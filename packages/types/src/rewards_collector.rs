@@ -180,6 +180,8 @@ pub struct ConfigResponse {
     pub timeout_seconds: u64,
     /// Maximum percentage of price movement (minimum amount you accept to receive during swap)
     pub slippage_tolerance: Decimal,
+    /// Neutron Ibc config
+    pub neutron_ibc_config: Option<NeutronIbcConfig>,
 }
 
 #[cw_serde]

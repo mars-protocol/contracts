@@ -94,6 +94,7 @@ export interface ConfigResponse {
   address_provider: string
   channel_id: string
   fee_collector_denom: string
+  neutron_ibc_config?: NeutronIbcConfig | null
   owner?: string | null
   proposed_new_owner?: string | null
   safety_fund_denom: string
