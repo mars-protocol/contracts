@@ -3,6 +3,7 @@ use std::{cmp::min, str};
 use cosmwasm_std::{
     Addr, Decimal, DepsMut, Env, MessageInfo, Response, StdError, StdResult, Uint128,
 };
+use cw2::set_contract_version;
 use mars_owner::{OwnerError, OwnerInit::SetInitialOwner, OwnerUpdate};
 use mars_red_bank_types::{
     address_provider::{self, MarsAddressType},
@@ -30,11 +31,11 @@ use crate::{
     user::User,
 };
 
-pub const CONTRACT_NAME: &str = "crates.io:mars-red-bank";
+pub const CONTRACT_NAME: &str = env!("CARGO_PKG_NAME");
 pub const CONTRACT_VERSION: &str = env!("CARGO_PKG_VERSION");
 
 pub fn instantiate(deps: DepsMut, msg: InstantiateMsg) -> Result<Response, ContractError> {
-    cw2::set_contract_version(deps.storage, CONTRACT_NAME, CONTRACT_VERSION)?;
+    set_contract_version(deps.storage, format!("crates.io:{CONTRACT_NAME}"), CONTRACT_VERSION)?;
 
     // Destructuring a struct’s fields into separate variables in order to force
     // compile error if we add more params

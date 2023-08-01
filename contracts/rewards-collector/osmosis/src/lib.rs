@@ -3,8 +3,12 @@ pub mod entry {
     use cosmwasm_std::{
         entry_point, Binary, Deps, DepsMut, Empty, Env, MessageInfo, Response, StdResult,
     };
+    use cw2::set_contract_version;
     use mars_red_bank_types::rewards_collector::{ExecuteMsg, InstantiateMsg, QueryMsg};
     use mars_rewards_collector_base::{contract::Collector, ContractResult};
+
+    pub const CONTRACT_NAME: &str = env!("CARGO_PKG_NAME");
+    pub const CONTRACT_VERSION: &str = env!("CARGO_PKG_VERSION");
 
     pub type OsmosisCollector<'a> = Collector<'a, Empty, Empty>;
 
@@ -15,6 +19,7 @@ pub mod entry {
         info: MessageInfo,
         msg: InstantiateMsg,
     ) -> ContractResult<Response> {
+        set_contract_version(deps.storage, format!("crates.io:{CONTRACT_NAME}"), CONTRACT_VERSION)?;
         let collector = OsmosisCollector::default();
         collector.instantiate(deps, env, info, msg)
     }

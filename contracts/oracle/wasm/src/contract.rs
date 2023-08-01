@@ -23,6 +23,7 @@ pub const CONTRACT_VERSION: &str = env!("CARGO_PKG_VERSION");
 #[cfg(not(feature = "library"))]
 pub mod entry {
     use cosmwasm_std::{entry_point, Binary, Decimal, Deps, DepsMut, Env, MessageInfo, Response};
+    use cw2::set_contract_version;
     use mars_oracle_base::{ContractError, ContractResult};
     use mars_red_bank_types::oracle::msg::{ExecuteMsg, InstantiateMsg, QueryMsg};
 
@@ -36,7 +37,7 @@ pub mod entry {
         _info: MessageInfo,
         msg: InstantiateMsg<WasmOracleCustomInitParams>,
     ) -> ContractResult<Response> {
-        cw2::set_contract_version(deps.storage, CONTRACT_NAME, CONTRACT_VERSION)?;
+        set_contract_version(deps.storage, format!("crates.io:{CONTRACT_NAME}"), CONTRACT_VERSION)?;
 
         let custom_init =
             msg.custom_init.as_ref().ok_or(ContractError::MissingCustomInitParams {})?;
