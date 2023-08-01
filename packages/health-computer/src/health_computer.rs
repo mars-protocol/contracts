@@ -207,6 +207,56 @@ impl HealthComputer {
                 .checked_sub(debt_value)?
                 .checked_sub(Uint128::one())?
                 .checked_div_floor(borrow_denom_price)?,
+
+            // When borrowing assets to add to a vault, the amount deposited into the vault counts towards collateral.
+            // The health factor can be calculated as:
+            //     1 = (max ltv adjusted value + (borrow amount * borrow price * vault max ltv)) / (debt value + (borrow amount * borrow price))
+            // Re-arranging this to isolate borrow amount renders:
+            //     borrow amount = (max ltv adjusted value - debt value) / (borrow price * (1 - vault max ltv)
+            BorrowTarget::Vault {
+                address,
+            } => {
+                let VaultConfig {
+                    addr,
+                    max_loan_to_value,
+                    whitelisted,
+                    hls,
+                    ..
+                } = self
+                    .vaults_data
+                    .vault_configs
+                    .get(address)
+                    .ok_or(MissingVaultConfig(address.to_string()))?;
+
+                // If vault or base token has been de-listed, drop MaxLTV to zero
+                let checked_vault_max_ltv = if *whitelisted {
+                    match self.kind {
+                        AccountKind::Default => *max_loan_to_value,
+                        AccountKind::HighLeveredStrategy => {
+                            hls.as_ref()
+                                .ok_or(MissingHLSParams(addr.to_string()))?
+                                .max_loan_to_value
+                        }
+                    }
+                } else {
+                    Decimal::zero()
+                };
+
+                // The max borrow for deposit can be calculated as:
+                //      1 = (total_max_ltv_adjusted_value + (max_borrow_denom_amount * borrow_denom_price * checked_vault_max_ltv)) / (debt_value + (max_borrow_denom_amount * borrow_denom_price))
+                // Re-arranging this to isolate borrow denom amount renders:
+                //      max_borrow_denom_amount = (total_max_ltv_adjusted_value - debt_value) / (borrow_denom_price * (1 - checked_vault_max_ltv))
+                // Which means re-arranging this to isolate borrow amount is an estimate,
+                // quite close, but never precisely right. For this reason, the - 1 of the formulas
+                // below are meant to err on the side of being more conservative vs aggressive.
+                total_max_ltv_adjusted_value
+                    .checked_sub(debt_value)?
+                    .checked_sub(Uint128::one())?
+                    .checked_div_floor(
+                    borrow_denom_price
+                        .checked_mul(Decimal::one().checked_sub(checked_vault_max_ltv)?)?,
+                )?
+            }
         };
 
         Ok(max_borrow_amount)
