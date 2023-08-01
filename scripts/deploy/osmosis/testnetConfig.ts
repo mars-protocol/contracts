@@ -117,8 +117,10 @@ export const USDCOracle: OracleConfig = {
   },
 }
 
-export const osmosisTestnetConfig = {
+export const osmosisTestnetConfig: DeploymentConfig = {
   oracleName: 'osmosis',
+  oracleBaseDenom: 'uusd',
+  rewardsCollectorName: 'osmosis',
   atomDenom: atom,
   baseAssetDenom: osmo,
   gasPrice: '0.1uosmo',
@@ -126,7 +128,7 @@ export const osmosisTestnetConfig = {
   chainPrefix: 'osmo',
   channelId: 'channel-2083',
   marsDenom: mars,
-  rewardCollectorTimeoutSeconds: 600,
+  rewardsCollectorTimeoutSeconds: 600,
   rpcEndpoint: 'https://rpc.osmotest5.osmosis.zone',
   safetyFundFeeShare: '0.5',
   deployerMnemonic:
@@ -154,6 +156,8 @@ export const osmosisTestnetConfig = {
 
 export const osmosisTestMultisig: DeploymentConfig = {
   oracleName: 'osmosis',
+  oracleBaseDenom: 'uusd',
+  rewardsCollectorName: 'osmosis',
   atomDenom: atom,
   baseAssetDenom: 'uosmo',
   gasPrice: '0.1uosmo',
@@ -161,7 +165,7 @@ export const osmosisTestMultisig: DeploymentConfig = {
   chainPrefix: 'osmo',
   channelId: 'channel-2083',
   marsDenom: mars,
-  rewardCollectorTimeoutSeconds: 600,
+  rewardsCollectorTimeoutSeconds: 600,
   rpcEndpoint: 'https://rpc.osmotest5.osmosis.zone',
   safetyFundFeeShare: '0.5',
   deployerMnemonic:

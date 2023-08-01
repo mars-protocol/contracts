@@ -105,6 +105,8 @@ export const axlUSDCOracle: OracleConfig = {
 
 export const osmosisMainnet: DeploymentConfig = {
   oracleName: 'osmosis',
+  oracleBaseDenom: 'uusd',
+  rewardsCollectorName: 'osmosis',
   atomDenom: atom,
   baseAssetDenom: osmo,
   gasPrice: '0.1uosmo',
@@ -112,7 +114,7 @@ export const osmosisMainnet: DeploymentConfig = {
   chainPrefix: 'osmo',
   channelId: 'channel-557',
   marsDenom: mars,
-  rewardCollectorTimeoutSeconds: 600,
+  rewardsCollectorTimeoutSeconds: 600,
   rpcEndpoint: 'https://rpc.osmosis.zone',
   safetyFundFeeShare: '0.5',
   deployerMnemonic: 'TO BE INSERTED AT TIME OF DEPLOYMENT',

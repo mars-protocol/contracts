@@ -1,4 +1,5 @@
 use cosmwasm_std::{DepsMut, Response};
+use cw2::set_contract_version;
 use mars_owner::OwnerInit::SetInitialOwner;
 use mars_red_bank_types::{
     error::MarsError,
@@ -11,12 +12,11 @@ use crate::{
     state::{CONFIG, OWNER},
 };
 
-pub const CONTRACT_NAME: &str = "crates.io:mars-red-bank";
-
+pub const CONTRACT_NAME: &str = env!("CARGO_PKG_NAME");
 pub const CONTRACT_VERSION: &str = env!("CARGO_PKG_VERSION");
 
 pub fn instantiate(deps: DepsMut, msg: InstantiateMsg) -> Result<Response, ContractError> {
-    cw2::set_contract_version(deps.storage, CONTRACT_NAME, CONTRACT_VERSION)?;
+    set_contract_version(deps.storage, format!("crates.io:{CONTRACT_NAME}"), CONTRACT_VERSION)?;
 
     // Destructuring a struct’s fields into separate variables in order to force
     // compile error if we add more params

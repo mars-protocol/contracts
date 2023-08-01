@@ -226,6 +226,10 @@ fn execute_claim_rewards() {
     let res = execute(deps.as_mut(), env.clone(), info, msg).unwrap();
 
     // query after execution gives 0 rewards
+    //
+    // NOTE: the query should return an empty array, instead of a non-empty array
+    // with a zero-amount coin! the latter is considered an invalid coins array
+    // and will result in error.
     let rewards_query_after = query_user_unclaimed_rewards(
         deps.as_ref(),
         env,
@@ -236,7 +240,7 @@ fn execute_claim_rewards() {
         None,
     )
     .unwrap();
-    assert_eq!(rewards_query_after[0].amount, Uint128::zero());
+    assert!(rewards_query_after.is_empty());
 
     // ASSERT
 
