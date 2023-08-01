@@ -1,0 +1,25 @@
+[package]
+name          = "mars-liquidation"
+description   = "Helper functions to calculate liquidation amounts"
+version       = "1.0.0"
+authors       = { workspace = true }
+edition       = { workspace = true }
+license       = { workspace = true }
+repository    = { workspace = true }
+homepage      = { workspace = true }
+documentation = { workspace = true }
+keywords      = { workspace = true }
+
+[lib]
+doctest = false
+
+[features]
+# for quicker tests, cargo test --lib
+# for more explicit tests, cargo test --features=backtraces
+backtraces = ["cosmwasm-std/backtraces"]
+
+[dependencies]
+cosmwasm-std        = { workspace = true }
+mars-health         = { workspace = true }
+mars-params         = { workspace = true }
+thiserror           = { workspace = true }

@@ -7,8 +7,8 @@ use cosmwasm_std::{
 use cw_storage_plus::{Bound, Item, Map};
 use mars_owner::{Owner, OwnerInit::SetInitialOwner, OwnerUpdate};
 use mars_red_bank_types::oracle::msg::{
-    Config, ConfigResponse, ExecuteMsg, InstantiateMsg, PriceResponse, PriceSourceResponse,
-    QueryMsg,
+    ActionKind, Config, ConfigResponse, ExecuteMsg, InstantiateMsg, PriceResponse,
+    PriceSourceResponse, QueryMsg,
 };
 
 use crate::{
@@ -126,11 +126,24 @@ where
             } => to_binary(&self.query_price_sources(deps, start_after, limit)?),
             QueryMsg::Price {
                 denom,
-            } => to_binary(&self.query_price(deps, env, denom)?),
+                kind,
+            } => to_binary(&self.query_price(
+                deps,
+                env,
+                denom,
+                kind.unwrap_or(ActionKind::Default),
+            )?),
             QueryMsg::Prices {
                 start_after,
                 limit,
-            } => to_binary(&self.query_prices(deps, env, start_after, limit)?),
+                kind,
+            } => to_binary(&self.query_prices(
+                deps,
+                env,
+                start_after,
+                limit,
+                kind.unwrap_or(ActionKind::Default),
+            )?),
         };
         res.map_err(Into::into)
     }
@@ -251,13 +264,26 @@ where
             .collect()
     }
 
-    fn query_price(&self, deps: Deps<C>, env: Env, denom: String) -> ContractResult<PriceResponse> {
+    fn query_price(
+        &self,
+        deps: Deps<C>,
+        env: Env,
+        denom: String,
+        kind: ActionKind,
+    ) -> ContractResult<PriceResponse> {
         let cfg = self.config.load(deps.storage)?;
 
         let price_source = self.query_price_source(deps, denom.clone())?.price_source;
 
         Ok(PriceResponse {
-            price: price_source.query_price(&deps, &env, &denom, &cfg, &self.price_sources)?,
+            price: price_source.query_price(
+                &deps,
+                &env,
+                &denom,
+                &cfg,
+                &self.price_sources,
+                kind,
+            )?,
             denom,
         })
     }
@@ -268,6 +294,7 @@ where
         env: Env,
         start_after: Option<String>,
         limit: Option<u32>,
+        kind: ActionKind,
     ) -> ContractResult<Vec<PriceResponse>> {
         let cfg = self.config.load(deps.storage)?;
 
@@ -280,7 +307,14 @@ where
             .map(|item| {
                 let (k, v) = item?;
                 Ok(PriceResponse {
-                    price: v.query_price(&deps, &env, &k, &cfg, &self.price_sources)?,
+                    price: v.query_price(
+                        &deps,
+                        &env,
+                        &k,
+                        &cfg,
+                        &self.price_sources,
+                        kind.clone(),
+                    )?,
                     denom: k,
                 })
             })

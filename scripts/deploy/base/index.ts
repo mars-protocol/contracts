@@ -25,14 +25,18 @@ export const taskRunner = async (config: DeploymentConfig) => {
     await deployer.instantiateOracle(config.oracleCustomInitParams)
     await deployer.instantiateRewards()
     await deployer.instantiateSwapper()
+    await deployer.instantiateParams()
     await deployer.saveDeploymentAddrsToFile()
 
     // setup
     await deployer.updateAddressProvider()
-    await deployer.setRoutes()
     for (const asset of config.assets) {
-      await deployer.initializeAsset(asset)
+      await deployer.updateAssetParams(asset)
     }
+    for (const vault of config.vaults) {
+      await deployer.updateVaultConfig(vault)
+    }
+    await deployer.setRoutes()
     for (const oracleConfig of config.oracleConfigs) {
       await deployer.setOracle(oracleConfig)
     }

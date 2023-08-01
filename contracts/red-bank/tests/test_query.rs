@@ -31,7 +31,8 @@ fn query_collateral() {
 
     // Assert markets correctly return collateral status
     let collaterals =
-        query_user_collaterals(deps.as_ref(), &env.block, user_addr.clone(), None, None).unwrap();
+        query_user_collaterals(deps.as_ref(), &env.block, user_addr.clone(), None, None, None)
+            .unwrap();
     assert_eq!(
         collaterals,
         vec![UserCollateralResponse {
@@ -47,7 +48,7 @@ fn query_collateral() {
 
     // Assert markets correctly return collateral status
     let collaterals =
-        query_user_collaterals(deps.as_ref(), &env.block, user_addr, None, None).unwrap();
+        query_user_collaterals(deps.as_ref(), &env.block, user_addr, None, None, None).unwrap();
     assert_eq!(
         collaterals,
         vec![

@@ -926,6 +926,15 @@ fn setting_price_source_xyk_lp() {
         }
     );
 
+    // attempting to use StableSwap pool
+    let err = set_price_source_xyk_lp("atom_mars_lp", 5555).unwrap_err();
+    assert_eq!(
+        err,
+        ContractError::InvalidPriceSource {
+            reason: "StableSwap pool not supported. Pool id 5555".to_string()
+        }
+    );
+
     // properly set xyk lp price source
     let res = set_price_source_xyk_lp("uosmo_umars_lp", 89).unwrap();
     assert_eq!(res.messages.len(), 0);
@@ -940,6 +949,51 @@ fn setting_price_source_xyk_lp() {
         res.price_source,
         OsmosisPriceSourceChecked::XykLiquidityToken {
             pool_id: 89,
+        }
+    );
+}
+
+#[test]
+fn setting_price_source_pyth_with_invalid_params() {
+    let mut deps = helpers::setup_test();
+
+    let mut set_price_source_pyth = |max_confidence: Decimal, max_deviation: Decimal| {
+        execute(
+            deps.as_mut(),
+            mock_env(),
+            mock_info("owner"),
+            ExecuteMsg::SetPriceSource {
+                denom: "uatom".to_string(),
+                price_source: OsmosisPriceSourceUnchecked::Pyth {
+                    contract_addr: "pyth_contract_addr".to_string(),
+                    price_feed_id: PriceIdentifier::from_hex(
+                        "61226d39beea19d334f17c2febce27e12646d84675924ebb02b9cdaea68727e3",
+                    )
+                    .unwrap(),
+                    max_staleness: 30,
+                    max_confidence,
+                    max_deviation,
+                    denom_decimals: 6u8,
+                },
+            },
+        )
+    };
+
+    // attempting to set max_confidence > 20%; should fail
+    let err = set_price_source_pyth(Decimal::percent(21), Decimal::percent(6)).unwrap_err();
+    assert_eq!(
+        err,
+        ContractError::InvalidPriceSource {
+            reason: "max_confidence must be in the range of <0;0.2>".to_string()
+        }
+    );
+
+    // attempting to set max_deviation > 20%; should fail
+    let err = set_price_source_pyth(Decimal::percent(5), Decimal::percent(21)).unwrap_err();
+    assert_eq!(
+        err,
+        ContractError::InvalidPriceSource {
+            reason: "max_deviation must be in the range of <0;0.2>".to_string()
         }
     );
 }
@@ -961,6 +1015,8 @@ fn setting_price_source_pyth_if_missing_usd() {
                 )
                 .unwrap(),
                 max_staleness: 30,
+                max_confidence: Decimal::percent(10),
+                max_deviation: Decimal::percent(10),
                 denom_decimals: 8,
             },
         },
@@ -1000,6 +1056,8 @@ fn setting_price_source_pyth_successfully() {
                 )
                 .unwrap(),
                 max_staleness: 30,
+                max_confidence: Decimal::percent(12),
+                max_deviation: Decimal::percent(14),
                 denom_decimals: 8,
             },
         },
@@ -1022,7 +1080,9 @@ fn setting_price_source_pyth_successfully() {
             )
             .unwrap(),
             max_staleness: 30,
-            denom_decimals: 8
+            max_confidence: Decimal::percent(12),
+            max_deviation: Decimal::percent(14),
+            denom_decimals: 8,
         },
     );
 }

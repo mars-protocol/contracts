@@ -5,11 +5,11 @@ use cosmwasm_schema::cw_serde;
 use cosmwasm_std::{Addr, Decimal, Deps, Empty, Env, Uint128};
 use cw_storage_plus::Map;
 use mars_oracle_base::{
-    pyth::PriceIdentifier,
     ContractError::{self},
     ContractResult, PriceSourceChecked, PriceSourceUnchecked,
 };
-use mars_red_bank_types::oracle::{AstroportTwapSnapshot, Config};
+use mars_red_bank_types::oracle::{ActionKind, AstroportTwapSnapshot, Config};
+use pyth_sdk_cw::PriceIdentifier;
 
 use crate::{
     helpers::{
@@ -54,11 +54,23 @@ pub enum WasmPriceSource<A> {
         contract_addr: A,
 
         /// Price feed id of an asset from the list: https://pyth.network/developers/price-feed-ids
+        /// We can't verify what denoms consist of the price feed.
+        /// Be very careful when adding it !!!
         price_feed_id: PriceIdentifier,
 
         /// The maximum number of seconds since the last price was by an oracle, before
         /// rejecting the price as too stale
         max_staleness: u64,
+
+        /// The maximum confidence deviation allowed for an oracle price.
+        ///
+        /// The confidence is measured as the percent of the confidence interval
+        /// value provided by the oracle as compared to the weighted average value
+        /// of the price.
+        max_confidence: Decimal,
+
+        /// The maximum deviation (percentage) between current and EMA price
+        max_deviation: Decimal,
 
         /// Assets are represented in their smallest unit and every asset can have different decimals (e.g. OSMO - 6 decimals, WETH - 18 decimals).
         ///
@@ -104,8 +116,10 @@ impl fmt::Display for WasmPriceSourceChecked {
                 contract_addr,
                 price_feed_id,
                 max_staleness,
-                denom_decimals,
-            } => format!("pyth:{contract_addr}:{price_feed_id}:{max_staleness}:{denom_decimals}"),
+                max_confidence,
+                max_deviation,
+                denom_decimals
+            } => format!("pyth:{contract_addr}:{price_feed_id}:{max_staleness}:{max_confidence}:{max_deviation}:{denom_decimals}"),
         };
         write!(f, "{label}")
     }
@@ -183,14 +197,18 @@ impl PriceSourceUnchecked<WasmPriceSourceChecked, Empty> for WasmPriceSourceUnch
                 contract_addr,
                 price_feed_id,
                 max_staleness,
+                max_confidence,
+                max_deviation,
                 denom_decimals,
             } => {
+                mars_oracle_base::pyth::assert_pyth(max_confidence, max_deviation)?;
                 mars_oracle_base::pyth::assert_usd_price_source(deps, price_sources)?;
-
                 Ok(WasmPriceSourceChecked::Pyth {
                     contract_addr: deps.api.addr_validate(&contract_addr)?,
                     price_feed_id,
                     max_staleness,
+                    max_confidence,
+                    max_deviation,
                     denom_decimals,
                 })
             }
@@ -207,6 +225,7 @@ impl PriceSourceChecked<Empty> for WasmPriceSourceChecked {
         denom: &str,
         config: &Config,
         price_sources: &Map<&str, Self>,
+        kind: ActionKind,
     ) -> ContractResult<Decimal> {
         match self {
             WasmPriceSource::Fixed {
@@ -214,7 +233,15 @@ impl PriceSourceChecked<Empty> for WasmPriceSourceChecked {
             } => Ok(*price),
             WasmPriceSource::AstroportSpot {
                 pair_address,
-            } => query_astroport_spot_price(deps, env, denom, config, price_sources, pair_address),
+            } => query_astroport_spot_price(
+                deps,
+                env,
+                denom,
+                config,
+                price_sources,
+                pair_address,
+                kind,
+            ),
             WasmPriceSource::AstroportTwap {
                 pair_address,
                 window_size,
@@ -228,11 +255,14 @@ impl PriceSourceChecked<Empty> for WasmPriceSourceChecked {
                 pair_address,
                 *window_size,
                 *tolerance,
+                kind,
             ),
             WasmPriceSource::Pyth {
                 contract_addr,
                 price_feed_id,
                 max_staleness,
+                max_confidence,
+                max_deviation,
                 denom_decimals,
             } => mars_oracle_base::pyth::query_pyth_price(
                 deps,
@@ -240,9 +270,12 @@ impl PriceSourceChecked<Empty> for WasmPriceSourceChecked {
                 contract_addr.clone(),
                 *price_feed_id,
                 *max_staleness,
+                *max_confidence,
+                *max_deviation,
                 *denom_decimals,
                 config,
                 price_sources,
+                kind,
             ),
         }
     }
@@ -256,6 +289,7 @@ fn query_astroport_spot_price(
     config: &Config,
     price_sources: &Map<&str, WasmPriceSourceChecked>,
     pair_address: &Addr,
+    kind: ActionKind,
 ) -> ContractResult<Decimal> {
     let astroport_factory = ASTROPORT_FACTORY.load(deps.storage)?;
     let pair_info = query_astroport_pair_info(&deps.querier, pair_address)?;
@@ -270,7 +304,7 @@ fn query_astroport_spot_price(
 
     let price = Decimal::from_ratio(sim_res.return_amount, one);
 
-    normalize_price(deps, env, config, price_sources, &pair_info, denom, price)
+    normalize_price(deps, env, config, price_sources, &pair_info, denom, price, kind)
 }
 
 /// Queries the TWAP price of `denom` denominated in `base_denom` from the Astroport pair at `pair_address`.
@@ -284,6 +318,7 @@ fn query_astroport_twap_price(
     pair_address: &Addr,
     window_size: u64,
     tolerance: u64,
+    kind: ActionKind,
 ) -> ContractResult<Decimal> {
     let snapshots = ASTROPORT_TWAP_SNAPSHOTS
         .may_load(deps.storage, denom)?
@@ -382,7 +417,7 @@ fn query_astroport_twap_price(
         PairType::Custom(_) => return Err(ContractError::InvalidPairType {}),
     };
 
-    normalize_price(deps, env, config, price_sources, &pair_info, denom, price)
+    normalize_price(deps, env, config, price_sources, &pair_info, denom, price, kind)
 }
 
 #[cfg(test)]
@@ -398,11 +433,13 @@ mod tests {
             )
             .unwrap(),
             max_staleness: 60,
-            denom_decimals: 6,
+            max_confidence: Decimal::percent(10u64),
+            max_deviation: Decimal::percent(15u64),
+            denom_decimals: 18,
         };
         assert_eq!(
-            ps.to_string(),
-            "pyth:osmo12j43nf2f0qumnt2zrrmpvnsqgzndxefujlvr08:0x61226d39beea19d334f17c2febce27e12646d84675924ebb02b9cdaea68727e3:60:6"
-        )
+                ps.to_string(),
+                "pyth:osmo12j43nf2f0qumnt2zrrmpvnsqgzndxefujlvr08:0x61226d39beea19d334f17c2febce27e12646d84675924ebb02b9cdaea68727e3:60:0.1:0.15:18"
+            )
     }
 }

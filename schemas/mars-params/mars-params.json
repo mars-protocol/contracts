@@ -1,0 +1,1455 @@
+{
+  "contract_name": "mars-params",
+  "contract_version": "1.0.7",
+  "idl_version": "1.0.0",
+  "instantiate": {
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "title": "InstantiateMsg",
+    "type": "object",
+    "required": [
+      "owner",
+      "target_health_factor"
+    ],
+    "properties": {
+      "owner": {
+        "description": "Contract's owner",
+        "type": "string"
+      },
+      "target_health_factor": {
+        "description": "Determines the ideal HF a position should be left at immediately after the position has been liquidated.",
+        "allOf": [
+          {
+            "$ref": "#/definitions/Decimal"
+          }
+        ]
+      }
+    },
+    "additionalProperties": false,
+    "definitions": {
+      "Decimal": {
+        "description": "A fixed-point decimal value with 18 fractional digits, i.e. Decimal(1_000_000_000_000_000_000) == 1.0\n\nThe greatest possible value that can be represented is 340282366920938463463.374607431768211455 (which is (2^128 - 1) / 10^18)",
+        "type": "string"
+      }
+    }
+  },
+  "execute": {
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "title": "ExecuteMsg",
+    "oneOf": [
+      {
+        "type": "object",
+        "required": [
+          "update_owner"
+        ],
+        "properties": {
+          "update_owner": {
+            "$ref": "#/definitions/OwnerUpdate"
+          }
+        },
+        "additionalProperties": false
+      },
+      {
+        "type": "object",
+        "required": [
+          "update_target_health_factor"
+        ],
+        "properties": {
+          "update_target_health_factor": {
+            "$ref": "#/definitions/Decimal"
+          }
+        },
+        "additionalProperties": false
+      },
+      {
+        "type": "object",
+        "required": [
+          "update_asset_params"
+        ],
+        "properties": {
+          "update_asset_params": {
+            "$ref": "#/definitions/AssetParamsUpdate"
+          }
+        },
+        "additionalProperties": false
+      },
+      {
+        "type": "object",
+        "required": [
+          "update_vault_config"
+        ],
+        "properties": {
+          "update_vault_config": {
+            "$ref": "#/definitions/VaultConfigUpdate"
+          }
+        },
+        "additionalProperties": false
+      },
+      {
+        "type": "object",
+        "required": [
+          "emergency_update"
+        ],
+        "properties": {
+          "emergency_update": {
+            "$ref": "#/definitions/EmergencyUpdate"
+          }
+        },
+        "additionalProperties": false
+      }
+    ],
+    "definitions": {
+      "AssetParamsBase_for_String": {
+        "type": "object",
+        "required": [
+          "credit_manager",
+          "denom",
+          "liquidation_bonus",
+          "liquidation_threshold",
+          "max_loan_to_value",
+          "protocol_liquidation_fee",
+          "red_bank"
+        ],
+        "properties": {
+          "credit_manager": {
+            "$ref": "#/definitions/CmSettings_for_String"
+          },
+          "denom": {
+            "type": "string"
+          },
+          "liquidation_bonus": {
+            "$ref": "#/definitions/LiquidationBonus"
+          },
+          "liquidation_threshold": {
+            "$ref": "#/definitions/Decimal"
+          },
+          "max_loan_to_value": {
+            "$ref": "#/definitions/Decimal"
+          },
+          "protocol_liquidation_fee": {
+            "$ref": "#/definitions/Decimal"
+          },
+          "red_bank": {
+            "$ref": "#/definitions/RedBankSettings"
+          }
+        },
+        "additionalProperties": false
+      },
+      "AssetParamsUpdate": {
+        "oneOf": [
+          {
+            "type": "object",
+            "required": [
+              "add_or_update"
+            ],
+            "properties": {
+              "add_or_update": {
+                "type": "object",
+                "required": [
+                  "params"
+                ],
+                "properties": {
+                  "params": {
+                    "$ref": "#/definitions/AssetParamsBase_for_String"
+                  }
+                },
+                "additionalProperties": false
+              }
+            },
+            "additionalProperties": false
+          }
+        ]
+      },
+      "CmEmergencyUpdate": {
+        "oneOf": [
+          {
+            "type": "object",
+            "required": [
+              "set_zero_max_ltv_on_vault"
+            ],
+            "properties": {
+              "set_zero_max_ltv_on_vault": {
+                "type": "string"
+              }
+            },
+            "additionalProperties": false
+          },
+          {
+            "type": "object",
+            "required": [
+              "set_zero_deposit_cap_on_vault"
+            ],
+            "properties": {
+              "set_zero_deposit_cap_on_vault": {
+                "type": "string"
+              }
+            },
+            "additionalProperties": false
+          },
+          {
+            "type": "object",
+            "required": [
+              "disallow_coin"
+            ],
+            "properties": {
+              "disallow_coin": {
+                "type": "string"
+              }
+            },
+            "additionalProperties": false
+          }
+        ]
+      },
+      "CmSettings_for_String": {
+        "type": "object",
+        "required": [
+          "whitelisted"
+        ],
+        "properties": {
+          "hls": {
+            "anyOf": [
+              {
+                "$ref": "#/definitions/HlsParamsBase_for_String"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "whitelisted": {
+            "type": "boolean"
+          }
+        },
+        "additionalProperties": false
+      },
+      "Coin": {
+        "type": "object",
+        "required": [
+          "amount",
+          "denom"
+        ],
+        "properties": {
+          "amount": {
+            "$ref": "#/definitions/Uint128"
+          },
+          "denom": {
+            "type": "string"
+          }
+        }
+      },
+      "Decimal": {
+        "description": "A fixed-point decimal value with 18 fractional digits, i.e. Decimal(1_000_000_000_000_000_000) == 1.0\n\nThe greatest possible value that can be represented is 340282366920938463463.374607431768211455 (which is (2^128 - 1) / 10^18)",
+        "type": "string"
+      },
+      "EmergencyUpdate": {
+        "oneOf": [
+          {
+            "type": "object",
+            "required": [
+              "credit_manager"
+            ],
+            "properties": {
+              "credit_manager": {
+                "$ref": "#/definitions/CmEmergencyUpdate"
+              }
+            },
+            "additionalProperties": false
+          },
+          {
+            "type": "object",
+            "required": [
+              "red_bank"
+            ],
+            "properties": {
+              "red_bank": {
+                "$ref": "#/definitions/RedBankEmergencyUpdate"
+              }
+            },
+            "additionalProperties": false
+          }
+        ]
+      },
+      "HlsAssetType_for_String": {
+        "oneOf": [
+          {
+            "type": "object",
+            "required": [
+              "coin"
+            ],
+            "properties": {
+              "coin": {
+                "type": "object",
+                "required": [
+                  "denom"
+                ],
+                "properties": {
+                  "denom": {
+                    "type": "string"
+                  }
+                },
+                "additionalProperties": false
+              }
+            },
+            "additionalProperties": false
+          },
+          {
+            "type": "object",
+            "required": [
+              "vault"
+            ],
+            "properties": {
+              "vault": {
+                "type": "object",
+                "required": [
+                  "addr"
+                ],
+                "properties": {
+                  "addr": {
+                    "type": "string"
+                  }
+                },
+                "additionalProperties": false
+              }
+            },
+            "additionalProperties": false
+          }
+        ]
+      },
+      "HlsParamsBase_for_String": {
+        "type": "object",
+        "required": [
+          "correlations",
+          "liquidation_threshold",
+          "max_loan_to_value"
+        ],
+        "properties": {
+          "correlations": {
+            "description": "Given this asset is debt, correlations are the only allowed collateral which are permitted to fulfill the HLS strategy",
+            "type": "array",
+            "items": {
+              "$ref": "#/definitions/HlsAssetType_for_String"
+            }
+          },
+          "liquidation_threshold": {
+            "$ref": "#/definitions/Decimal"
+          },
+          "max_loan_to_value": {
+            "$ref": "#/definitions/Decimal"
+          }
+        },
+        "additionalProperties": false
+      },
+      "LiquidationBonus": {
+        "description": "The LB will depend on the Health Factor and a couple other parameters as follows: Liquidation Bonus = min( b + (slope * (1 - HF)), max( min(CR - 1, max_lb), min_lb ) )",
+        "type": "object",
+        "required": [
+          "max_lb",
+          "min_lb",
+          "slope",
+          "starting_lb"
+        ],
+        "properties": {
+          "max_lb": {
+            "description": "Maximum LB that can be granted to a liquidator; in other words, the maxLB establishes a ceiling to the LB. This is a precautionary parameter to mitigate liquidated users being over-punished.",
+            "allOf": [
+              {
+                "$ref": "#/definitions/Decimal"
+              }
+            ]
+          },
+          "min_lb": {
+            "description": "Minimum LB that will be granted to liquidators even when the position is undercollateralized.",
+            "allOf": [
+              {
+                "$ref": "#/definitions/Decimal"
+              }
+            ]
+          },
+          "slope": {
+            "description": "Defines the slope at which the LB increases as the HF decreases. The higher the slope, the faster the LB increases as the HF decreases.",
+            "allOf": [
+              {
+                "$ref": "#/definitions/Decimal"
+              }
+            ]
+          },
+          "starting_lb": {
+            "description": "Marks the level at which the LB starts when HF drops marginally below 1. If set at 1%, at HF = 0.999 the LB will be 1%. If set at 0%, the LB starts increasing from 0% as the HF drops below 1.",
+            "allOf": [
+              {
+                "$ref": "#/definitions/Decimal"
+              }
+            ]
+          }
+        },
+        "additionalProperties": false
+      },
+      "OwnerUpdate": {
+        "oneOf": [
+          {
+            "description": "Proposes a new owner to take role. Only current owner can execute.",
+            "type": "object",
+            "required": [
+              "propose_new_owner"
+            ],
+            "properties": {
+              "propose_new_owner": {
+                "type": "object",
+                "required": [
+                  "proposed"
+                ],
+                "properties": {
+                  "proposed": {
+                    "type": "string"
+                  }
+                },
+                "additionalProperties": false
+              }
+            },
+            "additionalProperties": false
+          },
+          {
+            "description": "Clears the currently proposed owner. Only current owner can execute.",
+            "type": "string",
+            "enum": [
+              "clear_proposed"
+            ]
+          },
+          {
+            "description": "Promotes the proposed owner to be the current one. Only the proposed owner can execute.",
+            "type": "string",
+            "enum": [
+              "accept_proposed"
+            ]
+          },
+          {
+            "description": "Throws away the keys to the Owner role forever. Once done, no owner can ever be set later.",
+            "type": "string",
+            "enum": [
+              "abolish_owner_role"
+            ]
+          },
+          {
+            "description": "A separate entity managed by Owner that can be used for granting specific emergency powers.",
+            "type": "object",
+            "required": [
+              "set_emergency_owner"
+            ],
+            "properties": {
+              "set_emergency_owner": {
+                "type": "object",
+                "required": [
+                  "emergency_owner"
+                ],
+                "properties": {
+                  "emergency_owner": {
+                    "type": "string"
+                  }
+                },
+                "additionalProperties": false
+              }
+            },
+            "additionalProperties": false
+          },
+          {
+            "description": "Remove the entity in the Emergency Owner role",
+            "type": "string",
+            "enum": [
+              "clear_emergency_owner"
+            ]
+          }
+        ]
+      },
+      "RedBankEmergencyUpdate": {
+        "oneOf": [
+          {
+            "type": "object",
+            "required": [
+              "disable_borrowing"
+            ],
+            "properties": {
+              "disable_borrowing": {
+                "type": "string"
+              }
+            },
+            "additionalProperties": false
+          }
+        ]
+      },
+      "RedBankSettings": {
+        "type": "object",
+        "required": [
+          "borrow_enabled",
+          "deposit_cap",
+          "deposit_enabled"
+        ],
+        "properties": {
+          "borrow_enabled": {
+            "type": "boolean"
+          },
+          "deposit_cap": {
+            "$ref": "#/definitions/Uint128"
+          },
+          "deposit_enabled": {
+            "type": "boolean"
+          }
+        },
+        "additionalProperties": false
+      },
+      "Uint128": {
+        "description": "A thin wrapper around u128 that is using strings for JSON encoding/decoding, such that the full u128 range can be used for clients that convert JSON numbers to floats, like JavaScript and jq.\n\n# Examples\n\nUse `from` to create instances of this and `u128` to get the value out:\n\n``` # use cosmwasm_std::Uint128; let a = Uint128::from(123u128); assert_eq!(a.u128(), 123);\n\nlet b = Uint128::from(42u64); assert_eq!(b.u128(), 42);\n\nlet c = Uint128::from(70u32); assert_eq!(c.u128(), 70); ```",
+        "type": "string"
+      },
+      "VaultConfigBase_for_String": {
+        "type": "object",
+        "required": [
+          "addr",
+          "deposit_cap",
+          "liquidation_threshold",
+          "max_loan_to_value",
+          "whitelisted"
+        ],
+        "properties": {
+          "addr": {
+            "type": "string"
+          },
+          "deposit_cap": {
+            "$ref": "#/definitions/Coin"
+          },
+          "hls": {
+            "anyOf": [
+              {
+                "$ref": "#/definitions/HlsParamsBase_for_String"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "liquidation_threshold": {
+            "$ref": "#/definitions/Decimal"
+          },
+          "max_loan_to_value": {
+            "$ref": "#/definitions/Decimal"
+          },
+          "whitelisted": {
+            "type": "boolean"
+          }
+        },
+        "additionalProperties": false
+      },
+      "VaultConfigUpdate": {
+        "oneOf": [
+          {
+            "type": "object",
+            "required": [
+              "add_or_update"
+            ],
+            "properties": {
+              "add_or_update": {
+                "type": "object",
+                "required": [
+                  "config"
+                ],
+                "properties": {
+                  "config": {
+                    "$ref": "#/definitions/VaultConfigBase_for_String"
+                  }
+                },
+                "additionalProperties": false
+              }
+            },
+            "additionalProperties": false
+          }
+        ]
+      }
+    }
+  },
+  "query": {
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "title": "QueryMsg",
+    "oneOf": [
+      {
+        "type": "object",
+        "required": [
+          "owner"
+        ],
+        "properties": {
+          "owner": {
+            "type": "object",
+            "additionalProperties": false
+          }
+        },
+        "additionalProperties": false
+      },
+      {
+        "type": "object",
+        "required": [
+          "asset_params"
+        ],
+        "properties": {
+          "asset_params": {
+            "type": "object",
+            "required": [
+              "denom"
+            ],
+            "properties": {
+              "denom": {
+                "type": "string"
+              }
+            },
+            "additionalProperties": false
+          }
+        },
+        "additionalProperties": false
+      },
+      {
+        "type": "object",
+        "required": [
+          "all_asset_params"
+        ],
+        "properties": {
+          "all_asset_params": {
+            "type": "object",
+            "properties": {
+              "limit": {
+                "type": [
+                  "integer",
+                  "null"
+                ],
+                "format": "uint32",
+                "minimum": 0.0
+              },
+              "start_after": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              }
+            },
+            "additionalProperties": false
+          }
+        },
+        "additionalProperties": false
+      },
+      {
+        "type": "object",
+        "required": [
+          "vault_config"
+        ],
+        "properties": {
+          "vault_config": {
+            "type": "object",
+            "required": [
+              "address"
+            ],
+            "properties": {
+              "address": {
+                "description": "Address of vault",
+                "type": "string"
+              }
+            },
+            "additionalProperties": false
+          }
+        },
+        "additionalProperties": false
+      },
+      {
+        "type": "object",
+        "required": [
+          "all_vault_configs"
+        ],
+        "properties": {
+          "all_vault_configs": {
+            "type": "object",
+            "properties": {
+              "limit": {
+                "type": [
+                  "integer",
+                  "null"
+                ],
+                "format": "uint32",
+                "minimum": 0.0
+              },
+              "start_after": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              }
+            },
+            "additionalProperties": false
+          }
+        },
+        "additionalProperties": false
+      },
+      {
+        "type": "object",
+        "required": [
+          "target_health_factor"
+        ],
+        "properties": {
+          "target_health_factor": {
+            "type": "object",
+            "additionalProperties": false
+          }
+        },
+        "additionalProperties": false
+      }
+    ]
+  },
+  "migrate": null,
+  "sudo": null,
+  "responses": {
+    "all_asset_params": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Array_of_AssetParamsBase_for_Addr",
+      "type": "array",
+      "items": {
+        "$ref": "#/definitions/AssetParamsBase_for_Addr"
+      },
+      "definitions": {
+        "Addr": {
+          "description": "A human readable address.\n\nIn Cosmos, this is typically bech32 encoded. But for multi-chain smart contracts no assumptions should be made other than being UTF-8 encoded and of reasonable length.\n\nThis type represents a validated address. It can be created in the following ways 1. Use `Addr::unchecked(input)` 2. Use `let checked: Addr = deps.api.addr_validate(input)?` 3. Use `let checked: Addr = deps.api.addr_humanize(canonical_addr)?` 4. Deserialize from JSON. This must only be done from JSON that was validated before such as a contract's state. `Addr` must not be used in messages sent by the user because this would result in unvalidated instances.\n\nThis type is immutable. If you really need to mutate it (Really? Are you sure?), create a mutable copy using `let mut mutable = Addr::to_string()` and operate on that `String` instance.",
+          "type": "string"
+        },
+        "AssetParamsBase_for_Addr": {
+          "type": "object",
+          "required": [
+            "credit_manager",
+            "denom",
+            "liquidation_bonus",
+            "liquidation_threshold",
+            "max_loan_to_value",
+            "protocol_liquidation_fee",
+            "red_bank"
+          ],
+          "properties": {
+            "credit_manager": {
+              "$ref": "#/definitions/CmSettings_for_Addr"
+            },
+            "denom": {
+              "type": "string"
+            },
+            "liquidation_bonus": {
+              "$ref": "#/definitions/LiquidationBonus"
+            },
+            "liquidation_threshold": {
+              "$ref": "#/definitions/Decimal"
+            },
+            "max_loan_to_value": {
+              "$ref": "#/definitions/Decimal"
+            },
+            "protocol_liquidation_fee": {
+              "$ref": "#/definitions/Decimal"
+            },
+            "red_bank": {
+              "$ref": "#/definitions/RedBankSettings"
+            }
+          },
+          "additionalProperties": false
+        },
+        "CmSettings_for_Addr": {
+          "type": "object",
+          "required": [
+            "whitelisted"
+          ],
+          "properties": {
+            "hls": {
+              "anyOf": [
+                {
+                  "$ref": "#/definitions/HlsParamsBase_for_Addr"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "whitelisted": {
+              "type": "boolean"
+            }
+          },
+          "additionalProperties": false
+        },
+        "Decimal": {
+          "description": "A fixed-point decimal value with 18 fractional digits, i.e. Decimal(1_000_000_000_000_000_000) == 1.0\n\nThe greatest possible value that can be represented is 340282366920938463463.374607431768211455 (which is (2^128 - 1) / 10^18)",
+          "type": "string"
+        },
+        "HlsAssetType_for_Addr": {
+          "oneOf": [
+            {
+              "type": "object",
+              "required": [
+                "coin"
+              ],
+              "properties": {
+                "coin": {
+                  "type": "object",
+                  "required": [
+                    "denom"
+                  ],
+                  "properties": {
+                    "denom": {
+                      "type": "string"
+                    }
+                  },
+                  "additionalProperties": false
+                }
+              },
+              "additionalProperties": false
+            },
+            {
+              "type": "object",
+              "required": [
+                "vault"
+              ],
+              "properties": {
+                "vault": {
+                  "type": "object",
+                  "required": [
+                    "addr"
+                  ],
+                  "properties": {
+                    "addr": {
+                      "$ref": "#/definitions/Addr"
+                    }
+                  },
+                  "additionalProperties": false
+                }
+              },
+              "additionalProperties": false
+            }
+          ]
+        },
+        "HlsParamsBase_for_Addr": {
+          "type": "object",
+          "required": [
+            "correlations",
+            "liquidation_threshold",
+            "max_loan_to_value"
+          ],
+          "properties": {
+            "correlations": {
+              "description": "Given this asset is debt, correlations are the only allowed collateral which are permitted to fulfill the HLS strategy",
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/HlsAssetType_for_Addr"
+              }
+            },
+            "liquidation_threshold": {
+              "$ref": "#/definitions/Decimal"
+            },
+            "max_loan_to_value": {
+              "$ref": "#/definitions/Decimal"
+            }
+          },
+          "additionalProperties": false
+        },
+        "LiquidationBonus": {
+          "description": "The LB will depend on the Health Factor and a couple other parameters as follows: Liquidation Bonus = min( b + (slope * (1 - HF)), max( min(CR - 1, max_lb), min_lb ) )",
+          "type": "object",
+          "required": [
+            "max_lb",
+            "min_lb",
+            "slope",
+            "starting_lb"
+          ],
+          "properties": {
+            "max_lb": {
+              "description": "Maximum LB that can be granted to a liquidator; in other words, the maxLB establishes a ceiling to the LB. This is a precautionary parameter to mitigate liquidated users being over-punished.",
+              "allOf": [
+                {
+                  "$ref": "#/definitions/Decimal"
+                }
+              ]
+            },
+            "min_lb": {
+              "description": "Minimum LB that will be granted to liquidators even when the position is undercollateralized.",
+              "allOf": [
+                {
+                  "$ref": "#/definitions/Decimal"
+                }
+              ]
+            },
+            "slope": {
+              "description": "Defines the slope at which the LB increases as the HF decreases. The higher the slope, the faster the LB increases as the HF decreases.",
+              "allOf": [
+                {
+                  "$ref": "#/definitions/Decimal"
+                }
+              ]
+            },
+            "starting_lb": {
+              "description": "Marks the level at which the LB starts when HF drops marginally below 1. If set at 1%, at HF = 0.999 the LB will be 1%. If set at 0%, the LB starts increasing from 0% as the HF drops below 1.",
+              "allOf": [
+                {
+                  "$ref": "#/definitions/Decimal"
+                }
+              ]
+            }
+          },
+          "additionalProperties": false
+        },
+        "RedBankSettings": {
+          "type": "object",
+          "required": [
+            "borrow_enabled",
+            "deposit_cap",
+            "deposit_enabled"
+          ],
+          "properties": {
+            "borrow_enabled": {
+              "type": "boolean"
+            },
+            "deposit_cap": {
+              "$ref": "#/definitions/Uint128"
+            },
+            "deposit_enabled": {
+              "type": "boolean"
+            }
+          },
+          "additionalProperties": false
+        },
+        "Uint128": {
+          "description": "A thin wrapper around u128 that is using strings for JSON encoding/decoding, such that the full u128 range can be used for clients that convert JSON numbers to floats, like JavaScript and jq.\n\n# Examples\n\nUse `from` to create instances of this and `u128` to get the value out:\n\n``` # use cosmwasm_std::Uint128; let a = Uint128::from(123u128); assert_eq!(a.u128(), 123);\n\nlet b = Uint128::from(42u64); assert_eq!(b.u128(), 42);\n\nlet c = Uint128::from(70u32); assert_eq!(c.u128(), 70); ```",
+          "type": "string"
+        }
+      }
+    },
+    "all_vault_configs": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Array_of_VaultConfigBase_for_Addr",
+      "type": "array",
+      "items": {
+        "$ref": "#/definitions/VaultConfigBase_for_Addr"
+      },
+      "definitions": {
+        "Addr": {
+          "description": "A human readable address.\n\nIn Cosmos, this is typically bech32 encoded. But for multi-chain smart contracts no assumptions should be made other than being UTF-8 encoded and of reasonable length.\n\nThis type represents a validated address. It can be created in the following ways 1. Use `Addr::unchecked(input)` 2. Use `let checked: Addr = deps.api.addr_validate(input)?` 3. Use `let checked: Addr = deps.api.addr_humanize(canonical_addr)?` 4. Deserialize from JSON. This must only be done from JSON that was validated before such as a contract's state. `Addr` must not be used in messages sent by the user because this would result in unvalidated instances.\n\nThis type is immutable. If you really need to mutate it (Really? Are you sure?), create a mutable copy using `let mut mutable = Addr::to_string()` and operate on that `String` instance.",
+          "type": "string"
+        },
+        "Coin": {
+          "type": "object",
+          "required": [
+            "amount",
+            "denom"
+          ],
+          "properties": {
+            "amount": {
+              "$ref": "#/definitions/Uint128"
+            },
+            "denom": {
+              "type": "string"
+            }
+          }
+        },
+        "Decimal": {
+          "description": "A fixed-point decimal value with 18 fractional digits, i.e. Decimal(1_000_000_000_000_000_000) == 1.0\n\nThe greatest possible value that can be represented is 340282366920938463463.374607431768211455 (which is (2^128 - 1) / 10^18)",
+          "type": "string"
+        },
+        "HlsAssetType_for_Addr": {
+          "oneOf": [
+            {
+              "type": "object",
+              "required": [
+                "coin"
+              ],
+              "properties": {
+                "coin": {
+                  "type": "object",
+                  "required": [
+                    "denom"
+                  ],
+                  "properties": {
+                    "denom": {
+                      "type": "string"
+                    }
+                  },
+                  "additionalProperties": false
+                }
+              },
+              "additionalProperties": false
+            },
+            {
+              "type": "object",
+              "required": [
+                "vault"
+              ],
+              "properties": {
+                "vault": {
+                  "type": "object",
+                  "required": [
+                    "addr"
+                  ],
+                  "properties": {
+                    "addr": {
+                      "$ref": "#/definitions/Addr"
+                    }
+                  },
+                  "additionalProperties": false
+                }
+              },
+              "additionalProperties": false
+            }
+          ]
+        },
+        "HlsParamsBase_for_Addr": {
+          "type": "object",
+          "required": [
+            "correlations",
+            "liquidation_threshold",
+            "max_loan_to_value"
+          ],
+          "properties": {
+            "correlations": {
+              "description": "Given this asset is debt, correlations are the only allowed collateral which are permitted to fulfill the HLS strategy",
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/HlsAssetType_for_Addr"
+              }
+            },
+            "liquidation_threshold": {
+              "$ref": "#/definitions/Decimal"
+            },
+            "max_loan_to_value": {
+              "$ref": "#/definitions/Decimal"
+            }
+          },
+          "additionalProperties": false
+        },
+        "Uint128": {
+          "description": "A thin wrapper around u128 that is using strings for JSON encoding/decoding, such that the full u128 range can be used for clients that convert JSON numbers to floats, like JavaScript and jq.\n\n# Examples\n\nUse `from` to create instances of this and `u128` to get the value out:\n\n``` # use cosmwasm_std::Uint128; let a = Uint128::from(123u128); assert_eq!(a.u128(), 123);\n\nlet b = Uint128::from(42u64); assert_eq!(b.u128(), 42);\n\nlet c = Uint128::from(70u32); assert_eq!(c.u128(), 70); ```",
+          "type": "string"
+        },
+        "VaultConfigBase_for_Addr": {
+          "type": "object",
+          "required": [
+            "addr",
+            "deposit_cap",
+            "liquidation_threshold",
+            "max_loan_to_value",
+            "whitelisted"
+          ],
+          "properties": {
+            "addr": {
+              "$ref": "#/definitions/Addr"
+            },
+            "deposit_cap": {
+              "$ref": "#/definitions/Coin"
+            },
+            "hls": {
+              "anyOf": [
+                {
+                  "$ref": "#/definitions/HlsParamsBase_for_Addr"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "liquidation_threshold": {
+              "$ref": "#/definitions/Decimal"
+            },
+            "max_loan_to_value": {
+              "$ref": "#/definitions/Decimal"
+            },
+            "whitelisted": {
+              "type": "boolean"
+            }
+          },
+          "additionalProperties": false
+        }
+      }
+    },
+    "asset_params": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "AssetParamsBase_for_Addr",
+      "type": "object",
+      "required": [
+        "credit_manager",
+        "denom",
+        "liquidation_bonus",
+        "liquidation_threshold",
+        "max_loan_to_value",
+        "protocol_liquidation_fee",
+        "red_bank"
+      ],
+      "properties": {
+        "credit_manager": {
+          "$ref": "#/definitions/CmSettings_for_Addr"
+        },
+        "denom": {
+          "type": "string"
+        },
+        "liquidation_bonus": {
+          "$ref": "#/definitions/LiquidationBonus"
+        },
+        "liquidation_threshold": {
+          "$ref": "#/definitions/Decimal"
+        },
+        "max_loan_to_value": {
+          "$ref": "#/definitions/Decimal"
+        },
+        "protocol_liquidation_fee": {
+          "$ref": "#/definitions/Decimal"
+        },
+        "red_bank": {
+          "$ref": "#/definitions/RedBankSettings"
+        }
+      },
+      "additionalProperties": false,
+      "definitions": {
+        "Addr": {
+          "description": "A human readable address.\n\nIn Cosmos, this is typically bech32 encoded. But for multi-chain smart contracts no assumptions should be made other than being UTF-8 encoded and of reasonable length.\n\nThis type represents a validated address. It can be created in the following ways 1. Use `Addr::unchecked(input)` 2. Use `let checked: Addr = deps.api.addr_validate(input)?` 3. Use `let checked: Addr = deps.api.addr_humanize(canonical_addr)?` 4. Deserialize from JSON. This must only be done from JSON that was validated before such as a contract's state. `Addr` must not be used in messages sent by the user because this would result in unvalidated instances.\n\nThis type is immutable. If you really need to mutate it (Really? Are you sure?), create a mutable copy using `let mut mutable = Addr::to_string()` and operate on that `String` instance.",
+          "type": "string"
+        },
+        "CmSettings_for_Addr": {
+          "type": "object",
+          "required": [
+            "whitelisted"
+          ],
+          "properties": {
+            "hls": {
+              "anyOf": [
+                {
+                  "$ref": "#/definitions/HlsParamsBase_for_Addr"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "whitelisted": {
+              "type": "boolean"
+            }
+          },
+          "additionalProperties": false
+        },
+        "Decimal": {
+          "description": "A fixed-point decimal value with 18 fractional digits, i.e. Decimal(1_000_000_000_000_000_000) == 1.0\n\nThe greatest possible value that can be represented is 340282366920938463463.374607431768211455 (which is (2^128 - 1) / 10^18)",
+          "type": "string"
+        },
+        "HlsAssetType_for_Addr": {
+          "oneOf": [
+            {
+              "type": "object",
+              "required": [
+                "coin"
+              ],
+              "properties": {
+                "coin": {
+                  "type": "object",
+                  "required": [
+                    "denom"
+                  ],
+                  "properties": {
+                    "denom": {
+                      "type": "string"
+                    }
+                  },
+                  "additionalProperties": false
+                }
+              },
+              "additionalProperties": false
+            },
+            {
+              "type": "object",
+              "required": [
+                "vault"
+              ],
+              "properties": {
+                "vault": {
+                  "type": "object",
+                  "required": [
+                    "addr"
+                  ],
+                  "properties": {
+                    "addr": {
+                      "$ref": "#/definitions/Addr"
+                    }
+                  },
+                  "additionalProperties": false
+                }
+              },
+              "additionalProperties": false
+            }
+          ]
+        },
+        "HlsParamsBase_for_Addr": {
+          "type": "object",
+          "required": [
+            "correlations",
+            "liquidation_threshold",
+            "max_loan_to_value"
+          ],
+          "properties": {
+            "correlations": {
+              "description": "Given this asset is debt, correlations are the only allowed collateral which are permitted to fulfill the HLS strategy",
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/HlsAssetType_for_Addr"
+              }
+            },
+            "liquidation_threshold": {
+              "$ref": "#/definitions/Decimal"
+            },
+            "max_loan_to_value": {
+              "$ref": "#/definitions/Decimal"
+            }
+          },
+          "additionalProperties": false
+        },
+        "LiquidationBonus": {
+          "description": "The LB will depend on the Health Factor and a couple other parameters as follows: Liquidation Bonus = min( b + (slope * (1 - HF)), max( min(CR - 1, max_lb), min_lb ) )",
+          "type": "object",
+          "required": [
+            "max_lb",
+            "min_lb",
+            "slope",
+            "starting_lb"
+          ],
+          "properties": {
+            "max_lb": {
+              "description": "Maximum LB that can be granted to a liquidator; in other words, the maxLB establishes a ceiling to the LB. This is a precautionary parameter to mitigate liquidated users being over-punished.",
+              "allOf": [
+                {
+                  "$ref": "#/definitions/Decimal"
+                }
+              ]
+            },
+            "min_lb": {
+              "description": "Minimum LB that will be granted to liquidators even when the position is undercollateralized.",
+              "allOf": [
+                {
+                  "$ref": "#/definitions/Decimal"
+                }
+              ]
+            },
+            "slope": {
+              "description": "Defines the slope at which the LB increases as the HF decreases. The higher the slope, the faster the LB increases as the HF decreases.",
+              "allOf": [
+                {
+                  "$ref": "#/definitions/Decimal"
+                }
+              ]
+            },
+            "starting_lb": {
+              "description": "Marks the level at which the LB starts when HF drops marginally below 1. If set at 1%, at HF = 0.999 the LB will be 1%. If set at 0%, the LB starts increasing from 0% as the HF drops below 1.",
+              "allOf": [
+                {
+                  "$ref": "#/definitions/Decimal"
+                }
+              ]
+            }
+          },
+          "additionalProperties": false
+        },
+        "RedBankSettings": {
+          "type": "object",
+          "required": [
+            "borrow_enabled",
+            "deposit_cap",
+            "deposit_enabled"
+          ],
+          "properties": {
+            "borrow_enabled": {
+              "type": "boolean"
+            },
+            "deposit_cap": {
+              "$ref": "#/definitions/Uint128"
+            },
+            "deposit_enabled": {
+              "type": "boolean"
+            }
+          },
+          "additionalProperties": false
+        },
+        "Uint128": {
+          "description": "A thin wrapper around u128 that is using strings for JSON encoding/decoding, such that the full u128 range can be used for clients that convert JSON numbers to floats, like JavaScript and jq.\n\n# Examples\n\nUse `from` to create instances of this and `u128` to get the value out:\n\n``` # use cosmwasm_std::Uint128; let a = Uint128::from(123u128); assert_eq!(a.u128(), 123);\n\nlet b = Uint128::from(42u64); assert_eq!(b.u128(), 42);\n\nlet c = Uint128::from(70u32); assert_eq!(c.u128(), 70); ```",
+          "type": "string"
+        }
+      }
+    },
+    "owner": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "OwnerResponse",
+      "description": "Returned from Owner.query()",
+      "type": "object",
+      "required": [
+        "abolished",
+        "initialized"
+      ],
+      "properties": {
+        "abolished": {
+          "type": "boolean"
+        },
+        "emergency_owner": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "initialized": {
+          "type": "boolean"
+        },
+        "owner": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "proposed": {
+          "type": [
+            "string",
+            "null"
+          ]
+        }
+      },
+      "additionalProperties": false
+    },
+    "target_health_factor": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Decimal",
+      "description": "A fixed-point decimal value with 18 fractional digits, i.e. Decimal(1_000_000_000_000_000_000) == 1.0\n\nThe greatest possible value that can be represented is 340282366920938463463.374607431768211455 (which is (2^128 - 1) / 10^18)",
+      "type": "string"
+    },
+    "vault_config": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "VaultConfigBase_for_Addr",
+      "type": "object",
+      "required": [
+        "addr",
+        "deposit_cap",
+        "liquidation_threshold",
+        "max_loan_to_value",
+        "whitelisted"
+      ],
+      "properties": {
+        "addr": {
+          "$ref": "#/definitions/Addr"
+        },
+        "deposit_cap": {
+          "$ref": "#/definitions/Coin"
+        },
+        "hls": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/HlsParamsBase_for_Addr"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "liquidation_threshold": {
+          "$ref": "#/definitions/Decimal"
+        },
+        "max_loan_to_value": {
+          "$ref": "#/definitions/Decimal"
+        },
+        "whitelisted": {
+          "type": "boolean"
+        }
+      },
+      "additionalProperties": false,
+      "definitions": {
+        "Addr": {
+          "description": "A human readable address.\n\nIn Cosmos, this is typically bech32 encoded. But for multi-chain smart contracts no assumptions should be made other than being UTF-8 encoded and of reasonable length.\n\nThis type represents a validated address. It can be created in the following ways 1. Use `Addr::unchecked(input)` 2. Use `let checked: Addr = deps.api.addr_validate(input)?` 3. Use `let checked: Addr = deps.api.addr_humanize(canonical_addr)?` 4. Deserialize from JSON. This must only be done from JSON that was validated before such as a contract's state. `Addr` must not be used in messages sent by the user because this would result in unvalidated instances.\n\nThis type is immutable. If you really need to mutate it (Really? Are you sure?), create a mutable copy using `let mut mutable = Addr::to_string()` and operate on that `String` instance.",
+          "type": "string"
+        },
+        "Coin": {
+          "type": "object",
+          "required": [
+            "amount",
+            "denom"
+          ],
+          "properties": {
+            "amount": {
+              "$ref": "#/definitions/Uint128"
+            },
+            "denom": {
+              "type": "string"
+            }
+          }
+        },
+        "Decimal": {
+          "description": "A fixed-point decimal value with 18 fractional digits, i.e. Decimal(1_000_000_000_000_000_000) == 1.0\n\nThe greatest possible value that can be represented is 340282366920938463463.374607431768211455 (which is (2^128 - 1) / 10^18)",
+          "type": "string"
+        },
+        "HlsAssetType_for_Addr": {
+          "oneOf": [
+            {
+              "type": "object",
+              "required": [
+                "coin"
+              ],
+              "properties": {
+                "coin": {
+                  "type": "object",
+                  "required": [
+                    "denom"
+                  ],
+                  "properties": {
+                    "denom": {
+                      "type": "string"
+                    }
+                  },
+                  "additionalProperties": false
+                }
+              },
+              "additionalProperties": false
+            },
+            {
+              "type": "object",
+              "required": [
+                "vault"
+              ],
+              "properties": {
+                "vault": {
+                  "type": "object",
+                  "required": [
+                    "addr"
+                  ],
+                  "properties": {
+                    "addr": {
+                      "$ref": "#/definitions/Addr"
+                    }
+                  },
+                  "additionalProperties": false
+                }
+              },
+              "additionalProperties": false
+            }
+          ]
+        },
+        "HlsParamsBase_for_Addr": {
+          "type": "object",
+          "required": [
+            "correlations",
+            "liquidation_threshold",
+            "max_loan_to_value"
+          ],
+          "properties": {
+            "correlations": {
+              "description": "Given this asset is debt, correlations are the only allowed collateral which are permitted to fulfill the HLS strategy",
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/HlsAssetType_for_Addr"
+              }
+            },
+            "liquidation_threshold": {
+              "$ref": "#/definitions/Decimal"
+            },
+            "max_loan_to_value": {
+              "$ref": "#/definitions/Decimal"
+            }
+          },
+          "additionalProperties": false
+        },
+        "Uint128": {
+          "description": "A thin wrapper around u128 that is using strings for JSON encoding/decoding, such that the full u128 range can be used for clients that convert JSON numbers to floats, like JavaScript and jq.\n\n# Examples\n\nUse `from` to create instances of this and `u128` to get the value out:\n\n``` # use cosmwasm_std::Uint128; let a = Uint128::from(123u128); assert_eq!(a.u128(), 123);\n\nlet b = Uint128::from(42u64); assert_eq!(b.u128(), 42);\n\nlet c = Uint128::from(70u32); assert_eq!(c.u128(), 70); ```",
+          "type": "string"
+        }
+      }
+    }
+  }
+}
