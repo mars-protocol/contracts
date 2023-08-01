@@ -3,9 +3,6 @@ use std::str::FromStr;
 use cosmwasm_std::{
     coin, Decimal, Empty, QuerierWrapper, QueryRequest, StdError, StdResult, Uint128,
 };
-/// FIXME: migrate to Spot queries from PoolManager once whitelisted in https://github.com/osmosis-labs/osmosis/blob/main/wasmbinding/stargate_whitelist.go#L127
-#[allow(deprecated)]
-use osmosis_std::types::osmosis::gamm::v1beta1::QueryPoolRequest as PoolRequest;
 use osmosis_std::{
     shim::{Duration, Timestamp},
     types::{
@@ -13,26 +10,67 @@ use osmosis_std::{
         osmosis::{
             downtimedetector::v1beta1::DowntimedetectorQuerier,
             gamm::{
-                v1beta1::{PoolAsset, PoolParams},
-                v2::GammQuerier,
+                poolmodels::stableswap::v1beta1::Pool as StableSwapPool,
+                v1beta1::Pool as BalancerPool,
             },
+            poolmanager::v1beta1::{PoolRequest, PoolResponse, PoolmanagerQuerier},
             twap::v1beta1::TwapQuerier,
         },
     },
 };
-use serde::{Deserialize, Serialize};
+use prost::Message;
 
-// NOTE: Use custom Pool (`id` type as String) due to problem with json (de)serialization discrepancy between go and rust side.
-// https://github.com/osmosis-labs/osmosis-rust/issues/42
-#[derive(Serialize, Deserialize, Debug, Clone, PartialEq, Eq)]
-pub struct Pool {
-    pub id: String,
-    pub address: String,
-    pub pool_params: Option<PoolParams>,
-    pub future_pool_governor: String,
-    pub pool_assets: Vec<PoolAsset>,
-    pub total_shares: Option<Coin>,
-    pub total_weight: String,
+// Get denoms from different type of the pool
+pub trait CommonPoolData {
+    fn get_pool_id(&self) -> u64;
+    fn get_pool_denoms(&self) -> Vec<String>;
+}
+
+#[derive(Debug, PartialEq)]
+pub enum Pool {
+    Balancer(BalancerPool),
+    StableSwap(StableSwapPool),
+}
+
+impl CommonPoolData for Pool {
+    fn get_pool_id(&self) -> u64 {
+        match self {
+            Pool::Balancer(pool) => pool.id,
+            Pool::StableSwap(pool) => pool.id,
+        }
+    }
+
+    fn get_pool_denoms(&self) -> Vec<String> {
+        match self {
+            Pool::Balancer(pool) => pool
+                .pool_assets
+                .iter()
+                .flat_map(|asset| &asset.token)
+                .map(|token| token.denom.clone())
+                .collect(),
+            Pool::StableSwap(pool) => {
+                pool.pool_liquidity.iter().map(|pl| pl.denom.clone()).collect()
+            }
+        }
+    }
+}
+
+impl TryFrom<osmosis_std::shim::Any> for Pool {
+    type Error = StdError;
+
+    fn try_from(value: osmosis_std::shim::Any) -> Result<Self, Self::Error> {
+        if let Ok(pool) = BalancerPool::decode(value.value.as_slice()) {
+            return Ok(Pool::Balancer(pool));
+        }
+        if let Ok(pool) = StableSwapPool::decode(value.value.as_slice()) {
+            return Ok(Pool::StableSwap(pool));
+        }
+
+        Err(StdError::parse_err(
+            "Pool",
+            "Unsupported pool: must be either `Balancer` or `StableSwap`.",
+        ))
+    }
 }
 
 impl Pool {
@@ -48,39 +86,24 @@ impl Pool {
     }
 }
 
-#[derive(Serialize, Deserialize, Debug, Clone, PartialEq, Eq)]
-pub struct QueryPoolResponse {
-    pub pool: Pool,
-}
-
 /// Query an Osmosis pool's coin depths and the supply of of liquidity token
-///
-/// FIXME: migrate to Spot queries from PoolManager once whitelisted in https://github.com/osmosis-labs/osmosis/blob/main/wasmbinding/stargate_whitelist.go#L127
-#[allow(deprecated)]
 pub fn query_pool(querier: &QuerierWrapper, pool_id: u64) -> StdResult<Pool> {
     let req: QueryRequest<Empty> = PoolRequest {
         pool_id,
     }
     .into();
-    let res: QueryPoolResponse = querier.query(&req)?;
-    Ok(res.pool)
-}
-
-pub fn has_denom(denom: &str, pool_assets: &[PoolAsset]) -> bool {
-    pool_assets.iter().flat_map(|asset| &asset.token).any(|coin| coin.denom == denom)
+    let res: PoolResponse = querier.query(&req)?;
+    res.pool.ok_or_else(|| StdError::not_found("pool"))?.try_into() // convert `Any` to `Pool`
 }
 
 /// Query the spot price of a coin, denominated in OSMO
-///
-/// FIXME: migrate to Spot queries from PoolManager once whitelisted in https://github.com/osmosis-labs/osmosis/blob/main/wasmbinding/stargate_whitelist.go#L127
-#[allow(deprecated)]
 pub fn query_spot_price(
     querier: &QuerierWrapper,
     pool_id: u64,
     base_denom: &str,
     quote_denom: &str,
 ) -> StdResult<Decimal> {
-    let spot_price_res = GammQuerier::new(querier).spot_price(
+    let spot_price_res = PoolmanagerQuerier::new(querier).spot_price(
         pool_id,
         base_denom.to_string(),
         quote_denom.to_string(),
@@ -154,12 +177,14 @@ pub fn recovered_since_downtime_of_length(
 
 #[cfg(test)]
 mod tests {
+    use osmosis_std::types::osmosis::gamm::v1beta1::PoolAsset;
+
     use super::*;
 
     #[test]
     fn unwrapping_coin() {
-        let pool = Pool {
-            id: "1111".to_string(),
+        let pool = BalancerPool {
+            id: 1111,
             address: "".to_string(),
             pool_params: None,
             future_pool_governor: "".to_string(),
@@ -190,5 +215,68 @@ mod tests {
         assert_eq!(res, coin(123, "denom_1"));
         let res = Pool::unwrap_coin(&pool.pool_assets[1].token).unwrap();
         assert_eq!(res, coin(430, "denom_2"));
+    }
+
+    #[test]
+    fn common_data_for_balancer_pool() {
+        let balancer_pool = BalancerPool {
+            id: 1111,
+            address: "".to_string(),
+            pool_params: None,
+            future_pool_governor: "".to_string(),
+            pool_assets: vec![
+                PoolAsset {
+                    token: Some(Coin {
+                        denom: "denom_1".to_string(),
+                        amount: "123".to_string(),
+                    }),
+                    weight: "500".to_string(),
+                },
+                PoolAsset {
+                    token: Some(Coin {
+                        denom: "denom_2".to_string(),
+                        amount: "430".to_string(),
+                    }),
+                    weight: "500".to_string(),
+                },
+            ],
+            total_shares: None,
+            total_weight: "".to_string(),
+        };
+
+        let any_pool = balancer_pool.to_any();
+        let pool: Pool = any_pool.try_into().unwrap();
+
+        assert_eq!(balancer_pool.id, pool.get_pool_id());
+        assert_eq!(vec!["denom_1".to_string(), "denom_2".to_string()], pool.get_pool_denoms())
+    }
+
+    #[test]
+    fn common_data_for_stable_swap_pool() {
+        let stable_swap_pool = StableSwapPool {
+            address: "".to_string(),
+            id: 4444,
+            pool_params: None,
+            future_pool_governor: "".to_string(),
+            total_shares: None,
+            pool_liquidity: vec![
+                Coin {
+                    denom: "denom_1".to_string(),
+                    amount: "123".to_string(),
+                },
+                Coin {
+                    denom: "denom_2".to_string(),
+                    amount: "430".to_string(),
+                },
+            ],
+            scaling_factors: vec![],
+            scaling_factor_controller: "".to_string(),
+        };
+
+        let any_pool = stable_swap_pool.to_any();
+        let pool: Pool = any_pool.try_into().unwrap();
+
+        assert_eq!(stable_swap_pool.id, pool.get_pool_id());
+        assert_eq!(vec!["denom_1".to_string(), "denom_2".to_string()], pool.get_pool_denoms())
     }
 }

@@ -63,6 +63,8 @@ export const atomOracle: OracleConfig = {
       price_feed_id: pythAtomID,
       denom_decimals: 6,
       max_staleness: 300, // 5 minutes
+      max_confidence: '0.1',
+      max_deviation: '0.1',
     },
   },
 }
@@ -75,6 +77,8 @@ export const axlUSDCOracle: OracleConfig = {
       price_feed_id: pythUsdcID,
       denom_decimals: 6,
       max_staleness: 300, // 5 minutes
+      max_confidence: '0.1',
+      max_deviation: '0.1',
     },
   },
 }
@@ -223,55 +227,91 @@ export const usdcMarsRoute = {
 export const ntrnAsset: AssetConfig = {
   denom: 'untrn',
   max_loan_to_value: '0.35',
-  reserve_factor: '0.1',
   liquidation_threshold: '0.40',
-  liquidation_bonus: '0.15',
-  interest_rate_model: {
-    optimal_utilization_rate: '0.6',
-    base: '0',
-    slope_1: '0.15',
-    slope_2: '3',
+  liquidation_bonus: {
+    max_lb: '0.05',
+    min_lb: '0',
+    slope: '2',
+    starting_lb: '0',
   },
-  deposit_cap: '5000000000000',
-  deposit_enabled: true,
-  borrow_enabled: true,
+  protocol_liquidation_fee: '0.5',
+  // liquidation_bonus: '0.15',
+  // reserve_factor: '0.1',
+  // interest_rate_model: {
+  //   optimal_utilization_rate: '0.6',
+  //   base: '0',
+  //   slope_1: '0.15',
+  //   slope_2: '3',
+  // },
   symbol: 'NTRN',
+  credit_manager: {
+    whitelisted: false,
+  },
+  red_bank: {
+    deposit_cap: '5000000000000',
+    borrow_enabled: true,
+    deposit_enabled: true,
+  },
 }
 
 export const atomAsset: AssetConfig = {
   denom: atomDenom,
   max_loan_to_value: '0.68',
-  reserve_factor: '0.1',
   liquidation_threshold: '0.7',
-  liquidation_bonus: '0.1',
-  interest_rate_model: {
-    optimal_utilization_rate: '0.7',
-    base: '0',
-    slope_1: '0.2',
-    slope_2: '3',
+  liquidation_bonus: {
+    max_lb: '0.05',
+    min_lb: '0',
+    slope: '2',
+    starting_lb: '0',
   },
-  deposit_cap: '150000000000',
-  deposit_enabled: true,
-  borrow_enabled: true,
+  protocol_liquidation_fee: '0.5',
+  // liquidation_bonus: '0.1',
+  // reserve_factor: '0.1',
+  // interest_rate_model: {
+  //   optimal_utilization_rate: '0.7',
+  //   base: '0',
+  //   slope_1: '0.2',
+  //   slope_2: '3',
+  // },
   symbol: 'ATOM',
+  credit_manager: {
+    whitelisted: false,
+  },
+  red_bank: {
+    deposit_cap: '150000000000',
+    borrow_enabled: true,
+    deposit_enabled: true,
+  },
 }
 
 export const axlUSDCAsset: AssetConfig = {
   denom: axlUsdcDenom,
   max_loan_to_value: '0.74',
-  reserve_factor: '0.1',
   liquidation_threshold: '0.75',
-  liquidation_bonus: '0.1',
-  interest_rate_model: {
-    optimal_utilization_rate: '0.8',
-    base: '0',
-    slope_1: '0.125',
-    slope_2: '2',
+  liquidation_bonus: {
+    max_lb: '0.05',
+    min_lb: '0',
+    slope: '2',
+    starting_lb: '0',
   },
-  deposit_cap: '500000000000',
-  deposit_enabled: true,
-  borrow_enabled: true,
+  protocol_liquidation_fee: '0.5',
+  // liquidation_bonus: '0.1',
+  // reserve_factor: '0.1',
+  // interest_rate_model: {
+  //   optimal_utilization_rate: '0.8',
+  //   base: '0',
+  //   slope_1: '0.125',
+  //   slope_2: '2',
+  // },
   symbol: 'axlUSDC',
+  credit_manager: {
+    whitelisted: false,
+  },
+  red_bank: {
+    deposit_cap: '500000000000',
+    borrow_enabled: true,
+    deposit_enabled: true,
+  },
 }
 
 export const neutronTestnetConfig: DeploymentConfig = {
@@ -293,7 +333,6 @@ export const neutronTestnetConfig: DeploymentConfig = {
     'bundle bundle orchard jeans office umbrella bird around taxi arrive infant discover elder they joy misery photo crunch gift fancy pledge attend adult eight',
   slippage_tolerance: '0.01',
   base_asset_symbol: 'NTRN',
-  second_asset_symbol: 'ATOM',
   runTests: true,
   mainnet: false,
   feeCollectorDenom: marsDenom,
@@ -304,8 +343,8 @@ export const neutronTestnetConfig: DeploymentConfig = {
   feeCollectorAddr: feeCollectorAddr,
   swapperDexName: 'astroport',
   assets: [ntrnAsset, atomAsset, axlUSDCAsset],
+  vaults: [],
   oracleConfigs: [usdOracle, axlUSDCOracle, atomOracle, ntrnOracle],
-  maxCloseFactor: '0.5',
   oracleCustomInitParams: {
     astroport_factory: astroportFactory,
   },
