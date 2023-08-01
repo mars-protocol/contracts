@@ -28,6 +28,7 @@ backtraces = [
 [dependencies]
 cosmwasm-schema                 = { workspace = true }
 cosmwasm-std                    = { workspace = true, features = ["stargate"] }
+cw2                             = { workspace = true }
 cw-storage-plus                 = { workspace = true }
 mars-owner                      = { workspace = true }
 mars-red-bank-types             = { workspace = true }
@@ -36,7 +37,6 @@ mars-utils                      = { workspace = true }
 schemars                        = { workspace = true }
 serde                           = { workspace = true }
 thiserror                       = { workspace = true }
-
 
 [dev-dependencies]
 mars-osmosis = { workspace = true }

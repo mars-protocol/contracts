@@ -8,12 +8,13 @@ use crate::{OsmosisPriceSourceChecked, OsmosisPriceSourceUnchecked};
 pub type OsmosisOracle<'a> =
     OracleBase<'a, OsmosisPriceSourceChecked, OsmosisPriceSourceUnchecked, Empty, Empty, Empty>;
 
-pub const CONTRACT_NAME: &str = "crates.io:mars-oracle-osmosis";
+pub const CONTRACT_NAME: &str = env!("CARGO_PKG_NAME");
 pub const CONTRACT_VERSION: &str = env!("CARGO_PKG_VERSION");
 
 #[cfg(not(feature = "library"))]
 pub mod entry {
     use cosmwasm_std::{entry_point, Binary, Deps, DepsMut, Env, MessageInfo, Response};
+    use cw2::set_contract_version;
     use mars_oracle_base::ContractResult;
     use mars_red_bank_types::oracle::msg::{ExecuteMsg, InstantiateMsg, QueryMsg};
 
@@ -27,7 +28,7 @@ pub mod entry {
         _info: MessageInfo,
         msg: InstantiateMsg<Empty>,
     ) -> ContractResult<Response> {
-        cw2::set_contract_version(deps.storage, CONTRACT_NAME, CONTRACT_VERSION)?;
+        set_contract_version(deps.storage, format!("crates.io:{CONTRACT_NAME}"), CONTRACT_VERSION)?;
         OsmosisOracle::default().instantiate(deps, msg)
     }
 

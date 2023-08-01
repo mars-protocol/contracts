@@ -31,6 +31,7 @@ fn instantiating() {
             channel_id: config.channel_id,
             timeout_seconds: config.timeout_seconds,
             slippage_tolerance: config.slippage_tolerance,
+            neutron_ibc_config: config.neutron_ibc_config
         }
     );
 

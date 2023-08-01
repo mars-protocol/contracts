@@ -351,6 +351,7 @@ where
             channel_id: cfg.channel_id,
             timeout_seconds: cfg.timeout_seconds,
             slippage_tolerance: cfg.slippage_tolerance,
+            neutron_ibc_config: cfg.neutron_ibc_config,
         })
     }
 }
