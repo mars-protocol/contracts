@@ -14,7 +14,10 @@ export const taskRunner = async (config: DeploymentConfig) => {
     await deployer.upload('address-provider', 'mars_address_provider.wasm')
     await deployer.upload('incentives', 'mars_incentives.wasm')
     await deployer.upload('oracle', `mars_oracle_${config.oracleName}.wasm`)
-    await deployer.upload('rewards-collector', `mars_rewards_collector.wasm`)
+    await deployer.upload(
+      'rewards-collector',
+      `mars_rewards_collector_${config.rewardsCollectorName}.wasm`,
+    )
     await deployer.upload('swapper', `mars_swapper_${config.swapperDexName}.wasm`)
 
     // Instantiate contracts
@@ -41,7 +44,7 @@ export const taskRunner = async (config: DeploymentConfig) => {
       await deployer.setOracle(oracleConfig)
     }
 
-    //run tests
+    // run tests
     if (config.runTests) {
       await deployer.executeDeposit()
       await deployer.executeBorrow()
@@ -55,6 +58,7 @@ export const taskRunner = async (config: DeploymentConfig) => {
       await deployer.updateRedBankContractOwner()
       await deployer.updateOracleContractOwner()
       await deployer.updateRewardsContractOwner()
+      await deployer.updateSwapperContractOwner()
       await deployer.updateAddressProviderContractOwner()
       printGreen('It is confirmed that all contracts have transferred ownership to the Multisig')
     } else {
