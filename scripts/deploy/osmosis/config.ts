@@ -190,6 +190,8 @@ export const marsOracleTest: OracleConfig = {
 // axlUSDC does not have a pool on testnet so config can't have swapRoutes configured correctly
 export const osmosisTestnetConfig: DeploymentConfig = {
   oracleName: 'osmosis',
+  oracleBaseDenom: 'uusd',
+  rewardsCollectorName: 'osmosis',
   atomDenom: atom,
   baseAssetDenom: 'uosmo',
   gasPrice: '0.1uosmo',
@@ -197,7 +199,7 @@ export const osmosisTestnetConfig: DeploymentConfig = {
   chainPrefix: 'osmo',
   channelId: 'channel-2083',
   marsDenom: marsTest,
-  rewardCollectorTimeoutSeconds: 600,
+  rewardsCollectorTimeoutSeconds: 600,
   rpcEndpoint: 'https://rpc-test.osmosis.zone',
   safetyFundFeeShare: '0.5',
   deployerMnemonic:
@@ -227,6 +229,8 @@ export const osmosisTestnetConfig: DeploymentConfig = {
 // axlUSDC does not have a pool on testnet so config can't have swapRoutes configured correctly
 export const osmosisTestMultisig: DeploymentConfig = {
   oracleName: 'osmosis',
+  oracleBaseDenom: 'uusd',
+  rewardsCollectorName: 'osmosis',
   atomDenom: atom,
   baseAssetDenom: 'uosmo',
   gasPrice: '0.1uosmo',
@@ -234,7 +238,7 @@ export const osmosisTestMultisig: DeploymentConfig = {
   chainPrefix: 'osmo',
   channelId: 'channel-2083',
   marsDenom: marsTest,
-  rewardCollectorTimeoutSeconds: 600,
+  rewardsCollectorTimeoutSeconds: 600,
   rpcEndpoint: 'https://rpc-test.osmosis.zone',
   safetyFundFeeShare: '0.5',
   deployerMnemonic:
@@ -264,6 +268,8 @@ export const osmosisTestMultisig: DeploymentConfig = {
 
 export const osmosisMainnet: DeploymentConfig = {
   oracleName: 'osmosis',
+  oracleBaseDenom: 'uusd',
+  rewardsCollectorName: 'osmosis',
   atomDenom: atom,
   baseAssetDenom: 'uosmo',
   gasPrice: '0.1uosmo',
@@ -271,7 +277,7 @@ export const osmosisMainnet: DeploymentConfig = {
   chainPrefix: 'osmo',
   channelId: 'channel-557',
   marsDenom: mars,
-  rewardCollectorTimeoutSeconds: 600,
+  rewardsCollectorTimeoutSeconds: 600,
   rpcEndpoint: 'https://rpc.osmosis.zone',
   safetyFundFeeShare: '0.5',
   deployerMnemonic: 'TO BE INSERTED AT TIME OF DEPLOYMENT',
@@ -329,6 +335,8 @@ export const osmosisMainnet: DeploymentConfig = {
 
 export const osmosisLocalConfig: DeploymentConfig = {
   oracleName: 'osmosis',
+  oracleBaseDenom: 'uosmo',
+  rewardsCollectorName: 'osmosis',
   atomDenom: atom,
   baseAssetDenom: 'uosmo',
   gasPrice: '0.1uosmo',
@@ -336,7 +344,7 @@ export const osmosisLocalConfig: DeploymentConfig = {
   chainPrefix: 'osmo',
   channelId: 'channel-1',
   marsDenom: 'umars',
-  rewardCollectorTimeoutSeconds: 600,
+  rewardsCollectorTimeoutSeconds: 600,
   rpcEndpoint: 'http://localhost:26657',
   safetyFundFeeShare: '0.2',
   deployerMnemonic:

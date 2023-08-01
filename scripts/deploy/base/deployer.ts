@@ -137,7 +137,7 @@ export class Deployer {
   async instantiateOracle(init_params?: WasmOracleCustomInitParams) {
     const msg: OracleInstantiateMsg = {
       owner: this.deployerAddress,
-      base_denom: this.config.baseAssetDenom,
+      base_denom: this.config.oracleBaseDenom,
       custom_init: init_params,
     }
     await this.instantiate('oracle', this.storage.codeIds.oracle!, msg)
@@ -151,15 +151,16 @@ export class Deployer {
       safety_fund_denom: this.config.safetyFundDenom,
       fee_collector_denom: this.config.feeCollectorDenom,
       channel_id: this.config.channelId,
-      timeout_seconds: this.config.rewardCollectorTimeoutSeconds,
+      timeout_seconds: this.config.rewardsCollectorTimeoutSeconds,
       slippage_tolerance: this.config.slippage_tolerance,
+      neutron_ibc_config: this.config.rewardsCollectorNeutronIbcConfig,
     }
     await this.instantiate('rewards-collector', this.storage.codeIds['rewards-collector']!, msg)
   }
 
   async instantiateSwapper() {
     const msg: SwapperInstantiateMsg = {
-      owner: this.storage.owner!,
+      owner: this.deployerAddress,
     }
 
     await this.instantiate('swapper', this.storage.codeIds.swapper!, msg)
@@ -302,6 +303,8 @@ export class Deployer {
     printYellow(`Twap snapshots recorded for denoms: ${denoms.join(',')}.`)
   }
   async setOracle(oracleConfig: OracleConfig) {
+    printBlue(`Setting oracle price source: ${JSON.stringify(oracleConfig)}`)
+
     const msg = {
       set_price_source: oracleConfig,
     }
@@ -317,7 +320,7 @@ export class Deployer {
       })) as { price: number; denom: string }
 
       printGreen(
-        `${this.config.chainId} :: ${oracleConfig.denom} oracle price :  ${JSON.stringify(
+        `${this.config.chainId} :: ${oracleConfig.denom} oracle price:  ${JSON.stringify(
           oracleResult,
         )}`,
       )
@@ -421,62 +424,74 @@ export class Deployer {
     const coins = [
       {
         denom: this.config.atomDenom,
-        amount: '2000000',
+        amount: '20000',
       },
     ]
-    await this.client.sendTokens(
-      this.deployerAddress,
-      this.storage.addresses['rewards-collector']!,
-      coins,
-      'auto',
-    )
 
-    // Check contract balance before swap
-    const atomBalanceBefore = await this.client.getBalance(
-      this.storage.addresses['rewards-collector']!,
+    const deployerAtomBalance = await this.client.getBalance(
+      this.deployerAddress,
       this.config.atomDenom,
     )
-    const baseAssetBalanceBefore = await this.client.getBalance(
-      this.storage.addresses['rewards-collector']!,
-      this.config.baseAssetDenom,
-    )
-    printYellow(
-      `Rewards Collector balance:
-      ${atomBalanceBefore.amount} ${atomBalanceBefore.denom}
-      ${baseAssetBalanceBefore.amount} ${baseAssetBalanceBefore.denom}`,
-    )
 
-    // Execute swap
-    const msg = {
-      swap_asset: {
-        denom: this.config.atomDenom,
-      },
+    if (Number(deployerAtomBalance.amount) < Number(coins[0].amount)) {
+      printRed(
+        `not enough ATOM tokens to complete rewards-collector swap action, ${this.deployerAddress} has ${deployerAtomBalance.amount} ATOM but needs ${coins[0].amount}.`,
+      )
+    } else {
+      await this.client.sendTokens(
+        this.deployerAddress,
+        this.storage.addresses['rewards-collector']!,
+        coins,
+        'auto',
+      )
+
+      // Check contract balance before swap
+      const atomBalanceBefore = await this.client.getBalance(
+        this.storage.addresses['rewards-collector']!,
+        this.config.atomDenom,
+      )
+      const baseAssetBalanceBefore = await this.client.getBalance(
+        this.storage.addresses['rewards-collector']!,
+        this.config.baseAssetDenom,
+      )
+      printYellow(
+        `Rewards Collector balance:
+        ${atomBalanceBefore.amount} ${atomBalanceBefore.denom}
+        ${baseAssetBalanceBefore.amount} ${baseAssetBalanceBefore.denom}`,
+      )
+
+      // Execute swap
+      const msg = {
+        swap_asset: {
+          denom: this.config.atomDenom,
+        },
+      }
+      await this.client.execute(
+        this.deployerAddress,
+        this.storage.addresses['rewards-collector']!,
+        msg,
+        'auto',
+      )
+      // Check contract balance after swap
+      const atomBalanceAfter = await this.client.getBalance(
+        this.storage.addresses['rewards-collector']!,
+        this.config.atomDenom,
+      )
+      const baseAssetBalanceAfter = await this.client.getBalance(
+        this.storage.addresses['rewards-collector']!,
+        this.config.baseAssetDenom,
+      )
+      printYellow(
+        `Swap executed. Rewards Collector balance:
+        ${atomBalanceAfter.amount} ${atomBalanceAfter.denom},
+        ${baseAssetBalanceAfter.amount} ${baseAssetBalanceAfter.denom}`,
+      )
+
+      // swapped all atom balance
+      assert.equal(Number(atomBalanceAfter.amount), 0)
+      // base asset balance should be greater after swap
+      assert(Number(baseAssetBalanceAfter.amount) > Number(baseAssetBalanceBefore.amount))
     }
-    await this.client.execute(
-      this.deployerAddress,
-      this.storage.addresses['rewards-collector']!,
-      msg,
-      'auto',
-    )
-    // Check contract balance after swap
-    const atomBalanceAfter = await this.client.getBalance(
-      this.storage.addresses['rewards-collector']!,
-      this.config.atomDenom,
-    )
-    const baseAssetBalanceAfter = await this.client.getBalance(
-      this.storage.addresses['rewards-collector']!,
-      this.config.baseAssetDenom,
-    )
-    printYellow(
-      `Swap executed. Rewards Collector balance:
-      ${atomBalanceAfter.amount} ${atomBalanceAfter.denom},
-      ${baseAssetBalanceAfter.amount} ${baseAssetBalanceAfter.denom}`,
-    )
-
-    // swapped all atom balance
-    assert.equal(Number(atomBalanceAfter.amount), 0)
-    // base asset balance should be greater after swap
-    assert(Number(baseAssetBalanceAfter.amount) > Number(baseAssetBalanceBefore.amount))
   }
 
   async updateIncentivesContractOwner() {
@@ -494,7 +509,7 @@ export class Deployer {
       {
         config: {},
       },
-    )) as { proposed_new_owner: string; prefix: string }
+    )) as { proposed_new_owner: string }
 
     printRed(`${incentivesConfig.proposed_new_owner}`)
     assert.equal(incentivesConfig.proposed_new_owner, this.config.multisigAddr)
@@ -520,7 +535,7 @@ export class Deployer {
       {
         config: {},
       },
-    )) as { proposed_new_owner: string; prefix: string }
+    )) as { proposed_new_owner: string }
 
     assert.equal(redbankConfig.proposed_new_owner, this.config.multisigAddr)
   }
@@ -537,7 +552,7 @@ export class Deployer {
     printYellow('Owner updated to Mutlisig for Oracle')
     const oracleConfig = (await this.client.queryContractSmart(this.storage.addresses.oracle!, {
       config: {},
-    })) as { proposed_new_owner: string; prefix: string }
+    })) as { proposed_new_owner: string }
 
     assert.equal(oracleConfig.proposed_new_owner, this.config.multisigAddr)
   }
@@ -562,9 +577,26 @@ export class Deployer {
       {
         config: {},
       },
-    )) as { proposed_new_owner: string; prefix: string }
+    )) as { proposed_new_owner: string }
 
     assert.equal(rewardsConfig.proposed_new_owner, this.config.multisigAddr)
+  }
+
+  async updateSwapperContractOwner() {
+    const msg = {
+      update_owner: {
+        propose_new_owner: {
+          proposed: this.storage.owner,
+        },
+      },
+    }
+    await this.client.execute(this.deployerAddress, this.storage.addresses.swapper!, msg, 'auto')
+    printYellow('Owner updated to Mutlisig for Swapper')
+    const swapperConfig = (await this.client.queryContractSmart(this.storage.addresses.swapper!, {
+      owner: {},
+    })) as { proposed: string }
+
+    assert.equal(swapperConfig.proposed, this.config.multisigAddr)
   }
 
   async updateAddressProviderContractOwner() {
@@ -587,7 +619,7 @@ export class Deployer {
       {
         config: {},
       },
-    )) as { proposed_new_owner: string; prefix: string }
+    )) as { proposed_new_owner: string }
 
     assert.equal(addressProviderConfig.proposed_new_owner, this.config.multisigAddr)
   }

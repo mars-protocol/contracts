@@ -1,10 +1,10 @@
 import { setupDeployer } from '../base/setupDeployer'
-import { neutronTestnetConfig, atomOracleTestnet } from './config'
+import { neutronTestnetConfig, atomOracle } from './config_testnet'
 
 async function main() {
   const deployer = await setupDeployer(neutronTestnetConfig)
 
-  await deployer.setOracle(atomOracleTestnet)
+  await deployer.setOracle(atomOracle)
 }
 
 main()
