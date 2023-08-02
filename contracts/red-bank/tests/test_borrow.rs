@@ -1008,7 +1008,6 @@ fn cannot_borrow_if_market_not_enabled() {
             red_bank: RedBankSettings {
                 deposit_enabled: false,
                 borrow_enabled: false,
-                deposit_cap: Default::default(),
             },
             ..th_default_asset_params()
         },

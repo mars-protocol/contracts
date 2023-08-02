@@ -77,9 +77,9 @@ fn setup_test() -> TestSuite {
             red_bank: RedBankSettings {
                 deposit_enabled: true,
                 borrow_enabled: true,
-                deposit_cap: Uint128::new(12_000_000),
             },
             protocol_liquidation_fee: Decimal::percent(2u64),
+            deposit_cap: Uint128::new(12_000_000),
         },
     );
 
@@ -186,7 +186,6 @@ fn depositing_to_disabled_market() {
             red_bank: RedBankSettings {
                 deposit_enabled: false,
                 borrow_enabled: true,
-                deposit_cap: Default::default(),
             },
             ..th_default_asset_params()
         },
@@ -242,8 +241,8 @@ fn depositing_above_cap(amount_to_deposit: u128, deposit_cap: u128, exp_ok: bool
             red_bank: RedBankSettings {
                 deposit_enabled: true,
                 borrow_enabled: true,
-                deposit_cap: Uint128::new(deposit_cap),
             },
+            deposit_cap: Uint128::new(deposit_cap),
             ..th_default_asset_params()
         },
     );

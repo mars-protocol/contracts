@@ -44,7 +44,7 @@ pub fn deposit(
     }
 
     let total_deposits = query_total_deposit(&deps.querier, params_addr, &denom)?;
-    if total_deposits.amount.checked_add(deposit_amount)? > asset_params.red_bank.deposit_cap {
+    if total_deposits.amount.checked_add(deposit_amount)? > asset_params.deposit_cap {
         return Err(ContractError::DepositCapExceeded {
             denom,
         });

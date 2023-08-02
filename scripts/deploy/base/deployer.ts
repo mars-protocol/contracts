@@ -205,8 +205,8 @@ export class Deployer {
             red_bank: {
               borrow_enabled: assetConfig.red_bank.borrow_enabled,
               deposit_enabled: assetConfig.red_bank.borrow_enabled,
-              deposit_cap: assetConfig.red_bank.deposit_cap,
             },
+            deposit_cap: assetConfig.deposit_cap,
           },
         },
       },

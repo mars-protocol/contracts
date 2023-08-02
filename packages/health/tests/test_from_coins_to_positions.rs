@@ -136,7 +136,6 @@ fn mock_setup() -> MarsMockQuerier {
             red_bank: RedBankSettings {
                 deposit_enabled: false,
                 borrow_enabled: false,
-                deposit_cap: Default::default(),
             },
             max_loan_to_value: Decimal::from_atomics(50u128, 2).unwrap(),
             liquidation_threshold: Decimal::from_atomics(55u128, 2).unwrap(),
@@ -147,6 +146,7 @@ fn mock_setup() -> MarsMockQuerier {
                 max_lb: Decimal::percent(5u64),
             },
             protocol_liquidation_fee: Decimal::zero(),
+            deposit_cap: Default::default(),
         },
     );
     let atom_market = Market {
@@ -165,7 +165,6 @@ fn mock_setup() -> MarsMockQuerier {
             red_bank: RedBankSettings {
                 deposit_enabled: false,
                 borrow_enabled: false,
-                deposit_cap: Default::default(),
             },
             max_loan_to_value: Decimal::from_atomics(70u128, 2).unwrap(),
             liquidation_threshold: Decimal::from_atomics(75u128, 2).unwrap(),
@@ -176,6 +175,7 @@ fn mock_setup() -> MarsMockQuerier {
                 max_lb: Decimal::percent(5u64),
             },
             protocol_liquidation_fee: Decimal::zero(),
+            deposit_cap: Default::default(),
         },
     );
 

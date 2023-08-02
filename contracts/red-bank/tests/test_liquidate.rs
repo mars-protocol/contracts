@@ -1161,7 +1161,6 @@ fn default_asset_params_with(
         red_bank: RedBankSettings {
             deposit_enabled: true,
             borrow_enabled: true,
-            deposit_cap: Uint128::MAX,
         },
         max_loan_to_value,
         liquidation_threshold,
@@ -1172,6 +1171,7 @@ fn default_asset_params_with(
             max_lb: Decimal::percent(10),
         },
         protocol_liquidation_fee: Decimal::percent(2),
+        deposit_cap: Uint128::MAX,
     };
     (market_params, asset_params)
 }

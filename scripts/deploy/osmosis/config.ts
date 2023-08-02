@@ -47,9 +47,9 @@ export const osmoAsset: AssetConfig = {
   },
   red_bank: {
     borrow_enabled: true,
-    deposit_cap: '2500000000000',
     deposit_enabled: true,
   },
+  deposit_cap: '2500000000000',
 }
 
 export const atomAsset: AssetConfig = {
@@ -76,9 +76,9 @@ export const atomAsset: AssetConfig = {
   },
   red_bank: {
     borrow_enabled: true,
-    deposit_cap: '100000000000',
     deposit_enabled: true,
   },
+  deposit_cap: '100000000000',
 }
 
 export const atomAssetTest: AssetConfig = {
@@ -105,9 +105,9 @@ export const atomAssetTest: AssetConfig = {
   },
   red_bank: {
     borrow_enabled: true,
-    deposit_cap: '100000000000',
     deposit_enabled: true,
   },
+  deposit_cap: '100000000000',
 }
 
 export const axlUSDCAsset: AssetConfig = {
@@ -134,9 +134,9 @@ export const axlUSDCAsset: AssetConfig = {
   },
   red_bank: {
     borrow_enabled: true,
-    deposit_cap: '500000000000',
     deposit_enabled: true,
   },
+  deposit_cap: '500000000000',
 }
 
 export const axlUSDCAssetTest: AssetConfig = {
@@ -163,9 +163,9 @@ export const axlUSDCAssetTest: AssetConfig = {
   },
   red_bank: {
     borrow_enabled: true,
-    deposit_cap: '500000000000',
     deposit_enabled: true,
   },
+  deposit_cap: '500000000000',
 }
 
 export const marsAssetTest: AssetConfig = {
@@ -192,9 +192,9 @@ export const marsAssetTest: AssetConfig = {
   },
   red_bank: {
     borrow_enabled: true,
-    deposit_cap: '500000000000',
     deposit_enabled: true,
   },
+  deposit_cap: '500000000000',
 }
 
 // export const osmoOracle: OracleConfig = {

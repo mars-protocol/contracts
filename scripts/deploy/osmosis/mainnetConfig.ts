@@ -30,9 +30,9 @@ export const osmoAsset: AssetConfig = {
   max_loan_to_value: '0.59',
   red_bank: {
     borrow_enabled: true,
-    deposit_cap: '2500000000000',
     deposit_enabled: true,
   },
+  deposit_cap: '2500000000000',
 }
 
 export const atomAsset: AssetConfig = {
@@ -52,9 +52,9 @@ export const atomAsset: AssetConfig = {
   max_loan_to_value: '0.68',
   red_bank: {
     borrow_enabled: true,
-    deposit_cap: '100000000000',
     deposit_enabled: true,
   },
+  deposit_cap: '100000000000',
 }
 
 export const axlUSDCAsset: AssetConfig = {
@@ -74,9 +74,9 @@ export const axlUSDCAsset: AssetConfig = {
   max_loan_to_value: '0.74',
   red_bank: {
     borrow_enabled: true,
-    deposit_cap: '500000000000',
     deposit_enabled: true,
   },
+  deposit_cap: '500000000000',
 }
 
 export const atomOracle: OracleConfig = {

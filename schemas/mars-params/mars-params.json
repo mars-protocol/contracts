@@ -108,6 +108,7 @@
         "required": [
           "credit_manager",
           "denom",
+          "deposit_cap",
           "liquidation_bonus",
           "liquidation_threshold",
           "max_loan_to_value",
@@ -120,6 +121,9 @@
           },
           "denom": {
             "type": "string"
+          },
+          "deposit_cap": {
+            "$ref": "#/definitions/Uint128"
           },
           "liquidation_bonus": {
             "$ref": "#/definitions/LiquidationBonus"
@@ -484,15 +488,11 @@
         "type": "object",
         "required": [
           "borrow_enabled",
-          "deposit_cap",
           "deposit_enabled"
         ],
         "properties": {
           "borrow_enabled": {
             "type": "boolean"
-          },
-          "deposit_cap": {
-            "$ref": "#/definitions/Uint128"
           },
           "deposit_enabled": {
             "type": "boolean"
@@ -744,6 +744,7 @@
           "required": [
             "credit_manager",
             "denom",
+            "deposit_cap",
             "liquidation_bonus",
             "liquidation_threshold",
             "max_loan_to_value",
@@ -756,6 +757,9 @@
             },
             "denom": {
               "type": "string"
+            },
+            "deposit_cap": {
+              "$ref": "#/definitions/Uint128"
             },
             "liquidation_bonus": {
               "$ref": "#/definitions/LiquidationBonus"
@@ -920,15 +924,11 @@
           "type": "object",
           "required": [
             "borrow_enabled",
-            "deposit_cap",
             "deposit_enabled"
           ],
           "properties": {
             "borrow_enabled": {
               "type": "boolean"
-            },
-            "deposit_cap": {
-              "$ref": "#/definitions/Uint128"
             },
             "deposit_enabled": {
               "type": "boolean"
@@ -1094,6 +1094,7 @@
       "required": [
         "credit_manager",
         "denom",
+        "deposit_cap",
         "liquidation_bonus",
         "liquidation_threshold",
         "max_loan_to_value",
@@ -1106,6 +1107,9 @@
         },
         "denom": {
           "type": "string"
+        },
+        "deposit_cap": {
+          "$ref": "#/definitions/Uint128"
         },
         "liquidation_bonus": {
           "$ref": "#/definitions/LiquidationBonus"
@@ -1274,15 +1278,11 @@
           "type": "object",
           "required": [
             "borrow_enabled",
-            "deposit_cap",
             "deposit_enabled"
           ],
           "properties": {
             "borrow_enabled": {
               "type": "boolean"
-            },
-            "deposit_cap": {
-              "$ref": "#/definitions/Uint128"
             },
             "deposit_enabled": {
               "type": "boolean"
