@@ -1,4 +1,8 @@
 use cosmwasm_std::{Addr, DepsMut, Env, MessageInfo, Response, Uint128};
+use mars_interest_rate::{
+    get_scaled_debt_amount, get_scaled_liquidity_amount, get_underlying_debt_amount,
+    get_underlying_liquidity_amount,
+};
 use mars_liquidation::liquidation::calculate_liquidation_amounts;
 use mars_red_bank_types::address_provider::{self, MarsAddressType};
 use mars_utils::helpers::{build_send_asset_msg, option_string_to_addr};
@@ -7,10 +11,7 @@ use crate::{
     error::ContractError,
     health::get_health_and_positions,
     helpers::{query_asset_params, query_target_health_factor},
-    interest_rates::{
-        apply_accumulated_interests, get_scaled_debt_amount, get_scaled_liquidity_amount,
-        get_underlying_debt_amount, get_underlying_liquidity_amount, update_interest_rates,
-    },
+    interest_rates::{apply_accumulated_interests, update_interest_rates},
     state::{COLLATERALS, CONFIG, DEBTS, MARKETS},
     user::User,
 };

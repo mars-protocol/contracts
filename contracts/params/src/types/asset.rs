@@ -21,7 +21,6 @@ pub struct CmSettings<T> {
 pub struct RedBankSettings {
     pub deposit_enabled: bool,
     pub borrow_enabled: bool,
-    pub deposit_cap: Uint128,
 }
 
 /// The LB will depend on the Health Factor and a couple other parameters as follows:
@@ -122,6 +121,7 @@ pub struct AssetParamsBase<T> {
     pub liquidation_threshold: Decimal,
     pub liquidation_bonus: LiquidationBonus,
     pub protocol_liquidation_fee: Decimal,
+    pub deposit_cap: Uint128,
 }
 
 pub type AssetParams = AssetParamsBase<Addr>;
@@ -140,6 +140,7 @@ impl From<AssetParams> for AssetParamsUnchecked {
             liquidation_threshold: p.liquidation_threshold,
             liquidation_bonus: p.liquidation_bonus,
             protocol_liquidation_fee: p.protocol_liquidation_fee,
+            deposit_cap: p.deposit_cap,
         }
     }
 }
@@ -174,6 +175,7 @@ impl AssetParamsUnchecked {
             liquidation_threshold: self.liquidation_threshold,
             liquidation_bonus: self.liquidation_bonus.clone(),
             protocol_liquidation_fee: self.protocol_liquidation_fee,
+            deposit_cap: self.deposit_cap,
         })
     }
 }

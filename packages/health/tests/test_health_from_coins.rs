@@ -30,7 +30,6 @@ fn health_success_from_coins() {
             red_bank: RedBankSettings {
                 deposit_enabled: true,
                 borrow_enabled: true,
-                deposit_cap: Uint128::MAX,
             },
             max_loan_to_value: Decimal::from_atomics(50u128, 2).unwrap(),
             liquidation_threshold: Decimal::from_atomics(55u128, 2).unwrap(),
@@ -41,6 +40,7 @@ fn health_success_from_coins() {
                 max_lb: Decimal::percent(5u64),
             },
             protocol_liquidation_fee: Decimal::zero(),
+            deposit_cap: Uint128::MAX,
         },
     );
     let atom_market = Market {
@@ -59,7 +59,6 @@ fn health_success_from_coins() {
             red_bank: RedBankSettings {
                 deposit_enabled: true,
                 borrow_enabled: true,
-                deposit_cap: Uint128::MAX,
             },
             max_loan_to_value: Decimal::from_atomics(70u128, 2).unwrap(),
             liquidation_threshold: Decimal::from_atomics(75u128, 2).unwrap(),
@@ -70,6 +69,7 @@ fn health_success_from_coins() {
                 max_lb: Decimal::percent(5u64),
             },
             protocol_liquidation_fee: Decimal::zero(),
+            deposit_cap: Uint128::MAX,
         },
     );
 
@@ -127,7 +127,6 @@ fn health_error_from_coins() {
             red_bank: RedBankSettings {
                 deposit_enabled: false,
                 borrow_enabled: false,
-                deposit_cap: Default::default(),
             },
             max_loan_to_value: Decimal::from_atomics(50u128, 2).unwrap(),
             liquidation_threshold: Decimal::from_atomics(55u128, 2).unwrap(),
@@ -138,6 +137,7 @@ fn health_error_from_coins() {
                 max_lb: Decimal::percent(5u64),
             },
             protocol_liquidation_fee: Decimal::zero(),
+            deposit_cap: Default::default(),
         },
     );
 

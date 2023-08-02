@@ -16,7 +16,6 @@ pub fn default_asset_params(denom: &str) -> AssetParamsUnchecked {
         red_bank: RedBankSettings {
             deposit_enabled: true,
             borrow_enabled: false,
-            deposit_cap: Uint128::new(1_000_000_000),
         },
         max_loan_to_value: Decimal::from_str("0.6").unwrap(),
         liquidation_threshold: Decimal::from_str("0.7").unwrap(),
@@ -27,6 +26,7 @@ pub fn default_asset_params(denom: &str) -> AssetParamsUnchecked {
             max_lb: Decimal::percent(8),
         },
         protocol_liquidation_fee: Decimal::percent(2),
+        deposit_cap: Uint128::new(1_000_000_000),
     }
 }
 

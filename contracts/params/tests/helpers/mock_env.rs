@@ -187,6 +187,7 @@ impl MockEnvBuilder {
             Addr::unchecked("owner"),
             &InstantiateMsg {
                 owner: "owner".to_string(),
+                address_provider: "address_provider".to_string(),
                 target_health_factor: self.get_target_health_factor(),
             },
             &[],

@@ -796,6 +796,12 @@ fn response_verification() {
     deps.querier.set_oracle_price("uusdc", Decimal::from_ratio(68u128, 10u128));
     deps.querier.set_oracle_price("untrn", Decimal::from_ratio(55u128, 10u128));
 
+    // no deposit yet, initialize total deposit to zero
+    deps.querier.set_total_deposit("uosmo", Uint128::zero());
+    deps.querier.set_total_deposit("uatom", Uint128::zero());
+    deps.querier.set_total_deposit("uusdc", Uint128::zero());
+    deps.querier.set_total_deposit("untrn", Uint128::zero());
+
     // provider deposits collaterals
     execute(
         deps.as_mut(),
@@ -1155,7 +1161,6 @@ fn default_asset_params_with(
         red_bank: RedBankSettings {
             deposit_enabled: true,
             borrow_enabled: true,
-            deposit_cap: Uint128::MAX,
         },
         max_loan_to_value,
         liquidation_threshold,
@@ -1166,6 +1171,7 @@ fn default_asset_params_with(
             max_lb: Decimal::percent(10),
         },
         protocol_liquidation_fee: Decimal::percent(2),
+        deposit_cap: Uint128::MAX,
     };
     (market_params, asset_params)
 }

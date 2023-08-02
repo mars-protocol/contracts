@@ -176,6 +176,7 @@ export class Deployer {
   async instantiateParams() {
     const msg: ParamsInstantiateMsg = {
       owner: this.deployerAddress,
+      address_provider: this.storage.addresses['address-provider']!,
       target_health_factor: this.config.targetHealthFactor,
     }
     await this.instantiate('params', this.storage.codeIds.params!, msg)
@@ -204,8 +205,8 @@ export class Deployer {
             red_bank: {
               borrow_enabled: assetConfig.red_bank.borrow_enabled,
               deposit_enabled: assetConfig.red_bank.borrow_enabled,
-              deposit_cap: assetConfig.red_bank.deposit_cap,
             },
+            deposit_cap: assetConfig.deposit_cap,
           },
         },
       },

@@ -1,13 +1,11 @@
 use cosmwasm_std::{DepsMut, Env, MessageInfo, Response, Uint128};
+use mars_interest_rate::get_scaled_liquidity_amount;
 use mars_red_bank_types::address_provider::{self, MarsAddressType};
 
 use crate::{
     error::ContractError,
-    helpers::query_asset_params,
-    interest_rates::{
-        apply_accumulated_interests, get_scaled_liquidity_amount, get_underlying_liquidity_amount,
-        update_interest_rates,
-    },
+    helpers::{query_asset_params, query_total_deposit},
+    interest_rates::{apply_accumulated_interests, update_interest_rates},
     state::{CONFIG, MARKETS},
     user::User,
 };
@@ -45,10 +43,8 @@ pub fn deposit(
         });
     }
 
-    let total_scaled_deposits = market.collateral_total_scaled;
-    let total_deposits =
-        get_underlying_liquidity_amount(total_scaled_deposits, &market, env.block.time.seconds())?;
-    if total_deposits.checked_add(deposit_amount)? > asset_params.red_bank.deposit_cap {
+    let total_deposits = query_total_deposit(&deps.querier, params_addr, &denom)?;
+    if total_deposits.amount.checked_add(deposit_amount)? > asset_params.deposit_cap {
         return Err(ContractError::DepositCapExceeded {
             denom,
         });

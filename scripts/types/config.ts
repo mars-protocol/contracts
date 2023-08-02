@@ -14,6 +14,7 @@ import {
   RedBankSettings,
 } from './generated/mars-params/MarsParams.types'
 import { NeutronIbcConfig } from './generated/mars-rewards-collector-base/MarsRewardsCollectorBase.types'
+import { Uint128 } from './generated/mars-red-bank/MarsRedBank.types'
 
 type SwapRoute = {
   denom_in: string
@@ -79,6 +80,7 @@ export interface AssetConfig {
   max_loan_to_value: Decimal
   protocol_liquidation_fee: Decimal
   red_bank: RedBankSettings
+  deposit_cap: Uint128
 }
 export interface VaultConfig {
   addr: string

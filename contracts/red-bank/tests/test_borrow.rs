@@ -6,14 +6,14 @@ use helpers::{
     has_collateral_position, has_debt_position, set_collateral, th_build_interests_updated_event,
     th_get_expected_indices_and_rates, th_init_market, th_setup, TestUtilizationDeltaInfo,
 };
+use mars_interest_rate::{
+    calculate_applied_linear_interest_rate, compute_scaled_amount, compute_underlying_amount,
+    ScalingOperation, SCALING_FACTOR,
+};
 use mars_params::types::asset::{AssetParams, CmSettings, RedBankSettings};
 use mars_red_bank::{
     contract::execute,
     error::ContractError,
-    interest_rates::{
-        calculate_applied_linear_interest_rate, compute_scaled_amount, compute_underlying_amount,
-        ScalingOperation, SCALING_FACTOR,
-    },
     state::{DEBTS, MARKETS, UNCOLLATERALIZED_LOAN_LIMITS},
 };
 use mars_red_bank_types::red_bank::{ExecuteMsg, Market};
@@ -1008,7 +1008,6 @@ fn cannot_borrow_if_market_not_enabled() {
             red_bank: RedBankSettings {
                 deposit_enabled: false,
                 borrow_enabled: false,
-                deposit_cap: Default::default(),
             },
             ..th_default_asset_params()
         },

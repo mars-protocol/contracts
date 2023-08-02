@@ -10,14 +10,14 @@ use cosmwasm_std::{
     Addr, Coin, Decimal, Deps, DepsMut, Event, OwnedDeps, Uint128,
 };
 use cw_multi_test::AppResponse;
+use mars_interest_rate::{
+    calculate_applied_linear_interest_rate, compute_scaled_amount, compute_underlying_amount,
+    ScalingOperation,
+};
 use mars_params::types::asset::{AssetParams, CmSettings, LiquidationBonus, RedBankSettings};
 use mars_red_bank::{
     contract::{instantiate, query},
     error::ContractError,
-    interest_rates::{
-        calculate_applied_linear_interest_rate, compute_scaled_amount, compute_underlying_amount,
-        ScalingOperation,
-    },
     state::{COLLATERALS, DEBTS, MARKETS},
 };
 use mars_red_bank_types::red_bank::{
@@ -122,7 +122,6 @@ pub fn th_default_asset_params() -> AssetParams {
         red_bank: RedBankSettings {
             deposit_enabled: true,
             borrow_enabled: true,
-            deposit_cap: Uint128::MAX,
         },
         max_loan_to_value: Decimal::zero(),
         liquidation_threshold: Decimal::one(),
@@ -133,6 +132,7 @@ pub fn th_default_asset_params() -> AssetParams {
             max_lb: Decimal::percent(5u64),
         },
         protocol_liquidation_fee: Decimal::percent(2u64),
+        deposit_cap: Uint128::MAX,
     }
 }
 

@@ -76,6 +76,10 @@ impl MarsMockQuerier {
         self.base.update_balance(contract_addr.to_string(), contract_balances.to_vec());
     }
 
+    pub fn update_balances(&mut self, addr: impl Into<String>, balance: Vec<Coin>) {
+        self.base.update_balance(addr, balance);
+    }
+
     pub fn set_oracle_price(&mut self, denom: &str, price: Decimal) {
         self.oracle_querier.prices.insert(denom.to_string(), price);
     }
@@ -185,6 +189,14 @@ impl MarsMockQuerier {
             .insert((user.into(), collateral.denom.clone()), collateral);
     }
 
+    pub fn set_red_bank_user_debt(
+        &mut self,
+        user: impl Into<String>,
+        debt: red_bank::UserDebtResponse,
+    ) {
+        self.redbank_querier.users_denoms_debts.insert((user.into(), debt.denom.clone()), debt);
+    }
+
     pub fn set_redbank_user_position(
         &mut self,
         user_address: String,
@@ -199,6 +211,10 @@ impl MarsMockQuerier {
 
     pub fn set_target_health_factor(&mut self, thf: Decimal) {
         self.params_querier.target_health_factor = thf;
+    }
+
+    pub fn set_total_deposit(&mut self, denom: impl Into<String>, amount: impl Into<Uint128>) {
+        self.params_querier.total_deposits.insert(denom.into(), amount.into());
     }
 
     pub fn handle_query(&self, request: &QueryRequest<Empty>) -> QuerierResult {

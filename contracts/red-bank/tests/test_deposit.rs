@@ -3,17 +3,19 @@ use std::any::type_name;
 use cosmwasm_std::{
     attr, coin, coins,
     testing::{mock_env, mock_info, MockApi, MockStorage},
-    to_binary, Addr, Decimal, OwnedDeps, StdError, StdResult, SubMsg, Uint128, WasmMsg,
+    to_binary, Addr, Decimal, OwnedDeps, StdError, SubMsg, Uint128, WasmMsg,
 };
 use cw_utils::PaymentError;
 use helpers::{
     set_collateral, th_build_interests_updated_event, th_get_expected_indices_and_rates, th_setup,
 };
+use mars_interest_rate::{
+    compute_scaled_amount, get_underlying_liquidity_amount, ScalingOperation, SCALING_FACTOR,
+};
 use mars_params::types::asset::{AssetParams, CmSettings, LiquidationBonus, RedBankSettings};
 use mars_red_bank::{
     contract::execute,
     error::ContractError,
-    interest_rates::{compute_scaled_amount, ScalingOperation, SCALING_FACTOR},
     state::{COLLATERALS, MARKETS},
 };
 use mars_red_bank_types::{
@@ -22,6 +24,7 @@ use mars_red_bank_types::{
     red_bank::{Collateral, ExecuteMsg, Market},
 };
 use mars_testing::{mock_env_at_block_time, MarsMockQuerier};
+use test_case::test_case;
 
 use crate::helpers::th_default_asset_params;
 
@@ -74,10 +77,20 @@ fn setup_test() -> TestSuite {
             red_bank: RedBankSettings {
                 deposit_enabled: true,
                 borrow_enabled: true,
-                deposit_cap: Uint128::new(12_000_000),
             },
             protocol_liquidation_fee: Decimal::percent(2u64),
+            deposit_cap: Uint128::new(12_000_000),
         },
+    );
+
+    deps.querier.set_total_deposit(
+        denom,
+        get_underlying_liquidity_amount(
+            market.collateral_total_scaled,
+            &market,
+            market.indexes_last_updated,
+        )
+        .unwrap(),
     );
 
     TestSuite {
@@ -173,7 +186,6 @@ fn depositing_to_disabled_market() {
             red_bank: RedBankSettings {
                 deposit_enabled: false,
                 borrow_enabled: true,
-                deposit_cap: Default::default(),
             },
             ..th_default_asset_params()
         },
@@ -196,23 +208,29 @@ fn depositing_to_disabled_market() {
     );
 }
 
-#[test]
-fn depositing_above_cap() {
+// note: the initial deposit amount set in the TestSuite is 11_000_000 uosmo
+#[test_case(
+    1_000_001,
+    12_000_000,
+    false;
+    "deposit cap exceeded, should fail"
+)]
+#[test_case(
+    999_999,
+    12_000_000,
+    true;
+    "deposit cap not exceeded, should work"
+)]
+fn depositing_above_cap(amount_to_deposit: u128, deposit_cap: u128, exp_ok: bool) {
     let TestSuite {
         mut deps,
         denom,
         depositor_addr,
+        initial_market,
         ..
     } = setup_test();
 
-    // set a deposit cap
-    MARKETS
-        .update(deps.as_mut().storage, denom, |opt| -> StdResult<_> {
-            let mut market = opt.unwrap();
-            market.collateral_total_scaled = Uint128::new(9_000_000) * SCALING_FACTOR;
-            Ok(market)
-        })
-        .unwrap();
+    // set deposit cap
     deps.querier.set_redbank_params(
         denom,
         AssetParams {
@@ -223,39 +241,32 @@ fn depositing_above_cap() {
             red_bank: RedBankSettings {
                 deposit_enabled: true,
                 borrow_enabled: true,
-                deposit_cap: Uint128::new(10_000_000),
             },
+            deposit_cap: Uint128::new(deposit_cap),
             ..th_default_asset_params()
         },
     );
 
-    // try deposit with a big amount, should fail
-    let err = execute(
+    // try deposit with the given amount
+    let res = execute(
         deps.as_mut(),
-        mock_env_at_block_time(10000100),
-        mock_info(depositor_addr.as_str(), &coins(1_000_001, denom)),
+        mock_env_at_block_time(initial_market.indexes_last_updated),
+        mock_info(depositor_addr.as_str(), &coins(amount_to_deposit, denom)),
         ExecuteMsg::Deposit {
             account_id: None,
         },
-    )
-    .unwrap_err();
-    assert_eq!(
-        err,
-        ContractError::DepositCapExceeded {
-            denom: denom.to_string()
-        }
     );
 
-    // deposit a smaller amount, should work
-    let result = execute(
-        deps.as_mut(),
-        mock_env_at_block_time(10000100),
-        mock_info(depositor_addr.as_str(), &coins(123, denom)),
-        ExecuteMsg::Deposit {
-            account_id: None,
-        },
-    );
-    assert!(result.is_ok());
+    if exp_ok {
+        assert!(res.is_ok());
+    } else {
+        assert_eq!(
+            res,
+            Err(ContractError::DepositCapExceeded {
+                denom: denom.to_string(),
+            }),
+        );
+    }
 }
 
 #[test]

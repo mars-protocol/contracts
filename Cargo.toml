@@ -9,6 +9,7 @@ members = [
   "contracts/rewards-collector/*",
   "packages/chains/*",
   "packages/health",
+  "packages/interest-rate",
   "packages/liquidation",
   "packages/testing",
   "packages/types",
@@ -68,9 +69,9 @@ proptest          = "1.1.0"
 
 # packages
 mars-health         = { path = "./packages/health" }
+mars-interest-rate  = { path = "./packages/interest-rate" }
 mars-liquidation    = { path = "./packages/liquidation" }
 mars-osmosis        = { path = "./packages/chains/osmosis" }
-mars-params         = { path = "./contracts/params" }
 mars-red-bank-types = { path = "./packages/types" }
 mars-testing        = { path = "./packages/testing" }
 mars-utils          = { path = "./packages/utils" }
@@ -81,6 +82,7 @@ mars-incentives                = { path = "./contracts/incentives" }
 mars-oracle-base               = { path = "./contracts/oracle/base" }
 mars-oracle-osmosis            = { path = "./contracts/oracle/osmosis" }
 mars-oracle-wasm               = { path = "./contracts/oracle/wasm" }
+mars-params                    = { path = "./contracts/params" }
 mars-red-bank                  = { path = "./contracts/red-bank" }
 mars-rewards-collector-base    = { path = "./contracts/rewards-collector/base" }
 mars-rewards-collector-osmosis = { path = "./contracts/rewards-collector/osmosis" }

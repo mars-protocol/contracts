@@ -1,14 +1,12 @@
 use cosmwasm_std::{DepsMut, Env, MessageInfo, Response, Uint128};
+use mars_interest_rate::{get_scaled_liquidity_amount, get_underlying_liquidity_amount};
 use mars_red_bank_types::{address_provider, address_provider::MarsAddressType};
 use mars_utils::helpers::build_send_asset_msg;
 
 use crate::{
     error::ContractError,
     health::assert_below_liq_threshold_after_withdraw,
-    interest_rates::{
-        apply_accumulated_interests, get_scaled_liquidity_amount, get_underlying_liquidity_amount,
-        update_interest_rates,
-    },
+    interest_rates::{apply_accumulated_interests, update_interest_rates},
     state::{CONFIG, MARKETS},
     user::User,
 };

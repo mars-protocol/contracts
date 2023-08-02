@@ -756,7 +756,7 @@ impl MockEnvBuilder {
         let oracle_addr = self.deploy_oracle_osmosis();
         let red_bank_addr = self.deploy_red_bank(&address_provider_addr);
         let rewards_collector_addr = self.deploy_rewards_collector_osmosis(&address_provider_addr);
-        let params_addr = self.deploy_params_osmosis();
+        let params_addr = self.deploy_params_osmosis(&address_provider_addr);
 
         self.update_address_provider(
             &address_provider_addr,
@@ -909,7 +909,7 @@ impl MockEnvBuilder {
             .unwrap()
     }
 
-    fn deploy_params_osmosis(&mut self) -> Addr {
+    fn deploy_params_osmosis(&mut self, address_provider_addr: &Addr) -> Addr {
         let code_id = self.app.store_code(mock_params_osmosis_contract());
 
         self.app
@@ -918,6 +918,7 @@ impl MockEnvBuilder {
                 self.owner.clone(),
                 &mars_params::msg::InstantiateMsg {
                     owner: self.owner.to_string(),
+                    address_provider: address_provider_addr.to_string(),
                     target_health_factor: self.target_health_factor,
                 },
                 &[],

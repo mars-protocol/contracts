@@ -248,10 +248,10 @@ export const ntrnAsset: AssetConfig = {
     whitelisted: false,
   },
   red_bank: {
-    deposit_cap: '5000000000000',
     borrow_enabled: true,
     deposit_enabled: true,
   },
+  deposit_cap: '5000000000000',
 }
 
 export const atomAsset: AssetConfig = {
@@ -278,10 +278,10 @@ export const atomAsset: AssetConfig = {
     whitelisted: false,
   },
   red_bank: {
-    deposit_cap: '150000000000',
     borrow_enabled: true,
     deposit_enabled: true,
   },
+  deposit_cap: '150000000000',
 }
 
 export const axlUSDCAsset: AssetConfig = {
@@ -308,10 +308,10 @@ export const axlUSDCAsset: AssetConfig = {
     whitelisted: false,
   },
   red_bank: {
-    deposit_cap: '500000000000',
     borrow_enabled: true,
     deposit_enabled: true,
   },
+  deposit_cap: '500000000000',
 }
 
 export const neutronTestnetConfig: DeploymentConfig = {
