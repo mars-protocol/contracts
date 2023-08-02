@@ -164,3 +164,38 @@ pub fn ujuno_info() -> CoinInfo {
         },
     }
 }
+
+pub fn uatom_info() -> CoinInfo {
+    let denom = "uatom".to_string();
+    CoinInfo {
+        denom: denom.clone(),
+        price: Decimal::from_atomics(941236u128, 6).unwrap(),
+        params: AssetParams {
+            denom,
+            max_loan_to_value: Decimal::from_atomics(65u128, 2).unwrap(),
+            liquidation_threshold: Decimal::from_atomics(7u128, 1).unwrap(),
+            liquidation_bonus: LiquidationBonus {
+                starting_lb: Decimal::percent(1u64),
+                slope: Decimal::from_atomics(2u128, 0).unwrap(),
+                min_lb: Decimal::percent(2u64),
+                max_lb: Decimal::percent(10u64),
+            },
+            credit_manager: CmSettings {
+                whitelisted: true,
+                hls: Some(HlsParams {
+                    max_loan_to_value: Decimal::from_str("0.71").unwrap(),
+                    liquidation_threshold: Decimal::from_str("0.74").unwrap(),
+                    correlations: vec![HlsAssetType::Coin {
+                        denom: "stAtom".to_string(),
+                    }],
+                }),
+            },
+            red_bank: RedBankSettings {
+                deposit_enabled: true,
+                borrow_enabled: true,
+                deposit_cap: Default::default(),
+            },
+            protocol_liquidation_fee: Decimal::percent(2u64),
+        },
+    }
+}

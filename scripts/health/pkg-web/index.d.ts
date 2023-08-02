@@ -22,6 +22,19 @@ export function max_borrow_estimate_js(
   borrow_denom: string,
   target: BorrowTarget,
 ): string
+/**
+ * @param {HealthComputer} c
+ * @param {string} from_denom
+ * @param {string} to_denom
+ * @param {SwapKind} kind
+ * @returns {string}
+ */
+export function max_swap_estimate_js(
+  c: HealthComputer,
+  from_denom: string,
+  to_denom: string,
+  kind: SwapKind,
+): string
 export interface HealthComputer {
   kind: AccountKind
   positions: Positions
@@ -40,7 +53,9 @@ export interface HealthValuesResponse {
   above_max_ltv: boolean
 }
 
-export type BorrowTarget = 'deposit' | 'wallet'
+export type SwapKind = 'default' | 'margin'
+
+export type BorrowTarget = 'deposit' | 'wallet' | { vault: { address: Addr } }
 
 export type InitInput = RequestInfo | URL | Response | BufferSource | WebAssembly.Module
 
@@ -49,6 +64,15 @@ export interface InitOutput {
   readonly compute_health_js: (a: number) => number
   readonly max_withdraw_estimate_js: (a: number, b: number, c: number, d: number) => void
   readonly max_borrow_estimate_js: (a: number, b: number, c: number, d: number, e: number) => void
+  readonly max_swap_estimate_js: (
+    a: number,
+    b: number,
+    c: number,
+    d: number,
+    e: number,
+    f: number,
+    g: number,
+  ) => void
   readonly allocate: (a: number) => number
   readonly deallocate: (a: number) => void
   readonly requires_stargate: () => void

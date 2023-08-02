@@ -1,4 +1,4 @@
-use mars_rover_health_types::{BorrowTarget, HealthValuesResponse};
+use mars_rover_health_types::{BorrowTarget, HealthValuesResponse, SwapKind};
 use wasm_bindgen::prelude::*;
 
 use crate::HealthComputer;
@@ -25,4 +25,14 @@ pub fn max_borrow_estimate_js(
     target: BorrowTarget,
 ) -> String {
     c.max_borrow_amount_estimate(&borrow_denom, &target).unwrap().to_string()
+}
+
+#[wasm_bindgen]
+pub fn max_swap_estimate_js(
+    c: HealthComputer,
+    from_denom: String,
+    to_denom: String,
+    kind: SwapKind,
+) -> String {
+    c.max_swap_amount_estimate(&from_denom, &to_denom, &kind).unwrap().to_string()
 }

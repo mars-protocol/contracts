@@ -192,6 +192,34 @@ export function max_borrow_estimate_js(c, borrow_denom, target) {
   }
 }
 
+/**
+ * @param {HealthComputer} c
+ * @param {string} from_denom
+ * @param {string} to_denom
+ * @param {SwapKind} kind
+ * @returns {string}
+ */
+export function max_swap_estimate_js(c, from_denom, to_denom, kind) {
+  let deferred3_0
+  let deferred3_1
+  try {
+    const retptr = wasm.__wbindgen_add_to_stack_pointer(-16)
+    const ptr0 = passStringToWasm0(from_denom, wasm.__wbindgen_malloc, wasm.__wbindgen_realloc)
+    const len0 = WASM_VECTOR_LEN
+    const ptr1 = passStringToWasm0(to_denom, wasm.__wbindgen_malloc, wasm.__wbindgen_realloc)
+    const len1 = WASM_VECTOR_LEN
+    wasm.max_swap_estimate_js(retptr, addHeapObject(c), ptr0, len0, ptr1, len1, addHeapObject(kind))
+    var r0 = getInt32Memory0()[retptr / 4 + 0]
+    var r1 = getInt32Memory0()[retptr / 4 + 1]
+    deferred3_0 = r0
+    deferred3_1 = r1
+    return getStringFromWasm0(r0, r1)
+  } finally {
+    wasm.__wbindgen_add_to_stack_pointer(16)
+    wasm.__wbindgen_free(deferred3_0, deferred3_1, 1)
+  }
+}
+
 function handleError(f, args) {
   try {
     return f.apply(this, args)

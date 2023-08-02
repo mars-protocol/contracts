@@ -26,3 +26,10 @@ pub enum BorrowTarget {
         address: Addr,
     },
 }
+#[cw_serde]
+#[derive(Tsify)]
+#[tsify(into_wasm_abi, from_wasm_abi)]
+pub enum SwapKind {
+    Default,
+    Margin,
+}
