@@ -265,10 +265,10 @@ export const osmosisTestnetConfig = {
   assets: [osmoAsset, atomAsset, USDCAsset, ionAsset],
   vaults: [usdcOsmoVault, ionOsmoVault, atomOsmoVault],
   oracleConfigs: [
+    osmoOracle,
     atomOracle,
     USDCOracle,
     ionOracle,
-    osmoOracle,
     ionOsmoOracle,
     atomOsmoOracle,
     usdcOsmoOracle,
