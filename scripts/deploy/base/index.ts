@@ -61,6 +61,7 @@ export const taskRunner = async (config: DeploymentConfig) => {
       await deployer.updateOracleContractOwner()
       await deployer.updateRewardsContractOwner()
       await deployer.updateSwapperContractOwner()
+      await deployer.updateParamsContractOwner()
       await deployer.updateAddressProviderContractOwner()
       printGreen('It is confirmed that all contracts have transferred ownership to the Multisig')
     } else {

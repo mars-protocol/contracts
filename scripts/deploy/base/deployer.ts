@@ -677,6 +677,23 @@ export class Deployer {
     assert.equal(swapperConfig.proposed, this.config.multisigAddr)
   }
 
+  async updateParamsContractOwner() {
+    const msg = {
+      update_owner: {
+        propose_new_owner: {
+          proposed: this.storage.owner,
+        },
+      },
+    }
+    await this.client.execute(this.deployerAddress, this.storage.addresses.params!, msg, 'auto')
+    printYellow('Owner updated to Mutlisig for Params')
+    const paramsConfig = (await this.client.queryContractSmart(this.storage.addresses.params!, {
+      owner: {},
+    })) as { proposed: string }
+
+    assert.equal(paramsConfig.proposed, this.config.multisigAddr)
+  }
+
   async updateAddressProviderContractOwner() {
     const msg = {
       update_owner: {
