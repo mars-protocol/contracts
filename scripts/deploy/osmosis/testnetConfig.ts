@@ -235,7 +235,7 @@ export const atomOsmoOracle: OracleConfig = {
 
 export const osmosisTestnetConfig = {
   oracleName: 'osmosis',
-  oracleBaseDenom: 'uusd',
+  oracleBaseDenom: 'uosmo',
   rewardsCollectorName: 'osmosis',
   atomDenom: atom,
   baseAssetDenom: uosmo,
