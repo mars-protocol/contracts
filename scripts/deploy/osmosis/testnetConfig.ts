@@ -246,7 +246,7 @@ export const osmosisTestnetConfig = {
     usdcOsmoOracle,
   ],
   targetHealthFactor: '1.2',
-  incentiveEpochDuration: 86400,
+  incentiveEpochDuration: 604800, // 1 week
   maxWhitelistedIncentiveDenoms: 10,
 }
 
@@ -292,6 +292,6 @@ export const osmosisTestMultisig: DeploymentConfig = {
     usdcOsmoOracle,
   ],
   targetHealthFactor: '1.2',
-  incentiveEpochDuration: 86400,
+  incentiveEpochDuration: 604800, // 1 week
   maxWhitelistedIncentiveDenoms: 10,
 }

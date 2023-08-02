@@ -428,7 +428,7 @@ export const osmosisLocalConfig: DeploymentConfig = {
   assets: [osmoAsset, atomAsset, axlUSDCAsset],
   vaults: [],
   oracleConfigs: [atomOracle, axlUSDCOracle],
-  incentiveEpochDuration: 86400,
+  incentiveEpochDuration: 604800, // 1 week
   maxWhitelistedIncentiveDenoms: 10,
   targetHealthFactor: '1.2',
 }

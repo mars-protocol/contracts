@@ -19,6 +19,7 @@ export const taskRunner = async (config: DeploymentConfig) => {
       `mars_rewards_collector_${config.rewardsCollectorName}.wasm`,
     )
     await deployer.upload('swapper', `mars_swapper_${config.swapperDexName}.wasm`)
+    await deployer.upload('params', `mars_params.wasm`)
 
     // Instantiate contracts
     deployer.setOwnerAddr()

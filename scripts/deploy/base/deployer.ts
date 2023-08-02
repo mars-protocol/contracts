@@ -309,6 +309,10 @@ export class Deployer {
         address: this.storage.addresses.swapper!,
         address_type: 'swapper',
       },
+      {
+        address: this.storage.addresses.params!,
+        address_type: 'params',
+      },
     ]
 
     for (const addrObj of addressesToSet) {

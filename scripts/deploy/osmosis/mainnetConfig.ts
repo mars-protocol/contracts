@@ -165,6 +165,6 @@ export const osmosisMainnet: DeploymentConfig = {
   vaults: [],
   oracleConfigs: [atomOracle, axlUSDCOracle],
   targetHealthFactor: '1.2',
-  incentiveEpochDuration: 86400,
+  incentiveEpochDuration: 604800, // 1 week
   maxWhitelistedIncentiveDenoms: 10,
 }
