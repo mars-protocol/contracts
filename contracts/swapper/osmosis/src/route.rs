@@ -6,7 +6,7 @@ use mars_osmosis::helpers::{query_arithmetic_twap_price, query_pool, CommonPoolD
 use mars_red_bank_types::swapper::EstimateExactInSwapResponse;
 use mars_swapper_base::{ContractError, ContractResult, Route};
 use osmosis_std::types::osmosis::gamm::v1beta1::MsgSwapExactAmountIn;
-pub use osmosis_std::types::osmosis::poolmanager::v1beta1::SwapAmountInRoute;
+pub use osmosis_std::types::osmosis::poolmanager::v1beta1::SwapAmountInRoute as OsmosisSwapAmountInRoute;
 
 use crate::helpers::hashset;
 
@@ -15,6 +15,17 @@ const TWAP_WINDOW_SIZE_SECONDS: u64 = 600u64;
 
 #[cw_serde]
 pub struct OsmosisRoute(pub Vec<SwapAmountInRoute>);
+
+/// SwapAmountInRoute instead of using `osmosis_std::types::osmosis::poolmanager::v1beta1::SwapAmountInRoute`
+/// to keep consistency for pool_id representation as u64.
+///
+/// SwapAmountInRoute from osmosis package uses as_str serializer/deserializer, so it expects pool_id
+/// as a String, but JSON schema doesn't correctly represent it.
+#[cw_serde]
+pub struct SwapAmountInRoute {
+    pub pool_id: u64,
+    pub token_out_denom: String,
+}
 
 impl fmt::Display for OsmosisRoute {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
@@ -118,9 +129,17 @@ impl Route<Empty, Empty> for OsmosisRoute {
         let out_amount = query_out_amount(querier, &env.block, coin_in, steps)?;
         let min_out_amount = (Decimal::one() - slippage) * out_amount;
 
+        let routes: Vec<_> = steps
+            .iter()
+            .map(|step| OsmosisSwapAmountInRoute {
+                pool_id: step.pool_id,
+                token_out_denom: step.token_out_denom.clone(),
+            })
+            .collect();
+
         let swap_msg: CosmosMsg = MsgSwapExactAmountIn {
             sender: env.contract.address.to_string(),
-            routes: steps.to_vec(),
+            routes,
             token_in: Some(osmosis_std::types::cosmos::base::v1beta1::Coin {
                 denom: coin_in.denom.clone(),
                 amount: coin_in.amount.to_string(),
