@@ -74,9 +74,9 @@ export const ionAsset: AssetConfig = {
   max_loan_to_value: '0.68',
   red_bank: {
     borrow_enabled: true,
-    deposit_cap: '100000000000',
     deposit_enabled: true,
   },
+  deposit_cap: '100000000000',
 }
 export const USDCAsset: AssetConfig = {
   credit_manager: {
