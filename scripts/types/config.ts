@@ -81,6 +81,13 @@ export interface AssetConfig {
   protocol_liquidation_fee: Decimal
   red_bank: RedBankSettings
   deposit_cap: Uint128
+  reserve_factor: string
+  interest_rate_model: {
+    optimal_utilization_rate: string
+    base: string
+    slope_1: string
+    slope_2: string
+  }
 }
 export interface VaultConfig {
   addr: string

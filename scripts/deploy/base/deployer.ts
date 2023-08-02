@@ -21,6 +21,7 @@ import { InstantiateMsg as ParamsInstantiateMsg } from '../../types/generated/ma
 import { ExecuteMsg as ParamsExecuteMsg } from '../../types/generated/mars-params/MarsParams.types'
 import {
   InstantiateMsg as RedBankInstantiateMsg,
+  ExecuteMsg as RedBankExecuteMsg,
   QueryMsg as RedBankQueryMsg,
 } from '../../types/generated/mars-red-bank/MarsRedBank.types'
 import {
@@ -218,6 +219,40 @@ export class Deployer {
     await this.client.execute(this.deployerAddress, this.storage.addresses['params']!, msg, 'auto')
 
     printYellow(`${assetConfig.symbol} updated.`)
+  }
+
+  async initializeMarket(assetConfig: AssetConfig) {
+    if (this.storage.execute.marketsUpdated.includes(assetConfig.denom)) {
+      printBlue(`${assetConfig.symbol} already initialized in red-bank contract`)
+      return
+    }
+    printBlue(`Initializing ${assetConfig.symbol}...`)
+
+    const msg: RedBankExecuteMsg = {
+      init_asset: {
+        denom: assetConfig.denom,
+        params: {
+          reserve_factor: assetConfig.reserve_factor,
+          interest_rate_model: {
+            optimal_utilization_rate: assetConfig.interest_rate_model.optimal_utilization_rate,
+            base: assetConfig.interest_rate_model.base,
+            slope_1: assetConfig.interest_rate_model.slope_1,
+            slope_2: assetConfig.interest_rate_model.slope_2,
+          },
+        },
+      },
+    }
+
+    await this.client.execute(
+      this.deployerAddress,
+      this.storage.addresses['red-bank']!,
+      msg,
+      'auto',
+    )
+
+    printYellow(`${assetConfig.symbol} initialized`)
+
+    this.storage.execute.marketsUpdated.push(assetConfig.denom)
   }
 
   async updateVaultConfig(vaultConfig: VaultConfig) {

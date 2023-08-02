@@ -36,6 +36,7 @@ export const taskRunner = async (config: DeploymentConfig) => {
     await deployer.updateAddressProvider()
     for (const asset of config.assets) {
       await deployer.updateAssetParams(asset)
+      await deployer.initializeMarket(asset)
     }
     for (const vault of config.vaults) {
       await deployer.updateVaultConfig(vault)
