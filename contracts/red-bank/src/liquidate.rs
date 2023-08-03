@@ -1,4 +1,5 @@
-use cosmwasm_std::{Addr, DepsMut, Env, MessageInfo, Response, Uint128};
+use cosmwasm_std::{Addr, Deps, DepsMut, Env, MessageInfo, Response, Uint128};
+use mars_health::health::Health;
 use mars_interest_rate::{
     get_scaled_debt_amount, get_scaled_liquidity_amount, get_underlying_debt_amount,
     get_underlying_liquidity_amount,
@@ -215,7 +216,17 @@ pub fn liquidate(
     response = update_interest_rates(&env, &mut debt_market_after, response)?;
     MARKETS.save(deps.storage, &debt_denom, &debt_market_after)?;
 
-    // 7. Build response
+    // 7. Assert improvement for liquidation HF
+    assert_liq_threshold(
+        &deps.as_ref(),
+        &env,
+        &liquidatee_addr,
+        oracle_addr,
+        params_addr,
+        &health,
+    )?;
+
+    // 8. Build response
     // refund sent amount in excess of actual debt amount to liquidate
     if !refund_amount.is_zero() {
         response =
@@ -233,4 +244,26 @@ pub fn liquidate(
         .add_attribute("debt_denom", debt_denom)
         .add_attribute("debt_amount", debt_amount_to_repay)
         .add_attribute("debt_amount_scaled", debt_amount_scaled_delta))
+}
+
+fn assert_liq_threshold(
+    deps: &Deps,
+    env: &Env,
+    user_addr: &Addr,
+    oracle_addr: &Addr,
+    params_addr: &Addr,
+    prev_health: &Health,
+) -> Result<(), ContractError> {
+    let (new_health, _) =
+        get_health_and_positions(deps, env, user_addr, oracle_addr, params_addr, true)?;
+
+    match (prev_health.liquidation_health_factor, new_health.liquidation_health_factor) {
+        (Some(prev_liq_hf), Some(new_liq_hf)) if prev_liq_hf > new_liq_hf => {
+            Err(ContractError::HealthNotImproved {
+                prev_hf: prev_liq_hf.to_string(),
+                new_hf: new_liq_hf.to_string(),
+            })
+        }
+        _ => Ok(()),
+    }
 }
