@@ -6,18 +6,20 @@ use helpers::{
     has_collateral_position, has_debt_position, set_collateral, th_build_interests_updated_event,
     th_get_expected_indices_and_rates, th_init_market, th_setup, TestUtilizationDeltaInfo,
 };
+use mars_interest_rate::{
+    calculate_applied_linear_interest_rate, compute_scaled_amount, compute_underlying_amount,
+    ScalingOperation, SCALING_FACTOR,
+};
+use mars_params::types::asset::{AssetParams, CmSettings, RedBankSettings};
 use mars_red_bank::{
     contract::execute,
     error::ContractError,
-    interest_rates::{
-        calculate_applied_linear_interest_rate, compute_scaled_amount, compute_underlying_amount,
-        ScalingOperation, SCALING_FACTOR,
-    },
     state::{DEBTS, MARKETS, UNCOLLATERALIZED_LOAN_LIMITS},
 };
 use mars_red_bank_types::red_bank::{ExecuteMsg, Market};
 use mars_testing::{mock_env, mock_env_at_block_time, MockEnvParams};
-use mars_utils::math;
+
+use crate::helpers::th_default_asset_params;
 
 mod helpers;
 
@@ -60,7 +62,6 @@ fn borrow_and_repay() {
     let mock_market_3 = Market {
         borrow_index: Decimal::one(),
         liquidity_index: Decimal::from_ratio(11u128, 10u128),
-        max_loan_to_value: Decimal::from_ratio(7u128, 10u128),
         borrow_rate: Decimal::from_ratio(30u128, 100u128),
         reserve_factor: Decimal::from_ratio(3u128, 100u128),
         liquidity_rate: Decimal::from_ratio(20u128, 100u128),
@@ -72,6 +73,16 @@ fn borrow_and_repay() {
     let market_1_initial = th_init_market(deps.as_mut(), "uosmo", &mock_market_1);
     let market_2_initial = th_init_market(deps.as_mut(), "uusd", &mock_market_2);
     th_init_market(deps.as_mut(), "uatom", &mock_market_3);
+
+    deps.querier.set_redbank_params("uosmo", th_default_asset_params());
+    deps.querier.set_redbank_params("uusd", th_default_asset_params());
+    deps.querier.set_redbank_params(
+        "uatom",
+        AssetParams {
+            max_loan_to_value: Decimal::from_ratio(7u128, 10u128),
+            ..th_default_asset_params()
+        },
+    );
 
     let borrower_addr = Addr::unchecked("borrower");
 
@@ -482,13 +493,27 @@ fn repay_without_refund_on_behalf_of() {
     let mock_market = Market {
         liquidity_index: Decimal::one(),
         borrow_index: Decimal::one(),
-        max_loan_to_value: Decimal::from_ratio(50u128, 100u128),
         collateral_total_scaled: Uint128::new(1_000_000_000_000u128),
         ..Default::default()
     };
 
     let market_1_initial = th_init_market(deps.as_mut(), "depositedcoinnative", &mock_market); // collateral
     let market_2_initial = th_init_market(deps.as_mut(), "borrowedcoinnative", &mock_market);
+
+    deps.querier.set_redbank_params(
+        "depositedcoinnative",
+        AssetParams {
+            max_loan_to_value: Decimal::from_ratio(50u128, 100u128),
+            ..th_default_asset_params()
+        },
+    );
+    deps.querier.set_redbank_params(
+        "borrowedcoinnative",
+        AssetParams {
+            max_loan_to_value: Decimal::from_ratio(50u128, 100u128),
+            ..th_default_asset_params()
+        },
+    );
 
     let borrower_addr = Addr::unchecked("borrower");
     let user_addr = Addr::unchecked("user");
@@ -563,13 +588,27 @@ fn repay_with_refund_on_behalf_of() {
     let mock_market = Market {
         liquidity_index: Decimal::one(),
         borrow_index: Decimal::one(),
-        max_loan_to_value: Decimal::from_ratio(50u128, 100u128),
         collateral_total_scaled: Uint128::new(1_000_000_000_000u128),
         ..Default::default()
     };
 
     let market_1_initial = th_init_market(deps.as_mut(), "depositedcoinnative", &mock_market); // collateral
     let market_2_initial = th_init_market(deps.as_mut(), "borrowedcoinnative", &mock_market);
+
+    deps.querier.set_redbank_params(
+        "depositedcoinnative",
+        AssetParams {
+            max_loan_to_value: Decimal::from_ratio(50u128, 100u128),
+            ..th_default_asset_params()
+        },
+    );
+    deps.querier.set_redbank_params(
+        "borrowedcoinnative",
+        AssetParams {
+            max_loan_to_value: Decimal::from_ratio(50u128, 100u128),
+            ..th_default_asset_params()
+        },
+    );
 
     let borrower_addr = Addr::unchecked("borrower");
     let user_addr = Addr::unchecked("user");
@@ -672,7 +711,6 @@ fn borrow_uusd() {
 
     let mock_market = Market {
         liquidity_index: Decimal::one(),
-        max_loan_to_value: ltv,
         borrow_index: Decimal::from_ratio(20u128, 10u128),
         borrow_rate: Decimal::one(),
         liquidity_rate: Decimal::one(),
@@ -682,6 +720,14 @@ fn borrow_uusd() {
         ..Default::default()
     };
     let market = th_init_market(deps.as_mut(), "uusd", &mock_market);
+
+    deps.querier.set_redbank_params(
+        "uusd",
+        AssetParams {
+            max_loan_to_value: ltv,
+            ..th_default_asset_params()
+        },
+    );
 
     // Set user as having the market_collateral deposited
     let deposit_amount_scaled = Uint128::new(110_000) * SCALING_FACTOR;
@@ -751,7 +797,6 @@ fn borrow_full_liquidity_and_then_repay() {
 
     let mock_market = Market {
         liquidity_index: Decimal::one(),
-        max_loan_to_value: ltv,
         borrow_index: Decimal::one(),
         borrow_rate: Decimal::one(),
         liquidity_rate: Decimal::one(),
@@ -762,6 +807,14 @@ fn borrow_full_liquidity_and_then_repay() {
         ..Default::default()
     };
     th_init_market(deps.as_mut(), "uusd", &mock_market);
+
+    deps.querier.set_redbank_params(
+        "uusd",
+        AssetParams {
+            max_loan_to_value: ltv,
+            ..th_default_asset_params()
+        },
+    );
 
     // User should have amount of collateral more than initial liquidity in order to borrow full liquidity
     let deposit_amount = initial_liquidity + 1000u128;
@@ -831,7 +884,6 @@ fn borrow_collateral_check() {
     // NOTE: base asset price (asset3) should be set to 1 by the oracle helper
 
     let mock_market_1 = Market {
-        max_loan_to_value: Decimal::from_ratio(8u128, 10u128),
         collateral_total_scaled: Uint128::new(10_000_000_000_000u128),
         debt_total_scaled: Uint128::zero(),
         liquidity_index: Decimal::one(),
@@ -839,7 +891,6 @@ fn borrow_collateral_check() {
         ..Default::default()
     };
     let mock_market_2 = Market {
-        max_loan_to_value: Decimal::from_ratio(6u128, 10u128),
         collateral_total_scaled: Uint128::new(10_000_000_000_000u128),
         debt_total_scaled: Uint128::zero(),
         liquidity_index: Decimal::one(),
@@ -847,7 +898,6 @@ fn borrow_collateral_check() {
         ..Default::default()
     };
     let mock_market_3 = Market {
-        max_loan_to_value: Decimal::from_ratio(4u128, 10u128),
         collateral_total_scaled: Uint128::new(10_000_000_000_000u128),
         debt_total_scaled: Uint128::zero(),
         liquidity_index: Decimal::one(),
@@ -862,6 +912,22 @@ fn borrow_collateral_check() {
     // should get index 2
     let market_3_initial = th_init_market(deps.as_mut(), "uusd", &mock_market_3);
 
+    let asset_params_1 = AssetParams {
+        max_loan_to_value: Decimal::from_ratio(8u128, 10u128),
+        ..th_default_asset_params()
+    };
+    deps.querier.set_redbank_params("uatom", asset_params_1.clone());
+    let asset_params_2 = AssetParams {
+        max_loan_to_value: Decimal::from_ratio(6u128, 10u128),
+        ..th_default_asset_params()
+    };
+    deps.querier.set_redbank_params("uosmo", asset_params_2.clone());
+    let asset_params_3 = AssetParams {
+        max_loan_to_value: Decimal::from_ratio(4u128, 10u128),
+        ..th_default_asset_params()
+    };
+    deps.querier.set_redbank_params("uusd", asset_params_3.clone());
+
     let borrower_addr = Addr::unchecked("borrower");
 
     let balance_1 = Uint128::new(4_000_000) * SCALING_FACTOR;
@@ -873,7 +939,7 @@ fn borrow_collateral_check() {
     set_collateral(deps.as_mut(), &borrower_addr, &market_2_initial.denom, balance_2, true);
     set_collateral(deps.as_mut(), &borrower_addr, &market_3_initial.denom, balance_3, true);
 
-    let max_borrow_allowed_in_base_asset = (market_1_initial.max_loan_to_value
+    let max_borrow_allowed_in_base_asset = (asset_params_1.max_loan_to_value
         * compute_underlying_amount(
             balance_1,
             market_1_initial.liquidity_index,
@@ -881,7 +947,7 @@ fn borrow_collateral_check() {
         )
         .unwrap()
         * exchange_rate_1)
-        + (market_2_initial.max_loan_to_value
+        + (asset_params_2.max_loan_to_value
             * compute_underlying_amount(
                 balance_2,
                 market_2_initial.liquidity_index,
@@ -889,7 +955,7 @@ fn borrow_collateral_check() {
             )
             .unwrap()
             * exchange_rate_2)
-        + (market_3_initial.max_loan_to_value
+        + (asset_params_3.max_loan_to_value
             * compute_underlying_amount(
                 balance_3,
                 market_3_initial.liquidity_index,
@@ -898,10 +964,10 @@ fn borrow_collateral_check() {
             .unwrap()
             * exchange_rate_3);
     let exceeding_borrow_amount =
-        math::divide_uint128_by_decimal(max_borrow_allowed_in_base_asset, exchange_rate_2).unwrap()
+        max_borrow_allowed_in_base_asset.checked_div_floor(exchange_rate_2).unwrap()
             + Uint128::from(100_u64);
     let permissible_borrow_amount =
-        math::divide_uint128_by_decimal(max_borrow_allowed_in_base_asset, exchange_rate_2).unwrap()
+        max_borrow_allowed_in_base_asset.checked_div_floor(exchange_rate_2).unwrap()
             - Uint128::from(100_u64);
 
     // borrow above the allowed amount given current collateral, should fail
@@ -928,11 +994,23 @@ fn borrow_collateral_check() {
 fn cannot_borrow_if_market_not_enabled() {
     let mut deps = th_setup(&[]);
 
-    let mock_market = Market {
-        borrow_enabled: false,
-        ..Default::default()
-    };
-    th_init_market(deps.as_mut(), "somecoin", &mock_market);
+    th_init_market(deps.as_mut(), "somecoin", &Market::default());
+
+    deps.querier.set_redbank_params(
+        "somecoin",
+        AssetParams {
+            credit_manager: CmSettings {
+                whitelisted: false,
+
+                hls: None,
+            },
+            red_bank: RedBankSettings {
+                deposit_enabled: false,
+                borrow_enabled: false,
+            },
+            ..th_default_asset_params()
+        },
+    );
 
     // Check error when borrowing not allowed on market
     let env = mock_env(MockEnvParams::default());
@@ -962,12 +1040,19 @@ fn borrow_and_send_funds_to_another_user() {
     let mock_market = Market {
         liquidity_index: Decimal::one(),
         borrow_index: Decimal::one(),
-        max_loan_to_value: Decimal::from_ratio(5u128, 10u128),
         collateral_total_scaled: Uint128::new(1_000_000_000_000u128),
         debt_total_scaled: Uint128::zero(),
         ..Default::default()
     };
     let market = th_init_market(deps.as_mut(), "uusd", &mock_market);
+
+    deps.querier.set_redbank_params(
+        "uusd",
+        AssetParams {
+            max_loan_to_value: Decimal::from_ratio(5u128, 10u128),
+            ..th_default_asset_params()
+        },
+    );
 
     // Set user as having the market_collateral deposited
     let deposit_amount_scaled = Uint128::new(100_000) * SCALING_FACTOR;

@@ -1,14 +1,16 @@
 #![allow(dead_code)]
 
-use std::mem::take;
+use std::{collections::HashMap, mem::take, str::FromStr};
 
 use anyhow::Result as AnyResult;
 use cosmwasm_std::{coin, Addr, Coin, Decimal, Empty, StdResult, Uint128};
 use cw_multi_test::{App, AppResponse, BankSudo, BasicApp, Executor, SudoMsg};
 use mars_oracle_osmosis::OsmosisPriceSourceUnchecked;
+use mars_params::{msg::AssetParamsUpdate, types::asset::AssetParams};
 use mars_red_bank_types::{
     address_provider::{self, MarsAddressType},
-    incentives, oracle,
+    incentives,
+    oracle::{self, PriceResponse},
     red_bank::{
         self, CreateOrUpdateConfig, InitOrUpdateAssetParams, Market,
         UncollateralizedLoanLimitResponse, UserCollateralResponse, UserDebtResponse,
@@ -19,7 +21,7 @@ use mars_red_bank_types::{
 
 use crate::integration::mock_contracts::{
     mock_address_provider_contract, mock_incentives_contract, mock_oracle_osmosis_contract,
-    mock_red_bank_contract, mock_rewards_collector_osmosis_contract,
+    mock_params_osmosis_contract, mock_red_bank_contract, mock_rewards_collector_osmosis_contract,
 };
 
 pub struct MockEnv {
@@ -30,6 +32,8 @@ pub struct MockEnv {
     pub oracle: Oracle,
     pub red_bank: RedBank,
     pub rewards_collector: RewardsCollector,
+    pub params: Params,
+    pub credit_manager: Addr,
 }
 
 #[derive(Clone)]
@@ -57,6 +61,11 @@ pub struct RewardsCollector {
     pub contract_addr: Addr,
 }
 
+#[derive(Clone)]
+pub struct Params {
+    pub contract_addr: Addr,
+}
+
 impl MockEnv {
     pub fn increment_by_blocks(&mut self, num_of_blocks: u64) {
         self.app.update_block(|block| {
@@ -74,6 +83,13 @@ impl MockEnv {
         })
     }
 
+    pub fn fund_accounts(&mut self, addrs: &[&Addr], amount: u128, denoms: &[&str]) {
+        for addr in addrs {
+            let coins: Vec<_> = denoms.iter().map(|&d| coin(amount, d)).collect();
+            self.fund_account(addr, &coins);
+        }
+    }
+
     pub fn fund_account(&mut self, addr: &Addr, coins: &[Coin]) {
         self.app
             .sudo(SudoMsg::Bank(BankSudo::Mint {
@@ -85,6 +101,11 @@ impl MockEnv {
 
     pub fn query_balance(&self, addr: &Addr, denom: &str) -> StdResult<Coin> {
         self.app.wrap().query_balance(addr, denom)
+    }
+
+    pub fn query_all_balances(&self, addr: &Addr) -> HashMap<String, Uint128> {
+        let res: Vec<Coin> = self.app.wrap().query_all_balances(addr).unwrap();
+        res.into_iter().map(|r| (r.denom, r.amount)).collect()
     }
 }
 
@@ -156,10 +177,20 @@ impl Incentives {
     }
 
     pub fn claim_rewards(&self, env: &mut MockEnv, sender: &Addr) -> AnyResult<AppResponse> {
+        self.claim_rewards_with_acc_id(env, sender, None)
+    }
+
+    pub fn claim_rewards_with_acc_id(
+        &self,
+        env: &mut MockEnv,
+        sender: &Addr,
+        account_id: Option<String>,
+    ) -> AnyResult<AppResponse> {
         env.app.execute_contract(
             sender.clone(),
             self.contract_addr.clone(),
             &incentives::ExecuteMsg::ClaimRewards {
+                account_id,
                 start_after_collateral_denom: None,
                 start_after_incentive_denom: None,
                 limit: None,
@@ -168,19 +199,26 @@ impl Incentives {
         )
     }
 
-    pub fn query_unclaimed_rewards(&self, env: &mut MockEnv, user: &Addr) -> Vec<Coin> {
-        env.app
-            .wrap()
-            .query_wasm_smart(
-                self.contract_addr.clone(),
-                &incentives::QueryMsg::UserUnclaimedRewards {
-                    user: user.to_string(),
-                    start_after_collateral_denom: None,
-                    start_after_incentive_denom: None,
-                    limit: None,
-                },
-            )
-            .unwrap()
+    pub fn query_unclaimed_rewards(&self, env: &mut MockEnv, user: &Addr) -> StdResult<Vec<Coin>> {
+        self.query_unclaimed_rewards_with_acc_id(env, user, None)
+    }
+
+    pub fn query_unclaimed_rewards_with_acc_id(
+        &self,
+        env: &mut MockEnv,
+        user: &Addr,
+        account_id: Option<String>,
+    ) -> StdResult<Vec<Coin>> {
+        env.app.wrap().query_wasm_smart(
+            self.contract_addr.clone(),
+            &incentives::QueryMsg::UserUnclaimedRewards {
+                account_id,
+                user: user.to_string(),
+                start_after_collateral_denom: None,
+                start_after_incentive_denom: None,
+                limit: None,
+            },
+        )
     }
 }
 
@@ -200,6 +238,19 @@ impl Oracle {
             )
             .unwrap();
     }
+
+    pub fn query_price(&self, env: &mut MockEnv, denom: &str) -> PriceResponse {
+        env.app
+            .wrap()
+            .query_wasm_smart(
+                self.contract_addr.clone(),
+                &oracle::QueryMsg::Price {
+                    denom: denom.to_string(),
+                    kind: None,
+                },
+            )
+            .unwrap()
+    }
 }
 
 impl RedBank {
@@ -217,12 +268,42 @@ impl RedBank {
             .unwrap();
     }
 
+    pub fn update_user_collateral_status(
+        &self,
+        env: &mut MockEnv,
+        sender: &Addr,
+        denom: &str,
+        enabled: bool,
+    ) {
+        env.app
+            .execute_contract(
+                sender.clone(),
+                self.contract_addr.clone(),
+                &red_bank::ExecuteMsg::UpdateAssetCollateralStatus {
+                    denom: denom.to_string(),
+                    enable: enabled,
+                },
+                &[],
+            )
+            .unwrap();
+    }
+
     pub fn deposit(&self, env: &mut MockEnv, sender: &Addr, coin: Coin) -> AnyResult<AppResponse> {
+        self.deposit_with_acc_id(env, sender, coin, None)
+    }
+
+    pub fn deposit_with_acc_id(
+        &self,
+        env: &mut MockEnv,
+        sender: &Addr,
+        coin: Coin,
+        account_id: Option<String>,
+    ) -> AnyResult<AppResponse> {
         env.app.execute_contract(
             sender.clone(),
             self.contract_addr.clone(),
             &red_bank::ExecuteMsg::Deposit {
-                on_behalf_of: None,
+                account_id,
             },
             &[coin],
         )
@@ -265,6 +346,17 @@ impl RedBank {
         denom: &str,
         amount: Option<Uint128>,
     ) -> AnyResult<AppResponse> {
+        self.withdraw_with_acc_id(env, sender, denom, amount, None)
+    }
+
+    pub fn withdraw_with_acc_id(
+        &self,
+        env: &mut MockEnv,
+        sender: &Addr,
+        denom: &str,
+        amount: Option<Uint128>,
+        account_id: Option<String>,
+    ) -> AnyResult<AppResponse> {
         env.app.execute_contract(
             sender.clone(),
             self.contract_addr.clone(),
@@ -272,6 +364,7 @@ impl RedBank {
                 denom: denom.to_string(),
                 amount,
                 recipient: None,
+                account_id,
             },
             &[],
         )
@@ -283,7 +376,26 @@ impl RedBank {
         liquidator: &Addr,
         user: &Addr,
         collateral_denom: &str,
-        coin: Coin,
+        send_funds: &[Coin],
+    ) -> AnyResult<AppResponse> {
+        self.liquidate_with_different_recipient(
+            env,
+            liquidator,
+            user,
+            collateral_denom,
+            send_funds,
+            None,
+        )
+    }
+
+    pub fn liquidate_with_different_recipient(
+        &self,
+        env: &mut MockEnv,
+        liquidator: &Addr,
+        user: &Addr,
+        collateral_denom: &str,
+        send_funds: &[Coin],
+        recipient: Option<String>,
     ) -> AnyResult<AppResponse> {
         env.app.execute_contract(
             liquidator.clone(),
@@ -291,9 +403,9 @@ impl RedBank {
             &red_bank::ExecuteMsg::Liquidate {
                 user: user.to_string(),
                 collateral_denom: collateral_denom.to_string(),
-                recipient: None,
+                recipient,
             },
-            &[coin],
+            send_funds,
         )
     }
 
@@ -329,6 +441,21 @@ impl RedBank {
             .unwrap()
     }
 
+    pub fn query_markets(&self, env: &mut MockEnv) -> HashMap<String, Market> {
+        let res: Vec<Market> = env
+            .app
+            .wrap()
+            .query_wasm_smart(
+                self.contract_addr.clone(),
+                &red_bank::QueryMsg::Markets {
+                    start_after: None,
+                    limit: Some(100),
+                },
+            )
+            .unwrap();
+        res.into_iter().map(|r| (r.denom.clone(), r)).collect()
+    }
+
     pub fn query_user_debt(&self, env: &mut MockEnv, user: &Addr, denom: &str) -> UserDebtResponse {
         env.app
             .wrap()
@@ -342,10 +469,40 @@ impl RedBank {
             .unwrap()
     }
 
+    pub fn query_user_debts(
+        &self,
+        env: &mut MockEnv,
+        user: &Addr,
+    ) -> HashMap<String, UserDebtResponse> {
+        let res: Vec<UserDebtResponse> = env
+            .app
+            .wrap()
+            .query_wasm_smart(
+                self.contract_addr.clone(),
+                &red_bank::QueryMsg::UserDebts {
+                    user: user.to_string(),
+                    start_after: None,
+                    limit: Some(100),
+                },
+            )
+            .unwrap();
+        res.into_iter().map(|r| (r.denom.clone(), r)).collect()
+    }
+
     pub fn query_user_collateral(
         &self,
         env: &mut MockEnv,
         user: &Addr,
+        denom: &str,
+    ) -> UserCollateralResponse {
+        self.query_user_collateral_with_acc_id(env, user, None, denom)
+    }
+
+    pub fn query_user_collateral_with_acc_id(
+        &self,
+        env: &mut MockEnv,
+        user: &Addr,
+        account_id: Option<String>,
         denom: &str,
     ) -> UserCollateralResponse {
         env.app
@@ -354,10 +511,41 @@ impl RedBank {
                 self.contract_addr.clone(),
                 &red_bank::QueryMsg::UserCollateral {
                     user: user.to_string(),
+                    account_id,
                     denom: denom.to_string(),
                 },
             )
             .unwrap()
+    }
+
+    pub fn query_user_collaterals(
+        &self,
+        env: &mut MockEnv,
+        user: &Addr,
+    ) -> HashMap<String, UserCollateralResponse> {
+        self.query_user_collaterals_with_acc_id(env, user, None)
+    }
+
+    pub fn query_user_collaterals_with_acc_id(
+        &self,
+        env: &mut MockEnv,
+        user: &Addr,
+        account_id: Option<String>,
+    ) -> HashMap<String, UserCollateralResponse> {
+        let res: Vec<UserCollateralResponse> = env
+            .app
+            .wrap()
+            .query_wasm_smart(
+                self.contract_addr.clone(),
+                &red_bank::QueryMsg::UserCollaterals {
+                    user: user.to_string(),
+                    account_id,
+                    start_after: None,
+                    limit: Some(100),
+                },
+            )
+            .unwrap();
+        res.into_iter().map(|r| (r.denom.clone(), r)).collect()
     }
 
     pub fn query_user_position(&self, env: &mut MockEnv, user: &Addr) -> UserPositionResponse {
@@ -446,17 +634,43 @@ impl RewardsCollector {
     }
 }
 
+impl Params {
+    pub fn init_params(&self, env: &mut MockEnv, params: AssetParams) {
+        env.app
+            .execute_contract(
+                env.owner.clone(),
+                self.contract_addr.clone(),
+                &mars_params::msg::ExecuteMsg::UpdateAssetParams(AssetParamsUpdate::AddOrUpdate {
+                    params: params.into(),
+                }),
+                &[],
+            )
+            .unwrap();
+    }
+
+    pub fn query_params(&self, env: &mut MockEnv, denom: &str) -> AssetParams {
+        env.app
+            .wrap()
+            .query_wasm_smart(
+                self.contract_addr.clone(),
+                &mars_params::msg::QueryMsg::AssetParams {
+                    denom: denom.to_string(),
+                },
+            )
+            .unwrap()
+    }
+}
+
 pub struct MockEnvBuilder {
     app: BasicApp,
     admin: Option<String>,
     owner: Addr,
-    emergency_owner: Addr,
 
     chain_prefix: String,
     mars_denom: String,
     base_denom: String,
     base_denom_decimals: u8,
-    close_factor: Decimal,
+    target_health_factor: Decimal,
 
     // rewards-collector params
     safety_tax_rate: Decimal,
@@ -465,6 +679,8 @@ pub struct MockEnvBuilder {
     slippage_tolerance: Decimal,
 
     pyth_contract_addr: String,
+
+    credit_manager_contract_addr: String,
 }
 
 impl MockEnvBuilder {
@@ -472,19 +688,20 @@ impl MockEnvBuilder {
         Self {
             app: App::default(),
             admin,
-            owner: owner.clone(),
-            emergency_owner: owner,
+            owner,
             chain_prefix: "".to_string(), // empty prefix for multitest because deployed contracts have addresses such as contract1, contract2 etc which are invalid in address-provider
             mars_denom: "umars".to_string(),
             base_denom: "uosmo".to_string(),
             base_denom_decimals: 6u8,
-            close_factor: Decimal::percent(80),
+            target_health_factor: Decimal::from_str("1.05").unwrap(),
             safety_tax_rate: Decimal::percent(50),
             safety_fund_denom: "uusdc".to_string(),
             fee_collector_denom: "uusdc".to_string(),
             slippage_tolerance: Decimal::percent(5),
             pyth_contract_addr: "osmo1svg55quy7jjee6dn0qx85qxxvx5cafkkw4tmqpcjr9dx99l0zrhs4usft5"
                 .to_string(), // correct bech32 addr to pass validation
+            credit_manager_contract_addr:
+                "osmo1q7khj532p2fyvmnu83tul6xddl6yl0d0kmrzdz2pfel3lkxem92sw6zqrl".to_string(),
         }
     }
 
@@ -503,8 +720,8 @@ impl MockEnvBuilder {
         self
     }
 
-    pub fn close_factor(&mut self, percentage: Decimal) -> &mut Self {
-        self.close_factor = percentage;
+    pub fn target_health_factor(&mut self, thf: Decimal) -> &mut Self {
+        self.target_health_factor = thf;
         self
     }
 
@@ -539,6 +756,7 @@ impl MockEnvBuilder {
         let oracle_addr = self.deploy_oracle_osmosis();
         let red_bank_addr = self.deploy_red_bank(&address_provider_addr);
         let rewards_collector_addr = self.deploy_rewards_collector_osmosis(&address_provider_addr);
+        let params_addr = self.deploy_params_osmosis(&address_provider_addr);
 
         self.update_address_provider(
             &address_provider_addr,
@@ -555,6 +773,13 @@ impl MockEnvBuilder {
             &address_provider_addr,
             MarsAddressType::RewardsCollector,
             &rewards_collector_addr,
+        );
+        self.update_address_provider(&address_provider_addr, MarsAddressType::Params, &params_addr);
+        let cm_addr = Addr::unchecked(&self.credit_manager_contract_addr);
+        self.update_address_provider(
+            &address_provider_addr,
+            MarsAddressType::CreditManager,
+            &cm_addr,
         );
 
         MockEnv {
@@ -575,6 +800,10 @@ impl MockEnvBuilder {
             rewards_collector: RewardsCollector {
                 contract_addr: rewards_collector_addr,
             },
+            params: Params {
+                contract_addr: params_addr,
+            },
+            credit_manager: cm_addr,
         }
     }
 
@@ -646,7 +875,6 @@ impl MockEnvBuilder {
                     owner: self.owner.to_string(),
                     config: CreateOrUpdateConfig {
                         address_provider: Some(address_provider_addr.to_string()),
-                        close_factor: Some(self.close_factor),
                     },
                 },
                 &[],
@@ -676,6 +904,25 @@ impl MockEnvBuilder {
                 },
                 &[],
                 "rewards-collector",
+                None,
+            )
+            .unwrap()
+    }
+
+    fn deploy_params_osmosis(&mut self, address_provider_addr: &Addr) -> Addr {
+        let code_id = self.app.store_code(mock_params_osmosis_contract());
+
+        self.app
+            .instantiate_contract(
+                code_id,
+                self.owner.clone(),
+                &mars_params::msg::InstantiateMsg {
+                    owner: self.owner.to_string(),
+                    address_provider: address_provider_addr.to_string(),
+                    target_health_factor: self.target_health_factor,
+                },
+                &[],
+                "params",
                 None,
             )
             .unwrap()

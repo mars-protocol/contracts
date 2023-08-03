@@ -31,6 +31,7 @@ mars-oracle-base        = { workspace = true, features = ["pyth"] }
 mars-red-bank-types     = { workspace = true }
 cosmwasm-schema         = { workspace = true }
 astroport               = { workspace = true }
+pyth-sdk-cw             = { workspace = true }
 
 [dev-dependencies]
 cosmwasm-schema  = { workspace = true }
@@ -39,4 +40,3 @@ mars-owner       = { workspace = true }
 cw-it            = { workspace = true, features = ["astroport", "astroport-multi-test"] }
 test-case        = { workspace = true }
 proptest         = { workspace = true }
-pyth-sdk-cw      = { workspace = true }

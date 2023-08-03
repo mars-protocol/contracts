@@ -1,5 +1,9 @@
-use cosmwasm_std::{Addr, BlockInfo, Deps, Env, Order, StdError, StdResult, Uint128};
+use cosmwasm_std::{Addr, BlockInfo, Deps, Env, Order, StdResult, Uint128};
 use cw_storage_plus::Bound;
+use mars_interest_rate::{
+    get_scaled_debt_amount, get_scaled_liquidity_amount, get_underlying_debt_amount,
+    get_underlying_liquidity_amount,
+};
 use mars_red_bank_types::{
     address_provider::{self, MarsAddressType},
     red_bank::{
@@ -11,10 +15,6 @@ use mars_red_bank_types::{
 use crate::{
     error::ContractError,
     health,
-    interest_rates::{
-        get_scaled_debt_amount, get_scaled_liquidity_amount, get_underlying_debt_amount,
-        get_underlying_liquidity_amount,
-    },
     state::{COLLATERALS, CONFIG, DEBTS, MARKETS, OWNER, UNCOLLATERALIZED_LOAN_LIMITS},
 };
 
@@ -27,16 +27,12 @@ pub fn query_config(deps: Deps) -> StdResult<ConfigResponse> {
     Ok(ConfigResponse {
         owner: owner_state.owner,
         proposed_new_owner: owner_state.proposed,
-        emergency_owner: owner_state.emergency_owner,
         address_provider: config.address_provider.to_string(),
-        close_factor: config.close_factor,
     })
 }
 
-pub fn query_market(deps: Deps, denom: String) -> StdResult<Market> {
-    MARKETS
-        .load(deps.storage, &denom)
-        .map_err(|_| StdError::generic_err(format!("failed to load market for: {denom}")))
+pub fn query_market(deps: Deps, denom: String) -> StdResult<Option<Market>> {
+    MARKETS.may_load(deps.storage, &denom)
 }
 
 pub fn query_markets(
@@ -97,7 +93,7 @@ pub fn query_user_debt(
     block: &BlockInfo,
     user_addr: Addr,
     denom: String,
-) -> StdResult<UserDebtResponse> {
+) -> Result<UserDebtResponse, ContractError> {
     let Debt {
         amount_scaled,
         uncollateralized,
@@ -121,7 +117,7 @@ pub fn query_user_debts(
     user_addr: Addr,
     start_after: Option<String>,
     limit: Option<u32>,
-) -> StdResult<Vec<UserDebtResponse>> {
+) -> Result<Vec<UserDebtResponse>, ContractError> {
     let block_time = block.time.seconds();
 
     let start = start_after.map(|denom| Bound::ExclusiveRaw(denom.into_bytes()));
@@ -153,12 +149,15 @@ pub fn query_user_collateral(
     deps: Deps,
     block: &BlockInfo,
     user_addr: Addr,
+    account_id: Option<String>,
     denom: String,
-) -> StdResult<UserCollateralResponse> {
+) -> Result<UserCollateralResponse, ContractError> {
+    let acc_id = account_id.unwrap_or("".to_string());
+
     let Collateral {
         amount_scaled,
         enabled,
-    } = COLLATERALS.may_load(deps.storage, (&user_addr, &denom))?.unwrap_or_default();
+    } = COLLATERALS.may_load(deps.storage, (&user_addr, &acc_id, &denom))?.unwrap_or_default();
 
     let block_time = block.time.seconds();
     let market = MARKETS.load(deps.storage, &denom)?;
@@ -176,16 +175,19 @@ pub fn query_user_collaterals(
     deps: Deps,
     block: &BlockInfo,
     user_addr: Addr,
+    account_id: Option<String>,
     start_after: Option<String>,
     limit: Option<u32>,
-) -> StdResult<Vec<UserCollateralResponse>> {
+) -> Result<Vec<UserCollateralResponse>, ContractError> {
     let block_time = block.time.seconds();
 
     let start = start_after.map(|denom| Bound::ExclusiveRaw(denom.into_bytes()));
     let limit = limit.unwrap_or(DEFAULT_LIMIT).min(MAX_LIMIT) as usize;
 
+    let acc_id = account_id.unwrap_or("".to_string());
+
     COLLATERALS
-        .prefix(&user_addr)
+        .prefix((&user_addr, &acc_id))
         .range(deps.storage, start, None, Order::Ascending)
         .take(limit)
         .map(|item| {
@@ -211,9 +213,9 @@ pub fn query_scaled_liquidity_amount(
     env: Env,
     denom: String,
     amount: Uint128,
-) -> StdResult<Uint128> {
+) -> Result<Uint128, ContractError> {
     let market = MARKETS.load(deps.storage, &denom)?;
-    get_scaled_liquidity_amount(amount, &market, env.block.time.seconds())
+    Ok(get_scaled_liquidity_amount(amount, &market, env.block.time.seconds())?)
 }
 
 pub fn query_scaled_debt_amount(
@@ -221,9 +223,9 @@ pub fn query_scaled_debt_amount(
     env: Env,
     denom: String,
     amount: Uint128,
-) -> StdResult<Uint128> {
+) -> Result<Uint128, ContractError> {
     let market = MARKETS.load(deps.storage, &denom)?;
-    get_scaled_debt_amount(amount, &market, env.block.time.seconds())
+    Ok(get_scaled_debt_amount(amount, &market, env.block.time.seconds())?)
 }
 
 pub fn query_underlying_liquidity_amount(
@@ -231,9 +233,9 @@ pub fn query_underlying_liquidity_amount(
     env: Env,
     denom: String,
     amount_scaled: Uint128,
-) -> StdResult<Uint128> {
+) -> Result<Uint128, ContractError> {
     let market = MARKETS.load(deps.storage, &denom)?;
-    get_underlying_liquidity_amount(amount_scaled, &market, env.block.time.seconds())
+    Ok(get_underlying_liquidity_amount(amount_scaled, &market, env.block.time.seconds())?)
 }
 
 pub fn query_underlying_debt_amount(
@@ -241,9 +243,9 @@ pub fn query_underlying_debt_amount(
     env: Env,
     denom: String,
     amount_scaled: Uint128,
-) -> StdResult<Uint128> {
+) -> Result<Uint128, ContractError> {
     let market = MARKETS.load(deps.storage, &denom)?;
-    get_underlying_debt_amount(amount_scaled, &market, env.block.time.seconds())
+    Ok(get_underlying_debt_amount(amount_scaled, &market, env.block.time.seconds())?)
 }
 
 pub fn query_user_position(
@@ -252,13 +254,17 @@ pub fn query_user_position(
     user_addr: Addr,
 ) -> Result<UserPositionResponse, ContractError> {
     let config = CONFIG.load(deps.storage)?;
-    let oracle_addr = address_provider::helpers::query_contract_addr(
+
+    let addresses = address_provider::helpers::query_contract_addrs(
         deps,
         &config.address_provider,
-        MarsAddressType::Oracle,
+        vec![MarsAddressType::Oracle, MarsAddressType::Params],
     )?;
+    let oracle_addr = &addresses[&MarsAddressType::Oracle];
+    let params_addr = &addresses[&MarsAddressType::Params];
 
-    let positions = health::get_user_positions_map(&deps, &env, &user_addr, &oracle_addr)?;
+    let positions =
+        health::get_user_positions_map(&deps, &env, &user_addr, oracle_addr, params_addr)?;
     let health = health::compute_position_health(&positions)?;
 
     let health_status = if let (Some(max_ltv_hf), Some(liq_threshold_hf)) =

@@ -3,16 +3,19 @@ use std::any::type_name;
 use cosmwasm_std::{
     attr, coin, coins,
     testing::{mock_env, mock_info, MockApi, MockStorage},
-    to_binary, Addr, Decimal, OwnedDeps, StdError, StdResult, SubMsg, Uint128, WasmMsg,
+    to_binary, Addr, Decimal, OwnedDeps, StdError, SubMsg, Uint128, WasmMsg,
 };
 use cw_utils::PaymentError;
 use helpers::{
     set_collateral, th_build_interests_updated_event, th_get_expected_indices_and_rates, th_setup,
 };
+use mars_interest_rate::{
+    compute_scaled_amount, get_underlying_liquidity_amount, ScalingOperation, SCALING_FACTOR,
+};
+use mars_params::types::asset::{AssetParams, CmSettings, LiquidationBonus, RedBankSettings};
 use mars_red_bank::{
     contract::execute,
     error::ContractError,
-    interest_rates::{compute_scaled_amount, ScalingOperation, SCALING_FACTOR},
     state::{COLLATERALS, MARKETS},
 };
 use mars_red_bank_types::{
@@ -21,6 +24,9 @@ use mars_red_bank_types::{
     red_bank::{Collateral, ExecuteMsg, Market},
 };
 use mars_testing::{mock_env_at_block_time, MarsMockQuerier};
+use test_case::test_case;
+
+use crate::helpers::th_default_asset_params;
 
 mod helpers;
 
@@ -40,7 +46,6 @@ fn setup_test() -> TestSuite {
     let market = Market {
         denom: denom.to_string(),
         liquidity_index: Decimal::from_ratio(11u128, 10u128),
-        max_loan_to_value: Decimal::one(),
         borrow_index: Decimal::from_ratio(1u128, 1u128),
         borrow_rate: Decimal::from_ratio(10u128, 100u128),
         liquidity_rate: Decimal::from_ratio(10u128, 100u128),
@@ -48,11 +53,45 @@ fn setup_test() -> TestSuite {
         collateral_total_scaled: Uint128::new(10_000_000) * SCALING_FACTOR,
         debt_total_scaled: Uint128::new(10_000_000) * SCALING_FACTOR,
         indexes_last_updated: 10000000,
-        deposit_cap: Uint128::new(12_000_000),
         ..Default::default()
     };
 
     MARKETS.save(deps.as_mut().storage, denom, &market).unwrap();
+
+    deps.querier.set_redbank_params(
+        denom,
+        AssetParams {
+            denom: denom.to_string(),
+            max_loan_to_value: Decimal::one(),
+            liquidation_threshold: Default::default(),
+            liquidation_bonus: LiquidationBonus {
+                starting_lb: Decimal::percent(0u64),
+                slope: Decimal::one(),
+                min_lb: Decimal::percent(0u64),
+                max_lb: Decimal::percent(5u64),
+            },
+            credit_manager: CmSettings {
+                whitelisted: false,
+                hls: None,
+            },
+            red_bank: RedBankSettings {
+                deposit_enabled: true,
+                borrow_enabled: true,
+            },
+            protocol_liquidation_fee: Decimal::percent(2u64),
+            deposit_cap: Uint128::new(12_000_000),
+        },
+    );
+
+    deps.querier.set_total_deposit(
+        denom,
+        get_underlying_liquidity_amount(
+            market.collateral_total_scaled,
+            &market,
+            market.indexes_last_updated,
+        )
+        .unwrap(),
+    );
 
     TestSuite {
         deps,
@@ -75,7 +114,7 @@ fn depositing_with_no_coin_sent() {
         mock_env(),
         mock_info(depositor_addr.as_str(), &[]),
         ExecuteMsg::Deposit {
-            on_behalf_of: None,
+            account_id: None,
         },
     )
     .unwrap_err();
@@ -97,7 +136,7 @@ fn depositing_with_multiple_coins_sent() {
         mock_env(),
         mock_info(depositor_addr.as_str(), &sent_coins),
         ExecuteMsg::Deposit {
-            on_behalf_of: None,
+            account_id: None,
         },
     )
     .unwrap_err();
@@ -120,7 +159,7 @@ fn depositing_to_non_existent_market() {
         mock_env(),
         mock_info(depositor_addr.as_str(), &coins(123, false_denom)),
         ExecuteMsg::Deposit {
-            on_behalf_of: None,
+            account_id: None,
         },
     )
     .unwrap_err();
@@ -137,20 +176,27 @@ fn depositing_to_disabled_market() {
     } = setup_test();
 
     // disable the market
-    MARKETS
-        .update(deps.as_mut().storage, denom, |opt| -> StdResult<_> {
-            let mut market = opt.unwrap();
-            market.deposit_enabled = false;
-            Ok(market)
-        })
-        .unwrap();
+    deps.querier.set_redbank_params(
+        denom,
+        AssetParams {
+            credit_manager: CmSettings {
+                whitelisted: false,
+                hls: None,
+            },
+            red_bank: RedBankSettings {
+                deposit_enabled: false,
+                borrow_enabled: true,
+            },
+            ..th_default_asset_params()
+        },
+    );
 
     let err = execute(
         deps.as_mut(),
         mock_env(),
         mock_info(depositor_addr.as_str(), &coins(123, denom)),
         ExecuteMsg::Deposit {
-            on_behalf_of: None,
+            account_id: None,
         },
     )
     .unwrap_err();
@@ -162,52 +208,65 @@ fn depositing_to_disabled_market() {
     );
 }
 
-#[test]
-fn depositing_above_cap() {
+// note: the initial deposit amount set in the TestSuite is 11_000_000 uosmo
+#[test_case(
+    1_000_001,
+    12_000_000,
+    false;
+    "deposit cap exceeded, should fail"
+)]
+#[test_case(
+    999_999,
+    12_000_000,
+    true;
+    "deposit cap not exceeded, should work"
+)]
+fn depositing_above_cap(amount_to_deposit: u128, deposit_cap: u128, exp_ok: bool) {
     let TestSuite {
         mut deps,
         denom,
         depositor_addr,
+        initial_market,
         ..
     } = setup_test();
 
-    // set a deposit cap
-    MARKETS
-        .update(deps.as_mut().storage, denom, |opt| -> StdResult<_> {
-            let mut market = opt.unwrap();
-            market.collateral_total_scaled = Uint128::new(9_000_000) * SCALING_FACTOR;
-            market.deposit_cap = Uint128::new(10_000_000);
-            Ok(market)
-        })
-        .unwrap();
-
-    // try deposit with a big amount, should fail
-    let err = execute(
-        deps.as_mut(),
-        mock_env_at_block_time(10000100),
-        mock_info(depositor_addr.as_str(), &coins(1_000_001, denom)),
-        ExecuteMsg::Deposit {
-            on_behalf_of: None,
-        },
-    )
-    .unwrap_err();
-    assert_eq!(
-        err,
-        ContractError::DepositCapExceeded {
-            denom: denom.to_string()
-        }
-    );
-
-    // deposit a smaller amount, should work
-    let result = execute(
-        deps.as_mut(),
-        mock_env_at_block_time(10000100),
-        mock_info(depositor_addr.as_str(), &coins(123, denom)),
-        ExecuteMsg::Deposit {
-            on_behalf_of: None,
+    // set deposit cap
+    deps.querier.set_redbank_params(
+        denom,
+        AssetParams {
+            credit_manager: CmSettings {
+                whitelisted: false,
+                hls: None,
+            },
+            red_bank: RedBankSettings {
+                deposit_enabled: true,
+                borrow_enabled: true,
+            },
+            deposit_cap: Uint128::new(deposit_cap),
+            ..th_default_asset_params()
         },
     );
-    assert!(result.is_ok());
+
+    // try deposit with the given amount
+    let res = execute(
+        deps.as_mut(),
+        mock_env_at_block_time(initial_market.indexes_last_updated),
+        mock_info(depositor_addr.as_str(), &coins(amount_to_deposit, denom)),
+        ExecuteMsg::Deposit {
+            account_id: None,
+        },
+    );
+
+    if exp_ok {
+        assert!(res.is_ok());
+    } else {
+        assert_eq!(
+            res,
+            Err(ContractError::DepositCapExceeded {
+                denom: denom.to_string(),
+            }),
+        );
+    }
 }
 
 #[test]
@@ -237,7 +296,7 @@ fn depositing_without_existing_position() {
         mock_env_at_block_time(block_time),
         mock_info(depositor_addr.as_str(), &coins(deposit_amount, denom)),
         ExecuteMsg::Deposit {
-            on_behalf_of: None,
+            account_id: None,
         },
     )
     .unwrap();
@@ -251,6 +310,7 @@ fn depositing_without_existing_position() {
             contract_addr: MarsAddressType::Incentives.to_string(),
             msg: to_binary(&incentives::ExecuteMsg::BalanceChange {
                 user_addr: depositor_addr.clone(),
+                account_id: None,
                 denom: initial_market.denom.clone(),
                 user_amount_scaled_before: Uint128::zero(),
                 // NOTE: Protocol rewards accrued is zero, so here it's initial total supply
@@ -265,7 +325,6 @@ fn depositing_without_existing_position() {
         vec![
             attr("action", "deposit"),
             attr("sender", &depositor_addr),
-            attr("on_behalf_of", &depositor_addr),
             attr("denom", denom),
             attr("amount", deposit_amount.to_string()),
             attr("amount_scaled", expected_mint_amount),
@@ -286,7 +345,7 @@ fn depositing_without_existing_position() {
 
     // the depositor previously did not have a collateral position
     // a position should have been created with the correct scaled amount, and enabled by default
-    let collateral = COLLATERALS.load(deps.as_ref().storage, (&depositor_addr, denom)).unwrap();
+    let collateral = COLLATERALS.load(deps.as_ref().storage, (&depositor_addr, "", denom)).unwrap();
     assert_eq!(
         collateral,
         Collateral {
@@ -327,7 +386,7 @@ fn depositing_with_existing_position() {
         mock_env_at_block_time(block_time),
         mock_info(depositor_addr.as_str(), &coins(deposit_amount, denom)),
         ExecuteMsg::Deposit {
-            on_behalf_of: None,
+            account_id: None,
         },
     )
     .unwrap();
@@ -341,6 +400,7 @@ fn depositing_with_existing_position() {
             contract_addr: MarsAddressType::Incentives.to_string(),
             msg: to_binary(&incentives::ExecuteMsg::BalanceChange {
                 user_addr: depositor_addr.clone(),
+                account_id: None,
                 denom: initial_market.denom.clone(),
                 user_amount_scaled_before: collateral_amount_scaled,
                 // NOTE: Protocol rewards accrued is zero, so here it's initial total supply
@@ -353,7 +413,7 @@ fn depositing_with_existing_position() {
 
     // the depositor's scaled collateral amount should have been increased
     // however, the `enabled` status should not been affected
-    let collateral = COLLATERALS.load(deps.as_ref().storage, (&depositor_addr, denom)).unwrap();
+    let collateral = COLLATERALS.load(deps.as_ref().storage, (&depositor_addr, "", denom)).unwrap();
     let expected = collateral_amount_scaled + expected_mint_amount;
     assert_eq!(
         collateral,
@@ -362,153 +422,4 @@ fn depositing_with_existing_position() {
             enabled: false
         }
     );
-}
-
-#[test]
-fn depositing_on_behalf_of() {
-    let TestSuite {
-        mut deps,
-        denom,
-        depositor_addr,
-        initial_market,
-    } = setup_test();
-
-    let deposit_amount = 123456u128;
-    let on_behalf_of_addr = Addr::unchecked("jake");
-
-    // compute expected market parameters
-    let block_time = 10000300;
-    let expected_params =
-        th_get_expected_indices_and_rates(&initial_market, block_time, Default::default());
-    let expected_mint_amount = compute_scaled_amount(
-        Uint128::from(deposit_amount),
-        expected_params.liquidity_index,
-        ScalingOperation::Truncate,
-    )
-    .unwrap();
-    let expected_reward_amount_scaled = compute_scaled_amount(
-        expected_params.protocol_rewards_to_distribute,
-        expected_params.liquidity_index,
-        ScalingOperation::Truncate,
-    )
-    .unwrap();
-
-    let res = execute(
-        deps.as_mut(),
-        mock_env_at_block_time(block_time),
-        mock_info(depositor_addr.as_str(), &coins(deposit_amount, denom)),
-        ExecuteMsg::Deposit {
-            on_behalf_of: Some(on_behalf_of_addr.clone().into()),
-        },
-    )
-    .unwrap();
-
-    // NOTE: For this test, the accrued protocol reward is non-zero, so we do expect a message to
-    // update the index of the rewards collector.
-    assert_eq!(
-        res.messages,
-        vec![
-            SubMsg::new(WasmMsg::Execute {
-                contract_addr: MarsAddressType::Incentives.to_string(),
-                msg: to_binary(&incentives::ExecuteMsg::BalanceChange {
-                    user_addr: Addr::unchecked(MarsAddressType::RewardsCollector.to_string()),
-                    denom: initial_market.denom.clone(),
-                    user_amount_scaled_before: Uint128::zero(),
-                    total_amount_scaled_before: initial_market.collateral_total_scaled,
-                })
-                .unwrap(),
-                funds: vec![]
-            }),
-            SubMsg::new(WasmMsg::Execute {
-                contract_addr: MarsAddressType::Incentives.to_string(),
-                msg: to_binary(&incentives::ExecuteMsg::BalanceChange {
-                    user_addr: on_behalf_of_addr.clone(),
-                    denom: initial_market.denom.clone(),
-                    user_amount_scaled_before: Uint128::zero(),
-                    // NOTE: New collateral shares were minted to the rewards collector first, so
-                    // for the depositor this should be initial total supply + rewards shares minted
-                    total_amount_scaled_before: initial_market.collateral_total_scaled
-                        + expected_reward_amount_scaled,
-                })
-                .unwrap(),
-                funds: vec![]
-            })
-        ]
-    );
-
-    // depositor should not have created a new collateral position
-    let opt = COLLATERALS.may_load(deps.as_ref().storage, (&depositor_addr, denom)).unwrap();
-    assert!(opt.is_none());
-
-    // the recipient should have created a new collateral position
-    let collateral = COLLATERALS.load(deps.as_ref().storage, (&on_behalf_of_addr, denom)).unwrap();
-    assert_eq!(
-        collateral,
-        Collateral {
-            amount_scaled: expected_mint_amount,
-            enabled: true,
-        }
-    );
-}
-
-#[test]
-fn depositing_on_behalf_of_cannot_enable_collateral() {
-    let TestSuite {
-        mut deps,
-        denom,
-        depositor_addr,
-        ..
-    } = setup_test();
-
-    deps.querier.set_oracle_price(denom, Decimal::one());
-
-    let on_behalf_of_addr = Addr::unchecked("jake");
-
-    let block_time = 10000300;
-
-    // 'on_behalf_of_addr' deposit funds to their own account
-    execute(
-        deps.as_mut(),
-        mock_env_at_block_time(block_time),
-        mock_info(on_behalf_of_addr.as_str(), &coins(1u128, denom)),
-        ExecuteMsg::Deposit {
-            on_behalf_of: None,
-        },
-    )
-    .unwrap();
-
-    // 'on_behalf_of_addr' should have collateral enabled
-    let collateral = COLLATERALS.load(deps.as_ref().storage, (&on_behalf_of_addr, denom)).unwrap();
-    assert!(collateral.enabled);
-
-    // 'on_behalf_of_addr' disables asset as collateral
-    execute(
-        deps.as_mut(),
-        mock_env_at_block_time(block_time),
-        mock_info(on_behalf_of_addr.as_str(), &[]),
-        ExecuteMsg::UpdateAssetCollateralStatus {
-            denom: denom.to_string(),
-            enable: false,
-        },
-    )
-    .unwrap();
-
-    // verify asset is disabled as collateral for 'on_behalf_of_addr'
-    let collateral = COLLATERALS.load(deps.as_ref().storage, (&on_behalf_of_addr, denom)).unwrap();
-    assert!(!collateral.enabled);
-
-    // 'depositor_addr' deposits a small amount of funds to 'on_behalf_of_addr' to enable his asset as collateral
-    execute(
-        deps.as_mut(),
-        mock_env_at_block_time(block_time),
-        mock_info(depositor_addr.as_str(), &coins(1u128, denom)),
-        ExecuteMsg::Deposit {
-            on_behalf_of: Some(on_behalf_of_addr.to_string()),
-        },
-    )
-    .unwrap();
-
-    // 'on_behalf_of_addr' doesn't have the asset enabled as collateral
-    let collateral = COLLATERALS.load(deps.as_ref().storage, (&on_behalf_of_addr, denom)).unwrap();
-    assert!(!collateral.enabled);
 }

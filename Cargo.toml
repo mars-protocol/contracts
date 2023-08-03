@@ -3,11 +3,14 @@ members = [
   "contracts/address-provider",
   "contracts/incentives",
   "contracts/oracle/*",
+  "contracts/params",
   "contracts/swapper/*",
   "contracts/red-bank",
   "contracts/rewards-collector/*",
   "packages/chains/*",
   "packages/health",
+  "packages/interest-rate",
+  "packages/liquidation",
   "packages/testing",
   "packages/types",
   "packages/utils",
@@ -41,7 +44,7 @@ keywords = [
 anyhow            = "1.0.71"
 bech32            = "0.9.1"
 cosmwasm-schema   = "1.2.6"
-cosmwasm-std      = "1.2.6"
+cosmwasm-std      = "1.3.1"
 cw2               = "1.1.0"
 cw-storage-plus   = "1.0.1"
 cw-utils          = "1.0.1"
@@ -60,12 +63,14 @@ neutron-sdk       = "0.6.0"
 # dev-dependencies
 cw-multi-test     = "0.16.5"
 cw-it             = "0.1.0"
-osmosis-test-tube = "16.0.0"
+osmosis-test-tube = "=16.1.1"
 test-case         = "3.0.0"
 proptest          = "1.1.0"
 
 # packages
 mars-health         = { path = "./packages/health" }
+mars-interest-rate  = { path = "./packages/interest-rate" }
+mars-liquidation    = { path = "./packages/liquidation" }
 mars-osmosis        = { path = "./packages/chains/osmosis" }
 mars-red-bank-types = { path = "./packages/types" }
 mars-testing        = { path = "./packages/testing" }
@@ -77,6 +82,7 @@ mars-incentives                = { path = "./contracts/incentives" }
 mars-oracle-base               = { path = "./contracts/oracle/base" }
 mars-oracle-osmosis            = { path = "./contracts/oracle/osmosis" }
 mars-oracle-wasm               = { path = "./contracts/oracle/wasm" }
+mars-params                    = { path = "./contracts/params" }
 mars-red-bank                  = { path = "./contracts/red-bank" }
 mars-rewards-collector-base    = { path = "./contracts/rewards-collector/base" }
 mars-rewards-collector-osmosis = { path = "./contracts/rewards-collector/osmosis" }

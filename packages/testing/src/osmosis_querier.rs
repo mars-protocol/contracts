@@ -1,12 +1,11 @@
 use std::collections::HashMap;
 
 use cosmwasm_std::{to_binary, Binary, ContractResult, QuerierResult, SystemError};
-use mars_osmosis::helpers::QueryPoolResponse;
 use osmosis_std::types::osmosis::{
     downtimedetector::v1beta1::{
         RecoveredSinceDowntimeOfLengthRequest, RecoveredSinceDowntimeOfLengthResponse,
     },
-    poolmanager::v1beta1::{PoolRequest, SpotPriceRequest, SpotPriceResponse},
+    poolmanager::v1beta1::{PoolRequest, PoolResponse, SpotPriceRequest, SpotPriceResponse},
     twap::v1beta1::{
         ArithmeticTwapToNowRequest, ArithmeticTwapToNowResponse, GeometricTwapToNowRequest,
         GeometricTwapToNowResponse,
@@ -23,7 +22,7 @@ pub struct PriceKey {
 
 #[derive(Clone, Default)]
 pub struct OsmosisQuerier {
-    pub pools: HashMap<u64, QueryPoolResponse>,
+    pub pools: HashMap<u64, PoolResponse>,
 
     pub spot_prices: HashMap<PriceKey, SpotPriceResponse>,
     pub arithmetic_twap_prices: HashMap<PriceKey, ArithmeticTwapToNowResponse>,
@@ -34,7 +33,7 @@ pub struct OsmosisQuerier {
 
 impl OsmosisQuerier {
     pub fn handle_stargate_query(&self, path: &str, data: &Binary) -> Result<QuerierResult, ()> {
-        if path == "/osmosis.gamm.v1beta1.Query/Pool" {
+        if path == "/osmosis.poolmanager.v1beta1.Query/Pool" {
             let parse_osmosis_query: Result<PoolRequest, DecodeError> =
                 Message::decode(data.as_slice());
             if let Ok(osmosis_query) = parse_osmosis_query {
@@ -42,7 +41,7 @@ impl OsmosisQuerier {
             }
         }
 
-        if path == "/osmosis.gamm.v2.Query/SpotPrice" {
+        if path == "/osmosis.poolmanager.v1beta1.Query/SpotPrice" {
             let parse_osmosis_query: Result<SpotPriceRequest, DecodeError> =
                 Message::decode(data.as_slice());
             if let Ok(osmosis_query) = parse_osmosis_query {

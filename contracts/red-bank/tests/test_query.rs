@@ -1,7 +1,7 @@
 use cosmwasm_std::{testing::mock_env, Addr, Decimal, Uint128};
 use helpers::{set_collateral, th_init_market, th_setup};
+use mars_interest_rate::{get_scaled_debt_amount, get_underlying_debt_amount, SCALING_FACTOR};
 use mars_red_bank::{
-    interest_rates::{get_scaled_debt_amount, get_underlying_debt_amount, SCALING_FACTOR},
     query::{query_user_collaterals, query_user_debt, query_user_debts},
     state::DEBTS,
 };
@@ -31,7 +31,8 @@ fn query_collateral() {
 
     // Assert markets correctly return collateral status
     let collaterals =
-        query_user_collaterals(deps.as_ref(), &env.block, user_addr.clone(), None, None).unwrap();
+        query_user_collaterals(deps.as_ref(), &env.block, user_addr.clone(), None, None, None)
+            .unwrap();
     assert_eq!(
         collaterals,
         vec![UserCollateralResponse {
@@ -47,7 +48,7 @@ fn query_collateral() {
 
     // Assert markets correctly return collateral status
     let collaterals =
-        query_user_collaterals(deps.as_ref(), &env.block, user_addr, None, None).unwrap();
+        query_user_collaterals(deps.as_ref(), &env.block, user_addr, None, None, None).unwrap();
     assert_eq!(
         collaterals,
         vec![
