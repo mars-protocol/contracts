@@ -112,7 +112,7 @@ pub fn get_user_positions_map(
     user_addr: &Addr,
     oracle_addr: &Addr,
     params_addr: &Addr,
-) -> StdResult<HashMap<String, Position>> {
+) -> Result<HashMap<String, Position>, ContractError> {
     let block_time = env.block.time.seconds();
 
     // Find all denoms that the user has a collateral or debt position in

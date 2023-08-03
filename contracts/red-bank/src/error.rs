@@ -1,4 +1,6 @@
-use cosmwasm_std::{CheckedFromRatioError, CheckedMultiplyFractionError, OverflowError, StdError};
+use cosmwasm_std::{
+    CheckedFromRatioError, CheckedMultiplyFractionError, DivideByZeroError, OverflowError, StdError,
+};
 use cw_utils::PaymentError;
 use mars_health::error::HealthError;
 use mars_liquidation::error::LiquidationError;
@@ -32,6 +34,9 @@ pub enum ContractError {
 
     #[error("{0}")]
     CheckedMultiplyFraction(#[from] CheckedMultiplyFractionError),
+
+    #[error("{0}")]
+    DivideByZero(#[from] DivideByZeroError),
 
     #[error("{0}")]
     Health(#[from] HealthError),

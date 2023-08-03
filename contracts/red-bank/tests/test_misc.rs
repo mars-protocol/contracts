@@ -20,7 +20,6 @@ use mars_red_bank::{
 };
 use mars_red_bank_types::red_bank::{Debt, ExecuteMsg, Market};
 use mars_testing::{mock_env, mock_env_at_block_time, MockEnvParams};
-use mars_utils::math;
 
 use crate::helpers::th_default_asset_params;
 
@@ -338,11 +337,9 @@ fn update_asset_collateral() {
             * token_2_exchange_rate;
         let weighted_liquidation_threshold_in_base_asset =
             token_1_weighted_lt_in_base_asset + token_2_weighted_lt_in_base_asset;
-        let max_debt_for_valid_hf = math::divide_uint128_by_decimal(
-            weighted_liquidation_threshold_in_base_asset,
-            token_3_exchange_rate,
-        )
-        .unwrap();
+        let max_debt_for_valid_hf = weighted_liquidation_threshold_in_base_asset
+            .checked_div_floor(token_3_exchange_rate)
+            .unwrap();
         let token_3_debt_scaled = get_scaled_debt_amount(
             max_debt_for_valid_hf,
             &market_3_initial,
