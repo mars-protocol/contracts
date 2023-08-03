@@ -5,7 +5,6 @@ use std::{collections::HashMap, default::Default, mem::take, str::FromStr};
 use anyhow::Result as AnyResult;
 use cosmwasm_std::{coin, Addr, Coin, Decimal, Empty, StdResult, Uint128};
 use cw_multi_test::{App, AppResponse, BankSudo, BasicApp, Executor, SudoMsg};
-use mars_mock_pyth::msg::QueryMsg;
 use mars_oracle_osmosis::OsmosisPriceSourceUnchecked;
 use mars_params::{msg::AssetParamsUpdate, types::asset::AssetParams};
 use mars_red_bank_types::{
@@ -23,7 +22,7 @@ use mars_red_bank_types::{
     },
     rewards_collector,
 };
-use pyth_sdk_cw::{PriceFeedResponse, PriceIdentifier};
+use pyth_sdk_cw::PriceIdentifier;
 
 use crate::integration::mock_contracts::{
     mock_address_provider_contract, mock_incentives_contract, mock_oracle_osmosis_contract,
@@ -41,7 +40,7 @@ pub struct MockEnv {
     pub rewards_collector: RewardsCollector,
     pub params: Params,
     pub credit_manager: Addr,
-    pub pyth: Pyth,
+    pub pyth: Addr,
 }
 
 #[derive(Clone)]
@@ -71,11 +70,6 @@ pub struct RewardsCollector {
 
 #[derive(Clone)]
 pub struct Params {
-    pub contract_addr: Addr,
-}
-
-#[derive(Clone)]
-pub struct Pyth {
     pub contract_addr: Addr,
 }
 
@@ -304,24 +298,6 @@ impl Oracle {
                 &oracle::QueryMsg::Price {
                     denom: denom.to_string(),
                     kind: Some(Liquidation),
-                },
-            )
-            .unwrap()
-    }
-}
-
-impl Pyth {
-    pub fn query_price_feed(
-        &self,
-        env: &mut MockEnv,
-        price_id: PriceIdentifier,
-    ) -> PriceFeedResponse {
-        env.app
-            .wrap()
-            .query_wasm_smart(
-                self.contract_addr.clone(),
-                &QueryMsg::PriceFeed {
-                    id: price_id,
                 },
             )
             .unwrap()
@@ -880,9 +856,7 @@ impl MockEnvBuilder {
                 contract_addr: params_addr,
             },
             credit_manager: cm_addr,
-            pyth: Pyth {
-                contract_addr: pyth_addr,
-            },
+            pyth: pyth_addr,
         }
     }
 

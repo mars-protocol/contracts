@@ -21,7 +21,6 @@ use mars_testing::{
     integration::mock_env::{MockEnv, MockEnvBuilder},
     mock_env_at_block_time,
 };
-use pyth_sdk_cw::PriceIdentifier;
 
 use crate::helpers::{
     assert_err, liq_threshold_hf, merge_collaterals_and_debts, th_build_interests_updated_event,
@@ -982,34 +981,22 @@ fn liquidation_uses_correct_price_kind() {
     let red_bank = mock_env.red_bank.clone();
     let oracle = mock_env.oracle.clone();
     let pyth = mock_env.pyth.clone();
-    let pyth_contract = pyth.contract_addr.clone();
 
     let (_funded_amt, provider, liquidatee, liquidator) = setup_env(&mut mock_env);
 
     // change price to be able to liquidate
     oracle.set_price_source_fixed(&mut mock_env, "usd", Decimal::from_str("1000000").unwrap());
-    let max_confidence = Decimal::percent(10u64);
-    let max_deviation = Decimal::percent(15u64);
     oracle.set_price_source_pyth(
         &mut mock_env,
         "uusdc",
-        pyth_contract.to_string(),
-        max_confidence,
-        max_deviation,
+        pyth.to_string(),
+        Decimal::percent(10u64),
+        Decimal::percent(15u64),
     );
 
-    // liquidate user
-    let usdc_repay_amt = 120;
-    let recipient = Addr::unchecked("recipient");
+    // liquidation should succeed because it uses simpler pricing for Pyth
     red_bank
-        .liquidate_with_different_recipient(
-            &mut mock_env,
-            &liquidator,
-            &liquidatee,
-            "uosmo",
-            &[coin(usdc_repay_amt, "uusdc")],
-            Some(recipient.to_string()),
-        )
+        .liquidate(&mut mock_env, &liquidator, &liquidatee, "uosmo", &[coin(120, "uusdc")])
         .unwrap();
 
     // confidence is higher than max_confidence so borrow will fail
