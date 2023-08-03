@@ -179,7 +179,13 @@ pub fn query(deps: Deps, env: Env, msg: QueryMsg) -> Result<Binary, ContractErro
             user,
         } => {
             let user_addr = deps.api.addr_validate(&user)?;
-            to_binary(&query::query_user_position(deps, env, user_addr)?)
+            to_binary(&query::query_user_position(deps, env, user_addr, false)?)
+        }
+        QueryMsg::UserPositionLiquidationPricing {
+            user,
+        } => {
+            let user_addr = deps.api.addr_validate(&user)?;
+            to_binary(&query::query_user_position(deps, env, user_addr, true)?)
         }
         QueryMsg::ScaledLiquidityAmount {
             denom,

@@ -34,6 +34,7 @@ mars-params         = { workspace = true }
 mars-red-bank-types = { workspace = true }
 mars-utils          = { workspace = true }
 thiserror           = { workspace = true }
+pyth-sdk-cw         = { workspace = true }
 
 [dev-dependencies]
 anyhow          = { workspace = true }

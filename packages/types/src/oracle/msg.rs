@@ -116,6 +116,7 @@ pub mod helpers {
     use cosmwasm_std::{Decimal, QuerierWrapper, StdError, StdResult};
 
     use super::{ActionKind, PriceResponse, QueryMsg};
+    use crate::oracle::ActionKind::Liquidation;
 
     pub fn query_price(
         querier: &QuerierWrapper,
@@ -137,6 +138,21 @@ pub mod helpers {
                     denom, e
                 ))
             })?;
+        Ok(res.price)
+    }
+
+    pub fn query_price_for_liquidate(
+        querier: &QuerierWrapper,
+        oracle: impl Into<String>,
+        denom: impl Into<String>,
+    ) -> StdResult<Decimal> {
+        let res: PriceResponse = querier.query_wasm_smart(
+            oracle.into(),
+            &QueryMsg::Price {
+                denom: denom.into(),
+                kind: Some(Liquidation),
+            },
+        )?;
         Ok(res.price)
     }
 }

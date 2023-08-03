@@ -360,6 +360,7 @@ fn update_asset_collateral() {
             &user_addr,
             &Addr::unchecked("oracle"),
             &Addr::unchecked("params"),
+            false,
         )
         .unwrap();
         let health = health::compute_position_health(&positions).unwrap();

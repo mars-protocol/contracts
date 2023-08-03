@@ -2,6 +2,7 @@
 members = [
   "contracts/address-provider",
   "contracts/incentives",
+  "contracts/mock-pyth",
   "contracts/oracle/*",
   "contracts/params",
   "contracts/swapper/*",
@@ -59,6 +60,7 @@ cw-paginate       = "0.2.1"
 astroport         = "2.8.0"
 strum             = "0.24.1"
 neutron-sdk       = "0.6.0"
+serde_json        = "1.0"
 
 # dev-dependencies
 cw-multi-test     = "0.16.5"
@@ -79,6 +81,7 @@ mars-utils          = { path = "./packages/utils" }
 # contracts
 mars-address-provider          = { path = "./contracts/address-provider" }
 mars-incentives                = { path = "./contracts/incentives" }
+mars-mock-pyth                 = { path = "./contracts/mock-pyth" }
 mars-oracle-base               = { path = "./contracts/oracle/base" }
 mars-oracle-osmosis            = { path = "./contracts/oracle/osmosis" }
 mars-oracle-wasm               = { path = "./contracts/oracle/wasm" }

@@ -58,3 +58,12 @@ pub fn mock_params_osmosis_contract() -> Box<dyn Contract<Empty>> {
     );
     Box::new(contract)
 }
+
+pub fn mock_pyth_contract() -> Box<dyn Contract<Empty>> {
+    let contract = ContractWrapper::new(
+        mars_mock_pyth::contract::execute,
+        mars_mock_pyth::contract::instantiate,
+        mars_mock_pyth::contract::query,
+    );
+    Box::new(contract)
+}

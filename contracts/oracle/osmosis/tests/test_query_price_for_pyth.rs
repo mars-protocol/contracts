@@ -303,7 +303,7 @@ fn querying_liquidation_pyth_price_if_signed() {
 }
 
 #[test]
-fn querying_default_pyth_price_if_confidence_exceeded() {
+fn querying_pyth_price_if_confidence_exceeded() {
     let mut deps = helpers::setup_test_for_pyth();
 
     let price_id = PriceIdentifier::from_hex(
@@ -347,6 +347,7 @@ fn querying_default_pyth_price_if_confidence_exceeded() {
         },
     );
 
+    // should fail for Default pricing
     let res_err = entry::query(
         deps.as_ref(),
         mock_env_at_block_time(publish_time),
@@ -362,10 +363,23 @@ fn querying_default_pyth_price_if_confidence_exceeded() {
             reason: "price confidence deviation 0.051 exceeds max allowed 0.05".to_string()
         }
     );
+
+    // should succeed for Liquidation pricing
+    let res = entry::query(
+        deps.as_ref(),
+        mock_env_at_block_time(publish_time),
+        QueryMsg::Price {
+            denom: "uatom".to_string(),
+            kind: Some(ActionKind::Liquidation),
+        },
+    )
+    .unwrap();
+    let res: PriceResponse = from_binary(&res).unwrap();
+    assert_eq!(res.price, Decimal::from_ratio(101u128, 1u128));
 }
 
 #[test]
-fn querying_default_pyth_price_if_deviation_exceeded() {
+fn querying_pyth_price_if_deviation_exceeded() {
     let mut deps = helpers::setup_test_for_pyth();
 
     let price_id = PriceIdentifier::from_hex(
@@ -411,6 +425,7 @@ fn querying_default_pyth_price_if_deviation_exceeded() {
         },
     );
 
+    // should fail for Default pricing
     let res_err = entry::query(
         deps.as_ref(),
         mock_env_at_block_time(publish_time),
@@ -426,6 +441,19 @@ fn querying_default_pyth_price_if_deviation_exceeded() {
             reason: "price deviation 0.061 exceeds max allowed 0.06".to_string()
         }
     );
+
+    // should succeed for Liquidation pricing
+    let res = entry::query(
+        deps.as_ref(),
+        mock_env_at_block_time(publish_time),
+        QueryMsg::Price {
+            denom: "uatom".to_string(),
+            kind: Some(ActionKind::Liquidation),
+        },
+    )
+    .unwrap();
+    let res: PriceResponse = from_binary(&res).unwrap();
+    assert_eq!(res.price, Decimal::from_ratio(1061u128, 10u128));
 
     // ema_price > price
     deps.querier.set_pyth_price(
@@ -449,6 +477,7 @@ fn querying_default_pyth_price_if_deviation_exceeded() {
         },
     );
 
+    // should fail for Default pricing
     let res_err = entry::query(
         deps.as_ref(),
         mock_env_at_block_time(publish_time),
@@ -464,6 +493,19 @@ fn querying_default_pyth_price_if_deviation_exceeded() {
             reason: "price deviation 0.060001 exceeds max allowed 0.06".to_string()
         }
     );
+
+    // should succeed for Liquidation pricing
+    let res = entry::query(
+        deps.as_ref(),
+        mock_env_at_block_time(publish_time),
+        QueryMsg::Price {
+            denom: "uatom".to_string(),
+            kind: Some(ActionKind::Liquidation),
+        },
+    )
+    .unwrap();
+    let res: PriceResponse = from_binary(&res).unwrap();
+    assert_eq!(res.price, Decimal::from_ratio(939999u128, 10000u128));
 }
 
 #[test]

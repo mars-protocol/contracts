@@ -972,6 +972,37 @@ fn response_verification() {
     assert_eq!(res.messages, expected_msgs);
 }
 
+#[test]
+fn liquidation_uses_correct_price_kind() {
+    let mut mock_env = MockEnvBuilder::new(None, Addr::unchecked("owner"))
+        .target_health_factor(Decimal::from_ratio(12u128, 10u128))
+        .build();
+
+    let red_bank = mock_env.red_bank.clone();
+    let oracle = mock_env.oracle.clone();
+    let pyth = mock_env.pyth.clone();
+
+    let (_funded_amt, provider, liquidatee, liquidator) = setup_env(&mut mock_env);
+
+    // change price to be able to liquidate
+    oracle.set_price_source_fixed(&mut mock_env, "usd", Decimal::from_str("1000000").unwrap());
+    oracle.set_price_source_pyth(
+        &mut mock_env,
+        "uusdc",
+        pyth.to_string(),
+        Decimal::percent(10u64),
+        Decimal::percent(15u64),
+    );
+
+    // liquidation should succeed because it uses simpler pricing for Pyth
+    red_bank
+        .liquidate(&mut mock_env, &liquidator, &liquidatee, "uosmo", &[coin(120, "uusdc")])
+        .unwrap();
+
+    // confidence is higher than max_confidence so borrow will fail
+    red_bank.borrow(&mut mock_env, &provider, "uusdc", 300).unwrap_err();
+}
+
 // recipient - can be liquidator or another address which can receive collateral
 fn expected_messages(
     user_addr: &Addr,
