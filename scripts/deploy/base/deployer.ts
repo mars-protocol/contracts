@@ -21,9 +21,13 @@ import { InstantiateMsg as ParamsInstantiateMsg } from '../../types/generated/ma
 import { ExecuteMsg as ParamsExecuteMsg } from '../../types/generated/mars-params/MarsParams.types'
 import {
   InstantiateMsg as RedBankInstantiateMsg,
+  ExecuteMsg as RedBankExecuteMsg,
   QueryMsg as RedBankQueryMsg,
 } from '../../types/generated/mars-red-bank/MarsRedBank.types'
-import { InstantiateMsg as AddressProviderInstantiateMsg } from '../../types/generated/mars-address-provider/MarsAddressProvider.types'
+import {
+  AddressResponseItem,
+  InstantiateMsg as AddressProviderInstantiateMsg,
+} from '../../types/generated/mars-address-provider/MarsAddressProvider.types'
 import { InstantiateMsg as IncentivesInstantiateMsg } from '../../types/generated/mars-incentives/MarsIncentives.types'
 import { InstantiateMsg as RewardsInstantiateMsg } from '../../types/generated/mars-rewards-collector-base/MarsRewardsCollectorBase.types'
 import {
@@ -217,6 +221,40 @@ export class Deployer {
     printYellow(`${assetConfig.symbol} updated.`)
   }
 
+  async initializeMarket(assetConfig: AssetConfig) {
+    if (this.storage.execute.marketsUpdated.includes(assetConfig.denom)) {
+      printBlue(`${assetConfig.symbol} already initialized in red-bank contract`)
+      return
+    }
+    printBlue(`Initializing ${assetConfig.symbol}...`)
+
+    const msg: RedBankExecuteMsg = {
+      init_asset: {
+        denom: assetConfig.denom,
+        params: {
+          reserve_factor: assetConfig.reserve_factor,
+          interest_rate_model: {
+            optimal_utilization_rate: assetConfig.interest_rate_model.optimal_utilization_rate,
+            base: assetConfig.interest_rate_model.base,
+            slope_1: assetConfig.interest_rate_model.slope_1,
+            slope_2: assetConfig.interest_rate_model.slope_2,
+          },
+        },
+      },
+    }
+
+    await this.client.execute(
+      this.deployerAddress,
+      this.storage.addresses['red-bank']!,
+      msg,
+      'auto',
+    )
+
+    printYellow(`${assetConfig.symbol} initialized`)
+
+    this.storage.execute.marketsUpdated.push(assetConfig.denom)
+  }
+
   async updateVaultConfig(vaultConfig: VaultConfig) {
     if (this.storage.execute.vaultsUpdated.includes(vaultConfig.addr)) {
       printBlue(`${vaultConfig.symbol} already updated in Params contract`)
@@ -273,38 +311,42 @@ export class Deployer {
 
   async updateAddressProvider() {
     printBlue('Updating addresses in Address Provider...')
-    const addressesToSet = [
+    const addressesToSet: AddressResponseItem[] = [
       {
+        address: this.storage.addresses['rewards-collector']!,
         address_type: 'rewards_collector',
-        address: this.storage.addresses['rewards-collector'],
       },
       {
+        address: this.storage.addresses.incentives!,
         address_type: 'incentives',
-        address: this.storage.addresses.incentives,
       },
       {
+        address: this.storage.addresses.oracle!,
         address_type: 'oracle',
-        address: this.storage.addresses.oracle,
       },
       {
+        address: this.storage.addresses['red-bank']!,
         address_type: 'red_bank',
-        address: this.storage.addresses['red-bank'],
       },
       {
-        address_type: 'fee_collector',
         address: this.config.feeCollectorAddr,
+        address_type: 'fee_collector',
       },
       {
-        address_type: 'safety_fund',
         address: this.config.safetyFundAddr,
+        address_type: 'safety_fund',
       },
       {
-        address_type: 'protocol_admin',
         address: this.config.protocolAdminAddr,
+        address_type: 'protocol_admin',
       },
       {
+        address: this.storage.addresses.swapper!,
         address_type: 'swapper',
-        address: this.storage.addresses.swapper,
+      },
+      {
+        address: this.storage.addresses.params!,
+        address_type: 'params',
       },
     ]
 
@@ -633,6 +675,23 @@ export class Deployer {
     })) as { proposed: string }
 
     assert.equal(swapperConfig.proposed, this.config.multisigAddr)
+  }
+
+  async updateParamsContractOwner() {
+    const msg = {
+      update_owner: {
+        propose_new_owner: {
+          proposed: this.storage.owner,
+        },
+      },
+    }
+    await this.client.execute(this.deployerAddress, this.storage.addresses.params!, msg, 'auto')
+    printYellow('Owner updated to Mutlisig for Params')
+    const paramsConfig = (await this.client.queryContractSmart(this.storage.addresses.params!, {
+      owner: {},
+    })) as { proposed: string }
+
+    assert.equal(paramsConfig.proposed, this.config.multisigAddr)
   }
 
   async updateAddressProviderContractOwner() {

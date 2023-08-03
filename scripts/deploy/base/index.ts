@@ -19,6 +19,7 @@ export const taskRunner = async (config: DeploymentConfig) => {
       `mars_rewards_collector_${config.rewardsCollectorName}.wasm`,
     )
     await deployer.upload('swapper', `mars_swapper_${config.swapperDexName}.wasm`)
+    await deployer.upload('params', `mars_params.wasm`)
 
     // Instantiate contracts
     deployer.setOwnerAddr()
@@ -32,9 +33,10 @@ export const taskRunner = async (config: DeploymentConfig) => {
     await deployer.saveDeploymentAddrsToFile()
 
     // setup
-    await deployer.updateAddressProvider()
+    await deployer.updateAddressProvider() // CreditManager address in address-provider should be set once known
     for (const asset of config.assets) {
       await deployer.updateAssetParams(asset)
+      await deployer.initializeMarket(asset)
     }
     for (const vault of config.vaults) {
       await deployer.updateVaultConfig(vault)
@@ -59,6 +61,7 @@ export const taskRunner = async (config: DeploymentConfig) => {
       await deployer.updateOracleContractOwner()
       await deployer.updateRewardsContractOwner()
       await deployer.updateSwapperContractOwner()
+      await deployer.updateParamsContractOwner()
       await deployer.updateAddressProviderContractOwner()
       printGreen('It is confirmed that all contracts have transferred ownership to the Multisig')
     } else {

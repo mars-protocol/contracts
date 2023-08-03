@@ -33,6 +33,13 @@ export const osmoAsset: AssetConfig = {
     deposit_enabled: true,
   },
   deposit_cap: '2500000000000',
+  reserve_factor: '0.2',
+  interest_rate_model: {
+    optimal_utilization_rate: '0.8',
+    base: '0',
+    slope_1: '0.2',
+    slope_2: '2',
+  },
 }
 
 export const atomAsset: AssetConfig = {
@@ -55,6 +62,13 @@ export const atomAsset: AssetConfig = {
     deposit_enabled: true,
   },
   deposit_cap: '100000000000',
+  reserve_factor: '0.2',
+  interest_rate_model: {
+    optimal_utilization_rate: '0.8',
+    base: '0',
+    slope_1: '0.2',
+    slope_2: '2',
+  },
 }
 
 export const axlUSDCAsset: AssetConfig = {
@@ -77,6 +91,13 @@ export const axlUSDCAsset: AssetConfig = {
     deposit_enabled: true,
   },
   deposit_cap: '500000000000',
+  reserve_factor: '0.2',
+  interest_rate_model: {
+    optimal_utilization_rate: '0.8',
+    base: '0',
+    slope_1: '0.2',
+    slope_2: '2',
+  },
 }
 
 export const atomOracle: OracleConfig = {
@@ -165,6 +186,6 @@ export const osmosisMainnet: DeploymentConfig = {
   vaults: [],
   oracleConfigs: [atomOracle, axlUSDCOracle],
   targetHealthFactor: '1.2',
-  incentiveEpochDuration: 86400,
+  incentiveEpochDuration: 604800, // 1 week
   maxWhitelistedIncentiveDenoms: 10,
 }

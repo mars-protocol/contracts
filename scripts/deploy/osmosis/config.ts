@@ -34,13 +34,6 @@ export const osmoAsset: AssetConfig = {
     starting_lb: '0',
   },
   protocol_liquidation_fee: '0.5',
-  // reserve_factor: '0.2',
-  // interest_rate_model: {
-  //   optimal_utilization_rate: '0.6',
-  //   base: '0',
-  //   slope_1: '0.15',
-  //   slope_2: '3',
-  // },
   symbol: 'OSMO',
   credit_manager: {
     whitelisted: true,
@@ -50,6 +43,13 @@ export const osmoAsset: AssetConfig = {
     deposit_enabled: true,
   },
   deposit_cap: '2500000000000',
+  reserve_factor: '0.2',
+  interest_rate_model: {
+    optimal_utilization_rate: '0.6',
+    base: '0',
+    slope_1: '0.15',
+    slope_2: '3',
+  },
 }
 
 export const atomAsset: AssetConfig = {
@@ -63,13 +63,6 @@ export const atomAsset: AssetConfig = {
     starting_lb: '0',
   },
   protocol_liquidation_fee: '0.5',
-  // reserve_factor: '0.2',
-  // interest_rate_model: {
-  //   optimal_utilization_rate: '0.6',
-  //   base: '0',
-  //   slope_1: '0.15',
-  //   slope_2: '3',
-  // },
   symbol: 'ATOM',
   credit_manager: {
     whitelisted: true,
@@ -79,6 +72,13 @@ export const atomAsset: AssetConfig = {
     deposit_enabled: true,
   },
   deposit_cap: '100000000000',
+  reserve_factor: '0.2',
+  interest_rate_model: {
+    optimal_utilization_rate: '0.6',
+    base: '0',
+    slope_1: '0.15',
+    slope_2: '3',
+  },
 }
 
 export const atomAssetTest: AssetConfig = {
@@ -92,13 +92,6 @@ export const atomAssetTest: AssetConfig = {
     starting_lb: '0',
   },
   protocol_liquidation_fee: '0.5',
-  // reserve_factor: '0.2',
-  // interest_rate_model: {
-  //   optimal_utilization_rate: '0.6',
-  //   base: '0',
-  //   slope_1: '0.15',
-  //   slope_2: '3',
-  // },
   symbol: 'ATOM',
   credit_manager: {
     whitelisted: true,
@@ -108,6 +101,13 @@ export const atomAssetTest: AssetConfig = {
     deposit_enabled: true,
   },
   deposit_cap: '100000000000',
+  reserve_factor: '0.2',
+  interest_rate_model: {
+    optimal_utilization_rate: '0.6',
+    base: '0',
+    slope_1: '0.15',
+    slope_2: '3',
+  },
 }
 
 export const axlUSDCAsset: AssetConfig = {
@@ -121,13 +121,6 @@ export const axlUSDCAsset: AssetConfig = {
     starting_lb: '0',
   },
   protocol_liquidation_fee: '0.5',
-  // reserve_factor: '0.2',
-  // interest_rate_model: {
-  //   optimal_utilization_rate: '0.8',
-  //   base: '0',
-  //   slope_1: '0.2',
-  //   slope_2: '2',
-  // },
   symbol: 'axlUSDC',
   credit_manager: {
     whitelisted: true,
@@ -137,6 +130,13 @@ export const axlUSDCAsset: AssetConfig = {
     deposit_enabled: true,
   },
   deposit_cap: '500000000000',
+  reserve_factor: '0.2',
+  interest_rate_model: {
+    optimal_utilization_rate: '0.8',
+    base: '0',
+    slope_1: '0.2',
+    slope_2: '2',
+  },
 }
 
 export const axlUSDCAssetTest: AssetConfig = {
@@ -150,13 +150,6 @@ export const axlUSDCAssetTest: AssetConfig = {
     starting_lb: '0',
   },
   protocol_liquidation_fee: '0.5',
-  // reserve_factor: '0.2',
-  // interest_rate_model: {
-  //   optimal_utilization_rate: '0.8',
-  //   base: '0',
-  //   slope_1: '0.2',
-  //   slope_2: '2',
-  // },
   symbol: 'axlUSDC',
   credit_manager: {
     whitelisted: true,
@@ -166,6 +159,13 @@ export const axlUSDCAssetTest: AssetConfig = {
     deposit_enabled: true,
   },
   deposit_cap: '500000000000',
+  reserve_factor: '0.2',
+  interest_rate_model: {
+    optimal_utilization_rate: '0.8',
+    base: '0',
+    slope_1: '0.2',
+    slope_2: '2',
+  },
 }
 
 export const marsAssetTest: AssetConfig = {
@@ -179,13 +179,6 @@ export const marsAssetTest: AssetConfig = {
     starting_lb: '0',
   },
   protocol_liquidation_fee: '0.5',
-  // reserve_factor: '0.2',
-  // interest_rate_model: {
-  //   optimal_utilization_rate: '0.8',
-  //   base: '0',
-  //   slope_1: '0.2',
-  //   slope_2: '2',
-  // },
   symbol: 'mars',
   credit_manager: {
     whitelisted: true,
@@ -195,6 +188,13 @@ export const marsAssetTest: AssetConfig = {
     deposit_enabled: true,
   },
   deposit_cap: '500000000000',
+  reserve_factor: '0.2',
+  interest_rate_model: {
+    optimal_utilization_rate: '0.8',
+    base: '0',
+    slope_1: '0.2',
+    slope_2: '2',
+  },
 }
 
 // export const osmoOracle: OracleConfig = {
@@ -428,7 +428,7 @@ export const osmosisLocalConfig: DeploymentConfig = {
   assets: [osmoAsset, atomAsset, axlUSDCAsset],
   vaults: [],
   oracleConfigs: [atomOracle, axlUSDCOracle],
-  incentiveEpochDuration: 86400,
+  incentiveEpochDuration: 604800, // 1 week
   maxWhitelistedIncentiveDenoms: 10,
   targetHealthFactor: '1.2',
 }

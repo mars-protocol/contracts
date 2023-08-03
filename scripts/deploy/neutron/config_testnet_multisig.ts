@@ -273,13 +273,6 @@ export const ntrnAsset: AssetConfig = {
   },
   protocol_liquidation_fee: '0.5',
   // liquidation_bonus: '0.15',
-  // reserve_factor: '0.1',
-  // interest_rate_model: {
-  //   optimal_utilization_rate: '0.6',
-  //   base: '0',
-  //   slope_1: '0.15',
-  //   slope_2: '3',
-  // },
   symbol: 'NTRN',
   credit_manager: {
     whitelisted: false,
@@ -289,6 +282,13 @@ export const ntrnAsset: AssetConfig = {
     deposit_enabled: true,
   },
   deposit_cap: '5000000000000',
+  reserve_factor: '0.1',
+  interest_rate_model: {
+    optimal_utilization_rate: '0.6',
+    base: '0',
+    slope_1: '0.15',
+    slope_2: '3',
+  },
 }
 
 export const atomAsset: AssetConfig = {
@@ -303,13 +303,6 @@ export const atomAsset: AssetConfig = {
   },
   protocol_liquidation_fee: '0.5',
   // liquidation_bonus: '0.1',
-  // reserve_factor: '0.1',
-  // interest_rate_model: {
-  //   optimal_utilization_rate: '0.7',
-  //   base: '0',
-  //   slope_1: '0.2',
-  //   slope_2: '3',
-  // },
   symbol: 'ATOM',
   credit_manager: {
     whitelisted: false,
@@ -319,6 +312,13 @@ export const atomAsset: AssetConfig = {
     deposit_enabled: true,
   },
   deposit_cap: '150000000000',
+  reserve_factor: '0.1',
+  interest_rate_model: {
+    optimal_utilization_rate: '0.7',
+    base: '0',
+    slope_1: '0.2',
+    slope_2: '3',
+  },
 }
 
 export const axlUSDCAsset: AssetConfig = {
@@ -333,13 +333,6 @@ export const axlUSDCAsset: AssetConfig = {
   },
   protocol_liquidation_fee: '0.5',
   // liquidation_bonus: '0.1',
-  // reserve_factor: '0.1',
-  // interest_rate_model: {
-  //   optimal_utilization_rate: '0.8',
-  //   base: '0',
-  //   slope_1: '0.125',
-  //   slope_2: '2',
-  // },
   symbol: 'axlUSDC',
   credit_manager: {
     whitelisted: false,
@@ -349,6 +342,13 @@ export const axlUSDCAsset: AssetConfig = {
     deposit_enabled: true,
   },
   deposit_cap: '500000000000',
+  reserve_factor: '0.1',
+  interest_rate_model: {
+    optimal_utilization_rate: '0.8',
+    base: '0',
+    slope_1: '0.125',
+    slope_2: '2',
+  },
 }
 
 export const neutronTetstnetMultisigConfig: DeploymentConfig = {
