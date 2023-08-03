@@ -33,7 +33,7 @@ export const taskRunner = async (config: DeploymentConfig) => {
     await deployer.saveDeploymentAddrsToFile()
 
     // setup
-    await deployer.updateAddressProvider()
+    await deployer.updateAddressProvider() // CreditManager address in address-provider should be set once known
     for (const asset of config.assets) {
       await deployer.updateAssetParams(asset)
       await deployer.initializeMarket(asset)

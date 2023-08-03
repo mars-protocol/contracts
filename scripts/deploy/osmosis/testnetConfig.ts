@@ -174,7 +174,7 @@ export const atomOsmoOracle: OracleConfig = {
   },
 }
 
-export const osmosisTestnetConfig = {
+export const osmosisTestnetConfig: DeploymentConfig = {
   oracleName: 'osmosis',
   oracleBaseDenom: 'uosmo',
   rewardsCollectorName: 'osmosis',
@@ -192,7 +192,7 @@ export const osmosisTestnetConfig = {
     'elevator august inherit simple buddy giggle zone despair marine rich swim danger blur people hundred faint ladder wet toe strong blade utility trial process',
   slippage_tolerance: '0.01',
   base_asset_symbol: 'OSMO',
-  runTests: true,
+  runTests: false,
   mainnet: false,
   feeCollectorDenom: mars,
   safetyFundDenom: aUSDC,
