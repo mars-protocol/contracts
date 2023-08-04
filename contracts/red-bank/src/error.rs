@@ -155,4 +155,12 @@ pub enum ContractError {
 
     #[error("Cannot repay uncollateralized loan on behalf of another user")]
     CannotRepayUncollateralizedLoanOnBehalfOf {},
+
+    #[error(
+        "Liquidation did not result in improved health factor: before: {prev_hf:?}, after: {new_hf:?}"
+    )]
+    HealthNotImproved {
+        prev_hf: String,
+        new_hf: String,
+    },
 }
