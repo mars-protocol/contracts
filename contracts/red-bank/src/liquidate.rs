@@ -257,8 +257,9 @@ fn assert_liq_threshold(
     let (new_health, _) =
         get_health_and_positions(deps, env, user_addr, oracle_addr, params_addr, true)?;
 
+    // liquidation_health_factor = None only if debt = 0 but liquidation is not possible
     match (prev_health.liquidation_health_factor, new_health.liquidation_health_factor) {
-        (Some(prev_liq_hf), Some(new_liq_hf)) if prev_liq_hf > new_liq_hf => {
+        (Some(prev_liq_hf), Some(new_liq_hf)) if prev_liq_hf >= new_liq_hf => {
             Err(ContractError::HealthNotImproved {
                 prev_hf: prev_liq_hf.to_string(),
                 new_hf: new_liq_hf.to_string(),
