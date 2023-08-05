@@ -15,6 +15,7 @@ use mars_rover_health_types::{
     },
     HealthResult, SwapKind,
 };
+#[cfg(feature = "javascript")]
 use tsify::Tsify;
 
 use crate::{CollateralValue, DenomsData, VaultsData};
@@ -22,8 +23,8 @@ use crate::{CollateralValue, DenomsData, VaultsData};
 /// `HealthComputer` is a shared struct with the frontend that gets compiled to wasm.
 /// For this reason, it uses a dependency-injection-like pattern where all required data is needed up front.
 #[cw_serde]
-#[derive(Tsify)]
-#[tsify(into_wasm_abi, from_wasm_abi)]
+#[cfg_attr(feature = "javascript", derive(Tsify))]
+#[cfg_attr(feature = "javascript", tsify(into_wasm_abi, from_wasm_abi))]
 pub struct HealthComputer {
     pub kind: AccountKind,
     pub positions: Positions,

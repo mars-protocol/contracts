@@ -13,7 +13,7 @@ doctest    = false
 [features]
 backtraces = ["cosmwasm-std/backtraces"]
 default    = ["console_error_panic_hook"]
-javascript = []
+javascript = ["tsify", "wasm-bindgen", "mars-rover-health-types/javascript"]
 
 [dependencies]
 cosmwasm-schema         = { workspace = true }
@@ -25,8 +25,8 @@ mars-rover-health-types = { workspace = true }
 schemars                = { workspace = true }
 serde                   = { workspace = true }
 serde_json              = { workspace = true }
-tsify                   = { workspace = true }
-wasm-bindgen            = { workspace = true }
+tsify                   = { workspace = true, optional = true }
+wasm-bindgen            = { workspace = true, optional = true }
 
 # The `console_error_panic_hook` crate provides better debugging of panics by
 # logging them with `console.error`. This is great for development, but requires

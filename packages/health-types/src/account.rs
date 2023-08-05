@@ -2,6 +2,7 @@ use std::fmt;
 
 use cosmwasm_schema::cw_serde;
 use cosmwasm_std::Addr;
+#[cfg(feature = "javascript")]
 use tsify::Tsify;
 
 #[cw_serde]
@@ -17,8 +18,8 @@ impl fmt::Display for AccountKind {
 }
 
 #[cw_serde]
-#[derive(Tsify)]
-#[tsify(into_wasm_abi, from_wasm_abi)]
+#[cfg_attr(feature = "javascript", derive(Tsify))]
+#[cfg_attr(feature = "javascript", tsify(into_wasm_abi, from_wasm_abi))]
 pub enum BorrowTarget {
     Deposit,
     Wallet,
@@ -27,8 +28,8 @@ pub enum BorrowTarget {
     },
 }
 #[cw_serde]
-#[derive(Tsify)]
-#[tsify(into_wasm_abi, from_wasm_abi)]
+#[cfg_attr(feature = "javascript", derive(Tsify))]
+#[cfg_attr(feature = "javascript", tsify(into_wasm_abi, from_wasm_abi))]
 pub enum SwapKind {
     Default,
     Margin,

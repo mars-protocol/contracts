@@ -1,4 +1,5 @@
 # Rover
+
 A generalized credit protocol built on Mars lending market
 
 ## Overview
@@ -8,7 +9,6 @@ DeFi lending protocols, such as Aave and Compound, typically require users to fi
 Rover takes a different approach for Mars protocol, which utilizes a generalized credit account manager built on top of Mars' Red Bank. This approach will allow borrowers to retain control of their collateral assets, while at the same time providing a return for lenders.
 
 ### Credit manager and credit accounts
-
 
 The target audience of the credit manager is risk-seeking investors who wish to undertake leveraged trading or yield farming activities.
 
@@ -88,6 +88,24 @@ Vault writers interested in integrating with Rover must write their vaults
 to abide by the [Cosmos Vault Standard](https://github.com/apollodao/cosmos-vault-standard) and
 make a governance proposal.
 
+### Health computer crates
+
+The `mars-rover-health-{types,computer}` crates have two use cases:
+
+- To be imported into CosmWasm contracts as libraries. When doing this, **do not** enable the `javascript` feature:
+
+  ```toml
+  [dependencies]
+  # the `javascript` feature is disabled by default. do not enable unless needed!
+  mars-rover-health-types = { path = "./packages/health-types" }
+  ```
+
+- To be compiled into a Wasm binary and run in the browser. To do this, use the following command; **do** enable the `javascript` feature. The compiled Wasm binary can be found in the `./target/wasm32-unknown-unknown/release/` folder.
+
+  ```shell
+  cargo build --release -p mars-rover-health-computer --target wasm32-unknown-unknown --features javascript
+  ```
+
 ### Additional thoughts
 
 A generalized credit protocol would enable leveraged trading or yield farming capabilities that are largely available only on centralized exchanges today. End users would be able to borrow more than they've deposited into the lending protocol while still ensuring all credit accounts are fully collateralized. Mars Hub's decentralized architecture would also give third parties the ability to propose and write new trading and yield farming strategies that could tap Red Bank deposits on any supported blockchain. The proposed protocol would increase utility for traders. This new source of demand may generate higher yields for depositors and more fees for Mars Hub and MARS stakers.
@@ -97,6 +115,7 @@ A generalized credit protocol would enable leveraged trading or yield farming ca
 ### Environment Setup
 
 - [Install rustup](https://rustup.rs/). Once installed, make sure you have the wasm32 target:
+
 ```shell
 rustup default stable
 rustup update stable
@@ -120,6 +139,7 @@ cargo install --force cargo-make
 ### Build
 
 Pull down Rover repo locally
+
 ```shell
 git clone https://github.com/mars-protocol/rover
 cd rover
@@ -127,23 +147,25 @@ cd rover
 
 Run `cargo build` to ensure it compiles fine.
 
-
 ### Test
 
 Requires building the wasm binaries for the contracts:
+
 ```shell
 docker run --rm -v "$(pwd)":/code \
-  --mount type=volume,source="$(basename "$(pwd)")_cache",target=/code/target \
+  --mount type=volume,source="$(basename "$(pwd)")_cache",target=/target \
   --mount type=volume,source=registry_cache,target=/usr/local/cargo/registry \
-  cosmwasm/rust-optimizer:0.12.10
+  cosmwasm/rust-optimizer:0.13.0
 ```
 
 For Rust cw-multi tests + osmosis-testing suite (requires mars_swapper_osmosis.wasm from previous step):
+
 ```shell
 cargo test
 ```
 
 For Typescript testnet deployment with the deployer address being the owner and admin of the contracts & end-to-end tests:
+
 ```shell
 cd scripts
 yarn install
@@ -151,6 +173,7 @@ yarn deploy:osmosis:testnet-deployer
 ```
 
 For Typescript testnet deployment with the multisig address being the owner and admin of the contracts & end-to-end tests:
+
 ```shell
 cd scripts
 yarn install
@@ -158,6 +181,7 @@ yarn deploy:osmosis:testnet-multisig
 ```
 
 For mainnet:
+
 ```shell
 cd scripts
 yarn install

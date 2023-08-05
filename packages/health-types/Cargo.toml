@@ -15,6 +15,7 @@ doctest    = false
 
 [features]
 backtraces = ["cosmwasm-std/backtraces"]
+javascript = ["tsify", "wasm-bindgen"]
 
 [dependencies]
 cosmwasm-schema     = { workspace = true }
@@ -26,5 +27,5 @@ schemars            = { workspace = true }
 serde               = { workspace = true }
 serde_json          = { workspace = true }
 thiserror           = { workspace = true }
-tsify               = { workspace = true }
-wasm-bindgen        = { workspace = true }
+tsify               = { workspace = true, optional = true }
+wasm-bindgen        = { workspace = true, optional = true }
