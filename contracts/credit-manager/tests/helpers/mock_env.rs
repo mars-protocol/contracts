@@ -35,9 +35,11 @@ use mars_params::{
     },
 };
 use mars_red_bank_types::{
+    address_provider::{self, MarsAddressType},
     incentives::{ExecuteMsg::BalanceChange, QueryMsg::UserUnclaimedRewards},
     oracle::ActionKind,
     red_bank::{
+        self, InitOrUpdateAssetParams, InterestRateModel,
         QueryMsg::{UserCollateral, UserDebt},
         UserCollateralResponse, UserDebtResponse,
     },
@@ -75,10 +77,10 @@ use mars_rover_health_types::{
 use mars_v2_zapper_mock::msg::{InstantiateMsg as ZapperInstantiateMsg, LpConfig};
 
 use crate::helpers::{
-    lp_token_info, mock_account_nft_contract, mock_health_contract, mock_incentives_contract,
-    mock_oracle_contract, mock_params_contract, mock_red_bank_contract, mock_rover_contract,
-    mock_swapper_contract, mock_v2_zapper_contract, mock_vault_contract, AccountToFund, CoinInfo,
-    VaultTestInfo,
+    lp_token_info, mock_account_nft_contract, mock_address_provider_contract, mock_health_contract,
+    mock_incentives_contract, mock_oracle_contract, mock_params_contract, mock_red_bank_contract,
+    mock_rover_contract, mock_swapper_contract, mock_v2_zapper_contract, mock_vault_contract,
+    AccountToFund, CoinInfo, VaultTestInfo,
 };
 
 pub const DEFAULT_RED_BANK_COIN_BALANCE: Uint128 = Uint128::new(1_000_000);
@@ -98,6 +100,7 @@ pub struct MockEnvBuilder {
     pub emergency_owner: Option<Addr>,
     pub vault_configs: Option<Vec<VaultTestInfo>>,
     pub coin_params: Option<Vec<CoinInfo>>,
+    pub address_provider: Option<Addr>,
     pub oracle: Option<Oracle>,
     pub params: Option<Params>,
     pub red_bank: Option<RedBankUnchecked>,
@@ -120,6 +123,7 @@ impl MockEnv {
             emergency_owner: None,
             vault_configs: None,
             coin_params: None,
+            address_provider: None,
             oracle: None,
             params: None,
             red_bank: None,
@@ -772,11 +776,44 @@ impl MockEnvBuilder {
         }
     }
 
+    fn set_address(&mut self, address_type: MarsAddressType, address: Addr) {
+        let address_provider_addr = self.get_address_provider();
+        self.app
+            .execute_contract(
+                self.get_owner(),
+                address_provider_addr,
+                &address_provider::ExecuteMsg::SetAddress {
+                    address_type,
+                    address: address.into(),
+                },
+                &[],
+            )
+            .unwrap();
+    }
+
     fn add_params_to_contract(&mut self) {
         let params_to_set = self.get_coin_params();
         let params_contract = self.get_params_contract();
+        let red_bank_contract = self.get_red_bank();
 
         for coin_info in params_to_set {
+            // initialize red bank market
+            self.app
+                .execute_contract(
+                    Addr::unchecked("red_bank_contract_owner"),
+                    Addr::unchecked(red_bank_contract.address()),
+                    &red_bank::ExecuteMsg::InitAsset {
+                        denom: coin_info.denom.clone(),
+                        params: InitOrUpdateAssetParams {
+                            reserve_factor: Some(Decimal::zero()),
+                            interest_rate_model: Some(InterestRateModel::default()),
+                        },
+                    },
+                    &[],
+                )
+                .unwrap();
+
+            // save asset params to mars-params contract
             self.app
                 .execute_contract(
                     self.get_owner(),
@@ -834,28 +871,62 @@ impl MockEnvBuilder {
         let health_contract = self.get_health_contract().into();
         let params = self.get_params_contract().into();
 
-        self.app.instantiate_contract(
-            code_id,
-            self.get_owner(),
-            &InstantiateMsg {
-                owner: self.get_owner().to_string(),
-                red_bank,
-                oracle,
-                max_unlocking_positions,
-                swapper,
-                zapper,
-                health_contract,
-                params,
-                incentives,
-            },
-            &[],
-            "mock-rover-contract",
-            None,
-        )
+        let addr = self
+            .app
+            .instantiate_contract(
+                code_id,
+                self.get_owner(),
+                &InstantiateMsg {
+                    owner: self.get_owner().to_string(),
+                    red_bank,
+                    oracle,
+                    max_unlocking_positions,
+                    swapper,
+                    zapper,
+                    health_contract,
+                    params,
+                    incentives,
+                },
+                &[],
+                "mock-rover-contract",
+                None,
+            )
+            .unwrap();
+
+        self.set_address(MarsAddressType::CreditManager, addr.clone());
+
+        Ok(addr)
     }
 
     fn get_owner(&self) -> Addr {
         self.owner.clone().unwrap_or_else(|| Addr::unchecked("owner"))
+    }
+
+    fn get_address_provider(&mut self) -> Addr {
+        if self.address_provider.is_none() {
+            let addr = self.deploy_address_provider();
+            self.address_provider = Some(addr);
+        }
+        self.address_provider.clone().unwrap()
+    }
+
+    fn deploy_address_provider(&mut self) -> Addr {
+        let contract_code_id = self.app.store_code(mock_address_provider_contract());
+        let owner = self.get_owner();
+
+        self.app
+            .instantiate_contract(
+                contract_code_id,
+                owner.clone(),
+                &address_provider::InstantiateMsg {
+                    owner: owner.into(),
+                    prefix: "".into(),
+                },
+                &[],
+                "mock-address-provider",
+                None,
+            )
+            .unwrap()
     }
 
     fn get_oracle(&mut self) -> Oracle {
@@ -923,6 +994,7 @@ impl MockEnvBuilder {
     pub fn deploy_params_contract(&mut self) -> Params {
         let contract_code_id = self.app.store_code(mock_params_contract());
         let owner = self.get_owner();
+        let address_provider = self.get_address_provider();
 
         let addr = self
             .app
@@ -931,6 +1003,7 @@ impl MockEnvBuilder {
                 owner.clone(),
                 &ParamsInstantiateMsg {
                     owner: owner.to_string(),
+                    address_provider: address_provider.into(),
                     target_health_factor: self
                         .target_health_factor
                         .unwrap_or(Decimal::from_str("1.2").unwrap()),
@@ -1023,6 +1096,8 @@ impl MockEnvBuilder {
                 }))
                 .unwrap();
         }
+
+        self.set_address(MarsAddressType::RedBank, addr.clone());
 
         RedBankUnchecked::new(addr.to_string())
     }

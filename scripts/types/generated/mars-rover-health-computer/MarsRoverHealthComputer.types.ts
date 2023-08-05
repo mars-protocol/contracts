@@ -47,6 +47,7 @@ export interface DenomsData {
 export interface AssetParamsBaseForAddr {
   credit_manager: CmSettingsForAddr
   denom: string
+  deposit_cap: Uint128
   liquidation_bonus: LiquidationBonus
   liquidation_threshold: Decimal
   max_loan_to_value: Decimal
@@ -70,7 +71,6 @@ export interface LiquidationBonus {
 }
 export interface RedBankSettings {
   borrow_enabled: boolean
-  deposit_cap: Uint128
   deposit_enabled: boolean
 }
 export interface Positions {

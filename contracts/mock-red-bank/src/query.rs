@@ -1,7 +1,14 @@
 use cosmwasm_std::{Deps, StdResult, Uint128};
-use mars_red_bank_types::red_bank::{UserCollateralResponse, UserDebtResponse};
+use mars_red_bank_types::red_bank::{Market, UserCollateralResponse, UserDebtResponse};
 
-use crate::helpers::{load_collateral_amount, load_collateral_denoms, load_debt_amount};
+use crate::{
+    helpers::{load_collateral_amount, load_collateral_denoms, load_debt_amount},
+    state::MARKETS,
+};
+
+pub fn query_market(deps: Deps, denom: String) -> StdResult<Market> {
+    MARKETS.load(deps.storage, &denom)
+}
 
 pub fn query_debt(deps: Deps, user: String, denom: String) -> StdResult<UserDebtResponse> {
     let user_addr = deps.api.addr_validate(&user)?;

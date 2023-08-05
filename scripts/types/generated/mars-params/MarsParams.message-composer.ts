@@ -37,6 +37,7 @@ import {
   ArrayOfVaultConfigBaseForAddr,
   VaultConfigBaseForAddr,
   OwnerResponse,
+  TotalDepositResponse,
 } from './MarsParams.types'
 export interface MarsParamsMessage {
   contractAddress: string

@@ -37,6 +37,7 @@ import {
   ArrayOfVaultConfigBaseForAddr,
   VaultConfigBaseForAddr,
   OwnerResponse,
+  TotalDepositResponse,
 } from './MarsParams.types'
 import { MarsParamsQueryClient, MarsParamsClient } from './MarsParams.client'
 export const marsParamsQueryKeys = {
@@ -65,6 +66,10 @@ export const marsParamsQueryKeys = {
     [
       { ...marsParamsQueryKeys.address(contractAddress)[0], method: 'target_health_factor', args },
     ] as const,
+  totalDeposit: (contractAddress: string | undefined, args?: Record<string, unknown>) =>
+    [
+      { ...marsParamsQueryKeys.address(contractAddress)[0], method: 'total_deposit', args },
+    ] as const,
 }
 export interface MarsParamsReactQuery<TResponse, TData = TResponse> {
   client: MarsParamsQueryClient | undefined
@@ -74,6 +79,28 @@ export interface MarsParamsReactQuery<TResponse, TData = TResponse> {
   > & {
     initialData?: undefined
   }
+}
+export interface MarsParamsTotalDepositQuery<TData>
+  extends MarsParamsReactQuery<TotalDepositResponse, TData> {
+  args: {
+    denom: string
+  }
+}
+export function useMarsParamsTotalDepositQuery<TData = TotalDepositResponse>({
+  client,
+  args,
+  options,
+}: MarsParamsTotalDepositQuery<TData>) {
+  return useQuery<TotalDepositResponse, Error, TData>(
+    marsParamsQueryKeys.totalDeposit(client?.contractAddress, args),
+    () =>
+      client
+        ? client.totalDeposit({
+            denom: args.denom,
+          })
+        : Promise.reject(new Error('Invalid client')),
+    { ...options, enabled: !!client && (options?.enabled != undefined ? options.enabled : true) },
+  )
 }
 export interface MarsParamsTargetHealthFactorQuery<TData>
   extends MarsParamsReactQuery<Decimal, TData> {}

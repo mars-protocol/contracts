@@ -62,7 +62,6 @@ fn random_coin_info() -> impl Strategy<Value = AssetParams> {
                 red_bank: RedBankSettings {
                     deposit_enabled: true,
                     borrow_enabled: true,
-                    deposit_cap: Default::default(),
                 },
                 max_loan_to_value,
                 liquidation_threshold,
@@ -73,6 +72,7 @@ fn random_coin_info() -> impl Strategy<Value = AssetParams> {
                     max_lb: Default::default(),
                 },
                 protocol_liquidation_fee: Default::default(),
+                deposit_cap: Default::default(),
             }
         },
     )

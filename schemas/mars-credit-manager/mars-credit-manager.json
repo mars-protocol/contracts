@@ -903,6 +903,32 @@
             "additionalProperties": false
           },
           {
+            "description": "Assert that the total deposit amounts of the given denoms across Red Bank and Rover do not exceed their respective deposit caps.",
+            "type": "object",
+            "required": [
+              "assert_deposit_caps"
+            ],
+            "properties": {
+              "assert_deposit_caps": {
+                "type": "object",
+                "required": [
+                  "denoms"
+                ],
+                "properties": {
+                  "denoms": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    },
+                    "uniqueItems": true
+                  }
+                },
+                "additionalProperties": false
+              }
+            },
+            "additionalProperties": false
+          },
+          {
             "description": "Adds coin to a vault strategy",
             "type": "object",
             "required": [

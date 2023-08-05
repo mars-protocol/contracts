@@ -37,7 +37,6 @@ fn uses_liquidation_pricing() {
             red_bank: RedBankSettings {
                 deposit_enabled: false,
                 borrow_enabled: false,
-                deposit_cap: Default::default(),
             },
             max_loan_to_value: Decimal::from_atomics(4523u128, 4).unwrap(),
             liquidation_threshold: Decimal::from_atomics(5u128, 1).unwrap(),
@@ -48,6 +47,7 @@ fn uses_liquidation_pricing() {
                 max_lb: Decimal::percent(10u64),
             },
             protocol_liquidation_fee: Decimal::percent(2u64),
+            deposit_cap: Default::default(),
         },
     };
 

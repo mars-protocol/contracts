@@ -1,3 +1,5 @@
+use std::collections::BTreeSet;
+
 use cosmwasm_std::{
     to_binary, Addr, CosmosMsg, DepsMut, Env, MessageInfo, Response, StdResult, WasmMsg,
 };
@@ -13,7 +15,7 @@ use mars_rover_health_types::AccountKind;
 use crate::{
     borrow::borrow,
     claim_rewards::claim_rewards,
-    deposit::deposit,
+    deposit::{assert_deposit_caps, deposit},
     health::{assert_max_ltv, query_health_state},
     hls::assert_account_requirements,
     lend::lend,
@@ -74,10 +76,34 @@ pub fn dispatch_actions(
     let mut received_coins = Coins::try_from(info.funds)?;
     let prev_health_state = query_health_state(deps.as_ref(), account_id, ActionKind::Default)?;
 
+    // We use a Set to record all denoms whose deposited amount may go up as the
+    // result of any action. We invoke the AssertDepositCaps callback in the end
+    // to make sure that none of the deposit cap is exceeded.
+    //
+    // Additionally, we use a BTreeSet (instead of a Vec or HashSet) to ensure
+    // uniqueness and determininism.
+    //
+    // There are a few actions that may result in an asset's deposit amount
+    // going up:
+    // - Deposit: we check the deposited denom
+    // - SwapExactIn: we check the output denom
+    // - ClaimRewards: we don't check here; the reward amount is likely small so
+    //   won't have much impact; this is also difficult to handle given that now
+    //   we have multi-rewards
+    // - ExitVault/ExitVaultUnlocked: we don't check here; it isn't reasonable
+    //   to not allow a user to exit a vault because deposit cap will be exceeded
+    //
+    // Note that Borrow/Lend/Reclaim does not impact total deposit amount,
+    // because they simply move assets between Red Bank and Rover. We don't
+    // check these actions.
+    let mut denoms_for_cap_check = BTreeSet::new();
+
     for action in actions {
         match action {
             Action::Deposit(coin) => {
                 response = deposit(&mut deps, response, account_id, &coin, &mut received_coins)?;
+                // check the deposit cap of the deposited denom
+                denoms_for_cap_check.insert(coin.denom);
             }
             Action::Withdraw(coin) => callbacks.push(CallbackMsg::Withdraw {
                 account_id: account_id.to_string(),
@@ -158,12 +184,16 @@ pub fn dispatch_actions(
                 coin_in,
                 denom_out,
                 slippage,
-            } => callbacks.push(CallbackMsg::SwapExactIn {
-                account_id: account_id.to_string(),
-                coin_in,
-                denom_out,
-                slippage,
-            }),
+            } => {
+                callbacks.push(CallbackMsg::SwapExactIn {
+                    account_id: account_id.to_string(),
+                    coin_in,
+                    denom_out: denom_out.clone(),
+                    slippage,
+                });
+                // check the deposit cap of the swap output denom
+                denoms_for_cap_check.insert(denom_out);
+            }
             Action::ExitVault {
                 vault,
                 amount,
@@ -233,6 +263,11 @@ pub fn dispatch_actions(
             account_id: account_id.to_string(),
             prev_health_state,
         },
+        // After user selected actions, we assert that the relevant deposit caps
+        // are not exceeded.
+        CallbackMsg::AssertDepositCaps {
+            denoms: denoms_for_cap_check,
+        },
         // Removes guard so that subsequent action dispatches can be made
         CallbackMsg::RemoveReentrancyGuard {},
     ]);
@@ -291,6 +326,9 @@ pub fn execute_callback(
             account_id,
             prev_health_state,
         } => assert_max_ltv(deps.as_ref(), &account_id, prev_health_state),
+        CallbackMsg::AssertDepositCaps {
+            denoms,
+        } => assert_deposit_caps(deps.as_ref(), denoms),
         CallbackMsg::EnterVault {
             account_id,
             vault,

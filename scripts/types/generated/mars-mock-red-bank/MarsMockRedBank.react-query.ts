@@ -87,6 +87,17 @@ export const marsMockRedBankQueryKeys = {
     [
       { ...marsMockRedBankQueryKeys.address(contractAddress)[0], method: 'user_position', args },
     ] as const,
+  userPositionLiquidationPricing: (
+    contractAddress: string | undefined,
+    args?: Record<string, unknown>,
+  ) =>
+    [
+      {
+        ...marsMockRedBankQueryKeys.address(contractAddress)[0],
+        method: 'user_position_liquidation_pricing',
+        args,
+      },
+    ] as const,
   scaledLiquidityAmount: (contractAddress: string | undefined, args?: Record<string, unknown>) =>
     [
       {
@@ -223,6 +234,26 @@ export function useMarsMockRedBankScaledLiquidityAmountQuery<TData = Uint128>({
         ? client.scaledLiquidityAmount({
             amount: args.amount,
             denom: args.denom,
+          })
+        : Promise.reject(new Error('Invalid client')),
+    { ...options, enabled: !!client && (options?.enabled != undefined ? options.enabled : true) },
+  )
+}
+export interface MarsMockRedBankUserPositionLiquidationPricingQuery<TData>
+  extends MarsMockRedBankReactQuery<UserPositionResponse, TData> {
+  args: {
+    user: string
+  }
+}
+export function useMarsMockRedBankUserPositionLiquidationPricingQuery<
+  TData = UserPositionResponse,
+>({ client, args, options }: MarsMockRedBankUserPositionLiquidationPricingQuery<TData>) {
+  return useQuery<UserPositionResponse, Error, TData>(
+    marsMockRedBankQueryKeys.userPositionLiquidationPricing(client?.contractAddress, args),
+    () =>
+      client
+        ? client.userPositionLiquidationPricing({
+            user: args.user,
           })
         : Promise.reject(new Error('Invalid client')),
     { ...options, enabled: !!client && (options?.enabled != undefined ? options.enabled : true) },

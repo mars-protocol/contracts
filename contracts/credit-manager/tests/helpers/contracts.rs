@@ -24,6 +24,15 @@ pub fn mock_account_nft_contract() -> Box<dyn Contract<Empty>> {
     Box::new(contract)
 }
 
+pub fn mock_address_provider_contract() -> Box<dyn Contract<Empty>> {
+    let contract = ContractWrapper::new(
+        mars_address_provider::contract::execute,
+        mars_address_provider::contract::instantiate,
+        mars_address_provider::contract::query,
+    );
+    Box::new(contract)
+}
+
 pub fn mock_red_bank_contract() -> Box<dyn Contract<Empty>> {
     let contract = ContractWrapper::new(
         mars_mock_red_bank::contract::execute,

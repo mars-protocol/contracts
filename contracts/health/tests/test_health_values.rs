@@ -127,7 +127,6 @@ fn adds_vault_base_denoms_to_oracle_and_red_bank() {
             red_bank: RedBankSettings {
                 deposit_enabled: false,
                 borrow_enabled: false,
-                deposit_cap: Default::default(),
             },
             max_loan_to_value,
             liquidation_threshold,
@@ -138,6 +137,7 @@ fn adds_vault_base_denoms_to_oracle_and_red_bank() {
                 max_lb: Decimal::percent(10u64),
             },
             protocol_liquidation_fee: Decimal::percent(2u64),
+            deposit_cap: Default::default(),
         },
     };
 
@@ -193,12 +193,12 @@ fn whitelisted_coins_work() {
         red_bank: RedBankSettings {
             deposit_enabled: false,
             borrow_enabled: false,
-            deposit_cap: Default::default(),
         },
         max_loan_to_value,
         liquidation_threshold,
         liquidation_bonus,
         protocol_liquidation_fee: Decimal::percent(2u64),
+        deposit_cap: Default::default(),
     };
 
     let update = AddOrUpdate {
@@ -294,7 +294,6 @@ fn vault_whitelist_affects_max_ltv() {
             red_bank: RedBankSettings {
                 deposit_enabled: false,
                 borrow_enabled: false,
-                deposit_cap: Default::default(),
             },
             max_loan_to_value: Decimal::from_str("0.4523").unwrap(),
             liquidation_threshold: Decimal::from_str("0.5").unwrap(),
@@ -305,6 +304,7 @@ fn vault_whitelist_affects_max_ltv() {
                 max_lb: Decimal::percent(10u64),
             },
             protocol_liquidation_fee: Decimal::percent(2u64),
+            deposit_cap: Default::default(),
         },
     };
 

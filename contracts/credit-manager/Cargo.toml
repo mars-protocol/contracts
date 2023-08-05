@@ -37,13 +37,15 @@ mars-rover              = { workspace = true }
 mars-rover-health-types = { workspace = true }
 
 [dev-dependencies]
-anyhow               = { workspace = true }
-cw-multi-test        = { workspace = true }
-itertools            = { workspace = true }
-mars-mock-incentives = { workspace = true }
-mars-mock-oracle     = { workspace = true }
-mars-mock-red-bank   = { workspace = true }
-mars-mock-vault      = { workspace = true }
-mars-rover-health    = { workspace = true }
-mars-swapper-mock    = { workspace = true }
-mars-v2-zapper-mock  = { workspace = true }
+anyhow                = { workspace = true }
+cw-multi-test         = { workspace = true }
+itertools             = { workspace = true }
+mars-address-provider = { workspace = true }
+mars-mock-incentives  = { workspace = true }
+mars-mock-oracle      = { workspace = true }
+mars-mock-red-bank    = { workspace = true }
+mars-mock-vault       = { workspace = true }
+mars-rover-health     = { workspace = true }
+mars-swapper-mock     = { workspace = true }
+mars-v2-zapper-mock   = { workspace = true }
+test-case             = { workspace = true }

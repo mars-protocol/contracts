@@ -82,7 +82,7 @@ checksum = "cc6dde6e4ed435a4c1ee4e73592f5ba9da2151af10076cc04858746af9352d09"
 dependencies = [
  "proc-macro2",
  "quote",
- "syn 2.0.27",
+ "syn 2.0.28",
 ]
 
 [[package]]
@@ -134,6 +134,12 @@ name = "base64ct"
 version = "1.6.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "8c3c1a368f70d6cf7302d78f8f7093da241fb8e8807c05cc9e51a125895a6d5b"
+
+[[package]]
+name = "bech32"
+version = "0.9.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "d86b93f97252c47b41663388e6d155714a9d0c398b99f1005cbc5f978b29f445"
 
 [[package]]
 name = "bindgen"
@@ -256,9 +262,12 @@ checksum = "89b2fd2a0dcf38d7971e2194b6b6eebab45ae01067456a7fd93d5547a61b70be"
 
 [[package]]
 name = "cc"
-version = "1.0.79"
+version = "1.0.81"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "50d30906286121d95be3d479533b458f87493b30a4b5f79a607db8f5d11aa91f"
+checksum = "6c6b2562119bf28c3439f7f02db99faf0aa1a8cdfe5772a2ee155d32227239f0"
+dependencies = [
+ "libc",
+]
 
 [[package]]
 name = "cexpr"
@@ -386,9 +395,9 @@ dependencies = [
 
 [[package]]
 name = "cosmwasm-crypto"
-version = "1.3.0"
+version = "1.3.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "0d076a08ec01ed23c4396aca98ec73a38fa1fee5f310465add52b4108181c7a8"
+checksum = "7e272708a9745dad8b591ef8a718571512130f2b39b33e3d7a27c558e3069394"
 dependencies = [
  "digest 0.10.7",
  "ed25519-zebra",
@@ -399,18 +408,18 @@ dependencies = [
 
 [[package]]
 name = "cosmwasm-derive"
-version = "1.3.0"
+version = "1.3.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "dec361f3c09d7b41221948fc17be9b3c96cb58e55a02f82da36f888a651f2584"
+checksum = "296db6a3caca5283425ae0cf347f4e46999ba3f6620dbea8939a0e00347831ce"
 dependencies = [
  "syn 1.0.109",
 ]
 
 [[package]]
 name = "cosmwasm-schema"
-version = "1.3.0"
+version = "1.3.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "bb6b2fb76758ef59cddc77f2e2ae91c22f77da49037e9f182e9c2833f0e959b1"
+checksum = "63c337e097a089e5b52b5d914a7ff6613332777f38ea6d9d36e1887cd0baa72e"
 dependencies = [
  "cosmwasm-schema-derive",
  "schemars",
@@ -421,9 +430,9 @@ dependencies = [
 
 [[package]]
 name = "cosmwasm-schema-derive"
-version = "1.3.0"
+version = "1.3.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "2bfa39422f0d9f1c9a6fd3711573258495314dfa3aae738ea825ecd9964bc659"
+checksum = "766cc9e7c1762d8fc9c0265808910fcad755200cd0e624195a491dd885a61169"
 dependencies = [
  "proc-macro2",
  "quote",
@@ -432,9 +441,9 @@ dependencies = [
 
 [[package]]
 name = "cosmwasm-std"
-version = "1.3.0"
+version = "1.3.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "1f6dc2ee23313add5ecacc3ccac217b9967ad9d2d11bd56e5da6aa65a9da6138"
+checksum = "eb5e05a95fd2a420cca50f4e94eb7e70648dac64db45e90403997ebefeb143bd"
 dependencies = [
  "base64",
  "bnum",
@@ -886,9 +895,9 @@ dependencies = [
 
 [[package]]
 name = "errno"
-version = "0.3.1"
+version = "0.3.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "4bcfec3a70f97c962c307b2d2c56e358cf1d00b558d74262b5f929ee8cc7e73a"
+checksum = "6b30f669a7961ef1631673d2766cc92f52d64f7ef354d4fe0ddfd30ed52f0f4f"
 dependencies = [
  "errno-dragonfly",
  "libc",
@@ -1018,7 +1027,7 @@ checksum = "89ca545a94061b6365f2c7355b4b32bd20df3ff95f02da9329b34ccc3bd6ee72"
 dependencies = [
  "proc-macro2",
  "quote",
- "syn 2.0.27",
+ "syn 2.0.28",
 ]
 
 [[package]]
@@ -1417,9 +1426,9 @@ checksum = "f7012b1bbb0719e1097c47611d3898568c546d597c2e74d66f6087edd5233ff4"
 
 [[package]]
 name = "linux-raw-sys"
-version = "0.4.3"
+version = "0.4.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "09fc20d2ca12cb9f044c93e3bd6d32d523e6e2ec3db4f7b2939cd99026ecd3f0"
+checksum = "57bcfdad1b858c2db7c38303a6d2ad4dfaf5eb53dfeb0910128b2c26d6158503"
 
 [[package]]
 name = "log"
@@ -1441,9 +1450,23 @@ dependencies = [
  "cw721-base 0.16.0",
  "cw721-base 0.18.0",
  "mars-mock-rover-health",
- "mars-red-bank-types 1.1.0-ntrn-2",
+ "mars-red-bank-types",
  "mars-rover-health-types",
  "serde_json",
+ "thiserror",
+]
+
+[[package]]
+name = "mars-address-provider"
+version = "1.2.0"
+source = "git+https://github.com/mars-protocol/red-bank?rev=18e9c56#18e9c565df15c2a5ea5fa92da561b0c7cb570294"
+dependencies = [
+ "bech32",
+ "cosmwasm-std",
+ "cw-storage-plus 1.1.0",
+ "cw2 1.1.0",
+ "mars-owner",
+ "mars-red-bank-types",
  "thiserror",
 ]
 
@@ -1464,6 +1487,7 @@ dependencies = [
  "cw721-base 0.18.0",
  "itertools 0.11.0",
  "mars-account-nft",
+ "mars-address-provider",
  "mars-liquidation",
  "mars-mock-incentives",
  "mars-mock-oracle",
@@ -1471,29 +1495,41 @@ dependencies = [
  "mars-mock-vault",
  "mars-owner",
  "mars-params",
- "mars-red-bank-types 1.1.0-ntrn-2",
+ "mars-red-bank-types",
  "mars-rover",
  "mars-rover-health",
  "mars-rover-health-types",
  "mars-swapper-mock",
  "mars-v2-zapper-mock",
+ "test-case",
 ]
 
 [[package]]
 name = "mars-health"
-version = "1.1.0"
-source = "git+https://github.com/mars-protocol/red-bank?rev=cf28835abb717b00a2f30eef06db4ba32d3eeae2#cf28835abb717b00a2f30eef06db4ba32d3eeae2"
+version = "1.2.0"
+source = "git+https://github.com/mars-protocol/red-bank?rev=18e9c56#18e9c565df15c2a5ea5fa92da561b0c7cb570294"
 dependencies = [
  "cosmwasm-std",
  "mars-params",
- "mars-red-bank-types 1.1.0",
+ "mars-red-bank-types",
  "thiserror",
+]
+
+[[package]]
+name = "mars-interest-rate"
+version = "1.2.0"
+source = "git+https://github.com/mars-protocol/red-bank?rev=18e9c56#18e9c565df15c2a5ea5fa92da561b0c7cb570294"
+dependencies = [
+ "cosmwasm-schema",
+ "cosmwasm-std",
+ "mars-red-bank-types",
+ "mars-utils",
 ]
 
 [[package]]
 name = "mars-liquidation"
 version = "1.0.0"
-source = "git+https://github.com/mars-protocol/red-bank?rev=cf28835abb717b00a2f30eef06db4ba32d3eeae2#cf28835abb717b00a2f30eef06db4ba32d3eeae2"
+source = "git+https://github.com/mars-protocol/red-bank?rev=18e9c56#18e9c565df15c2a5ea5fa92da561b0c7cb570294"
 dependencies = [
  "cosmwasm-std",
  "mars-health",
@@ -1521,7 +1557,7 @@ dependencies = [
  "cosmwasm-schema",
  "cosmwasm-std",
  "cw-storage-plus 1.1.0",
- "mars-red-bank-types 1.1.0-ntrn-2",
+ "mars-red-bank-types",
 ]
 
 [[package]]
@@ -1531,7 +1567,7 @@ dependencies = [
  "cosmwasm-schema",
  "cosmwasm-std",
  "cw-storage-plus 1.1.0",
- "mars-red-bank-types 1.1.0-ntrn-2",
+ "mars-red-bank-types",
 ]
 
 [[package]]
@@ -1542,7 +1578,7 @@ dependencies = [
  "cosmwasm-std",
  "cw-storage-plus 1.1.0",
  "cw-utils 1.0.1",
- "mars-red-bank-types 1.1.0-ntrn-2",
+ "mars-red-bank-types",
 ]
 
 [[package]]
@@ -1564,7 +1600,7 @@ dependencies = [
  "cw-storage-plus 1.1.0",
  "cw-utils 1.0.1",
  "cw-vault-standard",
- "mars-red-bank-types 1.1.0-ntrn-2",
+ "mars-red-bank-types",
  "mars-rover",
  "thiserror",
 ]
@@ -1585,14 +1621,16 @@ dependencies = [
 [[package]]
 name = "mars-params"
 version = "1.0.7"
-source = "git+https://github.com/mars-protocol/red-bank?rev=cf28835abb717b00a2f30eef06db4ba32d3eeae2#cf28835abb717b00a2f30eef06db4ba32d3eeae2"
+source = "git+https://github.com/mars-protocol/red-bank?rev=18e9c56#18e9c565df15c2a5ea5fa92da561b0c7cb570294"
 dependencies = [
  "cosmwasm-schema",
  "cosmwasm-std",
  "cw-storage-plus 1.1.0",
  "cw2 1.1.0",
+ "mars-interest-rate",
  "mars-owner",
- "mars-utils 1.1.0",
+ "mars-red-bank-types",
+ "mars-utils",
  "schemars",
  "serde",
  "thiserror",
@@ -1600,27 +1638,13 @@ dependencies = [
 
 [[package]]
 name = "mars-red-bank-types"
-version = "1.1.0-ntrn-2"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "95aa8267e5681a101153d1ebc5b2a57a8d9f704c6aae519646ea5288d7fab8b5"
+version = "1.2.0"
+source = "git+https://github.com/mars-protocol/red-bank?rev=18e9c56#18e9c565df15c2a5ea5fa92da561b0c7cb570294"
 dependencies = [
  "cosmwasm-schema",
  "cosmwasm-std",
  "mars-owner",
- "mars-utils 1.0.0",
- "strum",
- "thiserror",
-]
-
-[[package]]
-name = "mars-red-bank-types"
-version = "1.1.0"
-source = "git+https://github.com/mars-protocol/red-bank?rev=cf28835abb717b00a2f30eef06db4ba32d3eeae2#cf28835abb717b00a2f30eef06db4ba32d3eeae2"
-dependencies = [
- "cosmwasm-schema",
- "cosmwasm-std",
- "mars-owner",
- "mars-utils 1.1.0",
+ "mars-utils",
  "strum",
  "thiserror",
 ]
@@ -1641,7 +1665,7 @@ dependencies = [
  "mars-liquidation",
  "mars-owner",
  "mars-params",
- "mars-red-bank-types 1.1.0-ntrn-2",
+ "mars-red-bank-types",
  "mars-rover-health-types",
  "mars-v2-zapper-base",
  "schemars",
@@ -1666,7 +1690,7 @@ dependencies = [
  "mars-mock-vault",
  "mars-owner",
  "mars-params",
- "mars-red-bank-types 1.1.0-ntrn-2",
+ "mars-red-bank-types",
  "mars-rover",
  "mars-rover-health-computer",
  "mars-rover-health-types",
@@ -1700,7 +1724,7 @@ dependencies = [
  "cosmwasm-std",
  "mars-health",
  "mars-owner",
- "mars-red-bank-types 1.1.0-ntrn-2",
+ "mars-red-bank-types",
  "schemars",
  "serde",
  "serde_json",
@@ -1718,7 +1742,7 @@ dependencies = [
  "cw-paginate",
  "cw-storage-plus 1.1.0",
  "mars-owner",
- "mars-red-bank-types 1.1.0-ntrn-2",
+ "mars-red-bank-types",
  "schemars",
  "serde",
  "thiserror",
@@ -1731,23 +1755,13 @@ dependencies = [
  "anyhow",
  "cosmwasm-std",
  "cw-multi-test",
- "mars-red-bank-types 1.1.0-ntrn-2",
+ "mars-red-bank-types",
 ]
 
 [[package]]
 name = "mars-utils"
-version = "1.0.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "12bae572eda20842ade4bf8ab09ce0856cae5cff89dbeb7c51e9123489e48256"
-dependencies = [
- "cosmwasm-std",
- "thiserror",
-]
-
-[[package]]
-name = "mars-utils"
-version = "1.1.0"
-source = "git+https://github.com/mars-protocol/red-bank?rev=cf28835abb717b00a2f30eef06db4ba32d3eeae2#cf28835abb717b00a2f30eef06db4ba32d3eeae2"
+version = "1.2.0"
+source = "git+https://github.com/mars-protocol/red-bank?rev=18e9c56#18e9c565df15c2a5ea5fa92da561b0c7cb570294"
 dependencies = [
  "cosmwasm-std",
  "thiserror",
@@ -1774,7 +1788,7 @@ dependencies = [
  "cosmwasm-std",
  "cw-storage-plus 1.1.0",
  "cw-utils 1.0.1",
- "mars-red-bank-types 1.1.0-ntrn-2",
+ "mars-red-bank-types",
  "mars-rover",
  "mars-v2-zapper-base",
  "thiserror",
@@ -1945,9 +1959,9 @@ dependencies = [
 
 [[package]]
 name = "osmosis-test-tube"
-version = "16.0.1"
+version = "16.1.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "527375c01396e7e4de4ccc18a0141aeb6b342dc089d30c57282025f3a8753e72"
+checksum = "4929047d1dcec5d7d02fd0a00ecdfca78918d3a33bffc193bf57b3eeb4d407ab"
 dependencies = [
  "base64",
  "bindgen",
@@ -2032,7 +2046,7 @@ checksum = "ec2e072ecce94ec471b13398d5402c188e76ac03cf74dd1a975161b23a3f6d9c"
 dependencies = [
  "proc-macro2",
  "quote",
- "syn 2.0.27",
+ "syn 2.0.28",
 ]
 
 [[package]]
@@ -2062,6 +2076,30 @@ name = "ppv-lite86"
 version = "0.2.17"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "5b40af805b3121feab8a3c29f04d8ad262fa8e0561883e7653e024ae4479e6de"
+
+[[package]]
+name = "proc-macro-error"
+version = "1.0.4"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "da25490ff9892aab3fcf7c36f08cfb902dd3e71ca0f9f9517bea02a73a5ce38c"
+dependencies = [
+ "proc-macro-error-attr",
+ "proc-macro2",
+ "quote",
+ "syn 1.0.109",
+ "version_check",
+]
+
+[[package]]
+name = "proc-macro-error-attr"
+version = "1.0.4"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "a1be40180e52ecc98ad80b184934baf3d0d29f979574e439af5a55274b35f869"
+dependencies = [
+ "proc-macro2",
+ "quote",
+ "version_check",
+]
 
 [[package]]
 name = "proc-macro2"
@@ -2230,9 +2268,9 @@ dependencies = [
 
 [[package]]
 name = "regex-automata"
-version = "0.3.3"
+version = "0.3.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "39354c10dd07468c2e73926b23bb9c2caca74c5501e38a35da70406f1d923310"
+checksum = "b7b6d6190b7594385f61bd3911cd1be99dfddcfc365a4160cc2ab5bff4aed294"
 dependencies = [
  "aho-corasick",
  "memchr",
@@ -2311,9 +2349,9 @@ checksum = "08d43f7aa6b08d49f382cde6a7982047c3426db949b1424bc4b7ec9ae12c6ce2"
 
 [[package]]
 name = "rustix"
-version = "0.38.4"
+version = "0.38.6"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "0a962918ea88d644592894bc6dc55acc6c0956488adcebbfb6e273506b7fd6e5"
+checksum = "1ee020b1716f0a80e2ace9b03441a749e402e86712f15f16fe8a8f75afac732f"
 dependencies = [
  "bitflags 2.3.3",
  "errno",
@@ -2468,9 +2506,9 @@ checksum = "b0293b4b29daaf487284529cc2f5675b8e57c61f70167ba415a463651fd6a918"
 
 [[package]]
 name = "serde"
-version = "1.0.175"
+version = "1.0.181"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "5d25439cd7397d044e2748a6fe2432b5e85db703d6d097bd014b3c0ad1ebff0b"
+checksum = "6d3e73c93c3240c0bda063c239298e633114c69a888c3e37ca8bb33f343e9890"
 dependencies = [
  "serde_derive",
 ]
@@ -2504,13 +2542,13 @@ dependencies = [
 
 [[package]]
 name = "serde_derive"
-version = "1.0.175"
+version = "1.0.181"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "b23f7ade6f110613c0d63858ddb8b94c1041f550eab58a16b371bdf2c9c80ab4"
+checksum = "be02f6cb0cd3a5ec20bbcfbcbd749f57daddb1a0882dc2e46a6c236c90b977ed"
 dependencies = [
  "proc-macro2",
  "quote",
- "syn 2.0.27",
+ "syn 2.0.28",
 ]
 
 [[package]]
@@ -2532,14 +2570,14 @@ checksum = "e578a843d40b4189a4d66bba51d7684f57da5bd7c304c64e14bd63efbef49509"
 dependencies = [
  "proc-macro2",
  "quote",
- "syn 2.0.27",
+ "syn 2.0.28",
 ]
 
 [[package]]
 name = "serde_json"
-version = "1.0.103"
+version = "1.0.104"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "d03b412469450d4404fe8499a268edd7f8b79fecb074b0d812ad64ca21f4031b"
+checksum = "076066c5f1078eac5b722a31827a8832fe108bed65dfa75e233c89f8206e976c"
 dependencies = [
  "itoa",
  "ryu",
@@ -2548,13 +2586,13 @@ dependencies = [
 
 [[package]]
 name = "serde_repr"
-version = "0.1.15"
+version = "0.1.16"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "e168eaaf71e8f9bd6037feb05190485708e019f4fd87d161b3c0a0d37daf85e5"
+checksum = "8725e1dfadb3a50f7e5ce0b1a540466f6ed3fe7a0fca2ac2b8b831d31316bd00"
 dependencies = [
  "proc-macro2",
  "quote",
- "syn 2.0.27",
+ "syn 2.0.28",
 ]
 
 [[package]]
@@ -2709,9 +2747,9 @@ dependencies = [
 
 [[package]]
 name = "syn"
-version = "2.0.27"
+version = "2.0.28"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "b60f673f44a8255b9c8c657daf66a596d435f2da81a555b06dc644d080ba45e0"
+checksum = "04361975b3f5e348b2189d8dc55bc942f278b2d482a6a0365de5bdd62d351567"
 dependencies = [
  "proc-macro2",
  "quote",
@@ -2837,6 +2875,41 @@ dependencies = [
 ]
 
 [[package]]
+name = "test-case"
+version = "3.1.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "2a1d6e7bde536b0412f20765b76e921028059adfd1b90d8974d33fd3c91b25df"
+dependencies = [
+ "test-case-macros",
+]
+
+[[package]]
+name = "test-case-core"
+version = "3.1.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "d10394d5d1e27794f772b6fc854c7e91a2dc26e2cbf807ad523370c2a59c0cee"
+dependencies = [
+ "cfg-if",
+ "proc-macro-error",
+ "proc-macro2",
+ "quote",
+ "syn 1.0.109",
+]
+
+[[package]]
+name = "test-case-macros"
+version = "3.1.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "eeb9a44b1c6a54c1ba58b152797739dba2a83ca74e18168a68c980eb142f9404"
+dependencies = [
+ "proc-macro-error",
+ "proc-macro2",
+ "quote",
+ "syn 1.0.109",
+ "test-case-core",
+]
+
+[[package]]
 name = "test-tube"
 version = "0.1.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2875,7 +2948,7 @@ checksum = "090198534930841fab3a5d1bb637cde49e339654e606195f8d9c76eeb081dc96"
 dependencies = [
  "proc-macro2",
  "quote",
- "syn 2.0.27",
+ "syn 2.0.28",
 ]
 
 [[package]]
@@ -2936,7 +3009,7 @@ checksum = "630bdcf245f78637c13ec01ffae6187cca34625e8c63150d424b59e55af2675e"
 dependencies = [
  "proc-macro2",
  "quote",
- "syn 2.0.27",
+ "syn 2.0.28",
 ]
 
 [[package]]
@@ -3027,7 +3100,7 @@ dependencies = [
  "proc-macro2",
  "quote",
  "serde_derive_internals 0.28.0",
- "syn 2.0.27",
+ "syn 2.0.28",
 ]
 
 [[package]]
@@ -3147,7 +3220,7 @@ dependencies = [
  "once_cell",
  "proc-macro2",
  "quote",
- "syn 2.0.27",
+ "syn 2.0.28",
  "wasm-bindgen-shared",
 ]
 
@@ -3169,7 +3242,7 @@ checksum = "54681b18a46765f095758388f2d0cf16eb8d4169b639ab575a8f5693af210c7b"
 dependencies = [
  "proc-macro2",
  "quote",
- "syn 2.0.27",
+ "syn 2.0.28",
  "wasm-bindgen-backend",
  "wasm-bindgen-shared",
 ]
@@ -3334,5 +3407,5 @@ checksum = "ce36e65b0d2999d2aafac989fb249189a141aee1f53c612c1f37d72631959f69"
 dependencies = [
  "proc-macro2",
  "quote",
- "syn 2.0.27",
+ "syn 2.0.28",
 ]

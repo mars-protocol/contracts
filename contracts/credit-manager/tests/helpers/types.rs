@@ -77,12 +77,12 @@ impl From<CoinInfo> for AssetParamsUnchecked {
             red_bank: RedBankSettings {
                 deposit_enabled: true,
                 borrow_enabled: true,
-                deposit_cap: Uint128::MAX,
             },
             max_loan_to_value: c.max_ltv,
             liquidation_threshold: c.liquidation_threshold,
             liquidation_bonus: c.liquidation_bonus,
             protocol_liquidation_fee: c.protocol_liquidation_fee,
+            deposit_cap: Uint128::MAX,
         }
     }
 }

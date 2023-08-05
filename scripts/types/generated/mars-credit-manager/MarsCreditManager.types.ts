@@ -223,6 +223,11 @@ export type CallbackMsg =
       }
     }
   | {
+      assert_deposit_caps: {
+        denoms: string[]
+      }
+    }
+  | {
       enter_vault: {
         account_id: string
         coin: ActionCoin

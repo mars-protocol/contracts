@@ -349,7 +349,6 @@ fn lent_position_fully_liquidated() {
     let atom_debt = get_debt("uatom", &position.debts);
     assert_eq!(atom_debt.amount, Uint128::new(480));
 
-    // FIXME: dust because of roundings, is it possible to avoid it?
     assert_eq!(position.lends.len(), 1);
     let osmo_balance = get_coin("uosmo", &position.lends);
     assert_eq!(osmo_balance.amount, Uint128::new(3));

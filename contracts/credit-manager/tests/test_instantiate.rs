@@ -11,12 +11,10 @@ fn owner_set_on_instantiate() {
 }
 
 #[test]
+#[should_panic]
 fn raises_on_invalid_owner_addr() {
     let owner = "%%%INVALID%%%";
-    let res = MockEnv::new().owner(owner).params_contract("xyz").health_contract("abc").build();
-    if res.is_ok() {
-        panic!("Should have thrown an error");
-    }
+    MockEnv::new().owner(owner).params_contract("xyz").health_contract("abc").build().unwrap();
 }
 
 #[test]
@@ -35,11 +33,9 @@ fn red_bank_set_on_instantiate() {
 }
 
 #[test]
+#[should_panic]
 fn raises_on_invalid_red_bank_addr() {
-    let mock = MockEnv::new().red_bank("%%%INVALID%%%").build();
-    if mock.is_ok() {
-        panic!("Should have thrown an error");
-    }
+    MockEnv::new().red_bank("%%%INVALID%%%").build().unwrap();
 }
 
 #[test]
@@ -67,9 +63,7 @@ fn params_set_on_instantiate() {
 }
 
 #[test]
+#[should_panic]
 fn raises_on_invalid_params_addr() {
-    let mock = MockEnv::new().params("%%%INVALID%%%").build();
-    if mock.is_ok() {
-        panic!("Should have thrown an error");
-    }
+    MockEnv::new().params("%%%INVALID%%%").build().unwrap();
 }

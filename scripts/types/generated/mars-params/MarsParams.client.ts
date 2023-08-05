@@ -36,6 +36,7 @@ import {
   ArrayOfVaultConfigBaseForAddr,
   VaultConfigBaseForAddr,
   OwnerResponse,
+  TotalDepositResponse,
 } from './MarsParams.types'
 export interface MarsParamsReadOnlyInterface {
   contractAddress: string
@@ -57,6 +58,7 @@ export interface MarsParamsReadOnlyInterface {
     startAfter?: string
   }) => Promise<ArrayOfVaultConfigBaseForAddr>
   targetHealthFactor: () => Promise<Decimal>
+  totalDeposit: ({ denom }: { denom: string }) => Promise<TotalDepositResponse>
 }
 export class MarsParamsQueryClient implements MarsParamsReadOnlyInterface {
   client: CosmWasmClient
@@ -71,6 +73,7 @@ export class MarsParamsQueryClient implements MarsParamsReadOnlyInterface {
     this.vaultConfig = this.vaultConfig.bind(this)
     this.allVaultConfigs = this.allVaultConfigs.bind(this)
     this.targetHealthFactor = this.targetHealthFactor.bind(this)
+    this.totalDeposit = this.totalDeposit.bind(this)
   }
 
   owner = async (): Promise<OwnerResponse> => {
@@ -123,6 +126,13 @@ export class MarsParamsQueryClient implements MarsParamsReadOnlyInterface {
   targetHealthFactor = async (): Promise<Decimal> => {
     return this.client.queryContractSmart(this.contractAddress, {
       target_health_factor: {},
+    })
+  }
+  totalDeposit = async ({ denom }: { denom: string }): Promise<TotalDepositResponse> => {
+    return this.client.queryContractSmart(this.contractAddress, {
+      total_deposit: {
+        denom,
+      },
     })
   }
 }

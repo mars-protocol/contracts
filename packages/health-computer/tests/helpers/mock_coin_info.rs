@@ -36,9 +36,9 @@ pub fn umars_info() -> CoinInfo {
             red_bank: RedBankSettings {
                 deposit_enabled: true,
                 borrow_enabled: true,
-                deposit_cap: Default::default(),
             },
             protocol_liquidation_fee: Decimal::percent(2u64),
+            deposit_cap: Default::default(),
         },
     }
 }
@@ -65,9 +65,9 @@ pub fn udai_info() -> CoinInfo {
             red_bank: RedBankSettings {
                 deposit_enabled: true,
                 borrow_enabled: true,
-                deposit_cap: Default::default(),
             },
             protocol_liquidation_fee: Decimal::percent(2u64),
+            deposit_cap: Default::default(),
         },
     }
 }
@@ -94,9 +94,9 @@ pub fn uluna_info() -> CoinInfo {
             red_bank: RedBankSettings {
                 deposit_enabled: true,
                 borrow_enabled: true,
-                deposit_cap: Default::default(),
             },
             protocol_liquidation_fee: Decimal::percent(2u64),
+            deposit_cap: Default::default(),
         },
     }
 }
@@ -129,9 +129,9 @@ pub fn ustars_info() -> CoinInfo {
             red_bank: RedBankSettings {
                 deposit_enabled: true,
                 borrow_enabled: true,
-                deposit_cap: Default::default(),
             },
             protocol_liquidation_fee: Decimal::percent(2u64),
+            deposit_cap: Default::default(),
         },
     }
 }
@@ -158,9 +158,9 @@ pub fn ujuno_info() -> CoinInfo {
             red_bank: RedBankSettings {
                 deposit_enabled: true,
                 borrow_enabled: true,
-                deposit_cap: Default::default(),
             },
             protocol_liquidation_fee: Decimal::percent(2u64),
+            deposit_cap: Default::default(),
         },
     }
 }
@@ -193,9 +193,9 @@ pub fn uatom_info() -> CoinInfo {
             red_bank: RedBankSettings {
                 deposit_enabled: true,
                 borrow_enabled: true,
-                deposit_cap: Default::default(),
             },
             protocol_liquidation_fee: Decimal::percent(2u64),
+            deposit_cap: Default::default(),
         },
     }
 }

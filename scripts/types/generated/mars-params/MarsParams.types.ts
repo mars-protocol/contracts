@@ -7,6 +7,7 @@
 
 export type Decimal = string
 export interface InstantiateMsg {
+  address_provider: string
   owner: string
   target_health_factor: Decimal
 }
@@ -86,6 +87,7 @@ export type RedBankEmergencyUpdate = {
 export interface AssetParamsBaseForString {
   credit_manager: CmSettingsForString
   denom: string
+  deposit_cap: Uint128
   liquidation_bonus: LiquidationBonus
   liquidation_threshold: Decimal
   max_loan_to_value: Decimal
@@ -109,7 +111,6 @@ export interface LiquidationBonus {
 }
 export interface RedBankSettings {
   borrow_enabled: boolean
-  deposit_cap: Uint128
   deposit_enabled: boolean
 }
 export interface VaultConfigBaseForString {
@@ -154,6 +155,11 @@ export type QueryMsg =
   | {
       target_health_factor: {}
     }
+  | {
+      total_deposit: {
+        denom: string
+      }
+    }
 export type HlsAssetTypeForAddr =
   | {
       coin: {
@@ -170,6 +176,7 @@ export type ArrayOfAssetParamsBaseForAddr = AssetParamsBaseForAddr[]
 export interface AssetParamsBaseForAddr {
   credit_manager: CmSettingsForAddr
   denom: string
+  deposit_cap: Uint128
   liquidation_bonus: LiquidationBonus
   liquidation_threshold: Decimal
   max_loan_to_value: Decimal
@@ -200,4 +207,9 @@ export interface OwnerResponse {
   initialized: boolean
   owner?: string | null
   proposed?: string | null
+}
+export interface TotalDepositResponse {
+  amount: Uint128
+  cap: Uint128
+  denom: string
 }

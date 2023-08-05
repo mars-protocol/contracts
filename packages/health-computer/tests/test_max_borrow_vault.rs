@@ -44,7 +44,7 @@ fn max_borrow_vault_offset_good() {
         .max_borrow_amount_estimate(
             &udai.denom,
             &BorrowTarget::Vault {
-                address: osmo_atom_1_config.addr.clone(),
+                address: osmo_atom_1_config.addr,
             },
         )
         .unwrap();
@@ -87,7 +87,7 @@ fn max_borrow_vault_offset_margin_of_error() {
         .max_borrow_amount_estimate(
             &umars.denom,
             &BorrowTarget::Vault {
-                address: osmo_atom_1_config.addr.clone(),
+                address: osmo_atom_1_config.addr,
             },
         )
         .unwrap();

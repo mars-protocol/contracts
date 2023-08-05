@@ -1,7 +1,7 @@
 use cosmwasm_schema::cw_serde;
 use cosmwasm_std::{Addr, Api, Decimal, QuerierWrapper, StdResult};
 use mars_params::{
-    msg::QueryMsg,
+    msg::{QueryMsg, TotalDepositResponse},
     types::{asset::AssetParams, vault::VaultConfig},
 };
 
@@ -42,6 +42,19 @@ impl Params {
         querier.query_wasm_smart(
             self.address().to_string(),
             &QueryMsg::AssetParams {
+                denom: denom.to_string(),
+            },
+        )
+    }
+
+    pub fn query_total_deposit(
+        &self,
+        querier: &QuerierWrapper,
+        denom: &str,
+    ) -> StdResult<TotalDepositResponse> {
+        querier.query_wasm_smart(
+            self.address().to_string(),
+            &QueryMsg::TotalDeposit {
                 denom: denom.to_string(),
             },
         )

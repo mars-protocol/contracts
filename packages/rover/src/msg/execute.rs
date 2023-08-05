@@ -1,3 +1,5 @@
+use std::collections::BTreeSet;
+
 use cosmwasm_schema::cw_serde;
 use cosmwasm_std::{to_binary, Addr, Coin, CosmosMsg, Decimal, StdResult, Uint128, WasmMsg};
 use mars_account_nft::nft_config::NftConfigUpdates;
@@ -239,6 +241,11 @@ pub enum CallbackMsg {
     AssertMaxLTV {
         account_id: String,
         prev_health_state: HealthState,
+    },
+    /// Assert that the total deposit amounts of the given denoms across Red
+    /// Bank and Rover do not exceed their respective deposit caps.
+    AssertDepositCaps {
+        denoms: BTreeSet<String>,
     },
     /// Adds coin to a vault strategy
     EnterVault {
