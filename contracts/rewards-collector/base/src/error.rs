@@ -39,6 +39,9 @@ pub enum ContractError {
     InvalidRoute {
         reason: String,
     },
+
+    #[error("Invalid actions. Only Withdraw and WithdrawLiquidity is possible to pass for CreditManager")]
+    InvalidActionsForCreditManager {},
 }
 
 pub type ContractResult<T> = Result<T, ContractError>;

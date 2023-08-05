@@ -44,6 +44,12 @@ export type ExecuteMsg =
       }
     }
   | {
+      withdraw_from_credit_manager: {
+        account_id: string
+        actions: Action[]
+      }
+    }
+  | {
       distribute_rewards: {
         amount?: Uint128 | null
         denom: string
@@ -77,6 +83,24 @@ export type OwnerUpdate =
       }
     }
   | 'clear_emergency_owner'
+export type Action =
+  | {
+      withdraw: Coin
+    }
+  | {
+      withdraw_liquidity: {
+        lp_token: ActionCoin
+        minimum_receive: Coin[]
+      }
+    }
+  | {
+      unknown: {}
+    }
+export type ActionAmount =
+  | 'account_balance'
+  | {
+      exact: Uint128
+    }
 export interface UpdateConfig {
   address_provider?: string | null
   channel_id?: string | null
@@ -86,6 +110,10 @@ export interface UpdateConfig {
   safety_tax_rate?: Decimal | null
   slippage_tolerance?: Decimal | null
   timeout_seconds?: number | null
+}
+export interface ActionCoin {
+  amount: ActionAmount
+  denom: string
 }
 export type QueryMsg = {
   config: {}

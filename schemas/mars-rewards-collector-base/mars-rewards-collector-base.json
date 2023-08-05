@@ -196,6 +196,35 @@
         "additionalProperties": false
       },
       {
+        "description": "Withdraw coins from the credit manager",
+        "type": "object",
+        "required": [
+          "withdraw_from_credit_manager"
+        ],
+        "properties": {
+          "withdraw_from_credit_manager": {
+            "type": "object",
+            "required": [
+              "account_id",
+              "actions"
+            ],
+            "properties": {
+              "account_id": {
+                "type": "string"
+              },
+              "actions": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/definitions/Action"
+                }
+              }
+            },
+            "additionalProperties": false
+          }
+        },
+        "additionalProperties": false
+      },
+      {
         "description": "Distribute the accrued protocol income between the safety fund and the fee modules on mars hub, according to the split set in config. Callable by any address.",
         "type": "object",
         "required": [
@@ -300,6 +329,101 @@
       }
     ],
     "definitions": {
+      "Action": {
+        "oneOf": [
+          {
+            "type": "object",
+            "required": [
+              "withdraw"
+            ],
+            "properties": {
+              "withdraw": {
+                "$ref": "#/definitions/Coin"
+              }
+            },
+            "additionalProperties": false
+          },
+          {
+            "type": "object",
+            "required": [
+              "withdraw_liquidity"
+            ],
+            "properties": {
+              "withdraw_liquidity": {
+                "type": "object",
+                "required": [
+                  "lp_token",
+                  "minimum_receive"
+                ],
+                "properties": {
+                  "lp_token": {
+                    "$ref": "#/definitions/ActionCoin"
+                  },
+                  "minimum_receive": {
+                    "type": "array",
+                    "items": {
+                      "$ref": "#/definitions/Coin"
+                    }
+                  }
+                },
+                "additionalProperties": false
+              }
+            },
+            "additionalProperties": false
+          },
+          {
+            "type": "object",
+            "required": [
+              "unknown"
+            ],
+            "properties": {
+              "unknown": {
+                "type": "object",
+                "additionalProperties": false
+              }
+            },
+            "additionalProperties": false
+          }
+        ]
+      },
+      "ActionAmount": {
+        "oneOf": [
+          {
+            "type": "string",
+            "enum": [
+              "account_balance"
+            ]
+          },
+          {
+            "type": "object",
+            "required": [
+              "exact"
+            ],
+            "properties": {
+              "exact": {
+                "$ref": "#/definitions/Uint128"
+              }
+            },
+            "additionalProperties": false
+          }
+        ]
+      },
+      "ActionCoin": {
+        "type": "object",
+        "required": [
+          "amount",
+          "denom"
+        ],
+        "properties": {
+          "amount": {
+            "$ref": "#/definitions/ActionAmount"
+          },
+          "denom": {
+            "type": "string"
+          }
+        },
+        "additionalProperties": false
+      },
       "Coin": {
         "type": "object",
         "required": [
