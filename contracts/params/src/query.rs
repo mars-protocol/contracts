@@ -1,4 +1,4 @@
-use cosmwasm_std::{Addr, Coin, Deps, Env, Order, StdResult, Uint128};
+use cosmwasm_std::{Addr, Deps, Env, Order, StdResult, Uint128};
 use cw_storage_plus::Bound;
 use mars_interest_rate::get_underlying_liquidity_amount;
 use mars_red_bank_types::{
@@ -7,6 +7,7 @@ use mars_red_bank_types::{
 };
 
 use crate::{
+    msg::TotalDepositResponse,
     state::{ADDRESS_PROVIDER, ASSET_PARAMS, VAULT_CONFIGS},
     types::{asset::AssetParams, vault::VaultConfig},
 };
@@ -73,7 +74,11 @@ pub fn query_all_vault_configs(
 ///    For example, when computing the deposited amount of ATOM, we only include
 ///    ATOM deposited in RB and CM; we don't include the ATOM-OSMO LP token, or
 ///    the ATOM-OSMO farming vault.
-pub fn query_total_deposit(deps: Deps, env: &Env, denom: String) -> StdResult<Coin> {
+pub fn query_total_deposit(
+    deps: Deps,
+    env: &Env,
+    denom: String,
+) -> StdResult<TotalDepositResponse> {
     let current_timestamp = env.block.time.seconds();
 
     // query contract addresses
@@ -124,8 +129,15 @@ pub fn query_total_deposit(deps: Deps, env: &Env, denom: String) -> StdResult<Co
     // note that this way, we don't include LP tokens or vault positions
     let cm_deposit = deps.querier.query_balance(credit_manager_addr, &denom)?.amount;
 
-    Ok(Coin {
+    // total deposited amount
+    let amount = rb_deposit.checked_add(cm_deposit)?.checked_sub(cm_debt)?;
+
+    // additionally, we include the deposit cap in the response
+    let asset_params = ASSET_PARAMS.load(deps.storage, &denom)?;
+
+    Ok(TotalDepositResponse {
         denom,
-        amount: rb_deposit.checked_add(cm_deposit)?.checked_sub(cm_debt)?,
+        amount,
+        cap: asset_params.deposit_cap,
     })
 }

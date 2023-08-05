@@ -37,6 +37,7 @@ import {
   ArrayOfVaultConfigBaseForAddr,
   VaultConfigBaseForAddr,
   OwnerResponse,
+  TotalDepositResponse,
 } from './MarsParams.types'
 import { MarsParamsQueryClient, MarsParamsClient } from './MarsParams.client'
 export const marsParamsQueryKeys = {
@@ -79,17 +80,18 @@ export interface MarsParamsReactQuery<TResponse, TData = TResponse> {
     initialData?: undefined
   }
 }
-export interface MarsParamsTotalDepositQuery<TData> extends MarsParamsReactQuery<Coin, TData> {
+export interface MarsParamsTotalDepositQuery<TData>
+  extends MarsParamsReactQuery<TotalDepositResponse, TData> {
   args: {
     denom: string
   }
 }
-export function useMarsParamsTotalDepositQuery<TData = Coin>({
+export function useMarsParamsTotalDepositQuery<TData = TotalDepositResponse>({
   client,
   args,
   options,
 }: MarsParamsTotalDepositQuery<TData>) {
-  return useQuery<Coin, Error, TData>(
+  return useQuery<TotalDepositResponse, Error, TData>(
     marsParamsQueryKeys.totalDeposit(client?.contractAddress, args),
     () =>
       client

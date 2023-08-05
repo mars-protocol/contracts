@@ -208,3 +208,8 @@ export interface OwnerResponse {
   owner?: string | null
   proposed?: string | null
 }
+export interface TotalDepositResponse {
+  amount: Uint128
+  cap: Uint128
+  denom: string
+}
