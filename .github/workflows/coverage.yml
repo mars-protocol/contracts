@@ -10,8 +10,6 @@ on:
 env:
   RUST_BACKTRACE: 1
   CARGO_TERM_COLOR: always
-  # Directory with wasm files used by `tests`
-  ARTIFACTS_DIR_PATH: 'target/wasm32-unknown-unknown/release'
 
 jobs:
   coverage:
@@ -20,24 +18,15 @@ jobs:
       - name: Checkout sources
         uses: actions/checkout@v3
 
-      - name: Install Rust
-        uses: actions-rs/toolchain@v1
-        with:
-          toolchain: stable
-          target: wasm32-unknown-unknown
-          profile: minimal
-          override: true
-          components: llvm-tools-preview
-
       - name: Install cargo make
         uses: davidB/rust-cargo-make@v1
 
-      # Artifacts used by tests.
-      # Change owner of the current directory (rust-optimizer set root for artifacts / target).
+      - name: Install stable Rust
+        run: cargo make install-stable
+
+      # Artifacts used by tests
       - name: Compile workspace
-        run: |
-          cargo make rust-optimizer
-          sudo chown -R $USER .
+        run: cargo make build
 
       - name: Run test coverage
         run: cargo make coverage-lcov

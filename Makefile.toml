@@ -1,6 +1,6 @@
 extend = [
-    { path = "schema.Makefile.toml" },
-    { path = "coverage_grcov.Makefile.toml" }
+  { path = "schema.Makefile.toml" },
+  { path = "coverage_grcov.Makefile.toml" }
 ]
 
 [config]
@@ -8,18 +8,40 @@ default_to_workspace = false
 
 [env]
 # Directory with wasm files used by integration tests (another directory can be used instead, for example 'artifacts' from rust-optimizer)
-ARTIFACTS_DIR_PATH = "artifacts"
+ARTIFACTS_DIR_PATH = "target/wasm32-unknown-unknown/release"
+# If you bump this version, verify RUST_VERSION correctness
+RUST_OPTIMIZER_VERSION = "0.13.0"
+# Use rust version from rust-optimizer Dockerfile (see https://github.com/CosmWasm/rust-optimizer/blob/main/Dockerfile#L1)
+# to be sure that we compile / test against the same version
+RUST_VERSION = "1.69.0"
+
+[tasks.install-stable]
+script = '''
+curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y --profile minimal --default-toolchain ${RUST_VERSION}
+rustup target add wasm32-unknown-unknown --toolchain ${RUST_VERSION}
+rustup component add rustfmt --toolchain ${RUST_VERSION}
+rustup component add clippy --toolchain ${RUST_VERSION}
+rustup component add llvm-tools-preview --toolchain ${RUST_VERSION}
+'''
+
+[tasks.install-nightly]
+script = '''
+curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y --profile minimal --default-toolchain nightly
+rustup target add wasm32-unknown-unknown --toolchain nightly
+rustup component add rustfmt --toolchain nightly
+'''
 
 [tasks.build]
+toolchain = "${RUST_VERSION}"
 command = "cargo"
 args = ["build", "--release", "--target", "wasm32-unknown-unknown", "--locked"]
 
 [tasks.rust-optimizer]
 script = """
 if [[ $(arch) == "arm64" ]]; then
-  image="cosmwasm/workspace-optimizer-arm64:0.13.0"
+  image="cosmwasm/workspace-optimizer-arm64:${RUST_OPTIMIZER_VERSION}"
 else
-  image="cosmwasm/workspace-optimizer:0.13.0"
+  image="cosmwasm/workspace-optimizer:${RUST_OPTIMIZER_VERSION}"
 fi
 docker run --rm -v "$(pwd)":/code \
   --mount type=volume,source="$(basename "$(pwd)")_cache",target=/target \
@@ -28,6 +50,7 @@ docker run --rm -v "$(pwd)":/code \
 """
 
 [tasks.test]
+toolchain = "${RUST_VERSION}"
 command = "cargo"
 args = ["test", "--locked"]
 
@@ -37,10 +60,12 @@ command = "cargo"
 args = ["fmt", "--all", "--check"]
 
 [tasks.clippy]
+toolchain = "${RUST_VERSION}"
 command = "cargo"
 args = ["clippy", "--tests", "--", "-D", "warnings"]
 
 [tasks.audit]
+toolchain = "${RUST_VERSION}"
 command = "cargo"
 args = ["audit"]
 
@@ -52,11 +77,13 @@ alias = "coverage-grcov-lcov"
 
 [tasks.all-actions]
 dependencies = [
-    "fmt",
-    "clippy",
-    "build",
-    "test",
-    "generate-all-schemas",
-    "audit",
-    "rust-optimizer",
+  "install-stable",
+  "install-nightly",
+  "fmt",
+  "clippy",
+  "build",
+  "test",
+  "audit",
+  "generate-all-schemas",
+  "rust-optimizer",
 ]
