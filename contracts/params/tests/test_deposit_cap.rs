@@ -1,11 +1,19 @@
+pub mod helpers;
+
 use std::str::FromStr;
 
 use cosmwasm_std::{coins, Addr, Decimal, Uint128};
 use mars_interest_rate::get_underlying_liquidity_amount;
-use mars_params::{query::query_total_deposit, state::ADDRESS_PROVIDER};
+use mars_params::{
+    msg::TotalDepositResponse,
+    query::query_total_deposit,
+    state::{ADDRESS_PROVIDER, ASSET_PARAMS},
+};
 use mars_red_bank_types::red_bank::{Market, UserDebtResponse};
 use mars_testing::{mock_dependencies, mock_env_at_block_time};
 use test_case::test_case;
+
+use crate::helpers::default_asset_params;
 
 const CREDIT_MANAGER: &str = "credit_manager";
 const MOCK_DENOM: &str = "utoken";
@@ -49,11 +57,15 @@ fn querying_total_deposit(rb_market: Market, rb_debt: UserDebtResponse, cm_balan
     let mut deps = mock_dependencies(&[]);
     let env = mock_env_at_block_time(TIMESTAMP);
 
+    let params_unchecked = default_asset_params(MOCK_DENOM);
+    let params = params_unchecked.check(deps.as_ref().api).unwrap();
+
     // setup
     deps.querier.set_redbank_market(rb_market.clone());
     deps.querier.set_red_bank_user_debt(CREDIT_MANAGER, rb_debt.clone());
     deps.querier.update_balances(CREDIT_MANAGER, coins(cm_balance.u128(), MOCK_DENOM));
     ADDRESS_PROVIDER.save(deps.as_mut().storage, &Addr::unchecked("address_provider")).unwrap();
+    ASSET_PARAMS.save(deps.as_mut().storage, MOCK_DENOM, &params).unwrap();
 
     // compute the correct, expected total deposit
     let rb_deposit =
@@ -62,6 +74,13 @@ fn querying_total_deposit(rb_market: Market, rb_debt: UserDebtResponse, cm_balan
     let exp_total_deposit = rb_deposit + cm_balance - rb_debt.amount;
 
     // query total deposit
-    let total_deposit = query_total_deposit(deps.as_ref(), &env, MOCK_DENOM.into()).unwrap();
-    assert_eq!(total_deposit.amount, exp_total_deposit);
+    let res = query_total_deposit(deps.as_ref(), &env, MOCK_DENOM.into()).unwrap();
+    assert_eq!(
+        res,
+        TotalDepositResponse {
+            denom: MOCK_DENOM.into(),
+            amount: exp_total_deposit,
+            cap: params.deposit_cap,
+        }
+    );
 }

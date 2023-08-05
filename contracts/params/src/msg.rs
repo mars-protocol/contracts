@@ -1,5 +1,5 @@
 use cosmwasm_schema::{cw_serde, QueryResponses};
-use cosmwasm_std::{Coin, Decimal};
+use cosmwasm_std::{Decimal, Uint128};
 use mars_owner::OwnerUpdate;
 
 use crate::types::{asset::AssetParamsUnchecked, vault::VaultConfigUnchecked};
@@ -57,10 +57,17 @@ pub enum QueryMsg {
 
     /// Compute the total amount deposited of the given asset across Red Bank
     /// and Credit Manager.
-    #[returns(Coin)]
+    #[returns(TotalDepositResponse)]
     TotalDeposit {
         denom: String,
     },
+}
+
+#[cw_serde]
+pub struct TotalDepositResponse {
+    pub denom: String,
+    pub cap: Uint128,
+    pub amount: Uint128,
 }
 
 #[cw_serde]
