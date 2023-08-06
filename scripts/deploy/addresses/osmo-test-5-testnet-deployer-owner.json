@@ -1,8 +1,6 @@
 {
-  "mockVault": "osmo1r7qzusdgpaw0f8jgeewtxquszxzd5sp63e2t6ezp72j6qd6wt4ns6ufkpd",
-  "swapper": "osmo1q3p82qtudu7f5edgvqyzf6hk8xanezlr0w7ntypnsea4jfpe37ps29eay3",
-  "zapper": "osmo1dz3ysw5sl0rvvnvatv7nu6vyam687tentfuxfa22sxqqafdcnkdqht3uw5",
-  "healthContract": "osmo10agkp20f6kqm8jlay760gszyg6qhz247mzk0r84pvjxaq086t0zsfmg6gt",
-  "creditManager": "osmo1sp7hlk78xpw6aer9wvskpz5ryknafw5lgf7f4jku4zfxkmuee6nqswkr8f",
-  "accountNft": "osmo1gmpua5rkzg6cmju73fz5a9x454nz4vwlnkgs4g8wjlyeqtmzsuhq5funky"
+  "zapper": "osmo1jwtmujld4ew2vt67qnmpdxr3fmmle2yg823de5ygvf47uvhpu76qlhf82q",
+  "healthContract": "osmo1xepv3c9rjp7qyjs2z088w6x9006uzure3e3n5k6fd3k72jw5fcvsrhf334",
+  "creditManager": "osmo1zwugj8tz9nq63m3lxcfpunp0xr5lnlxdr0yyn4gpftx3ham09m4skn73ew",
+  "accountNft": "osmo1hdk6nps2l2tdfgly0tegcgwl239l45etuae7nsc6s93u0yrqk4rqv489kl"
 }

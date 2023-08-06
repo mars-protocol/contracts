@@ -14,14 +14,12 @@ export const taskRunner = async ({ config, label }: TaskRunnerProps) => {
     // Upload contracts
     await deployer.upload('accountNft', wasmFile('mars_account_nft'))
     await deployer.upload('mockVault', wasmFile('mars_mock_vault'))
-    await deployer.upload('swapper', wasmFile(config.swapperContractName))
     await deployer.upload('zapper', wasmFile(config.zapperContractName))
     await deployer.upload('creditManager', wasmFile('mars_credit_manager'))
     await deployer.upload('healthContract', wasmFile('mars_rover_health'))
 
     // Instantiate contracts
     await deployer.instantiateMockVault()
-    await deployer.instantiateSwapper()
     await deployer.instantiateZapper()
     await deployer.instantiateHealthContract()
     await deployer.instantiateCreditManager()
@@ -33,8 +31,6 @@ export const taskRunner = async ({ config, label }: TaskRunnerProps) => {
     // Test basic user flows
     if (config.testActions) {
       await deployer.grantCreditLines()
-      await deployer.setupOraclePrices()
-      await deployer.setupRedBankMarkets()
 
       const rover = await deployer.newUserRoverClient(config.testActions)
       await rover.createCreditAccount()
@@ -62,7 +58,6 @@ export const taskRunner = async ({ config, label }: TaskRunnerProps) => {
     // If multisig is set, transfer ownership from deployer to multisig
     if (config.multisigAddr) {
       await deployer.updateCreditManagerOwner()
-      await deployer.updateSwapperOwner()
     }
 
     printYellow('COMPLETE')

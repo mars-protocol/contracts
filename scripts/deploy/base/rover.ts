@@ -98,32 +98,34 @@ export class Rover {
 
   async borrow() {
     const amount = this.actions.borrowAmount
-    await this.updateCreditAccount([{ borrow: { amount, denom: this.actions.secondaryDenom } }])
+    await this.updateCreditAccount([{ borrow: { amount, denom: this.config.chain.baseDenom } }])
     const positions = await this.query.positions({ accountId: this.accountId! })
     assert.equal(positions.debts.length, 1)
-    assert.equal(positions.debts[0].denom, this.actions.secondaryDenom)
-    printGreen(`Borrowed from RedBank: ${amount} ${this.actions.secondaryDenom}`)
+    assert.equal(positions.debts[0].denom, this.config.chain.baseDenom)
+    printGreen(`Borrowed from RedBank: ${amount} ${this.config.chain.baseDenom}`)
   }
 
   async repay() {
     const amount = this.actions.repayAmount
     await this.updateCreditAccount([
-      { repay: { coin: { amount: { exact: amount }, denom: this.actions.secondaryDenom } } },
+      { repay: { coin: { amount: { exact: amount }, denom: this.config.chain.baseDenom } } },
     ])
     const positions = await this.query.positions({ accountId: this.accountId! })
     printGreen(
       `Repaid to RedBank: ${amount} ${
-        this.actions.secondaryDenom
+        this.config.chain.baseDenom
       }. Debt remaining: ${JSON.stringify(positions.debts)}`,
     )
   }
 
   async reclaim() {
+    const positions = await this.query.positions({ accountId: this.accountId! })
+    printGreen(JSON.stringify(positions))
+
     const amount = this.actions.reclaimAmount
     await this.updateCreditAccount([
       { reclaim: { amount: { exact: amount }, denom: this.config.chain.baseDenom } },
     ])
-    const positions = await this.query.positions({ accountId: this.accountId! })
     printGreen(
       `User reclaimed: ${amount} ${
         this.config.chain.baseDenom

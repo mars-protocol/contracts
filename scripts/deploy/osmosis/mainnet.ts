@@ -25,12 +25,7 @@ export const osmosisMainnetConfig: DeploymentConfig = {
   redBank: { addr: 'osmo1c3ljch9dfw5kf52nfwpxd2zmj2ese7agnx0p9tenkrryasrle5sqf3ftpg' },
   incentives: { addr: 'osmo1nkahswfr8shg8rlxqwup0vgahp0dk4x8w6tkv3rra8rratnut36sk22vrm' },
   params: { addr: 'TBD' },
-  swapRoutes: [
-    { denomIn: uosmo, denomOut: uatom, route: [{ token_out_denom: uatom, pool_id: '1' }] },
-    { denomIn: uatom, denomOut: uosmo, route: [{ token_out_denom: uosmo, pool_id: '1' }] },
-    { denomIn: uosmo, denomOut: axlUSDC, route: [{ token_out_denom: axlUSDC, pool_id: '678' }] },
-    { denomIn: axlUSDC, denomOut: uosmo, route: [{ token_out_denom: uosmo, pool_id: '678' }] },
-  ],
+  swapper: { addr: 'TBD' },
   vaults: [
     {
       addr: 'osmo1g3kmqpp8608szfp0pdag3r6z85npph7wmccat8lgl3mp407kv73qlj7qwp',

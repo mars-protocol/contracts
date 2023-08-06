@@ -7,10 +7,6 @@ import { InstantiateMsgs } from '../../types/instantiateMsgs'
 import { InstantiateMsg as NftInstantiateMsg } from '../../types/generated/mars-account-nft/MarsAccountNft.types'
 import { InstantiateMsg as VaultInstantiateMsg } from '../../types/generated/mars-mock-vault/MarsMockVault.types'
 import { InstantiateMsg as HealthInstantiateMsg } from '../../types/generated/mars-rover-health-types/MarsRoverHealthTypes.types'
-import {
-  ExecuteMsg as SwapperExecute,
-  InstantiateMsg as SwapperInstantiateMsg,
-} from '../../types/generated/mars-swapper-base/MarsSwapperBase.types'
 import { InstantiateMsg as ZapperInstantiateMsg } from '../../types/generated/mars-v2-zapper-base/MarsV2ZapperBase.types'
 import {
   ExecuteMsg as CreditManagerExecute,
@@ -24,18 +20,12 @@ import { Coin } from '@cosmjs/amino'
 import { writeFile } from 'fs/promises'
 import { join, resolve } from 'path'
 import assert from 'assert'
-import {
-  MarsSwapperBaseClient,
-  MarsSwapperBaseQueryClient,
-} from '../../types/generated/mars-swapper-base/MarsSwapperBase.client'
 import { MarsAccountNftClient } from '../../types/generated/mars-account-nft/MarsAccountNft.client'
 import {
   MarsCreditManagerClient,
   MarsCreditManagerQueryClient,
 } from '../../types/generated/mars-credit-manager/MarsCreditManager.client'
-import { InitOrUpdateAssetParams } from '../../types/generated/mars-mock-red-bank/MarsMockRedBank.types'
 import { kebabCase } from 'lodash'
-import { MarsMockOracleQueryClient } from '../../types/generated/mars-mock-oracle/MarsMockOracle.client'
 import { MarsRoverHealthTypesClient } from '../../types/generated/mars-rover-health-types/MarsRoverHealthTypes.client'
 
 export class Deployer {
@@ -90,7 +80,7 @@ export class Deployer {
     if (this.storage.actions.healthContractConfigUpdate) {
       printGray('Credit manager address')
     } else {
-      let hExec = new MarsRoverHealthTypesClient(
+      const hExec = new MarsRoverHealthTypesClient(
         this.cwClient,
         this.deployerAddr,
         this.storage.addresses.healthContract!,
@@ -140,37 +130,6 @@ export class Deployer {
     }
   }
 
-  async instantiateSwapper() {
-    const msg: SwapperInstantiateMsg = {
-      owner: this.deployerAddr,
-    }
-    await this.instantiate('swapper', this.storage.codeIds.swapper!, msg)
-
-    if (!this.storage.actions.setRoutes) {
-      const swapClient = new MarsSwapperBaseClient(
-        this.cwClient,
-        this.deployerAddr,
-        this.storage.addresses.swapper!,
-      )
-
-      for (const route of this.config.swapRoutes) {
-        printBlue(`Setting ${route.denomIn}-${route.denomOut} route for swapper contract`)
-        // @ts-expect-error ts-codegen cannot parse the generic
-        await swapClient.setRoute(route)
-      }
-
-      const swapQuery = new MarsSwapperBaseQueryClient(
-        this.cwClient,
-        this.storage.addresses.swapper!,
-      )
-      const routes = await swapQuery.routes({})
-      assert.equal(routes.length, this.config.swapRoutes.length)
-      this.storage.actions.setRoutes = true
-    } else {
-      printGray("Swap contract's routes already set")
-    }
-  }
-
   async instantiateZapper() {
     const msg: ZapperInstantiateMsg = {}
     await this.instantiate('zapper', this.storage.codeIds.zapper!, msg)
@@ -183,7 +142,7 @@ export class Deployer {
       oracle: this.config.oracle.addr,
       owner: this.deployerAddr,
       red_bank: this.config.redBank.addr,
-      swapper: this.storage.addresses.swapper!,
+      swapper: this.config.swapper.addr,
       zapper: this.storage.addresses.zapper!,
       health_contract: this.storage.addresses.healthContract!,
       incentives: this.config.incentives.addr,
@@ -274,75 +233,6 @@ export class Deployer {
     this.storage.actions.grantedCreditLines = true
   }
 
-  async setupOraclePrices() {
-    if (this.storage.actions.oraclePricesSet) {
-      printGray('Oracle prices already set')
-      return
-    }
-
-    for (const coin of this.config.testActions?.allowedCoinsConfig ?? []) {
-      const oQuery = new MarsMockOracleQueryClient(this.cwClient, this.config.oracle.addr)
-      try {
-        await oQuery.price({ denom: coin.denom })
-        printGray(`Price source already set for ${coin.denom}`)
-      } catch (e) {
-        const msg = {
-          set_price_source: {
-            denom: coin.denom,
-            price_source: coin.priceSource,
-          },
-        }
-        printBlue(`Setting price source for ${coin.denom}: ${JSON.stringify(coin.priceSource)}`)
-        const { client, addr } = await this.getOutpostsDeployer()
-        await client.execute(addr, this.config.oracle.addr, msg, 'auto')
-      }
-    }
-    this.storage.actions.oraclePricesSet = true
-  }
-
-  async setupRedBankMarkets() {
-    if (this.storage.actions.redBankMarketsSet) {
-      printGray('Red bank markets already set')
-      return
-    }
-
-    const { client, addr } = await this.getOutpostsDeployer()
-
-    for (const denom of this.config.testActions?.allowedCoinsConfig.map((c) => c.denom) ?? []) {
-      try {
-        await client.queryContractSmart(this.config.redBank.addr, {
-          market: {
-            denom,
-          },
-        })
-        printGray(`Market for ${denom} already set`)
-      } catch {
-        const msg: {
-          init_asset: {
-            denom: string
-            params: InitOrUpdateAssetParams
-          }
-        } = {
-          init_asset: {
-            denom,
-            params: {
-              reserve_factor: '0.2',
-              interest_rate_model: {
-                optimal_utilization_rate: '0.1',
-                base: '0.3',
-                slope_1: '0.25',
-                slope_2: '0.3',
-              },
-            },
-          },
-        }
-        printBlue(`Setting market for ${denom}`)
-        await client.execute(addr, this.config.redBank.addr, msg, 'auto')
-      }
-    }
-    this.storage.actions.redBankMarketsSet = true
-  }
-
   async updateCreditManagerOwner() {
     if (!this.config.multisigAddr) throw new Error('No multisig addresses to transfer ownership to')
 
@@ -367,34 +257,6 @@ export class Deployer {
     )
     const creditManagerConfig = await cmQuery.config()
     assert.equal(creditManagerConfig.ownership.proposed, this.config.multisigAddr)
-  }
-
-  async updateSwapperOwner() {
-    if (!this.config.multisigAddr) throw new Error('No multisig addresses to transfer ownership to')
-
-    const msg: SwapperExecute = {
-      update_owner: {
-        propose_new_owner: {
-          proposed: this.config.multisigAddr,
-        },
-      },
-    }
-    await this.cwClient.execute(this.deployerAddr, this.storage.addresses.swapper!, msg, 'auto')
-    printGreen('Owner updated to Multisig for Swapper Contract')
-
-    const swQuery = new MarsSwapperBaseQueryClient(this.cwClient, this.storage.addresses.swapper!)
-    const swapperOwner = await swQuery.owner()
-    assert.equal(swapperOwner.proposed, this.config.multisigAddr)
-  }
-
-  private async getOutpostsDeployer() {
-    const wallet = await getWallet(
-      this.config.testActions!.outpostsDeployerMnemonic,
-      this.config.chain.prefix,
-    )
-    const client = await setupClient(this.config, wallet)
-    const addr = await getAddress(wallet)
-    return { client, addr }
   }
 
   private async transferCoin(recipient: string, coin: Coin) {

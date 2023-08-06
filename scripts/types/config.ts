@@ -25,11 +25,11 @@ export interface DeploymentConfig {
   redBank: { addr: string }
   incentives: { addr: string }
   params: { addr: string }
+  swapper: { addr: string }
   vaults: VaultConfigBaseForString[]
   allowedCoins: string[]
   maxValueForBurn: string
   maxUnlockingPositions: string
-  swapRoutes: SwapRoute[]
   testActions?: TestActions
   swapperContractName: string
   zapperContractName: string
