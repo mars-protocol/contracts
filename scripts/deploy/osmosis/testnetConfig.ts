@@ -198,6 +198,9 @@ export const osmosisTestnetConfig: DeploymentConfig = {
   safetyFundDenom: aUSDC,
   swapRoutes: [
     { denom_in: atom, denom_out: uosmo, route: [{ pool_id: 12, token_out_denom: uosmo }] },
+    { denom_in: uosmo, denom_out: atom, route: [{ pool_id: 12, token_out_denom: atom }] },
+    { denom_in: aUSDC, denom_out: uosmo, route: [{ pool_id: 5, token_out_denom: uosmo }] },
+    { denom_in: uosmo, denom_out: aUSDC, route: [{ pool_id: 5, token_out_denom: aUSDC }] },
   ],
   safetyFundAddr: safetyFundAddr,
   protocolAdminAddr: protocolAdminAddr,
