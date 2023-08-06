@@ -10,7 +10,7 @@ default_to_workspace = false
 # Directory with wasm files used by integration tests (another directory can be used instead, for example 'artifacts' from rust-optimizer)
 ARTIFACTS_DIR_PATH = "target/wasm32-unknown-unknown/release"
 # If you bump this version, verify RUST_VERSION correctness
-RUST_OPTIMIZER_VERSION = "0.12.13"
+RUST_OPTIMIZER_VERSION = "0.13.0"
 # Use rust version from rust-optimizer Dockerfile (see https://github.com/CosmWasm/rust-optimizer/blob/main/Dockerfile#L1)
 # to be sure that we compile / test against the same version
 RUST_VERSION = "1.69.0"
@@ -44,7 +44,7 @@ else
   image="cosmwasm/workspace-optimizer:${RUST_OPTIMIZER_VERSION}"
 fi
 docker run --rm -v "$(pwd)":/code \
-  --mount type=volume,source="$(basename "$(pwd)")_cache",target=/code/target \
+  --mount type=volume,source="$(basename "$(pwd)")_cache",target=/target \
   --mount type=volume,source=registry_cache,target=/usr/local/cargo/registry \
   ${image}
 """
