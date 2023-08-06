@@ -52,7 +52,7 @@ export const taskRunner = async (config: DeploymentConfig) => {
       await deployer.executeBorrow()
       await deployer.executeRepay()
       await deployer.executeWithdraw()
-      await deployer.executeRewardsSwap()
+      // await deployer.executeRewardsSwap()
     }
 
     if (config.multisigAddr) {
