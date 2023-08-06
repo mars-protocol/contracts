@@ -265,6 +265,41 @@
         "additionalProperties": false
       },
       {
+        "type": "object",
+        "required": [
+          "accounts"
+        ],
+        "properties": {
+          "accounts": {
+            "type": "object",
+            "required": [
+              "owner"
+            ],
+            "properties": {
+              "limit": {
+                "type": [
+                  "integer",
+                  "null"
+                ],
+                "format": "uint32",
+                "minimum": 0.0
+              },
+              "owner": {
+                "type": "string"
+              },
+              "start_after": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              }
+            },
+            "additionalProperties": false
+          }
+        },
+        "additionalProperties": false
+      },
+      {
         "description": "Rover contract-level config",
         "type": "object",
         "required": [
@@ -713,6 +748,39 @@
         "default",
         "high_levered_strategy"
       ]
+    },
+    "accounts": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Array_of_Account",
+      "type": "array",
+      "items": {
+        "$ref": "#/definitions/Account"
+      },
+      "definitions": {
+        "Account": {
+          "type": "object",
+          "required": [
+            "id",
+            "kind"
+          ],
+          "properties": {
+            "id": {
+              "type": "string"
+            },
+            "kind": {
+              "$ref": "#/definitions/AccountKind"
+            }
+          },
+          "additionalProperties": false
+        },
+        "AccountKind": {
+          "type": "string",
+          "enum": [
+            "default",
+            "high_levered_strategy"
+          ]
+        }
+      }
     },
     "all_coin_balances": {
       "$schema": "http://json-schema.org/draft-07/schema#",

@@ -45,6 +45,8 @@ import {
   VaultPosition,
   LockingVaultAmount,
   VaultUnlockingPosition,
+  ArrayOfAccount,
+  Account,
   ArrayOfCoinBalanceResponseItem,
   CoinBalanceResponseItem,
   ArrayOfSharesResponseItem,
@@ -65,6 +67,15 @@ import {
 export interface MarsCreditManagerReadOnlyInterface {
   contractAddress: string
   accountKind: ({ accountId }: { accountId: string }) => Promise<AccountKind>
+  accounts: ({
+    limit,
+    owner,
+    startAfter,
+  }: {
+    limit?: number
+    owner: string
+    startAfter?: string
+  }) => Promise<ArrayOfAccount>
   config: () => Promise<ConfigResponse>
   vaultUtilization: ({ vault }: { vault: VaultBaseForString }) => Promise<VaultUtilizationResponse>
   positions: ({ accountId }: { accountId: string }) => Promise<Positions>
@@ -119,6 +130,7 @@ export class MarsCreditManagerQueryClient implements MarsCreditManagerReadOnlyIn
     this.client = client
     this.contractAddress = contractAddress
     this.accountKind = this.accountKind.bind(this)
+    this.accounts = this.accounts.bind(this)
     this.config = this.config.bind(this)
     this.vaultUtilization = this.vaultUtilization.bind(this)
     this.positions = this.positions.bind(this)
@@ -136,6 +148,23 @@ export class MarsCreditManagerQueryClient implements MarsCreditManagerReadOnlyIn
     return this.client.queryContractSmart(this.contractAddress, {
       account_kind: {
         account_id: accountId,
+      },
+    })
+  }
+  accounts = async ({
+    limit,
+    owner,
+    startAfter,
+  }: {
+    limit?: number
+    owner: string
+    startAfter?: string
+  }): Promise<ArrayOfAccount> => {
+    return this.client.queryContractSmart(this.contractAddress, {
+      accounts: {
+        limit,
+        owner,
+        start_after: startAfter,
       },
     })
   }

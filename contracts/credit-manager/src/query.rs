@@ -6,20 +6,44 @@ use mars_rover::{
     adapters::vault::{VaultBase, VaultPosition, VaultPositionValue, VaultUnchecked},
     error::ContractResult,
     msg::query::{
-        CoinBalanceResponseItem, ConfigResponse, DebtAmount, DebtShares, Positions,
+        Account, CoinBalanceResponseItem, ConfigResponse, DebtAmount, DebtShares, Positions,
         SharesResponseItem, VaultPositionResponseItem, VaultUtilizationResponse,
     },
 };
+use mars_rover_health_types::AccountKind;
 
 use crate::{
     state::{
-        ACCOUNT_NFT, COIN_BALANCES, DEBT_SHARES, HEALTH_CONTRACT, INCENTIVES,
+        ACCOUNT_KINDS, ACCOUNT_NFT, COIN_BALANCES, DEBT_SHARES, HEALTH_CONTRACT, INCENTIVES,
         MAX_UNLOCKING_POSITIONS, ORACLE, OWNER, PARAMS, RED_BANK, REWARDS_COLLECTOR, SWAPPER,
         TOTAL_DEBT_SHARES, VAULT_POSITIONS, ZAPPER,
     },
     utils::debt_shares_to_amount,
     vault::vault_utilization_in_deposit_cap_denom,
 };
+
+pub fn query_accounts(
+    deps: Deps,
+    owner: String,
+    start_after: Option<String>,
+    limit: Option<u32>,
+) -> ContractResult<Vec<Account>> {
+    let account_nft = ACCOUNT_NFT.load(deps.storage)?;
+
+    let tokens = account_nft.query_tokens(&deps.querier, owner, start_after, limit)?;
+    tokens
+        .tokens
+        .iter()
+        .map(|acc_id| {
+            let acc_kind =
+                ACCOUNT_KINDS.may_load(deps.storage, acc_id)?.unwrap_or(AccountKind::Default);
+            Ok(Account {
+                id: acc_id.clone(),
+                kind: acc_kind,
+            })
+        })
+        .collect()
+}
 
 pub fn query_config(deps: Deps) -> ContractResult<ConfigResponse> {
     Ok(ConfigResponse {

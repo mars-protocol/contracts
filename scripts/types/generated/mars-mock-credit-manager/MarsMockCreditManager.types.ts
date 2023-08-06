@@ -65,6 +65,13 @@ export type QueryMsg =
       }
     }
   | {
+      accounts: {
+        limit?: number | null
+        owner: string
+        start_after?: string | null
+      }
+    }
+  | {
       config: {}
     }
   | {
@@ -124,6 +131,11 @@ export interface VaultBaseForString {
   address: string
 }
 export type AccountKind = 'default' | 'high_levered_strategy'
+export type ArrayOfAccount = Account[]
+export interface Account {
+  id: string
+  kind: AccountKind
+}
 export type ArrayOfCoinBalanceResponseItem = CoinBalanceResponseItem[]
 export interface CoinBalanceResponseItem {
   account_id: string

@@ -14,6 +14,12 @@ pub enum QueryMsg {
     AccountKind {
         account_id: String,
     },
+    #[returns(Vec<Account>)]
+    Accounts {
+        owner: String,
+        start_after: Option<String>,
+        limit: Option<u32>,
+    },
     /// Rover contract-level config
     #[returns(ConfigResponse)]
     Config {},
@@ -161,4 +167,10 @@ pub struct ConfigResponse {
     pub zapper: String,
     pub health_contract: String,
     pub rewards_collector: Option<String>,
+}
+
+#[cw_serde]
+pub struct Account {
+    pub id: String,
+    pub kind: mars_rover_health_types::AccountKind,
 }

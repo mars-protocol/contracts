@@ -63,8 +63,8 @@ use mars_rover::{
         execute::{Action, CallbackMsg},
         instantiate::ConfigUpdates,
         query::{
-            CoinBalanceResponseItem, ConfigResponse, DebtShares, Positions, SharesResponseItem,
-            VaultPositionResponseItem, VaultUtilizationResponse,
+            Account, CoinBalanceResponseItem, ConfigResponse, DebtShares, Positions,
+            SharesResponseItem, VaultPositionResponseItem, VaultUtilizationResponse,
         },
         ExecuteMsg, InstantiateMsg, QueryMsg,
         QueryMsg::{EstimateProvideLiquidity, VaultPositionValue},
@@ -400,6 +400,25 @@ impl MockEnv {
 
     pub fn query_config(&self) -> ConfigResponse {
         self.app.wrap().query_wasm_smart(self.rover.clone(), &QueryMsg::Config {}).unwrap()
+    }
+
+    pub fn query_accounts(
+        &self,
+        owner: &str,
+        start_after: Option<String>,
+        limit: Option<u32>,
+    ) -> Vec<Account> {
+        self.app
+            .wrap()
+            .query_wasm_smart(
+                self.rover.clone(),
+                &QueryMsg::Accounts {
+                    owner: owner.to_string(),
+                    start_after,
+                    limit,
+                },
+            )
+            .unwrap()
     }
 
     pub fn query_account_kind(&self, account_id: &str) -> AccountKind {

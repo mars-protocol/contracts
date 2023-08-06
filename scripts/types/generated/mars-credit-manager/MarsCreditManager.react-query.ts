@@ -46,6 +46,8 @@ import {
   VaultPosition,
   LockingVaultAmount,
   VaultUnlockingPosition,
+  ArrayOfAccount,
+  Account,
   ArrayOfCoinBalanceResponseItem,
   CoinBalanceResponseItem,
   ArrayOfSharesResponseItem,
@@ -75,6 +77,10 @@ export const marsCreditManagerQueryKeys = {
   accountKind: (contractAddress: string | undefined, args?: Record<string, unknown>) =>
     [
       { ...marsCreditManagerQueryKeys.address(contractAddress)[0], method: 'account_kind', args },
+    ] as const,
+  accounts: (contractAddress: string | undefined, args?: Record<string, unknown>) =>
+    [
+      { ...marsCreditManagerQueryKeys.address(contractAddress)[0], method: 'accounts', args },
     ] as const,
   config: (contractAddress: string | undefined, args?: Record<string, unknown>) =>
     [
@@ -396,6 +402,32 @@ export function useMarsCreditManagerConfigQuery<TData = ConfigResponse>({
   return useQuery<ConfigResponse, Error, TData>(
     marsCreditManagerQueryKeys.config(client?.contractAddress),
     () => (client ? client.config() : Promise.reject(new Error('Invalid client'))),
+    { ...options, enabled: !!client && (options?.enabled != undefined ? options.enabled : true) },
+  )
+}
+export interface MarsCreditManagerAccountsQuery<TData>
+  extends MarsCreditManagerReactQuery<ArrayOfAccount, TData> {
+  args: {
+    limit?: number
+    owner: string
+    startAfter?: string
+  }
+}
+export function useMarsCreditManagerAccountsQuery<TData = ArrayOfAccount>({
+  client,
+  args,
+  options,
+}: MarsCreditManagerAccountsQuery<TData>) {
+  return useQuery<ArrayOfAccount, Error, TData>(
+    marsCreditManagerQueryKeys.accounts(client?.contractAddress, args),
+    () =>
+      client
+        ? client.accounts({
+            limit: args.limit,
+            owner: args.owner,
+            startAfter: args.startAfter,
+          })
+        : Promise.reject(new Error('Invalid client')),
     { ...options, enabled: !!client && (options?.enabled != undefined ? options.enabled : true) },
   )
 }

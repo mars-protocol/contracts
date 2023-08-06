@@ -379,6 +379,13 @@ export type QueryMsg =
       }
     }
   | {
+      accounts: {
+        limit?: number | null
+        owner: string
+        start_after?: string | null
+      }
+    }
+  | {
       config: {}
     }
   | {
@@ -455,6 +462,11 @@ export interface LockingVaultAmount {
 export interface VaultUnlockingPosition {
   coin: Coin
   id: number
+}
+export type ArrayOfAccount = Account[]
+export interface Account {
+  id: string
+  kind: AccountKind
 }
 export type ArrayOfCoinBalanceResponseItem = CoinBalanceResponseItem[]
 export interface CoinBalanceResponseItem {

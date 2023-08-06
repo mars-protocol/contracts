@@ -46,6 +46,8 @@ import {
   VaultPosition,
   LockingVaultAmount,
   VaultUnlockingPosition,
+  ArrayOfAccount,
+  Account,
   ArrayOfCoinBalanceResponseItem,
   CoinBalanceResponseItem,
   ArrayOfSharesResponseItem,

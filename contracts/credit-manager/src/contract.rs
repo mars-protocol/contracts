@@ -14,9 +14,9 @@ use crate::{
     migrations,
     migrations::helpers::assert_migration_env,
     query::{
-        query_all_coin_balances, query_all_debt_shares, query_all_total_debt_shares,
-        query_all_vault_positions, query_config, query_positions, query_total_debt_shares,
-        query_vault_position_value, query_vault_utilization,
+        query_accounts, query_all_coin_balances, query_all_debt_shares,
+        query_all_total_debt_shares, query_all_vault_positions, query_config, query_positions,
+        query_total_debt_shares, query_vault_position_value, query_vault_utilization,
     },
     repay::repay_from_wallet,
     update_config::{update_config, update_nft_config, update_owner},
@@ -82,6 +82,11 @@ pub fn query(deps: Deps, env: Env, msg: QueryMsg) -> ContractResult<Binary> {
         QueryMsg::AccountKind {
             account_id,
         } => to_binary(&get_account_kind(deps.storage, &account_id)?),
+        QueryMsg::Accounts {
+            owner,
+            start_after,
+            limit,
+        } => to_binary(&query_accounts(deps, owner, start_after, limit)?),
         QueryMsg::Config {} => to_binary(&query_config(deps)?),
         QueryMsg::VaultUtilization {
             vault,

@@ -27,6 +27,8 @@ import {
   QueryMsg,
   VaultBaseForString,
   AccountKind,
+  ArrayOfAccount,
+  Account,
   ArrayOfCoinBalanceResponseItem,
   CoinBalanceResponseItem,
   ArrayOfSharesResponseItem,
@@ -61,6 +63,10 @@ export const marsMockCreditManagerQueryKeys = {
         method: 'account_kind',
         args,
       },
+    ] as const,
+  accounts: (contractAddress: string | undefined, args?: Record<string, unknown>) =>
+    [
+      { ...marsMockCreditManagerQueryKeys.address(contractAddress)[0], method: 'accounts', args },
     ] as const,
   config: (contractAddress: string | undefined, args?: Record<string, unknown>) =>
     [
@@ -380,6 +386,32 @@ export function useMarsMockCreditManagerConfigQuery<TData = ConfigResponse>({
   return useQuery<ConfigResponse, Error, TData>(
     marsMockCreditManagerQueryKeys.config(client?.contractAddress),
     () => (client ? client.config() : Promise.reject(new Error('Invalid client'))),
+    { ...options, enabled: !!client && (options?.enabled != undefined ? options.enabled : true) },
+  )
+}
+export interface MarsMockCreditManagerAccountsQuery<TData>
+  extends MarsMockCreditManagerReactQuery<ArrayOfAccount, TData> {
+  args: {
+    limit?: number
+    owner: string
+    startAfter?: string
+  }
+}
+export function useMarsMockCreditManagerAccountsQuery<TData = ArrayOfAccount>({
+  client,
+  args,
+  options,
+}: MarsMockCreditManagerAccountsQuery<TData>) {
+  return useQuery<ArrayOfAccount, Error, TData>(
+    marsMockCreditManagerQueryKeys.accounts(client?.contractAddress, args),
+    () =>
+      client
+        ? client.accounts({
+            limit: args.limit,
+            owner: args.owner,
+            startAfter: args.startAfter,
+          })
+        : Promise.reject(new Error('Invalid client')),
     { ...options, enabled: !!client && (options?.enabled != undefined ? options.enabled : true) },
   )
 }

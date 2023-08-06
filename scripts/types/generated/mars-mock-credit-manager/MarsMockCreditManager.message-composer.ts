@@ -27,6 +27,8 @@ import {
   QueryMsg,
   VaultBaseForString,
   AccountKind,
+  ArrayOfAccount,
+  Account,
   ArrayOfCoinBalanceResponseItem,
   CoinBalanceResponseItem,
   ArrayOfSharesResponseItem,
