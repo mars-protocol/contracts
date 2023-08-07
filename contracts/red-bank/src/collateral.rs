@@ -50,6 +50,7 @@ pub fn update_asset_collateral_status(
             &deps.as_ref(),
             &env,
             user.address(),
+            "",
             oracle_addr,
             params_addr,
             false,

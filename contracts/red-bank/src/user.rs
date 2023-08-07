@@ -52,10 +52,9 @@ impl<'a> User<'a> {
         &self,
         store: &dyn Storage,
         denom: &str,
-        account_id: Option<String>,
+        account_id: &str,
     ) -> StdResult<Collateral> {
-        let acc_id = account_id.unwrap_or("".to_string());
-        COLLATERALS.load(store, (self.0, &acc_id, denom))
+        COLLATERALS.load(store, (self.0, account_id, denom))
     }
 
     /// Load the user's debt

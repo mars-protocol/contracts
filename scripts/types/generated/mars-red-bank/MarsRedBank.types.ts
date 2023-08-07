@@ -163,11 +163,13 @@ export type QueryMsg =
     }
   | {
       user_position: {
+        account_id?: string | null
         user: string
       }
     }
   | {
       user_position_liquidation_pricing: {
+        account_id?: string | null
         user: string
       }
     }

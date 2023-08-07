@@ -89,6 +89,7 @@ pub fn liquidate(
         &deps.as_ref(),
         &env,
         &liquidatee_addr,
+        "",
         oracle_addr,
         params_addr,
         true,
@@ -255,7 +256,7 @@ fn assert_liq_threshold(
     prev_health: &Health,
 ) -> Result<(), ContractError> {
     let (new_health, _) =
-        get_health_and_positions(deps, env, user_addr, oracle_addr, params_addr, true)?;
+        get_health_and_positions(deps, env, user_addr, "", oracle_addr, params_addr, true)?;
 
     // liquidation_health_factor = None only if debt = 0 but liquidation is not possible
     match (prev_health.liquidation_health_factor, new_health.liquidation_health_factor) {

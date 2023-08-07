@@ -196,12 +196,14 @@ pub enum QueryMsg {
     #[returns(crate::red_bank::UserPositionResponse)]
     UserPosition {
         user: String,
+        account_id: Option<String>,
     },
 
     /// Get user position for liquidation
     #[returns(crate::red_bank::UserPositionResponse)]
     UserPositionLiquidationPricing {
         user: String,
+        account_id: Option<String>,
     },
 
     /// Get liquidity scaled amount for a given underlying asset amount.
