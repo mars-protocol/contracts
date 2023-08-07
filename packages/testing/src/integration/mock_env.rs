@@ -600,13 +600,22 @@ impl RedBank {
     }
 
     pub fn query_user_position(&self, env: &mut MockEnv, user: &Addr) -> UserPositionResponse {
+        self.query_user_position_with_acc_id(env, user, None)
+    }
+
+    pub fn query_user_position_with_acc_id(
+        &self,
+        env: &mut MockEnv,
+        user: &Addr,
+        account_id: Option<String>,
+    ) -> UserPositionResponse {
         env.app
             .wrap()
             .query_wasm_smart(
                 self.contract_addr.clone(),
                 &red_bank::QueryMsg::UserPosition {
                     user: user.to_string(),
-                    account_id: None,
+                    account_id,
                 },
             )
             .unwrap()
