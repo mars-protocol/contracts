@@ -19,7 +19,7 @@ doctest = false
 backtraces = ["cosmwasm-std/backtraces"]
 
 [dependencies]
-cosmwasm-std        = { workspace = true }
-mars-health         = { workspace = true }
-mars-params         = { workspace = true }
-thiserror           = { workspace = true }
+cosmwasm-std = { workspace = true }
+mars-health  = { workspace = true }
+mars-params  = { workspace = true }
+thiserror    = { workspace = true }

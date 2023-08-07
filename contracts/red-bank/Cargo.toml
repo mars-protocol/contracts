@@ -12,10 +12,7 @@ keywords      = { workspace = true }
 
 [lib]
 crate-type = ["cdylib", "rlib"]
-doctest = false
-
-[profile.release]
-overflow-checks  = true
+doctest    = false
 
 [features]
 # for more explicit tests, cargo test --features=backtraces
@@ -33,8 +30,8 @@ mars-owner          = { workspace = true }
 mars-params         = { workspace = true }
 mars-red-bank-types = { workspace = true }
 mars-utils          = { workspace = true }
-thiserror           = { workspace = true }
 pyth-sdk-cw         = { workspace = true }
+thiserror           = { workspace = true }
 
 [dev-dependencies]
 anyhow          = { workspace = true }

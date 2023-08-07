@@ -23,5 +23,5 @@ cosmwasm-schema = { workspace = true }
 cosmwasm-std    = { workspace = true }
 mars-owner      = { workspace = true }
 mars-utils      = { workspace = true }
+strum           = { workspace = true, features = ["derive"] }
 thiserror       = { workspace = true }
-strum           = { workspace = true, features = ["derive"] }   

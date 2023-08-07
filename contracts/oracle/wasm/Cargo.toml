@@ -14,29 +14,26 @@ keywords      = { workspace = true }
 crate-type = ["cdylib", "rlib"]
 doctest    = false
 
-[profile.release]
-overflow-checks  = true
-
 [features]
 # for more explicit tests, cargo test --features=backtraces
-backtraces = ["cosmwasm-std/backtraces"]
-library = []
+backtraces       = ["cosmwasm-std/backtraces"]
+library          = []
 osmosis-test-app = ["cw-it/osmosis-test-tube", "mars-testing/osmosis-test-tube"]
 
 [dependencies]
+astroport               = { workspace = true }
+cosmwasm-schema         = { workspace = true }
 cosmwasm-std            = { workspace = true }
 cw2                     = { workspace = true }
 cw-storage-plus         = { workspace = true }
 mars-oracle-base        = { workspace = true, features = ["pyth"] }
 mars-red-bank-types     = { workspace = true }
-cosmwasm-schema         = { workspace = true }
-astroport               = { workspace = true }
 pyth-sdk-cw             = { workspace = true }
 
 [dev-dependencies]
 cosmwasm-schema  = { workspace = true }
-mars-testing     = { workspace = true, features = ["astroport"] }
-mars-owner       = { workspace = true }
 cw-it            = { workspace = true, features = ["astroport", "astroport-multi-test"] }
-test-case        = { workspace = true }
+mars-owner       = { workspace = true }
+mars-testing     = { workspace = true, features = ["astroport"] }
 proptest         = { workspace = true }
+test-case        = { workspace = true }
