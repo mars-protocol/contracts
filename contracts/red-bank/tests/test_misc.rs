@@ -358,6 +358,7 @@ fn update_asset_collateral() {
             &deps.as_ref(),
             &env,
             &user_addr,
+            "",
             &Addr::unchecked("oracle"),
             &Addr::unchecked("params"),
             false,

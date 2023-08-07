@@ -1,4 +1,6 @@
-use cosmwasm_std::{entry_point, to_binary, Binary, Deps, DepsMut, Env, MessageInfo, Response};
+use cosmwasm_std::{
+    entry_point, to_binary, Binary, Deps, DepsMut, Empty, Env, MessageInfo, Response, StdResult,
+};
 use mars_red_bank_types::red_bank::{ExecuteMsg, InstantiateMsg, QueryMsg};
 
 use crate::{
@@ -177,15 +179,17 @@ pub fn query(deps: Deps, env: Env, msg: QueryMsg) -> Result<Binary, ContractErro
         }
         QueryMsg::UserPosition {
             user,
+            account_id,
         } => {
             let user_addr = deps.api.addr_validate(&user)?;
-            to_binary(&query::query_user_position(deps, env, user_addr, false)?)
+            to_binary(&query::query_user_position(deps, env, user_addr, account_id, false)?)
         }
         QueryMsg::UserPositionLiquidationPricing {
             user,
+            account_id,
         } => {
             let user_addr = deps.api.addr_validate(&user)?;
-            to_binary(&query::query_user_position(deps, env, user_addr, true)?)
+            to_binary(&query::query_user_position(deps, env, user_addr, account_id, true)?)
         }
         QueryMsg::ScaledLiquidityAmount {
             denom,
@@ -205,4 +209,9 @@ pub fn query(deps: Deps, env: Env, msg: QueryMsg) -> Result<Binary, ContractErro
         } => to_binary(&query::query_underlying_debt_amount(deps, env, denom, amount_scaled)?),
     };
     res.map_err(Into::into)
+}
+
+#[entry_point]
+pub fn migrate(_deps: DepsMut, _env: Env, _msg: Empty) -> StdResult<Response> {
+    Ok(Response::default())
 }

@@ -75,6 +75,7 @@ pub fn borrow(
             &deps.as_ref(),
             &env,
             borrower.address(),
+            "",
             oracle_addr,
             params_addr,
             &denom,

@@ -829,6 +829,12 @@
               "user"
             ],
             "properties": {
+              "account_id": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
               "user": {
                 "type": "string"
               }
@@ -851,6 +857,12 @@
               "user"
             ],
             "properties": {
+              "account_id": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
               "user": {
                 "type": "string"
               }

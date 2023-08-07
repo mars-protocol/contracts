@@ -39,6 +39,7 @@ impl RedBankQuerier {
             },
             QueryMsg::UserPosition {
                 user,
+                account_id: _,
             } => match self.users_positions.get(&user) {
                 Some(market) => to_binary(&market).into(),
                 None => Err(format!("[mock]: could not find the position for {user}")).into(),

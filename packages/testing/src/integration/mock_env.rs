@@ -606,6 +606,7 @@ impl RedBank {
                 self.contract_addr.clone(),
                 &red_bank::QueryMsg::UserPosition {
                     user: user.to_string(),
+                    account_id: None,
                 },
             )
             .unwrap()

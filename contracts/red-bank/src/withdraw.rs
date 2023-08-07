@@ -21,10 +21,11 @@ pub fn withdraw(
     account_id: Option<String>,
 ) -> Result<Response, ContractError> {
     let withdrawer = User(&info.sender);
+    let acc_id = account_id.clone().unwrap_or("".to_string());
 
     let mut market = MARKETS.load(deps.storage, &denom)?;
 
-    let collateral = withdrawer.collateral(deps.storage, &denom, account_id.clone())?;
+    let collateral = withdrawer.collateral(deps.storage, &denom, &acc_id)?;
     let withdrawer_balance_scaled_before = collateral.amount_scaled;
 
     if withdrawer_balance_scaled_before.is_zero() {
@@ -77,6 +78,7 @@ pub fn withdraw(
             &deps.as_ref(),
             &env,
             withdrawer.address(),
+            &acc_id,
             oracle_addr,
             params_addr,
             &denom,
