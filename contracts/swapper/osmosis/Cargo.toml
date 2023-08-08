@@ -11,9 +11,7 @@ keywords      = { workspace = true }
 
 [lib]
 crate-type = ["cdylib", "rlib"]
-
-[profile.release]
-overflow-checks  = true
+doctest    = false
 
 [features]
 # for quicker tests, cargo test --lib
@@ -32,5 +30,5 @@ osmosis-std         = { workspace = true }
 mars-red-bank-types = { workspace = true }
 
 [dev-dependencies]
-anyhow            = { workspace = true }
-cw-it             = { workspace = true, features = ["osmosis-test-tube"] }
+anyhow = { workspace = true }
+cw-it  = { workspace = true, features = ["osmosis-test-tube"] }
