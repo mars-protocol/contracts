@@ -1,4 +1,4 @@
-import { DeploymentConfig } from '../../types/config'
+import { DeploymentConfig, VaultType } from '../../types/config'
 
 // Note: since osmo-test-5 upgrade, testnet and mainnet denoms are no longer the same. Reference asset info here: https://docs.osmosis.zone/osmosis-core/asset-info/
 const uosmo = 'uosmo'
@@ -50,4 +50,68 @@ export const osmosisTestnetConfig: DeploymentConfig = {
   vaults: [aUSDC_OSMO_Config(ausdcOsmoVault), ATOM_OSMO_Config(atomOsmoVault)],
   swapperContractName: 'mars_swapper_osmosis',
   zapperContractName: 'mars_v2_zapper_osmosis',
+  runTests: true,
+  testActions: {
+    allowedCoinsConfig: [
+      { denom: uosmo, priceSource: { fixed: { price: '1' } }, grantCreditLine: true },
+      {
+        denom: aUSDC,
+        priceSource: { geometric_twap: { pool_id: 5, window_size: 1800 } },
+        grantCreditLine: true,
+      },
+      {
+        denom: ausdcOsmoPool,
+        priceSource: { xyk_liquidity_token: { pool_id: 6 } },
+        grantCreditLine: false,
+      },
+    ],
+    vault: {
+      depositAmount: '1000000',
+      withdrawAmount: '1000000',
+      mock: {
+        config: {
+          deposit_cap: { denom: aUSDC, amount: '100000000' }, // 100 usdc
+          liquidation_threshold: '0.585',
+          max_loan_to_value: '0.569',
+          whitelisted: true,
+        },
+        vaultTokenDenom: uosmo,
+        type: VaultType.LOCKED,
+        lockup: { time: 900 }, // 15 mins
+        baseToken: ausdcOsmoPool,
+      },
+    },
+    outpostsDeployerMnemonic:
+      'elevator august inherit simple buddy giggle zone despair marine rich swim danger blur people hundred faint ladder wet toe strong blade utility trial process',
+    borrowAmount: '10',
+    repayAmount: '11',
+    defaultCreditLine: '100000000000',
+    depositAmount: '100',
+    lendAmount: '10',
+    reclaimAmount: '5',
+    secondaryDenom: aUSDC,
+    startingAmountForTestUser: '4000000',
+    swap: {
+      slippage: '0.4',
+      amount: '40',
+      route: [
+        {
+          token_out_denom: aUSDC,
+          pool_id: '1',
+        },
+      ],
+    },
+    unzapAmount: '1000000',
+    withdrawAmount: '12',
+    zap: {
+      coinsIn: [
+        {
+          denom: aUSDC,
+          amount: '1',
+        },
+        { denom: uosmo, amount: '3' },
+      ],
+      denomOut: ausdcOsmoPool,
+    },
+  },
 }

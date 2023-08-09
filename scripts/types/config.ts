@@ -34,6 +34,7 @@ export interface DeploymentConfig {
   swapperContractName: string
   zapperContractName: string
   multisigAddr?: string
+  runTests: boolean
 }
 
 export interface SwapRoute {

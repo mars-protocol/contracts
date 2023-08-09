@@ -120,7 +120,6 @@ export class Rover {
 
   async reclaim() {
     const positions = await this.query.positions({ accountId: this.accountId! })
-    printGreen(JSON.stringify(positions))
 
     const amount = this.actions.reclaimAmount
     await this.updateCreditAccount([
@@ -202,6 +201,10 @@ export class Rover {
       this.storage.addresses.creditManager!,
       info.tokens.vault_token,
     )
+    printBlue('testing vault deposit')
+    printGreen(v.addr)
+    printGreen(this.actions.vault.depositAmount)
+    printGreen(info.tokens.base_token)
     await this.updateCreditAccount([
       {
         enter_vault: {
