@@ -612,6 +612,14 @@ impl OsmosisPriceSourceChecked {
                     reason: format!("StableSwap pool not supported. Pool id {}", pool.id),
                 })
             }
+            Pool::ConcentratedLiquidity(pool) => {
+                return Err(ContractError::InvalidPrice {
+                    reason: format!(
+                        "ConcentratedLiquidity pool not supported. Pool id {}",
+                        pool.id
+                    ),
+                })
+            }
         };
 
         let coin0 = Pool::unwrap_coin(&pool.pool_assets[0].token)?;

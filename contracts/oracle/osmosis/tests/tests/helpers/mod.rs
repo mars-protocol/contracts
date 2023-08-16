@@ -9,7 +9,7 @@ use cosmwasm_std::{
 };
 use mars_oracle_base::ContractError;
 use mars_oracle_osmosis::{contract::entry, msg::ExecuteMsg, OsmosisPriceSourceUnchecked};
-use mars_osmosis::{BalancerPool, StableSwapPool};
+use mars_osmosis::{BalancerPool, ConcentratedLiquidityPool, StableSwapPool};
 use mars_red_bank_types::oracle::msg::{InstantiateMsg, QueryMsg};
 use mars_testing::{mock_info, MarsMockQuerier};
 use osmosis_std::types::osmosis::{gamm::v1beta1::PoolAsset, poolmanager::v1beta1::PoolResponse};
@@ -90,6 +90,10 @@ pub fn setup_test_with_pools() -> OwnedDeps<MockStorage, MockApi, MarsMockQuerie
     let assets = vec![coin(42069, "uatom"), coin(69420, "uosmo")];
     deps.querier
         .set_query_pool_response(5555, prepare_query_stable_swap_pool_response(5555, &assets));
+
+    // Set ConcentratedLiquidity pool
+    deps.querier
+        .set_query_pool_response(6666, prepare_query_cl_pool_response(6666, "ujuno", "uosmo"));
 
     deps
 }
@@ -196,6 +200,29 @@ pub fn prepare_query_stable_swap_pool_response(pool_id: u64, assets: &[Coin]) ->
         pool_liquidity,
         scaling_factors: vec![100000u64, 113890u64],
         scaling_factor_controller: "osmo1k8c2m5cn322akk5wy8lpt87dd2f4yh9afcd7af".to_string(),
+    };
+    PoolResponse {
+        pool: Some(pool.to_any()),
+    }
+}
+
+pub fn prepare_query_cl_pool_response(pool_id: u64, token0: &str, token1: &str) -> PoolResponse {
+    let pool = ConcentratedLiquidityPool {
+        address: "osmo126pr9qp44aft4juw7x4ev4s2qdtnwe38jzwunec9pxt5cpzaaphqyagqpu".to_string(),
+        incentives_address: "osmo1h2mhtj3wmsdt3uacev9pgpg38hkcxhsmyyn9ums0ya6eddrsafjsxs9j03"
+            .to_string(),
+        spread_rewards_address: "osmo16j5sssw32xuk8a0kjj8n54g25ye6kr339nz5axf8lzyeajk0k22stsm36c"
+            .to_string(),
+        id: pool_id,
+        current_tick_liquidity: "3820025893854099618.699762490947860933".to_string(),
+        token0: token0.to_string(),
+        token1: token1.to_string(),
+        current_sqrt_price: "656651.537483144215151633465586753226461989".to_string(),
+        current_tick: 102311912,
+        tick_spacing: 100,
+        exponent_at_price_one: -6,
+        spread_factor: "0.002000000000000000".to_string(),
+        last_liquidity_update: None,
     };
     PoolResponse {
         pool: Some(pool.to_any()),
