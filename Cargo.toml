@@ -59,7 +59,7 @@ thiserror         = "1.0.44"
 
 # dev-dependencies
 cw-multi-test     = "0.16.5"
-cw-it             = "0.1.0"
+cw-it             = "0.1.1"
 osmosis-test-tube = "=16.1.1"
 proptest          = "1.2.0"
 test-case         = "3.1.0"
