@@ -11,6 +11,7 @@ use mars_oracle_osmosis::{
 use mars_owner::OwnerError::NotOwner;
 use mars_red_bank_types::oracle::msg::QueryMsg;
 use mars_testing::mock_info;
+use mars_utils::error::ValidationError;
 use pyth_sdk_cw::PriceIdentifier;
 
 mod helpers;
@@ -83,9 +84,9 @@ fn setting_price_source_incorrect_denom() {
     );
     assert_eq!(
         res,
-        Err(ContractError::InvalidDenom {
+        Err(ContractError::Validation(ValidationError::InvalidDenom {
             reason: "First character is not ASCII alphabetic".to_string()
-        })
+        }))
     );
 
     let res_two = execute(
@@ -101,10 +102,10 @@ fn setting_price_source_incorrect_denom() {
     );
     assert_eq!(
         res_two,
-        Err(ContractError::InvalidDenom {
+        Err(ContractError::Validation(ValidationError::InvalidDenom {
             reason: "Not all characters are ASCII alphanumeric or one of:  /  :  .  _  -"
                 .to_string()
-        })
+        }))
     );
 
     let res_three = execute(
@@ -120,9 +121,9 @@ fn setting_price_source_incorrect_denom() {
     );
     assert_eq!(
         res_three,
-        Err(ContractError::InvalidDenom {
+        Err(ContractError::Validation(ValidationError::InvalidDenom {
             reason: "Invalid denom length".to_string()
-        })
+        }))
     );
 }
 
@@ -143,6 +144,15 @@ fn setting_price_source_spot() {
             },
         )
     };
+
+    // attempting to set price source for base denom; should fail
+    let err = set_price_source_spot("uosmo", 1).unwrap_err();
+    assert_eq!(
+        err,
+        ContractError::InvalidPriceSource {
+            reason: "denom and base denom can't be the same".to_string()
+        }
+    );
 
     // attempting to use a pool that does not contain the denom of interest; should fail
     let err = set_price_source_spot("umars", 1).unwrap_err();
@@ -221,6 +231,15 @@ fn setting_price_source_arithmetic_twap_with_invalid_params() {
                 },
             )
         };
+
+    // attempting to set price source for base denom; should fail
+    let err = set_price_source_twap("uosmo", 1, 86400, None).unwrap_err();
+    assert_eq!(
+        err,
+        ContractError::InvalidPriceSource {
+            reason: "denom and base denom can't be the same".to_string()
+        }
+    );
 
     // attempting to use a pool that does not contain the denom of interest; should fail
     let err = set_price_source_twap("umars", 1, 86400, None).unwrap_err();
@@ -384,6 +403,15 @@ fn setting_price_source_geometric_twap_with_invalid_params() {
                 },
             )
         };
+
+    // attempting to set price source for base denom; should fail
+    let err = set_price_source_twap("uosmo", 1, 86400, None).unwrap_err();
+    assert_eq!(
+        err,
+        ContractError::InvalidPriceSource {
+            reason: "denom and base denom can't be the same".to_string()
+        }
+    );
 
     // attempting to use a pool that does not contain the denom of interest; should fail
     let err = set_price_source_twap("umars", 1, 86400, None).unwrap_err();
@@ -549,6 +577,24 @@ fn setting_price_source_staked_geometric_twap_with_invalid_params() {
                 },
             )
         };
+
+    // attempting to set price source for base denom; should fail
+    let err = set_price_source_twap("uosmo", "uosmo", 1, 86400, None).unwrap_err();
+    assert_eq!(
+        err,
+        ContractError::InvalidPriceSource {
+            reason: "denom and base denom can't be the same".to_string()
+        }
+    );
+
+    // attempting to set price source with invalid transitive denom; should fail
+    let err = set_price_source_twap("ustatom", "!*jadfaefc", 803, 86400, None).unwrap_err();
+    assert_eq!(
+        err,
+        ContractError::Validation(ValidationError::InvalidDenom {
+            reason: "First character is not ASCII alphabetic".to_string()
+        })
+    );
 
     // attempting to use a pool that does not contain the denom of interest; should fail
     let err = set_price_source_twap("ustatom", "umars", 803, 86400, None).unwrap_err();
@@ -723,6 +769,24 @@ fn setting_price_source_lsd_with_invalid_params() {
                 },
             )
         };
+
+    // attempting to set price source for base denom; should fail
+    let err = set_price_source_twap("uosmo", "uosmo", 1, 86400, None).unwrap_err();
+    assert_eq!(
+        err,
+        ContractError::InvalidPriceSource {
+            reason: "denom and base denom can't be the same".to_string()
+        }
+    );
+
+    // attempting to set price source with invalid transitive denom; should fail
+    let err = set_price_source_twap("ustatom", "!*jadfaefc", 3333, 86400, None).unwrap_err();
+    assert_eq!(
+        err,
+        ContractError::Validation(ValidationError::InvalidDenom {
+            reason: "First character is not ASCII alphabetic".to_string()
+        })
+    );
 
     // attempting to use a pool that does not contain the denom of interest; should fail
     let err = set_price_source_twap("ustatom", "umars", 803, 86400, None).unwrap_err();

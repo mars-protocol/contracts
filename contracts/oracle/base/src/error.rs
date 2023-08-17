@@ -3,6 +3,7 @@ use cosmwasm_std::{
     DecimalRangeExceeded, DivideByZeroError, OverflowError, StdError,
 };
 use mars_owner::OwnerError;
+use mars_utils::error::ValidationError;
 use thiserror::Error;
 
 #[derive(Error, Debug, PartialEq)]
@@ -10,12 +11,13 @@ pub enum ContractError {
     #[error("{0}")]
     Std(#[from] StdError),
 
-    // #[error("{0}")]
-    // Mars(#[from] MarsError),
     #[error("Invalid denom: {reason}")]
     InvalidDenom {
         reason: String,
     },
+
+    #[error("{0}")]
+    Validation(#[from] ValidationError),
 
     #[error("{0}")]
     Version(#[from] cw2::VersionError),

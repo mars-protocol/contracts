@@ -49,6 +49,12 @@ fn assert_osmosis_pool_contains_two_assets(
     let pool_id = pool.get_pool_id();
     let pool_denoms = pool.get_pool_denoms();
 
+    if denom == base_denom {
+        return Err(ContractError::InvalidPriceSource {
+            reason: "denom and base denom can't be the same".to_string(),
+        });
+    }
+
     if !pool_denoms.contains(&base_denom.to_string()) {
         return Err(ContractError::InvalidPriceSource {
             reason: format!("pool {} does not contain the base denom {}", pool_id, base_denom),
