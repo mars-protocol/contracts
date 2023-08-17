@@ -11,11 +11,6 @@ pub enum ContractError {
     #[error("{0}")]
     Std(#[from] StdError),
 
-    #[error("Invalid denom: {reason}")]
-    InvalidDenom {
-        reason: String,
-    },
-
     #[error("{0}")]
     Validation(#[from] ValidationError),
 
