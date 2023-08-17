@@ -655,6 +655,69 @@ fn setting_price_source_pyth_if_missing_usd() {
 }
 
 #[test]
+fn setting_price_source_pyth_with_invalid_params() {
+    let runner = get_test_runner();
+    let robot = WasmOracleTestRobot::new(
+        &runner,
+        get_contracts(&get_test_runner()),
+        &get_test_runner().init_default_accounts().unwrap()[0],
+        None,
+    );
+
+    let mut deps = helpers::setup_test(&robot.astroport_contracts.factory.address);
+
+    let mut set_price_source_pyth =
+        |max_confidence: Decimal, max_deviation: Decimal, denom_decimals: u8| {
+            execute(
+                deps.as_mut(),
+                mock_env(),
+                mock_info("owner"),
+                ExecuteMsg::SetPriceSource {
+                    denom: "uatom".to_string(),
+                    price_source: WasmPriceSourceUnchecked::Pyth {
+                        contract_addr: "pyth_contract_addr".to_string(),
+                        price_feed_id: PriceIdentifier::from_hex(
+                            "61226d39beea19d334f17c2febce27e12646d84675924ebb02b9cdaea68727e3",
+                        )
+                        .unwrap(),
+                        max_staleness: 30,
+                        max_confidence,
+                        max_deviation,
+                        denom_decimals,
+                    },
+                },
+            )
+        };
+
+    // attempting to set max_confidence > 20%; should fail
+    let err = set_price_source_pyth(Decimal::percent(21), Decimal::percent(6), 6).unwrap_err();
+    assert_eq!(
+        err,
+        ContractError::InvalidPriceSource {
+            reason: "max_confidence must be in the range of <0;0.2>".to_string()
+        }
+    );
+
+    // attempting to set max_deviation > 20%; should fail
+    let err = set_price_source_pyth(Decimal::percent(5), Decimal::percent(21), 18).unwrap_err();
+    assert_eq!(
+        err,
+        ContractError::InvalidPriceSource {
+            reason: "max_deviation must be in the range of <0;0.2>".to_string()
+        }
+    );
+
+    // attempting to set denom_decimals > 18; should fail
+    let err = set_price_source_pyth(Decimal::percent(5), Decimal::percent(20), 19).unwrap_err();
+    assert_eq!(
+        err,
+        ContractError::InvalidPriceSource {
+            reason: "denom_decimals must be <= 18".to_string()
+        }
+    );
+}
+
+#[test]
 fn twap_window_size_not_gt_tolerance() {
     let runner = get_test_runner();
     let admin = &runner.init_default_accounts().unwrap()[0];
