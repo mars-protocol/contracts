@@ -6,6 +6,9 @@ use pyth_sdk_cw::{query_price_feed, Price, PriceFeed, PriceFeedResponse, PriceId
 use super::*;
 use crate::error::ContractError::InvalidPrice;
 
+// We don't support any denom with more than 18 decimals
+const MAX_DENOM_DECIMALS: u8 = 18;
+
 /// We want to discriminate which actions should trigger a circuit breaker check.
 /// The objective is to allow liquidations to happen without requiring too many checks (always be open for liquidations)
 /// while not allowing other actions to be taken in cases of extreme volatility (which could indicate price manipulation attacks).
@@ -121,7 +124,11 @@ fn query_pyth_price_for_liquidation(
 }
 
 /// Assert Pyth configuration
-pub fn assert_pyth(max_confidence: Decimal, max_deviation: Decimal) -> ContractResult<()> {
+pub fn assert_pyth(
+    max_confidence: Decimal,
+    max_deviation: Decimal,
+    denom_decimals: u8,
+) -> ContractResult<()> {
     if !max_confidence.le(&Decimal::percent(20u64)) {
         return Err(ContractError::InvalidPriceSource {
             reason: "max_confidence must be in the range of <0;0.2>".to_string(),
@@ -131,6 +138,12 @@ pub fn assert_pyth(max_confidence: Decimal, max_deviation: Decimal) -> ContractR
     if !max_deviation.le(&Decimal::percent(20u64)) {
         return Err(ContractError::InvalidPriceSource {
             reason: "max_deviation must be in the range of <0;0.2>".to_string(),
+        });
+    }
+
+    if denom_decimals > MAX_DENOM_DECIMALS {
+        return Err(ContractError::InvalidPriceSource {
+            reason: format!("denom_decimals must be <= {}", MAX_DENOM_DECIMALS),
         });
     }
 
@@ -255,6 +268,12 @@ pub fn scale_pyth_price(
     // 26 decimals used (overflow) !!!
     let price = usd_price.checked_mul(denom_scaled)?.checked_mul(pyth_price)?;
 
+    if price.is_zero() {
+        return Err(InvalidPrice {
+            reason: "price is zero".to_string(),
+        });
+    }
+
     Ok(price)
 }
 
@@ -326,5 +345,17 @@ mod tests {
             scale_pyth_price(100000098000001u128, -8, 18u8, Decimal::from_str("1000000").unwrap())
                 .unwrap();
         assert_eq!(ueth_price_in_uusd, Decimal::from_atomics(100000098000001u128, 20u32).unwrap());
+    }
+
+    #[test]
+    fn return_error_if_scaled_pyth_price_is_zero() {
+        let price_err =
+            scale_pyth_price(1u128, -18, 18u8, Decimal::from_str("1000000").unwrap()).unwrap_err();
+        assert_eq!(
+            price_err,
+            ContractError::InvalidPrice {
+                reason: "price is zero".to_string()
+            }
+        );
     }
 }

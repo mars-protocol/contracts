@@ -201,7 +201,7 @@ impl PriceSourceUnchecked<WasmPriceSourceChecked, Empty> for WasmPriceSourceUnch
                 max_deviation,
                 denom_decimals,
             } => {
-                mars_oracle_base::pyth::assert_pyth(max_confidence, max_deviation)?;
+                mars_oracle_base::pyth::assert_pyth(max_confidence, max_deviation, denom_decimals)?;
                 mars_oracle_base::pyth::assert_usd_price_source(deps, price_sources)?;
                 Ok(WasmPriceSourceChecked::Pyth {
                     contract_addr: deps.api.addr_validate(&contract_addr)?,
