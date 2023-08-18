@@ -22,6 +22,7 @@ cosmwasm-std        = { workspace = true }
 cw2                 = { workspace = true }
 cw-storage-plus     = { workspace = true }
 mars-owner          = { workspace = true }
+mars-utils          = { workspace = true }
 mars-red-bank-types = { workspace = true }
 pyth-sdk-cw         = { workspace = true, optional = true }
 schemars            = { workspace = true }

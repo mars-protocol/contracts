@@ -11,6 +11,7 @@ use mars_osmosis::helpers::{
     recovered_since_downtime_of_length, Pool,
 };
 use mars_red_bank_types::oracle::{ActionKind, Config};
+use mars_utils::helpers::validate_native_denom;
 use pyth_sdk_cw::PriceIdentifier;
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
@@ -381,9 +382,12 @@ impl PriceSourceUnchecked<OsmosisPriceSourceChecked, Empty> for OsmosisPriceSour
                 window_size,
                 downtime_detector,
             } => {
+                validate_native_denom(transitive_denom)?;
+
                 let pool = query_pool(&deps.querier, *pool_id)?;
                 helpers::assert_osmosis_pool_assets(&pool, denom, transitive_denom)?;
                 helpers::assert_osmosis_twap(*window_size, downtime_detector)?;
+
                 Ok(OsmosisPriceSourceChecked::StakedGeometricTwap {
                     transitive_denom: transitive_denom.to_string(),
                     pool_id: *pool_id,
@@ -415,12 +419,15 @@ impl PriceSourceUnchecked<OsmosisPriceSourceChecked, Empty> for OsmosisPriceSour
                 geometric_twap,
                 redemption_rate,
             } => {
+                validate_native_denom(transitive_denom)?;
+
                 let pool = query_pool(&deps.querier, geometric_twap.pool_id)?;
                 helpers::assert_osmosis_pool_assets(&pool, denom, transitive_denom)?;
                 helpers::assert_osmosis_twap(
                     geometric_twap.window_size,
                     &geometric_twap.downtime_detector,
                 )?;
+
                 Ok(OsmosisPriceSourceChecked::Lsd {
                     transitive_denom: transitive_denom.to_string(),
                     geometric_twap: geometric_twap.clone(),

@@ -10,11 +10,9 @@ use mars_red_bank_types::oracle::msg::{
     ActionKind, Config, ConfigResponse, ExecuteMsg, InstantiateMsg, PriceResponse,
     PriceSourceResponse, QueryMsg,
 };
+use mars_utils::helpers::validate_native_denom;
 
-use crate::{
-    error::ContractResult, utils::validate_native_denom, ContractError, PriceSourceChecked,
-    PriceSourceUnchecked,
-};
+use crate::{error::ContractResult, ContractError, PriceSourceChecked, PriceSourceUnchecked};
 
 const DEFAULT_LIMIT: u32 = 10;
 const MAX_LIMIT: u32 = 30;

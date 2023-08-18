@@ -4,6 +4,7 @@ use mars_oracle_osmosis::{contract::entry, msg::ExecuteMsg};
 use mars_owner::OwnerError::NotOwner;
 use mars_red_bank_types::oracle::{ConfigResponse, InstantiateMsg, QueryMsg};
 use mars_testing::{mock_dependencies, mock_info};
+use mars_utils::error::ValidationError;
 
 mod helpers;
 
@@ -35,9 +36,9 @@ fn instantiating_incorrect_denom() {
     );
     assert_eq!(
         res,
-        Err(ContractError::InvalidDenom {
+        Err(ContractError::Validation(ValidationError::InvalidDenom {
             reason: "First character is not ASCII alphabetic".to_string()
-        })
+        }))
     );
 
     let res = entry::instantiate(
@@ -52,10 +53,10 @@ fn instantiating_incorrect_denom() {
     );
     assert_eq!(
         res,
-        Err(ContractError::InvalidDenom {
+        Err(ContractError::Validation(ValidationError::InvalidDenom {
             reason: "Not all characters are ASCII alphanumeric or one of:  /  :  .  _  -"
                 .to_string()
-        })
+        }))
     );
 
     let res = entry::instantiate(
@@ -70,9 +71,9 @@ fn instantiating_incorrect_denom() {
     );
     assert_eq!(
         res,
-        Err(ContractError::InvalidDenom {
+        Err(ContractError::Validation(ValidationError::InvalidDenom {
             reason: "Invalid denom length".to_string()
-        })
+        }))
     );
 }
 
@@ -99,9 +100,9 @@ fn update_config_with_invalid_base_denom() {
     let res_err = entry::execute(deps.as_mut(), mock_env(), info, msg).unwrap_err();
     assert_eq!(
         res_err,
-        ContractError::InvalidDenom {
+        ContractError::Validation(ValidationError::InvalidDenom {
             reason: "First character is not ASCII alphabetic".to_string()
-        }
+        })
     );
 }
 
