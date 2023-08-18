@@ -54,9 +54,11 @@ const DEFAULT_LIQ: [u128; 2] = [10000000000000000u128, 10000000000000000u128];
 #[test_case(PoolType::Stable { amp: 10u64 }, "uatom", &DEFAULT_LIQ, &[6,6], Decimal::percent(5), true => panics ; "stable swap no route")]
 #[test_case(PoolType::Xyk {}, "uatom",  &DEFAULT_LIQ, &[10,6], Decimal::percent(1), false; "xyk 10:6 decimals, even pool")]
 #[test_case(PoolType::Xyk {}, "uatom",  &DEFAULT_LIQ, &[6,18], Decimal::percent(1), false; "xyk 6:18 decimals, even pool")]
-#[test_case(PoolType::Stable { amp: 10u64 }, "uatom", &[100000000000,10000000000000], &[6,8], Decimal::percent(50), false; "stable 6:8 decimals, even adjusted pool")]
-#[test_case(PoolType::Stable { amp: 10u64 }, "uatom", &[1000000000000,100000000000], &[7,6], Decimal::percent(50), false; "stable 8:6 decimals, even adjusted pool")]
+#[test_case(PoolType::Stable { amp: 10u64 }, "uatom", &[100000000000,10000000000000], &[6,8], Decimal::percent(10), false; "stable 6:8 decimals, even adjusted pool")]
+#[test_case(PoolType::Stable { amp: 10u64 }, "uatom", &[1000000000000,100000000000], &[7,6], Decimal::percent(10), false; "stable 8:6 decimals, even adjusted pool")]
 #[test_case(PoolType::Stable { amp: 10u64 }, "uatom", &[100000000000,100000000000000000000000], &[6,18], Decimal::percent(5), false; "stable 6:18 decimals, even adjusted pool")]
+#[test_case(PoolType::Xyk {}, "uatom", &DEFAULT_LIQ, &[6,6], Decimal::percent(11), false => panics ; "xyk max slippage exceeded")]
+#[test_case(PoolType::Stable { amp: 10u64 }, "uatom", &DEFAULT_LIQ, &[6,6], Decimal::percent(11), false => panics ; "stable max slippage exceeded")]
 fn swap(
     pool_type: PoolType,
     denom_out: &str,
