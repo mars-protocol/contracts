@@ -297,7 +297,7 @@ pub fn execute_callback(
             account_id,
             coin,
             recipient,
-        } => withdraw(deps, &account_id, coin, recipient),
+        } => withdraw(deps, &account_id, &coin, recipient),
         CallbackMsg::Borrow {
             coin,
             account_id,

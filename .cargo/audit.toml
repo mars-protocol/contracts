@@ -1,0 +1,6 @@
+# Reference: https://github.com/rustsec/rustsec/blob/main/cargo-audit/audit.toml.example
+
+[advisories]
+# Ignore the following advisory IDs.
+# RUSTSEC-2022-0093 is reported for test-tube which is only used for testing.
+ignore = ["RUSTSEC-2022-0093"]

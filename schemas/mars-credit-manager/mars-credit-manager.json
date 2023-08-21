@@ -304,7 +304,7 @@
             ],
             "properties": {
               "withdraw": {
-                "$ref": "#/definitions/Coin"
+                "$ref": "#/definitions/ActionCoin"
               }
             },
             "additionalProperties": false
@@ -709,7 +709,7 @@
                     "type": "string"
                   },
                   "coin": {
-                    "$ref": "#/definitions/Coin"
+                    "$ref": "#/definitions/ActionCoin"
                   },
                   "recipient": {
                     "$ref": "#/definitions/Addr"

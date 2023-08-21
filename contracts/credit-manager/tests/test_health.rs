@@ -932,7 +932,7 @@ fn can_take_actions_if_ltv_does_not_weaken() {
     mock.update_credit_account(
         &account_id,
         &user,
-        vec![Deposit(uosmo_info.to_coin(1)), Withdraw(uosmo_info.to_coin(1))],
+        vec![Deposit(uosmo_info.to_coin(1)), Withdraw(uosmo_info.to_action_coin(1))],
         &[uosmo_info.to_coin(1)],
     )
     .unwrap();

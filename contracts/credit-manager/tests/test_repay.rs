@@ -179,7 +179,7 @@ fn raises_when_not_enough_assets_to_repay() {
         vec![
             Deposit(uatom_info.to_coin(300)),
             Borrow(uosmo_info.to_coin(50)),
-            Withdraw(uosmo_info.to_coin(10)),
+            Withdraw(uosmo_info.to_action_coin(10)),
             Repay {
                 recipient_account_id: None,
                 coin: uosmo_info.to_action_coin(50),

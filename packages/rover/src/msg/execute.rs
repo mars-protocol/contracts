@@ -117,7 +117,7 @@ pub enum Action {
     /// Deposit coin of specified denom and amount. Verifies if the correct amount is sent with transaction.
     Deposit(Coin),
     /// Withdraw coin of specified denom and amount
-    Withdraw(Coin),
+    Withdraw(ActionCoin),
     /// Borrow coin of specified amount from Red Bank
     Borrow(Coin),
     /// Lend coin to the Red Bank
@@ -195,7 +195,7 @@ pub enum CallbackMsg {
     /// Decrement the token's asset amount;
     Withdraw {
         account_id: String,
-        coin: Coin,
+        coin: ActionCoin,
         recipient: Addr,
     },
     /// Borrow specified amount of coin from Red Bank;

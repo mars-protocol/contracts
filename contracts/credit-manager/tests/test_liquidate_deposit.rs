@@ -477,7 +477,7 @@ fn target_health_factor_reached_after_max_debt_repayed() {
         vec![
             Deposit(uosmo_info.to_coin(3000)),
             Borrow(uatom_info.to_coin(1000)),
-            Withdraw(uatom_info.to_coin(400)),
+            Withdraw(uatom_info.to_action_coin(400)),
         ],
         &[Coin::new(3000, uosmo_info.denom.clone())],
     )

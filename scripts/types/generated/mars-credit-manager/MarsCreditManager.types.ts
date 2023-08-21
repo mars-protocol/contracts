@@ -62,7 +62,7 @@ export type Action =
       deposit: Coin
     }
   | {
-      withdraw: Coin
+      withdraw: ActionCoin
     }
   | {
       borrow: Coin
@@ -176,7 +176,7 @@ export type CallbackMsg =
   | {
       withdraw: {
         account_id: string
-        coin: Coin
+        coin: ActionCoin
         recipient: Addr
       }
     }

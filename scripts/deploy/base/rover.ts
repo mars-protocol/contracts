@@ -87,7 +87,9 @@ export class Rover {
     const beforeWithdraw = parseFloat(
       positionsBefore.deposits.find((c) => c.denom === this.config.chain.baseDenom)!.amount,
     )
-    await this.updateCreditAccount([{ withdraw: { amount, denom: this.config.chain.baseDenom } }])
+    await this.updateCreditAccount([
+      { withdraw: { amount: { exact: amount }, denom: this.config.chain.baseDenom } },
+    ])
     const positionsAfter = await this.query.positions({ accountId: this.accountId! })
     const afterWithdraw = parseFloat(
       positionsAfter.deposits.find((c) => c.denom === this.config.chain.baseDenom)!.amount,
