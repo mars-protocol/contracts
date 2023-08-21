@@ -4,9 +4,10 @@ use cosmwasm_std::{
     Uint128,
 };
 use cw_utils::PaymentError;
-use super::helpers::th_setup;
 use mars_red_bank::contract;
 use mars_red_bank_types::red_bank::ExecuteMsg;
+
+use super::helpers::th_setup;
 
 /// The Red Bank contract has 6 user-facing functions: deposit, withdraw, borrow,
 /// repay, liquidate, and update_asset_collateral_status; amount these, 3 do not

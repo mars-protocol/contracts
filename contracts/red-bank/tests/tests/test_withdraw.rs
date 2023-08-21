@@ -3,10 +3,6 @@ use cosmwasm_std::{
     testing::{mock_env, mock_info, MockApi, MockStorage},
     to_binary, Addr, BankMsg, CosmosMsg, Decimal, OwnedDeps, SubMsg, Uint128, WasmMsg,
 };
-use super::helpers::{
-    has_collateral_position, set_collateral, th_build_interests_updated_event,
-    th_get_expected_indices_and_rates, th_setup, TestUtilizationDeltaInfo,th_default_asset_params
-};
 use mars_interest_rate::{
     compute_scaled_amount, compute_underlying_amount, get_scaled_liquidity_amount,
     get_updated_borrow_index, get_updated_liquidity_index, ScalingOperation, SCALING_FACTOR,
@@ -23,6 +19,11 @@ use mars_red_bank_types::{
     red_bank::{Collateral, Debt, ExecuteMsg, Market},
 };
 use mars_testing::{mock_env_at_block_time, MarsMockQuerier};
+
+use super::helpers::{
+    has_collateral_position, set_collateral, th_build_interests_updated_event,
+    th_default_asset_params, th_get_expected_indices_and_rates, th_setup, TestUtilizationDeltaInfo,
+};
 
 struct TestSuite {
     deps: OwnedDeps<MockStorage, MockApi, MarsMockQuerier>,

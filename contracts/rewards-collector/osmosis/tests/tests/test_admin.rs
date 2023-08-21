@@ -6,8 +6,10 @@ use mars_rewards_collector_osmosis::entry::{execute, instantiate};
 use mars_testing::mock_info;
 use mars_utils::error::ValidationError;
 
-use super::helpers;
-use super::helpers::{mock_config, mock_instantiate_msg};
+use super::{
+    helpers,
+    helpers::{mock_config, mock_instantiate_msg},
+};
 
 #[test]
 fn instantiating() {

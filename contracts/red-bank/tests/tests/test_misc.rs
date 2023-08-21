@@ -1,11 +1,6 @@
 use cosmwasm_std::{
     attr, coin, coins, testing::mock_info, Addr, BankMsg, CosmosMsg, Decimal, SubMsg, Uint128,
 };
-use super::helpers::{
-    has_collateral_enabled, has_collateral_position, has_debt_position, set_collateral, set_debt,
-    th_build_interests_updated_event, th_get_expected_indices_and_rates, th_init_market, th_setup,
-    TestUtilizationDeltaInfo, th_default_asset_params
-};
 use mars_interest_rate::{
     compute_scaled_amount, compute_underlying_amount, get_scaled_debt_amount,
     get_updated_liquidity_index, ScalingOperation, SCALING_FACTOR,
@@ -20,6 +15,12 @@ use mars_red_bank::{
 };
 use mars_red_bank_types::red_bank::{Debt, ExecuteMsg, Market};
 use mars_testing::{mock_env, mock_env_at_block_time, MockEnvParams};
+
+use super::helpers::{
+    has_collateral_enabled, has_collateral_position, has_debt_position, set_collateral, set_debt,
+    th_build_interests_updated_event, th_default_asset_params, th_get_expected_indices_and_rates,
+    th_init_market, th_setup, TestUtilizationDeltaInfo,
+};
 
 #[test]
 fn uncollateralized_loan_limits() {

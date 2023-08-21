@@ -1,11 +1,12 @@
 use std::str::FromStr;
 
 use cosmwasm_std::{coin, Addr, Decimal, Uint128};
-use super::helpers::assert_err;
 use mars_params::types::asset::{AssetParams, CmSettings, LiquidationBonus, RedBankSettings};
 use mars_red_bank::error::ContractError;
 use mars_red_bank_types::red_bank::{InitOrUpdateAssetParams, InterestRateModel, UserHealthStatus};
 use mars_testing::integration::mock_env::MockEnvBuilder;
+
+use super::helpers::assert_err;
 
 #[test]
 fn deposit_and_withdraw_for_credit_account_works() {

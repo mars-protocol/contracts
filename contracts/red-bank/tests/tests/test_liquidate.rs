@@ -6,8 +6,6 @@ use cosmwasm_std::{
     to_binary, Addr, Decimal, SubMsg, Uint128, WasmMsg,
 };
 use cw_utils::PaymentError;
-use super::helpers::{th_get_expected_indices_and_rates, th_query, th_setup, TestUtilizationDeltaInfo, assert_err, liq_threshold_hf, merge_collaterals_and_debts, th_build_interests_updated_event,
-    th_get_scaled_liquidity_amount};
 use mars_params::types::asset::{AssetParams, CmSettings, LiquidationBonus, RedBankSettings};
 use mars_red_bank::{contract::execute, error::ContractError};
 use mars_red_bank_types::{
@@ -21,6 +19,12 @@ use mars_red_bank_types::{
 use mars_testing::{
     integration::mock_env::{MockEnv, MockEnvBuilder},
     mock_env_at_block_time,
+};
+
+use super::helpers::{
+    assert_err, liq_threshold_hf, merge_collaterals_and_debts, th_build_interests_updated_event,
+    th_get_expected_indices_and_rates, th_get_scaled_liquidity_amount, th_query, th_setup,
+    TestUtilizationDeltaInfo,
 };
 
 // NOTE: See spreadsheet with liquidation numbers for reference:

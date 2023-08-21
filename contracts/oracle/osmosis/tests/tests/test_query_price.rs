@@ -5,6 +5,7 @@ use cosmwasm_std::{
     testing::{mock_env, MockApi, MockStorage},
     Decimal, OwnedDeps, StdError,
 };
+use helpers::prepare_query_balancer_pool_response;
 use mars_oracle_base::{pyth::scale_pyth_price, ContractError};
 use mars_oracle_osmosis::{
     contract::entry, stride::RedemptionRateResponse, Downtime, DowntimeDetector, GeometricTwap,
@@ -17,8 +18,6 @@ use osmosis_std::types::osmosis::{
     twap::v1beta1::{ArithmeticTwapToNowResponse, GeometricTwapToNowResponse},
 };
 use pyth_sdk_cw::{Price, PriceFeed, PriceFeedResponse, PriceIdentifier};
-
-use helpers::prepare_query_balancer_pool_response;
 
 use super::helpers;
 

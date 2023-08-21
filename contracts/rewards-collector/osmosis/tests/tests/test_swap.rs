@@ -9,8 +9,7 @@ use mars_rewards_collector_osmosis::entry::execute;
 use mars_testing::mock_info;
 use osmosis_std::types::osmosis::twap::v1beta1::ArithmeticTwapToNowResponse;
 
-use super::helpers;
-use super::helpers::mock_instantiate_msg;
+use super::{helpers, helpers::mock_instantiate_msg};
 
 #[test]
 fn swapping_asset() {

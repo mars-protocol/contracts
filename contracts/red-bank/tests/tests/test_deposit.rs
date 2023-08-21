@@ -6,9 +6,6 @@ use cosmwasm_std::{
     to_binary, Addr, Decimal, OwnedDeps, StdError, SubMsg, Uint128, WasmMsg,
 };
 use cw_utils::PaymentError;
-use super::helpers::{
-    set_collateral, th_build_interests_updated_event, th_get_expected_indices_and_rates, th_setup, th_default_asset_params
-};
 use mars_interest_rate::{
     compute_scaled_amount, get_underlying_liquidity_amount, ScalingOperation, SCALING_FACTOR,
 };
@@ -25,6 +22,11 @@ use mars_red_bank_types::{
 };
 use mars_testing::{mock_env_at_block_time, MarsMockQuerier};
 use test_case::test_case;
+
+use super::helpers::{
+    set_collateral, th_build_interests_updated_event, th_default_asset_params,
+    th_get_expected_indices_and_rates, th_setup,
+};
 
 struct TestSuite {
     deps: OwnedDeps<MockStorage, MockApi, MarsMockQuerier>,

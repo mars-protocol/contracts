@@ -5,7 +5,7 @@ use mars_red_bank_types::address_provider::{
     AddressResponseItem, ExecuteMsg, MarsAddressType, QueryMsg,
 };
 
-use super::helpers::{th_setup, th_query};
+use super::helpers::{th_query, th_setup};
 
 #[test]
 fn setting_address_if_unauthorized() {

@@ -6,7 +6,7 @@ use mars_red_bank_types::incentives::{
 use mars_testing::{mock_env, MockEnvParams};
 use test_case::test_case;
 
-use super::helpers::{th_setup, th_query, th_query_with_env};
+use super::helpers::{th_query, th_query_with_env, th_setup};
 
 #[test]
 fn query_incentive_state() {
