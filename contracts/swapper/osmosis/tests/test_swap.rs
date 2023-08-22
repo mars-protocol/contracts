@@ -47,6 +47,41 @@ fn transfer_callback_only_internal() {
 }
 
 #[test]
+fn max_slippage_exeeded() {
+    let app = OsmosisTestApp::new();
+    let wasm = Wasm::new(&app);
+
+    let accs = app
+        .init_accounts(&[coin(1_000_000_000_000, "uosmo"), coin(1_000_000_000_000, "umars")], 2)
+        .unwrap();
+    let owner = &accs[0];
+    let other_guy = &accs[1];
+
+    let contract_addr = instantiate_contract(&wasm, owner);
+
+    let res_err = wasm
+        .execute(
+            &contract_addr,
+            &ExecuteMsg::<OsmosisRoute>::SwapExactIn {
+                coin_in: coin(1_000_000, "umars"),
+                denom_out: "uosmo".to_string(),
+                slippage: Decimal::percent(11),
+            },
+            &[coin(1_000_000, "umars")],
+            other_guy,
+        )
+        .unwrap_err();
+
+    assert_err(
+        res_err,
+        ContractError::MaxSlippageExceeded {
+            max_slippage: Decimal::percent(10),
+            slippage: Decimal::percent(11),
+        },
+    );
+}
+
+#[test]
 fn swap_exact_in_slippage_too_high() {
     let app = OsmosisTestApp::new();
     let wasm = Wasm::new(&app);

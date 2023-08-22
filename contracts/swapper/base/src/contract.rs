@@ -14,6 +14,9 @@ use mars_red_bank_types::swapper::{
 
 use crate::{ContractError, ContractResult, Route};
 
+// Max allowed slippage percentage for swap
+const MAX_SLIPPAGE_PERCENTAGE: u64 = 10;
+
 pub struct SwapBase<'a, Q, M, R>
 where
     Q: CustomQuery,
@@ -161,6 +164,14 @@ where
         denom_out: String,
         slippage: Decimal,
     ) -> ContractResult<Response<M>> {
+        let max_slippage = Decimal::percent(MAX_SLIPPAGE_PERCENTAGE);
+        if slippage > max_slippage {
+            return Err(ContractError::MaxSlippageExceeded {
+                max_slippage,
+                slippage,
+            });
+        }
+
         let swap_msg = self
             .routes
             .load(deps.storage, (coin_in.denom.clone(), denom_out.clone()))
