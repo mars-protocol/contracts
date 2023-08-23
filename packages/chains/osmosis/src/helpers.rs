@@ -8,6 +8,7 @@ use osmosis_std::{
     types::{
         cosmos::base::v1beta1::Coin,
         osmosis::{
+            concentratedliquidity::v1beta1::Pool as ConcentratedLiquidityPool,
             downtimedetector::v1beta1::DowntimedetectorQuerier,
             gamm::{
                 poolmodels::stableswap::v1beta1::Pool as StableSwapPool,
@@ -30,6 +31,7 @@ pub trait CommonPoolData {
 pub enum Pool {
     Balancer(BalancerPool),
     StableSwap(StableSwapPool),
+    ConcentratedLiquidity(ConcentratedLiquidityPool),
 }
 
 impl CommonPoolData for Pool {
@@ -37,6 +39,7 @@ impl CommonPoolData for Pool {
         match self {
             Pool::Balancer(pool) => pool.id,
             Pool::StableSwap(pool) => pool.id,
+            Pool::ConcentratedLiquidity(pool) => pool.id,
         }
     }
 
@@ -51,6 +54,9 @@ impl CommonPoolData for Pool {
             Pool::StableSwap(pool) => {
                 pool.pool_liquidity.iter().map(|pl| pl.denom.clone()).collect()
             }
+            Pool::ConcentratedLiquidity(pool) => {
+                vec![pool.token0.clone(), pool.token1.clone()]
+            }
         }
     }
 }
@@ -62,13 +68,18 @@ impl TryFrom<osmosis_std::shim::Any> for Pool {
         if let Ok(pool) = BalancerPool::decode(value.value.as_slice()) {
             return Ok(Pool::Balancer(pool));
         }
+
         if let Ok(pool) = StableSwapPool::decode(value.value.as_slice()) {
             return Ok(Pool::StableSwap(pool));
         }
 
+        if let Ok(pool) = ConcentratedLiquidityPool::decode(value.value.as_slice()) {
+            return Ok(Pool::ConcentratedLiquidity(pool));
+        }
+
         Err(StdError::parse_err(
             "Pool",
-            "Unsupported pool: must be either `Balancer` or `StableSwap`.",
+            "Unsupported pool: must be either `Balancer`, `StableSwap` or `ConcentratedLiquidity`.",
         ))
     }
 }
@@ -278,5 +289,37 @@ mod tests {
 
         assert_eq!(stable_swap_pool.id, pool.get_pool_id());
         assert_eq!(vec!["denom_1".to_string(), "denom_2".to_string()], pool.get_pool_denoms())
+    }
+
+    #[test]
+    fn common_data_for_concentrated_liquidity_pool() {
+        let concentrated_liquidity_pool = ConcentratedLiquidityPool {
+            address: "pool_address".to_string(),
+            incentives_address: "incentives_address".to_string(),
+            spread_rewards_address: "spread_rewards_address".to_string(),
+            id: 1066,
+            current_tick_liquidity: "3820025893854099618.699762490947860933".to_string(),
+            token0: "uosmo".to_string(),
+            token1: "ibc/0CD3A0285E1341859B5E86B6AB7682F023D03E97607CCC1DC95706411D866DF7"
+                .to_string(),
+            current_sqrt_price: "656651.537483144215151633465586753226461989".to_string(),
+            current_tick: 102311912,
+            tick_spacing: 100,
+            exponent_at_price_one: -6,
+            spread_factor: "0.002000000000000000".to_string(),
+            last_liquidity_update: None,
+        };
+
+        let any_pool = concentrated_liquidity_pool.to_any();
+        let pool: Pool = any_pool.try_into().unwrap();
+
+        assert_eq!(concentrated_liquidity_pool.id, pool.get_pool_id());
+        assert_eq!(
+            vec![
+                "uosmo".to_string(),
+                "ibc/0CD3A0285E1341859B5E86B6AB7682F023D03E97607CCC1DC95706411D866DF7".to_string()
+            ],
+            pool.get_pool_denoms()
+        );
     }
 }
