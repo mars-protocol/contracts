@@ -29,10 +29,6 @@ jobs:
       - name: Compile workspace
         run: cargo make build
 
-      # - name: Run test
-      #   run: cargo make test
-
-      # disabled because of "no space left" error.
       - name: Run test coverage
         run: cargo make coverage-lcov
 
