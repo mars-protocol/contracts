@@ -991,11 +991,20 @@ fn setting_price_source_xyk_lp() {
     );
 
     // attempting to use StableSwap pool
-    let err = set_price_source_xyk_lp("atom_mars_lp", 5555).unwrap_err();
+    let err = set_price_source_xyk_lp("atom_uosmo_lp", 5555).unwrap_err();
     assert_eq!(
         err,
         ContractError::InvalidPriceSource {
             reason: "StableSwap pool not supported. Pool id 5555".to_string()
+        }
+    );
+
+    // attempting to use ConcentratedLiquid pool
+    let err = set_price_source_xyk_lp("ujuno_uosmo_lp", 6666).unwrap_err();
+    assert_eq!(
+        err,
+        ContractError::InvalidPriceSource {
+            reason: "ConcentratedLiquidity pool not supported. Pool id 6666".to_string()
         }
     );
 

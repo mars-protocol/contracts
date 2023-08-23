@@ -49,7 +49,7 @@ cw-storage-plus   = "1.1.0"
 cw-utils          = "1.0.1"
 mars-owner        = { version = "2.0.0", features = ["emergency-owner"] }
 neutron-sdk       = "0.6.1"
-osmosis-std       = "0.16.1"
+osmosis-std       = "0.16.2"
 prost             = { version = "0.11.9", default-features = false }
 pyth-sdk-cw       = "1.2.0"
 schemars          = "0.8.12"

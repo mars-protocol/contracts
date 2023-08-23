@@ -9,7 +9,7 @@ use crate::DowntimeDetector;
 /// 48 hours in seconds
 const TWO_DAYS_IN_SECONDS: u64 = 172800u64;
 
-/// Assert the Osmosis pool indicated by `pool_id` is of Balancer XYK or StableSwap and assets are OSMO and `denom`
+/// Assert the Osmosis pool indicated by `pool_id` is of Balancer XYK, StableSwap or ConcentratedLiquidity and assets are OSMO and `denom`
 pub fn assert_osmosis_pool_assets(
     pool: &Pool,
     denom: &str,
@@ -20,6 +20,7 @@ pub fn assert_osmosis_pool_assets(
             assert_osmosis_xyk_pool(balancer_pool)?;
         }
         Pool::StableSwap(_) => {}
+        Pool::ConcentratedLiquidity(_) => {}
     };
 
     assert_osmosis_pool_contains_two_assets(pool, denom, base_denom)?;
@@ -34,6 +35,11 @@ pub fn assert_osmosis_xyk_lp_pool(pool: &Pool) -> ContractResult<()> {
         Pool::StableSwap(stable_swap_pool) => {
             return Err(ContractError::InvalidPriceSource {
                 reason: format!("StableSwap pool not supported. Pool id {}", stable_swap_pool.id),
+            });
+        }
+        Pool::ConcentratedLiquidity(cl_pool) => {
+            return Err(ContractError::InvalidPriceSource {
+                reason: format!("ConcentratedLiquidity pool not supported. Pool id {}", cl_pool.id),
             });
         }
     };
