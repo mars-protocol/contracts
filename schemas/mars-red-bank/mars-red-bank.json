@@ -238,6 +238,12 @@
                 "description": "Asset to withdraw",
                 "type": "string"
               },
+              "liquidation_related": {
+                "type": [
+                  "boolean",
+                  "null"
+                ]
+              },
               "recipient": {
                 "description": "The address where the withdrawn amount is sent",
                 "type": [

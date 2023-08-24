@@ -1,6 +1,6 @@
 #![allow(dead_code)]
 
-use std::collections::HashMap;
+use std::{collections::HashMap, fmt::Display, str::FromStr};
 
 use anyhow::Result as AnyResult;
 use cosmwasm_schema::serde;
@@ -21,8 +21,9 @@ use mars_red_bank::{
     state::{COLLATERALS, DEBTS, MARKETS},
 };
 use mars_red_bank_types::red_bank::{
-    Collateral, CreateOrUpdateConfig, Debt, InstantiateMsg, Market, QueryMsg,
-    UserCollateralResponse, UserDebtResponse, UserHealthStatus, UserPositionResponse,
+    Collateral, CreateOrUpdateConfig, Debt, InitOrUpdateAssetParams, InstantiateMsg,
+    InterestRateModel, Market, QueryMsg, UserCollateralResponse, UserDebtResponse,
+    UserHealthStatus, UserPositionResponse,
 };
 use mars_testing::{mock_dependencies, mock_env, mock_info, MarsMockQuerier, MockEnvParams};
 
@@ -371,4 +372,62 @@ pub fn assert_err(res: AnyResult<AppResponse>, err: ContractError) {
             assert_eq!(contract_err, err);
         }
     }
+}
+
+pub fn assert_err_with_str(res: AnyResult<AppResponse>, expected: impl Display) {
+    match res {
+        Ok(_) => panic!("Result was not an error"),
+        Err(generic_err) => {
+            let contract_err: ContractError = generic_err.downcast().unwrap();
+            let msg = contract_err.to_string();
+            println!("error: {}", msg); // print error for debugging
+            assert!(msg.contains(&format!("{expected}")))
+        }
+    }
+}
+
+pub fn osmo_asset_params() -> (InitOrUpdateAssetParams, AssetParams) {
+    default_asset_params_with("uosmo", Decimal::percent(70), Decimal::percent(78))
+}
+
+pub fn usdc_asset_params() -> (InitOrUpdateAssetParams, AssetParams) {
+    default_asset_params_with("uusdc", Decimal::percent(90), Decimal::percent(96))
+}
+
+pub fn default_asset_params_with(
+    denom: &str,
+    max_loan_to_value: Decimal,
+    liquidation_threshold: Decimal,
+) -> (InitOrUpdateAssetParams, AssetParams) {
+    let market_params = InitOrUpdateAssetParams {
+        reserve_factor: Some(Decimal::percent(20)),
+        interest_rate_model: Some(InterestRateModel {
+            optimal_utilization_rate: Decimal::percent(10),
+            base: Decimal::percent(30),
+            slope_1: Decimal::percent(25),
+            slope_2: Decimal::percent(30),
+        }),
+    };
+    let asset_params = AssetParams {
+        denom: denom.to_string(),
+        credit_manager: CmSettings {
+            whitelisted: false,
+            hls: None,
+        },
+        red_bank: RedBankSettings {
+            deposit_enabled: true,
+            borrow_enabled: true,
+        },
+        max_loan_to_value,
+        liquidation_threshold,
+        liquidation_bonus: LiquidationBonus {
+            starting_lb: Decimal::percent(1),
+            slope: Decimal::from_str("2.0").unwrap(),
+            min_lb: Decimal::percent(2),
+            max_lb: Decimal::percent(10),
+        },
+        protocol_liquidation_fee: Decimal::percent(2),
+        deposit_cap: Uint128::MAX,
+    };
+    (market_params, asset_params)
 }
