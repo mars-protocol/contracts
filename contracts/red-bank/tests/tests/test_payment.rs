@@ -30,6 +30,7 @@ fn rejecting_unexpected_payments() {
             amount: None,
             recipient: None,
             account_id: None,
+            liquidation_related: None,
         },
     )
     .unwrap_err();

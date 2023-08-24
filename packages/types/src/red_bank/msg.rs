@@ -68,6 +68,9 @@ pub enum ExecuteMsg {
         recipient: Option<String>,
         /// Credit account id (Rover)
         account_id: Option<String>,
+        // Withdraw action related to liquidation process initiated in credit manager.
+        // This flag is used to identify different way for pricing assets during liquidation.
+        liquidation_related: Option<bool>,
     },
 
     /// Borrow native coins. If borrow allowed, amount is added to caller's debt

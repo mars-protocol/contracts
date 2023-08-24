@@ -19,6 +19,7 @@ pub fn withdraw(
     amount: Option<Uint128>,
     recipient: Option<String>,
     account_id: Option<String>,
+    liquidation_related: bool,
 ) -> Result<Response, ContractError> {
     let withdrawer = User(&info.sender);
     let acc_id = account_id.clone().unwrap_or("".to_string());
@@ -63,12 +64,17 @@ pub fn withdraw(
             MarsAddressType::Incentives,
             MarsAddressType::RewardsCollector,
             MarsAddressType::Params,
+            MarsAddressType::CreditManager,
         ],
     )?;
     let rewards_collector_addr = &addresses[&MarsAddressType::RewardsCollector];
     let incentives_addr = &addresses[&MarsAddressType::Incentives];
     let oracle_addr = &addresses[&MarsAddressType::Oracle];
     let params_addr = &addresses[&MarsAddressType::Params];
+    let credit_manager_addr = &addresses[&MarsAddressType::CreditManager];
+
+    // if withdraw is part of the liquidation in credit manager we need to use correct pricing for the assets
+    let liquidation_related = info.sender == credit_manager_addr && liquidation_related;
 
     // if asset is used as collateral and user is borrowing we need to validate health factor after withdraw,
     // otherwise no reasons to block the withdraw
@@ -83,6 +89,7 @@ pub fn withdraw(
             params_addr,
             &denom,
             withdraw_amount,
+            liquidation_related,
         )?
     {
         return Err(ContractError::InvalidHealthFactorAfterWithdraw {});

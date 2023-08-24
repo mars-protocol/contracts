@@ -188,6 +188,7 @@ fn rewards_claim_for_credit_account() {
             "uusdc",
             Some(Uint128::from(withdraw_amt_acc_id_1)),
             Some(acc_id_1.clone()),
+            None,
         )
         .unwrap();
     red_bank
@@ -197,6 +198,7 @@ fn rewards_claim_for_credit_account() {
             "uusdc",
             Some(Uint128::from(withdraw_amt_acc_id_2)),
             Some(acc_id_2.clone()),
+            None,
         )
         .unwrap();
     let user_collateral = red_bank.query_user_collateral(&mut mock_env, &credit_manager, "uusdc");

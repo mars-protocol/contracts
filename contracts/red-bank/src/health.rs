@@ -45,9 +45,17 @@ pub fn assert_below_liq_threshold_after_withdraw(
     params_addr: &Addr,
     denom: &str,
     withdraw_amount: Uint128,
+    is_liquidation: bool,
 ) -> Result<bool, ContractError> {
-    let mut positions =
-        get_user_positions_map(deps, env, user_addr, account_id, oracle_addr, params_addr, false)?;
+    let mut positions = get_user_positions_map(
+        deps,
+        env,
+        user_addr,
+        account_id,
+        oracle_addr,
+        params_addr,
+        is_liquidation,
+    )?;
     // Update position to compute health factor after withdraw
     match positions.get_mut(denom) {
         Some(p) => {

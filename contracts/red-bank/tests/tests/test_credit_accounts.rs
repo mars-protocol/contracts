@@ -109,6 +109,7 @@ fn deposit_and_withdraw_for_credit_account_works() {
             "uosmo",
             None,
             Some(account_id.clone()),
+            None,
         )
         .unwrap();
 

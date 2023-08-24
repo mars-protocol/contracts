@@ -82,6 +82,7 @@ fn withdrawing_more_than_balance() {
             amount: Some(Uint128::from(2000u128)),
             recipient: None,
             account_id: None,
+            liquidation_related: None,
         },
     )
     .unwrap_err();
@@ -126,6 +127,7 @@ fn withdrawing_partially() {
             amount: Some(withdraw_amount),
             recipient: None,
             account_id: None,
+            liquidation_related: None,
         },
     )
     .unwrap();
@@ -263,6 +265,7 @@ fn withdrawing_completely() {
             amount: None,
             recipient: None,
             account_id: None,
+            liquidation_related: None,
         },
     )
     .unwrap();
@@ -373,6 +376,7 @@ fn withdrawing_to_another_user() {
             amount: None,
             recipient: Some(recipient_addr.to_string()),
             account_id: None,
+            liquidation_related: None,
         },
     )
     .unwrap();
@@ -670,6 +674,7 @@ fn withdrawing_if_health_factor_not_met() {
             amount: Some(withdraw_amount),
             recipient: None,
             account_id: None,
+            liquidation_related: None,
         },
     )
     .unwrap_err();
@@ -707,6 +712,7 @@ fn withdrawing_if_health_factor_met() {
             amount: Some(withdraw_amount),
             recipient: None,
             account_id: None,
+            liquidation_related: None,
         },
     )
     .unwrap();
