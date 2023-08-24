@@ -34,7 +34,8 @@ fn withdrawing_from_red_bank() {
                 denom: "uatom".to_string(),
                 amount: Some(Uint128::new(42069)),
                 recipient: None,
-                account_id: None
+                account_id: None,
+                liquidation_related: None
             })
             .unwrap(),
             funds: vec![]

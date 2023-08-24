@@ -580,6 +580,7 @@ export interface MarsRedBankWithdrawMutation {
     accountId?: string
     amount?: Uint128
     denom: string
+    liquidationRelated?: boolean
     recipient?: string
   }
   args?: {

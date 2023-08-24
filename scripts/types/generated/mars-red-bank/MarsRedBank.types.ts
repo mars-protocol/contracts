@@ -50,6 +50,7 @@ export type ExecuteMsg =
         account_id?: string | null
         amount?: Uint128 | null
         denom: string
+        liquidation_related?: boolean | null
         recipient?: string | null
       }
     }

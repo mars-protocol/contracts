@@ -423,11 +423,13 @@ export interface MarsRedBankInterface extends MarsRedBankReadOnlyInterface {
       accountId,
       amount,
       denom,
+      liquidationRelated,
       recipient,
     }: {
       accountId?: string
       amount?: Uint128
       denom: string
+      liquidationRelated?: boolean
       recipient?: string
     },
     fee?: number | StdFee | 'auto',
@@ -657,11 +659,13 @@ export class MarsRedBankClient extends MarsRedBankQueryClient implements MarsRed
       accountId,
       amount,
       denom,
+      liquidationRelated,
       recipient,
     }: {
       accountId?: string
       amount?: Uint128
       denom: string
+      liquidationRelated?: boolean
       recipient?: string
     },
     fee: number | StdFee | 'auto' = 'auto',
@@ -676,6 +680,7 @@ export class MarsRedBankClient extends MarsRedBankQueryClient implements MarsRed
           account_id: accountId,
           amount,
           denom,
+          liquidation_related: liquidationRelated,
           recipient,
         },
       },

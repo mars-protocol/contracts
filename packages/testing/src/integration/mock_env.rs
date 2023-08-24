@@ -397,7 +397,7 @@ impl RedBank {
         denom: &str,
         amount: Option<Uint128>,
     ) -> AnyResult<AppResponse> {
-        self.withdraw_with_acc_id(env, sender, denom, amount, None)
+        self.withdraw_with_acc_id(env, sender, denom, amount, None, None)
     }
 
     pub fn withdraw_with_acc_id(
@@ -407,6 +407,7 @@ impl RedBank {
         denom: &str,
         amount: Option<Uint128>,
         account_id: Option<String>,
+        liquidation_related: Option<bool>,
     ) -> AnyResult<AppResponse> {
         env.app.execute_contract(
             sender.clone(),
@@ -416,6 +417,7 @@ impl RedBank {
                 amount,
                 recipient: None,
                 account_id,
+                liquidation_related,
             },
             &[],
         )

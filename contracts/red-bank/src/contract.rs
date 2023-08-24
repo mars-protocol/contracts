@@ -59,9 +59,19 @@ pub fn execute(
             amount,
             recipient,
             account_id,
+            liquidation_related,
         } => {
             cw_utils::nonpayable(&info)?;
-            withdraw::withdraw(deps, env, info, denom, amount, recipient, account_id)
+            withdraw::withdraw(
+                deps,
+                env,
+                info,
+                denom,
+                amount,
+                recipient,
+                account_id,
+                liquidation_related.unwrap_or(false),
+            )
         }
         ExecuteMsg::Borrow {
             denom,

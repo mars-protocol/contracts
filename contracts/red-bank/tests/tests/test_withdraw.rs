@@ -1,3 +1,5 @@
+use std::str::FromStr;
+
 use cosmwasm_std::{
     attr, coin, coins,
     testing::{mock_env, mock_info, MockApi, MockStorage},
@@ -18,12 +20,15 @@ use mars_red_bank_types::{
     incentives,
     red_bank::{Collateral, Debt, ExecuteMsg, Market},
 };
-use mars_testing::{mock_env_at_block_time, MarsMockQuerier};
+use mars_testing::{
+    integration::mock_env::MockEnvBuilder, mock_env_at_block_time, MarsMockQuerier,
+};
 
 use super::helpers::{
     has_collateral_position, set_collateral, th_build_interests_updated_event,
     th_default_asset_params, th_get_expected_indices_and_rates, th_setup, TestUtilizationDeltaInfo,
 };
+use crate::tests::helpers::{assert_err_with_str, osmo_asset_params, usdc_asset_params};
 
 struct TestSuite {
     deps: OwnedDeps<MockStorage, MockApi, MarsMockQuerier>,
@@ -82,6 +87,7 @@ fn withdrawing_more_than_balance() {
             amount: Some(Uint128::from(2000u128)),
             recipient: None,
             account_id: None,
+            liquidation_related: None,
         },
     )
     .unwrap_err();
@@ -126,6 +132,7 @@ fn withdrawing_partially() {
             amount: Some(withdraw_amount),
             recipient: None,
             account_id: None,
+            liquidation_related: None,
         },
     )
     .unwrap();
@@ -263,6 +270,7 @@ fn withdrawing_completely() {
             amount: None,
             recipient: None,
             account_id: None,
+            liquidation_related: None,
         },
     )
     .unwrap();
@@ -373,6 +381,7 @@ fn withdrawing_to_another_user() {
             amount: None,
             recipient: Some(recipient_addr.to_string()),
             account_id: None,
+            liquidation_related: None,
         },
     )
     .unwrap();
@@ -670,6 +679,7 @@ fn withdrawing_if_health_factor_not_met() {
             amount: Some(withdraw_amount),
             recipient: None,
             account_id: None,
+            liquidation_related: None,
         },
     )
     .unwrap_err();
@@ -707,6 +717,7 @@ fn withdrawing_if_health_factor_met() {
             amount: Some(withdraw_amount),
             recipient: None,
             account_id: None,
+            liquidation_related: None,
         },
     )
     .unwrap();
@@ -749,4 +760,182 @@ fn withdrawing_if_health_factor_met() {
 
     let market = MARKETS.load(deps.as_ref().storage, denoms[2]).unwrap();
     assert_eq!(market.collateral_total_scaled, expected_collateral_total_amount_scaled_after);
+}
+
+// Withdraw should be blocked if circuit breakers are activated in oracle contract except for the
+// case where the withdrawer is the credit manager contract and the withdraw is for liquidation.
+#[test]
+fn withdraw_for_credit_manager_works_during_liquidation() {
+    let owner = Addr::unchecked("owner");
+    let mut mock_env = MockEnvBuilder::new(None, owner.clone()).build();
+
+    let red_bank = mock_env.red_bank.clone();
+    let params = mock_env.params.clone();
+    let oracle = mock_env.oracle.clone();
+    let pyth = mock_env.pyth.clone();
+    let credit_manager = mock_env.credit_manager.clone();
+
+    let funded_amt = 1_000_000_000_000u128;
+    let provider = Addr::unchecked("provider"); // provides collateral to be borrowed by others
+    let account_id = "111".to_string();
+
+    // setup red-bank
+    let (market_params, asset_params) = osmo_asset_params();
+    red_bank.init_asset(&mut mock_env, &asset_params.denom, market_params);
+    params.init_params(&mut mock_env, asset_params);
+    let (market_params, asset_params) = usdc_asset_params();
+    red_bank.init_asset(&mut mock_env, &asset_params.denom, market_params);
+    params.init_params(&mut mock_env, asset_params);
+
+    // setup oracle
+    oracle.set_price_source_fixed(&mut mock_env, "uosmo", Decimal::one());
+    oracle.set_price_source_fixed(&mut mock_env, "uusdc", Decimal::from_ratio(2u128, 1u128));
+
+    // fund accounts
+    mock_env.fund_accounts(&[&provider, &credit_manager], funded_amt, &["uosmo", "uusdc"]);
+
+    // provider deposits collaterals
+    red_bank.deposit(&mut mock_env, &provider, coin(1000000000, "uusdc")).unwrap();
+
+    // credit manager deposits
+    let cm_osmo_deposit_amt = 100000000u128;
+    red_bank
+        .deposit_with_acc_id(
+            &mut mock_env,
+            &credit_manager,
+            coin(cm_osmo_deposit_amt, "uosmo"),
+            Some(account_id.clone()),
+        )
+        .unwrap();
+
+    // update credit line for credit manager
+    red_bank
+        .update_uncollateralized_loan_limit(
+            &mut mock_env,
+            &owner,
+            &credit_manager,
+            "uusdc",
+            Uint128::MAX,
+        )
+        .unwrap();
+
+    // credit manager should be able to borrow
+    let cm_usdc_borrow_amt = 100000000u128;
+    red_bank.borrow(&mut mock_env, &credit_manager, "uusdc", cm_usdc_borrow_amt).unwrap();
+
+    // check collaterals for credit manager account id before withdraw
+    let cm_collaterals = red_bank.query_user_collaterals_with_acc_id(
+        &mut mock_env,
+        &credit_manager,
+        Some(account_id.clone()),
+    );
+    assert_eq!(cm_collaterals.len(), 1);
+    let cm_osmo_collateral = cm_collaterals.get("uosmo").unwrap();
+    assert_eq!(cm_osmo_collateral.amount.u128(), cm_osmo_deposit_amt);
+
+    // activate circuit breakers using pyth mocked invalid price
+    oracle.set_price_source_fixed(&mut mock_env, "usd", Decimal::from_str("1000000").unwrap());
+    oracle.set_price_source_pyth(
+        &mut mock_env,
+        "uusdc",
+        pyth.to_string(),
+        Decimal::percent(10u64),
+        Decimal::percent(15u64),
+    );
+
+    // try to withdraw total collateral for account id, should fail because of circuit breakers
+    let res = red_bank.withdraw_with_acc_id(
+        &mut mock_env,
+        &credit_manager,
+        "uosmo",
+        None,
+        Some(account_id.clone()),
+        None,
+    );
+    assert_err_with_str(
+        res,
+        "Invalid price: price confidence deviation 0.748898678414096916 exceeds max allowed 0.1",
+    );
+
+    // withdraw total collateral for account id during liquidation, should pass
+    red_bank
+        .withdraw_with_acc_id(
+            &mut mock_env,
+            &credit_manager,
+            "uosmo",
+            None,
+            Some(account_id.clone()),
+            Some(true),
+        )
+        .unwrap();
+
+    // check collaterals for credit manager account id after withdraw
+    let cm_collaterals = red_bank.query_user_collaterals_with_acc_id(
+        &mut mock_env,
+        &credit_manager,
+        Some(account_id),
+    );
+    assert!(cm_collaterals.is_empty());
+}
+
+// Withdraw for a red bank user (without account id) should be blocked if circuit breakers are activated in oracle contract.
+#[test]
+fn withdraw_if_oracle_circuit_breakers_activated() {
+    let owner = Addr::unchecked("owner");
+    let mut mock_env = MockEnvBuilder::new(None, owner).build();
+
+    let red_bank = mock_env.red_bank.clone();
+    let params = mock_env.params.clone();
+    let oracle = mock_env.oracle.clone();
+    let pyth = mock_env.pyth.clone();
+
+    let funded_amt = 1_000_000_000_000u128;
+    let provider = Addr::unchecked("provider"); // provides collateral to be borrowed by others
+    let user = Addr::unchecked("user");
+
+    // setup red-bank
+    let (market_params, asset_params) = osmo_asset_params();
+    red_bank.init_asset(&mut mock_env, &asset_params.denom, market_params);
+    params.init_params(&mut mock_env, asset_params);
+    let (market_params, asset_params) = usdc_asset_params();
+    red_bank.init_asset(&mut mock_env, &asset_params.denom, market_params);
+    params.init_params(&mut mock_env, asset_params);
+
+    // setup oracle
+    oracle.set_price_source_fixed(&mut mock_env, "uosmo", Decimal::one());
+    oracle.set_price_source_fixed(&mut mock_env, "uusdc", Decimal::from_ratio(2u128, 1u128));
+
+    // fund accounts
+    mock_env.fund_accounts(&[&provider, &user], funded_amt, &["uosmo", "uusdc"]);
+
+    // provider deposits collaterals
+    red_bank.deposit(&mut mock_env, &provider, coin(1000000000, "uusdc")).unwrap();
+
+    // user deposits
+    let cm_osmo_deposit_amt = 100000000u128;
+    red_bank.deposit(&mut mock_env, &user, coin(cm_osmo_deposit_amt, "uosmo")).unwrap();
+
+    // user borrows
+    let cm_usdc_borrow_amt = 100u128;
+    red_bank.borrow(&mut mock_env, &user, "uusdc", cm_usdc_borrow_amt).unwrap();
+
+    // activate circuit breakers using pyth mocked invalid price
+    oracle.set_price_source_fixed(&mut mock_env, "usd", Decimal::from_str("1000000").unwrap());
+    oracle.set_price_source_pyth(
+        &mut mock_env,
+        "uusdc",
+        pyth.to_string(),
+        Decimal::percent(10u64),
+        Decimal::percent(15u64),
+    );
+
+    // try to withdraw with different `liquidation_related` value, should fail because of circuit breakers
+    let expected_msg =
+        "Invalid price: price confidence deviation 0.748898678414096916 exceeds max allowed 0.1";
+    let res = red_bank.withdraw_with_acc_id(&mut mock_env, &user, "uosmo", None, None, None);
+    assert_err_with_str(res, expected_msg);
+    let res = red_bank.withdraw_with_acc_id(&mut mock_env, &user, "uosmo", None, None, Some(false));
+    assert_err_with_str(res, expected_msg);
+    let res = red_bank.withdraw_with_acc_id(&mut mock_env, &user, "uosmo", None, None, Some(true));
+    assert_err_with_str(res, expected_msg);
 }
