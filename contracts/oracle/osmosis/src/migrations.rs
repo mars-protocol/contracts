@@ -10,7 +10,11 @@ pub mod v1_0_1 {
 
     pub fn migrate(deps: DepsMut) -> ContractResult<Response> {
         // make sure we're migrating the correct contract and from the correct version
-        cw2::assert_contract_version(deps.as_ref().storage, CONTRACT_NAME, FROM_VERSION)?;
+        cw2::assert_contract_version(
+            deps.as_ref().storage,
+            &format!("crates.io:{CONTRACT_NAME}"),
+            FROM_VERSION,
+        )?;
 
         // map old owner struct to new one
         let old_owner = old_state::OWNER.load(deps.storage)?;
@@ -32,7 +36,11 @@ pub mod v1_0_1 {
         )?;
 
         // update contract version
-        cw2::set_contract_version(deps.storage, CONTRACT_NAME, CONTRACT_VERSION)?;
+        cw2::set_contract_version(
+            deps.storage,
+            format!("crates.io:{CONTRACT_NAME}"),
+            CONTRACT_VERSION,
+        )?;
 
         Ok(Response::new()
             .add_attribute("action", "migrate")
@@ -83,7 +91,12 @@ pub mod v1_0_1 {
         fn migration_owner_from_state_b() {
             let mut deps = mock_dependencies();
 
-            cw2::set_contract_version(deps.as_mut().storage, CONTRACT_NAME, FROM_VERSION).unwrap();
+            cw2::set_contract_version(
+                deps.as_mut().storage,
+                format!("crates.io:{CONTRACT_NAME}"),
+                FROM_VERSION,
+            )
+            .unwrap();
 
             old_state::OWNER
                 .save(
@@ -113,7 +126,12 @@ pub mod v1_0_1 {
         fn migration_owner_from_state_c() {
             let mut deps = mock_dependencies();
 
-            cw2::set_contract_version(deps.as_mut().storage, CONTRACT_NAME, FROM_VERSION).unwrap();
+            cw2::set_contract_version(
+                deps.as_mut().storage,
+                format!("crates.io:{CONTRACT_NAME}"),
+                FROM_VERSION,
+            )
+            .unwrap();
 
             old_state::OWNER
                 .save(
