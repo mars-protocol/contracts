@@ -20,6 +20,15 @@ pub struct InterestRateModel {
 impl InterestRateModel {
     pub fn validate(&self) -> Result<(), ValidationError> {
         decimal_param_le_one(self.optimal_utilization_rate, "optimal_utilization_rate")?;
+
+        if self.slope_1 >= self.slope_2 {
+            return Err(ValidationError::InvalidParam {
+                param_name: "slope_1".to_string(),
+                invalid_value: self.slope_1.to_string(),
+                predicate: format!("< {}", self.slope_2),
+            });
+        }
+
         Ok(())
     }
 
