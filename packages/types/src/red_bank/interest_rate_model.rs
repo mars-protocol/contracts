@@ -11,9 +11,9 @@ pub struct InterestRateModel {
     pub optimal_utilization_rate: Decimal,
     /// Base rate
     pub base: Decimal,
-    /// Slope parameter for interest rate model function when utilization_rate < optimal_utilization_rate
+    /// Slope parameter for interest rate model function when utilization_rate <= optimal_utilization_rate
     pub slope_1: Decimal,
-    /// Slope parameter for interest rate model function when utilization_rate >= optimal_utilization_rate
+    /// Slope parameter for interest rate model function when utilization_rate > optimal_utilization_rate
     pub slope_2: Decimal,
 }
 
