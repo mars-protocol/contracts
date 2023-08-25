@@ -242,6 +242,7 @@ export function useMarsMockRedBankScaledLiquidityAmountQuery<TData = Uint128>({
 export interface MarsMockRedBankUserPositionLiquidationPricingQuery<TData>
   extends MarsMockRedBankReactQuery<UserPositionResponse, TData> {
   args: {
+    accountId?: string
     user: string
   }
 }
@@ -253,6 +254,7 @@ export function useMarsMockRedBankUserPositionLiquidationPricingQuery<
     () =>
       client
         ? client.userPositionLiquidationPricing({
+            accountId: args.accountId,
             user: args.user,
           })
         : Promise.reject(new Error('Invalid client')),
@@ -262,6 +264,7 @@ export function useMarsMockRedBankUserPositionLiquidationPricingQuery<
 export interface MarsMockRedBankUserPositionQuery<TData>
   extends MarsMockRedBankReactQuery<UserPositionResponse, TData> {
   args: {
+    accountId?: string
     user: string
   }
 }
@@ -275,6 +278,7 @@ export function useMarsMockRedBankUserPositionQuery<TData = UserPositionResponse
     () =>
       client
         ? client.userPosition({
+            accountId: args.accountId,
             user: args.user,
           })
         : Promise.reject(new Error('Invalid client')),
@@ -589,6 +593,7 @@ export interface MarsMockRedBankWithdrawMutation {
     accountId?: string
     amount?: Uint128
     denom: string
+    liquidationRelated?: boolean
     recipient?: string
   }
   args?: {

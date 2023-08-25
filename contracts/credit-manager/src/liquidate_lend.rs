@@ -42,7 +42,7 @@ pub fn liquidate_lend(
     // Liquidatee's lent coin reclaimed from Red Bank
     let red_bank = RED_BANK.load(deps.storage)?;
     let reclaim_from_liquidatee_msg =
-        red_bank.reclaim_msg(&liquidatee_request, liquidatee_account_id)?;
+        red_bank.reclaim_msg(&liquidatee_request, liquidatee_account_id, true)?;
 
     // Liquidator gets portion of reclaimed lent coin
     increment_coin_balance(deps.storage, liquidator_account_id, &liquidator_request)?;

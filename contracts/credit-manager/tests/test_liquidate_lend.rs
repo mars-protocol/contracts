@@ -1,4 +1,4 @@
-use cosmwasm_std::{coins, Addr, Decimal, Uint128};
+use cosmwasm_std::{coins, Addr, Decimal, Event, Uint128};
 use mars_mock_oracle::msg::CoinPrice;
 use mars_red_bank_types::oracle::ActionKind;
 use mars_rover::{
@@ -206,20 +206,22 @@ fn lent_position_partially_liquidated() {
 
     let liquidator_account_id = mock.create_credit_account(&liquidator).unwrap();
 
-    mock.update_credit_account(
-        &liquidator_account_id,
-        &liquidator,
-        vec![
-            Deposit(uatom_info.to_coin(45)),
-            Liquidate {
-                liquidatee_account_id: liquidatee_account_id.clone(),
-                debt_coin: uatom_info.to_coin(45),
-                request: LiquidateRequest::Lend(uosmo_info.denom),
-            },
-        ],
-        &[uatom_info.to_coin(45)],
-    )
-    .unwrap();
+    let res = mock
+        .update_credit_account(
+            &liquidator_account_id,
+            &liquidator,
+            vec![
+                Deposit(uatom_info.to_coin(45)),
+                Liquidate {
+                    liquidatee_account_id: liquidatee_account_id.clone(),
+                    debt_coin: uatom_info.to_coin(45),
+                    request: LiquidateRequest::Lend(uosmo_info.denom),
+                },
+            ],
+            &[uatom_info.to_coin(45)],
+        )
+        .unwrap();
+    res.assert_event(&Event::new("wasm-withdraw").add_attribute("liquidation_related", "true"));
 
     // Assert liquidatee's new position
     let position = mock.query_positions(&liquidatee_account_id);
@@ -322,20 +324,22 @@ fn lent_position_fully_liquidated() {
 
     let liquidator_account_id = mock.create_credit_account(&liquidator).unwrap();
 
-    mock.update_credit_account(
-        &liquidator_account_id,
-        &liquidator,
-        vec![
-            Deposit(uatom_info.to_coin(32)),
-            Liquidate {
-                liquidatee_account_id: liquidatee_account_id.clone(),
-                debt_coin: uatom_info.to_coin(32),
-                request: LiquidateRequest::Lend(uosmo_info.denom),
-            },
-        ],
-        &[uatom_info.to_coin(32)],
-    )
-    .unwrap();
+    let res = mock
+        .update_credit_account(
+            &liquidator_account_id,
+            &liquidator,
+            vec![
+                Deposit(uatom_info.to_coin(32)),
+                Liquidate {
+                    liquidatee_account_id: liquidatee_account_id.clone(),
+                    debt_coin: uatom_info.to_coin(32),
+                    request: LiquidateRequest::Lend(uosmo_info.denom),
+                },
+            ],
+            &[uatom_info.to_coin(32)],
+        )
+        .unwrap();
+    res.assert_event(&Event::new("wasm-withdraw").add_attribute("liquidation_related", "true"));
 
     // Assert liquidatee's new position
     let position = mock.query_positions(&liquidatee_account_id);

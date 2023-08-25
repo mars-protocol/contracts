@@ -32,6 +32,7 @@ pub fn reclaim(deps: DepsMut, account_id: &str, coin: &ActionCoin) -> ContractRe
             amount: amount_to_reclaim,
         },
         account_id,
+        false,
     )?;
 
     Ok(Response::new()

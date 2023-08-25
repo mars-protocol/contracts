@@ -29,7 +29,8 @@ LLVM_PROFILE_FILE = "${COVERAGE_PROF_OUTPUT}/coverage-%p-%m.profraw"
 [tasks.install-grcov]
 condition = { env_not_set = ["SKIP_INSTALL_GRCOV"] }
 private = true
-install_crate = { crate_name = "grcov" }
+command = "cargo"
+args = ["install", "grcov", "--locked"]
 
 # NOTE: ignore coverage for swapper and zapper contracts because their tests are based on `osmosis-testing` which don't work for grcov
 [tasks.coverage-grcov]

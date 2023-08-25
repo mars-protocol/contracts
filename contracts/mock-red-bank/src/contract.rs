@@ -47,8 +47,11 @@ pub fn execute(
             denom,
             amount,
             account_id,
+            liquidation_related,
             ..
-        } => withdraw(deps, info, &denom, &amount, account_id),
+        } => {
+            withdraw(deps, info, &denom, &amount, account_id, liquidation_related.unwrap_or(false))
+        }
         _ => unimplemented!("Msg not supported!"),
     }
 }

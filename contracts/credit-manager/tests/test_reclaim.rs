@@ -1,4 +1,4 @@
-use cosmwasm_std::{coin, coins, Addr, Uint128};
+use cosmwasm_std::{coin, coins, Addr, Event, Uint128};
 use mars_rover::{
     error::ContractError,
     msg::execute::Action::{Deposit, Lend, Reclaim},
@@ -307,4 +307,39 @@ fn reclaiming_multiple_assets() {
     // Assert Rover's balances
     let coin = mock.query_balance(&mock.rover, &uatom_info.denom);
     assert_eq!(coin.amount, Uint128::new(301));
+}
+
+#[test]
+fn reclaiming_with_correct_withdraw_liquidation_related_param() {
+    let coin_info = uosmo_info();
+    let user = Addr::unchecked("user");
+
+    let mut mock = MockEnv::new()
+        .set_params(&[coin_info.clone()])
+        .fund_account(AccountToFund {
+            addr: user.clone(),
+            funds: coins(300, coin_info.denom.clone()),
+        })
+        .build()
+        .unwrap();
+
+    let account_id = mock.create_credit_account(&user).unwrap();
+
+    mock.update_credit_account(
+        &account_id,
+        &user,
+        vec![Deposit(coin_info.to_coin(300)), Lend(coin_info.to_action_coin(200))],
+        &[coin(300, coin_info.denom.clone())],
+    )
+    .unwrap();
+
+    let res = mock
+        .update_credit_account(
+            &account_id,
+            &user,
+            vec![Reclaim(coin_info.to_action_coin(100))],
+            &[],
+        )
+        .unwrap();
+    res.assert_event(&Event::new("wasm-withdraw").add_attribute("liquidation_related", "false"));
 }

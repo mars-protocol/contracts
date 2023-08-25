@@ -46,6 +46,7 @@ export type ExecuteMsg =
         account_id?: string | null
         amount?: Uint128 | null
         denom: string
+        liquidation_related?: boolean | null
         recipient?: string | null
       }
     }
@@ -162,11 +163,13 @@ export type QueryMsg =
     }
   | {
       user_position: {
+        account_id?: string | null
         user: string
       }
     }
   | {
       user_position_liquidation_pricing: {
+        account_id?: string | null
         user: string
       }
     }

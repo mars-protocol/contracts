@@ -1459,7 +1459,7 @@ dependencies = [
 [[package]]
 name = "mars-address-provider"
 version = "1.2.0"
-source = "git+https://github.com/mars-protocol/red-bank?rev=18e9c56#18e9c565df15c2a5ea5fa92da561b0c7cb570294"
+source = "git+https://github.com/mars-protocol/red-bank?rev=6b5f55e#6b5f55efc9a58b75e54b619a219c304efe3e222c"
 dependencies = [
  "bech32",
  "cosmwasm-std",
@@ -1507,7 +1507,7 @@ dependencies = [
 [[package]]
 name = "mars-health"
 version = "1.2.0"
-source = "git+https://github.com/mars-protocol/red-bank?rev=18e9c56#18e9c565df15c2a5ea5fa92da561b0c7cb570294"
+source = "git+https://github.com/mars-protocol/red-bank?rev=6b5f55e#6b5f55efc9a58b75e54b619a219c304efe3e222c"
 dependencies = [
  "cosmwasm-std",
  "mars-params",
@@ -1518,7 +1518,7 @@ dependencies = [
 [[package]]
 name = "mars-interest-rate"
 version = "1.2.0"
-source = "git+https://github.com/mars-protocol/red-bank?rev=18e9c56#18e9c565df15c2a5ea5fa92da561b0c7cb570294"
+source = "git+https://github.com/mars-protocol/red-bank?rev=6b5f55e#6b5f55efc9a58b75e54b619a219c304efe3e222c"
 dependencies = [
  "cosmwasm-schema",
  "cosmwasm-std",
@@ -1529,7 +1529,7 @@ dependencies = [
 [[package]]
 name = "mars-liquidation"
 version = "1.0.0"
-source = "git+https://github.com/mars-protocol/red-bank?rev=18e9c56#18e9c565df15c2a5ea5fa92da561b0c7cb570294"
+source = "git+https://github.com/mars-protocol/red-bank?rev=6b5f55e#6b5f55efc9a58b75e54b619a219c304efe3e222c"
 dependencies = [
  "cosmwasm-std",
  "mars-health",
@@ -1607,9 +1607,9 @@ dependencies = [
 
 [[package]]
 name = "mars-owner"
-version = "1.2.0"
+version = "2.0.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "acd53908ffc561da878ce5ff4f5ec9f25a193af28ec0b6e7c8e6d1a0866d9dfc"
+checksum = "ab46e0b2f81a8a98036b46730fbe33a337e98e87cb3d34553b45a5ae87c5828c"
 dependencies = [
  "cosmwasm-schema",
  "cosmwasm-std",
@@ -1620,8 +1620,8 @@ dependencies = [
 
 [[package]]
 name = "mars-params"
-version = "1.0.7"
-source = "git+https://github.com/mars-protocol/red-bank?rev=18e9c56#18e9c565df15c2a5ea5fa92da561b0c7cb570294"
+version = "1.2.0"
+source = "git+https://github.com/mars-protocol/red-bank?rev=6b5f55e#6b5f55efc9a58b75e54b619a219c304efe3e222c"
 dependencies = [
  "cosmwasm-schema",
  "cosmwasm-std",
@@ -1631,15 +1631,13 @@ dependencies = [
  "mars-owner",
  "mars-red-bank-types",
  "mars-utils",
- "schemars",
- "serde",
  "thiserror",
 ]
 
 [[package]]
 name = "mars-red-bank-types"
 version = "1.2.0"
-source = "git+https://github.com/mars-protocol/red-bank?rev=18e9c56#18e9c565df15c2a5ea5fa92da561b0c7cb570294"
+source = "git+https://github.com/mars-protocol/red-bank?rev=6b5f55e#6b5f55efc9a58b75e54b619a219c304efe3e222c"
 dependencies = [
  "cosmwasm-schema",
  "cosmwasm-std",
@@ -1761,7 +1759,7 @@ dependencies = [
 [[package]]
 name = "mars-utils"
 version = "1.2.0"
-source = "git+https://github.com/mars-protocol/red-bank?rev=18e9c56#18e9c565df15c2a5ea5fa92da561b0c7cb570294"
+source = "git+https://github.com/mars-protocol/red-bank?rev=6b5f55e#6b5f55efc9a58b75e54b619a219c304efe3e222c"
 dependencies = [
  "cosmwasm-std",
  "thiserror",
@@ -2699,24 +2697,24 @@ checksum = "73473c0e59e6d5812c5dfe2a064a6444949f089e20eec9a2e5506596494e4623"
 
 [[package]]
 name = "strum"
-version = "0.24.1"
+version = "0.25.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "063e6045c0e62079840579a7e47a355ae92f60eb74daaf156fb1e84ba164e63f"
+checksum = "290d54ea6f91c969195bdbcd7442c8c2a2ba87da8bf60a7ee86a235d4bc1e125"
 dependencies = [
  "strum_macros",
 ]
 
 [[package]]
 name = "strum_macros"
-version = "0.24.3"
+version = "0.25.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "1e385be0d24f186b4ce2f9982191e7101bb737312ad61c1f2f984f34bcf85d59"
+checksum = "ad8d03b598d3d0fff69bf533ee3ef19b8eeb342729596df84bcc7e1f96ec4059"
 dependencies = [
  "heck",
  "proc-macro2",
  "quote",
  "rustversion",
- "syn 1.0.109",
+ "syn 2.0.28",
 ]
 
 [[package]]

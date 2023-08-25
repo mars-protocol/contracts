@@ -1,6 +1,6 @@
 use cosmwasm_std::{
-    coin, BankMsg, CosmosMsg, Decimal, DepsMut, Env, MessageInfo, Response, StdError, StdResult,
-    Uint128,
+    coin, BankMsg, CosmosMsg, Decimal, DepsMut, Env, Event, MessageInfo, Response, StdError,
+    StdResult, Uint128,
 };
 use cw_utils::one_coin;
 use mars_red_bank_types::red_bank::{InitOrUpdateAssetParams, Market};
@@ -112,6 +112,7 @@ pub fn withdraw(
     denom: &str,
     amount: &Option<Uint128>,
     account_id: Option<String>,
+    liquidation_related: bool,
 ) -> StdResult<Response> {
     let total_lent = load_collateral_amount(
         deps.storage,
@@ -145,5 +146,8 @@ pub fn withdraw(
         amount: vec![coin(amount_to_reclaim.u128(), denom)],
     });
 
-    Ok(Response::new().add_message(transfer_msg))
+    // This is only used for testing purposes to validate if 'withdraw' msg contains correct value for liquidation_related
+    let event = Event::new("withdraw")
+        .add_attribute("liquidation_related", liquidation_related.to_string());
+    Ok(Response::new().add_event(event).add_message(transfer_msg))
 }

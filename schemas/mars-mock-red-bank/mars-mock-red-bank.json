@@ -206,6 +206,12 @@
                 "description": "Asset to withdraw",
                 "type": "string"
               },
+              "liquidation_related": {
+                "type": [
+                  "boolean",
+                  "null"
+                ]
+              },
               "recipient": {
                 "description": "The address where the withdrawn amount is sent",
                 "type": [
@@ -797,6 +803,12 @@
               "user"
             ],
             "properties": {
+              "account_id": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
               "user": {
                 "type": "string"
               }
@@ -819,6 +831,12 @@
               "user"
             ],
             "properties": {
+              "account_id": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
               "user": {
                 "type": "string"
               }

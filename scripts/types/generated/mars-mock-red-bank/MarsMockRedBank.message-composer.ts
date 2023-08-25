@@ -88,11 +88,13 @@ export interface MarsMockRedBankMessage {
       accountId,
       amount,
       denom,
+      liquidationRelated,
       recipient,
     }: {
       accountId?: string
       amount?: Uint128
       denom: string
+      liquidationRelated?: boolean
       recipient?: string
     },
     _funds?: Coin[],
@@ -312,11 +314,13 @@ export class MarsMockRedBankMessageComposer implements MarsMockRedBankMessage {
       accountId,
       amount,
       denom,
+      liquidationRelated,
       recipient,
     }: {
       accountId?: string
       amount?: Uint128
       denom: string
+      liquidationRelated?: boolean
       recipient?: string
     },
     _funds?: Coin[],
@@ -332,6 +336,7 @@ export class MarsMockRedBankMessageComposer implements MarsMockRedBankMessage {
               account_id: accountId,
               amount,
               denom,
+              liquidation_related: liquidationRelated,
               recipient,
             },
           }),

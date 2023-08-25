@@ -81,7 +81,12 @@ impl RedBank {
     }
 
     /// Generate message for reclaiming a specified amount of lent coin
-    pub fn reclaim_msg(&self, coin: &Coin, account_id: &str) -> StdResult<CosmosMsg> {
+    pub fn reclaim_msg(
+        &self,
+        coin: &Coin,
+        account_id: &str,
+        liquidation_related: bool,
+    ) -> StdResult<CosmosMsg> {
         Ok(CosmosMsg::Wasm(WasmMsg::Execute {
             contract_addr: self.addr.to_string(),
             msg: to_binary(&red_bank::ExecuteMsg::Withdraw {
@@ -89,6 +94,7 @@ impl RedBank {
                 amount: Some(coin.amount),
                 recipient: None,
                 account_id: Some(account_id.to_string()),
+                liquidation_related: Some(liquidation_related),
             })?,
             funds: vec![],
         }))

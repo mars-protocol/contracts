@@ -86,8 +86,20 @@ export interface MarsMockRedBankReadOnlyInterface {
     startAfter?: string
     user: string
   }) => Promise<ArrayOfUserCollateralResponse>
-  userPosition: ({ user }: { user: string }) => Promise<UserPositionResponse>
-  userPositionLiquidationPricing: ({ user }: { user: string }) => Promise<UserPositionResponse>
+  userPosition: ({
+    accountId,
+    user,
+  }: {
+    accountId?: string
+    user: string
+  }) => Promise<UserPositionResponse>
+  userPositionLiquidationPricing: ({
+    accountId,
+    user,
+  }: {
+    accountId?: string
+    user: string
+  }) => Promise<UserPositionResponse>
   scaledLiquidityAmount: ({ amount, denom }: { amount: Uint128; denom: string }) => Promise<Uint128>
   scaledDebtAmount: ({ amount, denom }: { amount: Uint128; denom: string }) => Promise<Uint128>
   underlyingLiquidityAmount: ({
@@ -254,20 +266,30 @@ export class MarsMockRedBankQueryClient implements MarsMockRedBankReadOnlyInterf
       },
     })
   }
-  userPosition = async ({ user }: { user: string }): Promise<UserPositionResponse> => {
+  userPosition = async ({
+    accountId,
+    user,
+  }: {
+    accountId?: string
+    user: string
+  }): Promise<UserPositionResponse> => {
     return this.client.queryContractSmart(this.contractAddress, {
       user_position: {
+        account_id: accountId,
         user,
       },
     })
   }
   userPositionLiquidationPricing = async ({
+    accountId,
     user,
   }: {
+    accountId?: string
     user: string
   }): Promise<UserPositionResponse> => {
     return this.client.queryContractSmart(this.contractAddress, {
       user_position_liquidation_pricing: {
+        account_id: accountId,
         user,
       },
     })
@@ -401,11 +423,13 @@ export interface MarsMockRedBankInterface extends MarsMockRedBankReadOnlyInterfa
       accountId,
       amount,
       denom,
+      liquidationRelated,
       recipient,
     }: {
       accountId?: string
       amount?: Uint128
       denom: string
+      liquidationRelated?: boolean
       recipient?: string
     },
     fee?: number | StdFee | 'auto',
@@ -638,11 +662,13 @@ export class MarsMockRedBankClient
       accountId,
       amount,
       denom,
+      liquidationRelated,
       recipient,
     }: {
       accountId?: string
       amount?: Uint128
       denom: string
+      liquidationRelated?: boolean
       recipient?: string
     },
     fee: number | StdFee | 'auto' = 'auto',
@@ -657,6 +683,7 @@ export class MarsMockRedBankClient
           account_id: accountId,
           amount,
           denom,
+          liquidation_related: liquidationRelated,
           recipient,
         },
       },
