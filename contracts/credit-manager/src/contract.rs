@@ -12,7 +12,6 @@ use crate::{
     execute::{create_credit_account, dispatch_actions, execute_callback},
     instantiate::store_config,
     migrations,
-    migrations::helpers::assert_migration_env,
     query::{
         query_accounts, query_all_coin_balances, query_all_debt_shares,
         query_all_total_debt_shares, query_all_vault_positions, query_config, query_positions,
@@ -128,9 +127,6 @@ pub fn query(deps: Deps, env: Env, msg: QueryMsg) -> ContractResult<Binary> {
 #[cfg_attr(not(feature = "library"), entry_point)]
 pub fn migrate(deps: DepsMut, env: Env, msg: MigrateMsg) -> ContractResult<Response> {
     match msg {
-        MigrateMsg::V1_0_0ToV2_0_0(updates) => {
-            assert_migration_env(deps.storage, "1.0.0", "2.0.0")?;
-            migrations::v2_0_0::migrate(deps, env, updates)
-        }
+        MigrateMsg::V1_0_0ToV2_0_0(updates) => migrations::v2_0_0::migrate(deps, env, updates),
     }
 }

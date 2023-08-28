@@ -1,5 +1,5 @@
 use cosmwasm_std::{DepsMut, Env, Response};
-use cw2::set_contract_version;
+use cw2::{assert_contract_version, set_contract_version};
 use mars_owner::OwnerInit;
 use mars_rover::{error::ContractResult, msg::migrate::V2Updates};
 
@@ -36,6 +36,8 @@ pub mod v1_owner {
 }
 
 pub fn migrate(deps: DepsMut, env: Env, updates: V2Updates) -> ContractResult<Response> {
+    assert_contract_version(deps.storage, &format!("crates.io:{CONTRACT_NAME}"), FROM_VERSION)?;
+
     HEALTH_CONTRACT.save(deps.storage, &updates.health_contract.check(deps.api)?)?;
     PARAMS.save(deps.storage, &updates.params.check(deps.api)?)?;
     INCENTIVES.save(deps.storage, &updates.incentives.check(deps.api, env.contract.address)?)?;
@@ -54,7 +56,7 @@ pub fn migrate(deps: DepsMut, env: Env, updates: V2Updates) -> ContractResult<Re
         },
     )?;
 
-    set_contract_version(deps.storage, CONTRACT_NAME, CONTRACT_VERSION)?;
+    set_contract_version(deps.storage, format!("crates.io:{CONTRACT_NAME}"), CONTRACT_VERSION)?;
     Ok(Response::new()
         .add_attribute("action", "migrate")
         .add_attribute("from_version", FROM_VERSION)

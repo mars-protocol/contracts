@@ -3,12 +3,12 @@ use cosmwasm_std::{
     testing::{mock_dependencies, mock_env, mock_info},
     Addr, Empty, Event,
 };
-use cw2::{get_contract_version, set_contract_version, ContractVersion};
+use cw2::{get_contract_version, set_contract_version, ContractVersion, VersionError};
 use cw721_base::{Cw721Contract, Ownership, QueryMsg};
 use cw721_base_v16::{
     msg::InstantiateMsg as Cw721v16InstantiateMsg, Cw721Contract as Cw721ContractV16,
 };
-use mars_account_nft::{contract::migrate, error::ContractError::MigrationError};
+use mars_account_nft::{contract::migrate, error::ContractError};
 
 pub mod helpers;
 
@@ -31,10 +31,10 @@ fn invalid_contract_name() {
 
     let err = migrate(deps.as_mut(), env, Empty {}).unwrap_err();
     assert_eq!(
-        MigrationError {
-            reason: "Wrong contract. Expected: mars-account-nft, Found: WRONG_CONTRACT_NAME"
-                .to_string()
-        },
+        ContractError::Version(VersionError::WrongContract {
+            expected: "crates.io:mars-account-nft".to_string(),
+            found: "WRONG_CONTRACT_NAME".to_string()
+        }),
         err
     );
 }
@@ -45,7 +45,7 @@ fn invalid_contract_version() {
     let env = mock_env();
 
     let old_contract_version = ContractVersion {
-        contract: "mars-account-nft".to_string(),
+        contract: "crates.io:mars-account-nft".to_string(),
         version: "4.4.5".to_string(),
     };
 
@@ -58,9 +58,10 @@ fn invalid_contract_version() {
 
     let err = migrate(deps.as_mut(), env, Empty {}).unwrap_err();
     assert_eq!(
-        MigrationError {
-            reason: "Wrong version. Expected: 1.0.0, Found: 4.4.5".to_string()
-        },
+        ContractError::Version(VersionError::WrongVersion {
+            expected: "1.0.0".to_string(),
+            found: "4.4.5".to_string()
+        }),
         err
     );
 }
@@ -72,7 +73,7 @@ fn proper_migration() {
     let minter = "nft-minter-abc";
 
     let old_contract_version = ContractVersion {
-        contract: "mars-account-nft".to_string(),
+        contract: "crates.io:mars-account-nft".to_string(),
         version: "1.0.0".to_string(),
     };
 
@@ -102,7 +103,7 @@ fn proper_migration() {
     let res = migrate(deps.as_mut(), env.clone(), Empty {}).unwrap();
 
     let new_contract_version = ContractVersion {
-        contract: "mars-account-nft".to_string(),
+        contract: "crates.io:mars-account-nft".to_string(),
         version: "2.0.0".to_string(),
     };
     assert_eq!(get_contract_version(deps.as_ref().storage).unwrap(), new_contract_version);

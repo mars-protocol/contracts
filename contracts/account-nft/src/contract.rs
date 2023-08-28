@@ -5,11 +5,11 @@ use cosmwasm_std::entry_point;
 use cosmwasm_std::{
     to_binary, Binary, Deps, DepsMut, Empty, Env, MessageInfo, Response, StdResult,
 };
-use cw2::{get_contract_version, set_contract_version, ContractVersion};
+use cw2::set_contract_version;
 use cw721_base::Cw721Contract;
 
 use crate::{
-    error::{ContractError, ContractError::MigrationError},
+    error::ContractError,
     execute::{burn, mint, update_config},
     msg::{ExecuteMsg, InstantiateMsg, QueryMsg},
     nft_config::NftConfig,
@@ -82,28 +82,17 @@ pub fn query(deps: Deps, env: Env, msg: QueryMsg) -> StdResult<Binary> {
 }
 
 const FROM_VERSION: &str = "1.0.0";
-const TO_VERSION: &str = "2.0.0";
 
 #[cfg_attr(not(feature = "library"), entry_point)]
 pub fn migrate(deps: DepsMut, _env: Env, _msg: Empty) -> Result<Response, ContractError> {
-    let ContractVersion {
-        contract,
-        version,
-    } = get_contract_version(deps.storage)?;
+    // make sure we're migrating the correct contract and from the correct version
+    cw2::assert_contract_version(
+        deps.as_ref().storage,
+        &format!("crates.io:{CONTRACT_NAME}"),
+        FROM_VERSION,
+    )?;
 
-    if CONTRACT_NAME != contract {
-        return Err(MigrationError {
-            reason: format!("Wrong contract. Expected: {CONTRACT_NAME}, Found: {contract}"),
-        });
-    }
-
-    if FROM_VERSION != version {
-        return Err(MigrationError {
-            reason: format!("Wrong version. Expected: {FROM_VERSION}, Found: {version}"),
-        });
-    }
-
-    set_contract_version(deps.storage, CONTRACT_NAME, TO_VERSION)?;
+    set_contract_version(deps.storage, format!("crates.io:{CONTRACT_NAME}"), CONTRACT_VERSION)?;
 
     Ok(cw721_base::upgrades::v0_17::migrate::<Empty, Empty, Empty, Empty>(deps)?)
 }

@@ -4,7 +4,7 @@ use cosmwasm_std::{
 };
 use cw2::VersionError;
 use mars_credit_manager::{
-    contract::{migrate, CONTRACT_NAME},
+    contract::migrate,
     migrations::v2_0_0::{v1_owner, v1_owner::OwnerSetNoneProposed},
     state::{HEALTH_CONTRACT, INCENTIVES, OWNER, PARAMS, REWARDS_COLLECTOR, SWAPPER},
 };
@@ -43,7 +43,7 @@ fn wrong_contract_name() {
     assert_eq!(
         err,
         ContractError::Version(VersionError::WrongContract {
-            expected: "mars-credit-manager".to_string(),
+            expected: "crates.io:mars-credit-manager".to_string(),
             found: "contract_xyz".to_string()
         })
     );
@@ -52,7 +52,8 @@ fn wrong_contract_name() {
 #[test]
 fn wrong_contract_version() {
     let mut deps = mock_dependencies();
-    cw2::set_contract_version(deps.as_mut().storage, CONTRACT_NAME, "4.1.0").unwrap();
+    cw2::set_contract_version(deps.as_mut().storage, "crates.io:mars-credit-manager", "4.1.0")
+        .unwrap();
 
     let err = migrate(
         deps.as_mut(),
@@ -82,7 +83,8 @@ fn wrong_contract_version() {
 #[test]
 fn successful_migration() {
     let mut deps = mock_dependencies();
-    cw2::set_contract_version(deps.as_mut().storage, CONTRACT_NAME, "1.0.0").unwrap();
+    cw2::set_contract_version(deps.as_mut().storage, "crates.io:mars-credit-manager", "1.0.0")
+        .unwrap();
 
     let old_owner = "spiderman_246";
     v1_owner::OWNER
