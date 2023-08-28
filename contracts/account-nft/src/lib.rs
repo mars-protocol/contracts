@@ -1,6 +1,7 @@
 pub mod contract;
 pub mod error;
 pub mod execute;
+pub mod migrations;
 pub mod msg;
 pub mod nft_config;
 pub mod query;

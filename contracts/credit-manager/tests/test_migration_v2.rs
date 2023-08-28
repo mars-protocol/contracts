@@ -5,8 +5,8 @@ use cosmwasm_std::{
 use cw2::VersionError;
 use mars_credit_manager::{
     contract::migrate,
-    migrations::v2_0_0::{v1_owner, v1_owner::OwnerSetNoneProposed},
-    state::{HEALTH_CONTRACT, INCENTIVES, OWNER, PARAMS, REWARDS_COLLECTOR, SWAPPER},
+    migrations::v2_0_0::{v1_state, v1_state::OwnerSetNoneProposed},
+    state::{ACCOUNT_NFT, HEALTH_CONTRACT, INCENTIVES, OWNER, PARAMS, REWARDS_COLLECTOR, SWAPPER},
 };
 use mars_rover::{
     adapters::{
@@ -87,14 +87,17 @@ fn successful_migration() {
         .unwrap();
 
     let old_owner = "spiderman_246";
-    v1_owner::OWNER
+    v1_state::OWNER
         .save(
             deps.as_mut().storage,
-            &v1_owner::OwnerState::B(OwnerSetNoneProposed {
+            &v1_state::OwnerState::B(OwnerSetNoneProposed {
                 owner: Addr::unchecked(old_owner),
             }),
         )
         .unwrap();
+
+    let old_account_nft = "account_nft_addr_123";
+    v1_state::ACCOUNT_NFT.save(deps.as_mut().storage, &Addr::unchecked(old_account_nft)).unwrap();
 
     let health_contract = "health_addr_123".to_string();
     let params = "params_addr_456".to_string();
@@ -140,4 +143,7 @@ fn successful_migration() {
     assert!(o.initialized);
     assert!(!o.abolished);
     assert!(o.emergency_owner.is_none());
+
+    let set_acc_nft = ACCOUNT_NFT.load(deps.as_ref().storage).unwrap();
+    assert_eq!(old_account_nft, set_acc_nft.address().to_string());
 }

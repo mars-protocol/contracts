@@ -11,14 +11,15 @@ use cw721_base::Cw721Contract;
 use crate::{
     error::ContractError,
     execute::{burn, mint, update_config},
+    migrations,
     msg::{ExecuteMsg, InstantiateMsg, QueryMsg},
     nft_config::NftConfig,
     query::{query_config, query_next_id},
     state::{CONFIG, NEXT_ID},
 };
 
-const CONTRACT_NAME: &str = env!("CARGO_PKG_NAME");
-const CONTRACT_VERSION: &str = env!("CARGO_PKG_VERSION");
+pub const CONTRACT_NAME: &str = env!("CARGO_PKG_NAME");
+pub const CONTRACT_VERSION: &str = env!("CARGO_PKG_VERSION");
 
 // Extending CW721 base contract
 pub type Parent<'a> = Cw721Contract<'a, Empty, Empty, Empty, Empty>;
@@ -81,18 +82,7 @@ pub fn query(deps: Deps, env: Env, msg: QueryMsg) -> StdResult<Binary> {
     }
 }
 
-const FROM_VERSION: &str = "1.0.0";
-
 #[cfg_attr(not(feature = "library"), entry_point)]
 pub fn migrate(deps: DepsMut, _env: Env, _msg: Empty) -> Result<Response, ContractError> {
-    // make sure we're migrating the correct contract and from the correct version
-    cw2::assert_contract_version(
-        deps.as_ref().storage,
-        &format!("crates.io:{CONTRACT_NAME}"),
-        FROM_VERSION,
-    )?;
-
-    set_contract_version(deps.storage, format!("crates.io:{CONTRACT_NAME}"), CONTRACT_VERSION)?;
-
-    Ok(cw721_base::upgrades::v0_17::migrate::<Empty, Empty, Empty, Empty>(deps)?)
+    migrations::v2_0_0::migrate(deps)
 }

@@ -1,14 +1,17 @@
 use cosmwasm_std::{
     attr,
     testing::{mock_dependencies, mock_env, mock_info},
-    Addr, Empty, Event,
+    Addr, Empty, Event, Uint128,
 };
 use cw2::{get_contract_version, set_contract_version, ContractVersion, VersionError};
 use cw721_base::{Cw721Contract, Ownership, QueryMsg};
 use cw721_base_v16::{
     msg::InstantiateMsg as Cw721v16InstantiateMsg, Cw721Contract as Cw721ContractV16,
 };
-use mars_account_nft::{contract::migrate, error::ContractError};
+use mars_account_nft::{
+    contract::migrate, error::ContractError, migrations::v2_0_0::v1_state, nft_config::NftConfig,
+    state::CONFIG,
+};
 
 pub mod helpers;
 
@@ -98,6 +101,17 @@ fn proper_migration() {
     )
     .unwrap();
 
+    let old_max_value_for_burn = Uint128::new(1234u128);
+    v1_state::CONFIG
+        .save(
+            deps.as_mut().storage,
+            &mars_rover_old::adapters::account_nft::NftConfig {
+                max_value_for_burn: old_max_value_for_burn,
+                proposed_new_minter: Some(Addr::unchecked("minter_1234")),
+            },
+        )
+        .unwrap();
+
     assert_eq!(get_contract_version(deps.as_ref().storage).unwrap(), old_contract_version);
 
     let res = migrate(deps.as_mut(), env.clone(), Empty {}).unwrap();
@@ -133,4 +147,13 @@ fn proper_migration() {
     assert_eq!(ownership.owner, Some(Addr::unchecked(minter)));
     assert_eq!(ownership.pending_owner, None);
     assert_eq!(ownership.pending_expiry, None);
+
+    let config = CONFIG.load(deps.as_ref().storage).unwrap();
+    assert_eq!(
+        config,
+        NftConfig {
+            max_value_for_burn: old_max_value_for_burn,
+            health_contract_addr: None
+        }
+    );
 }
