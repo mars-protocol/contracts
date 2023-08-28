@@ -11,15 +11,24 @@ pub struct InterestRateModel {
     pub optimal_utilization_rate: Decimal,
     /// Base rate
     pub base: Decimal,
-    /// Slope parameter for interest rate model function when utilization_rate < optimal_utilization_rate
+    /// Slope parameter for interest rate model function when utilization_rate <= optimal_utilization_rate
     pub slope_1: Decimal,
-    /// Slope parameter for interest rate model function when utilization_rate >= optimal_utilization_rate
+    /// Slope parameter for interest rate model function when utilization_rate > optimal_utilization_rate
     pub slope_2: Decimal,
 }
 
 impl InterestRateModel {
     pub fn validate(&self) -> Result<(), ValidationError> {
         decimal_param_le_one(self.optimal_utilization_rate, "optimal_utilization_rate")?;
+
+        if self.slope_1 >= self.slope_2 {
+            return Err(ValidationError::InvalidParam {
+                param_name: "slope_1".to_string(),
+                invalid_value: self.slope_1.to_string(),
+                predicate: format!("< {}", self.slope_2),
+            });
+        }
+
         Ok(())
     }
 

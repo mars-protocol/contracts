@@ -137,7 +137,7 @@ fn init_asset() {
         optimal_utilization_rate: Decimal::one(),
         base: Decimal::percent(5),
         slope_1: Decimal::zero(),
-        slope_2: Decimal::zero(),
+        slope_2: Decimal::one(),
     };
 
     let params = InitOrUpdateAssetParams {
@@ -269,6 +269,33 @@ fn init_asset() {
         );
     }
 
+    // init asset where slope_1 >= slope_2
+    {
+        let invalid_asset_params = InitOrUpdateAssetParams {
+            interest_rate_model: Some(InterestRateModel {
+                slope_1: Decimal::percent(10),
+                slope_2: Decimal::percent(10),
+                ..ir_model
+            }),
+            ..params
+        };
+        let msg = ExecuteMsg::InitAsset {
+            denom: "someasset".to_string(),
+            params: invalid_asset_params,
+        };
+        let info = mock_info("owner", &[]);
+        let error_res = execute(deps.as_mut(), env.clone(), info, msg).unwrap_err();
+        assert_eq!(
+            error_res,
+            ValidationError::InvalidParam {
+                param_name: "slope_1".to_string(),
+                invalid_value: "0.1".to_string(),
+                predicate: "< 0.1".to_string()
+            }
+            .into()
+        );
+    }
+
     // owner is authorized
     {
         let msg = ExecuteMsg::InitAsset {
@@ -322,7 +349,7 @@ fn update_asset() {
         optimal_utilization_rate: Decimal::one(),
         base: Decimal::percent(5),
         slope_1: Decimal::zero(),
-        slope_2: Decimal::zero(),
+        slope_2: Decimal::one(),
     };
 
     let params = InitOrUpdateAssetParams {
@@ -459,7 +486,7 @@ fn update_asset_with_new_interest_rate_model_params() {
         optimal_utilization_rate: Decimal::one(),
         base: Decimal::percent(5),
         slope_1: Decimal::zero(),
-        slope_2: Decimal::zero(),
+        slope_2: Decimal::one(),
     };
 
     let params = InitOrUpdateAssetParams {

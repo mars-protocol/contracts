@@ -454,7 +454,7 @@
             ]
           },
           "slope_1": {
-            "description": "Slope parameter for interest rate model function when utilization_rate < optimal_utilization_rate",
+            "description": "Slope parameter for interest rate model function when utilization_rate <= optimal_utilization_rate",
             "allOf": [
               {
                 "$ref": "#/definitions/Decimal"
@@ -462,7 +462,7 @@
             ]
           },
           "slope_2": {
-            "description": "Slope parameter for interest rate model function when utilization_rate >= optimal_utilization_rate",
+            "description": "Slope parameter for interest rate model function when utilization_rate > optimal_utilization_rate",
             "allOf": [
               {
                 "$ref": "#/definitions/Decimal"
@@ -1146,7 +1146,7 @@
               ]
             },
             "slope_1": {
-              "description": "Slope parameter for interest rate model function when utilization_rate < optimal_utilization_rate",
+              "description": "Slope parameter for interest rate model function when utilization_rate <= optimal_utilization_rate",
               "allOf": [
                 {
                   "$ref": "#/definitions/Decimal"
@@ -1154,7 +1154,7 @@
               ]
             },
             "slope_2": {
-              "description": "Slope parameter for interest rate model function when utilization_rate >= optimal_utilization_rate",
+              "description": "Slope parameter for interest rate model function when utilization_rate > optimal_utilization_rate",
               "allOf": [
                 {
                   "$ref": "#/definitions/Decimal"
@@ -1208,7 +1208,7 @@
               ]
             },
             "slope_1": {
-              "description": "Slope parameter for interest rate model function when utilization_rate < optimal_utilization_rate",
+              "description": "Slope parameter for interest rate model function when utilization_rate <= optimal_utilization_rate",
               "allOf": [
                 {
                   "$ref": "#/definitions/Decimal"
@@ -1216,7 +1216,7 @@
               ]
             },
             "slope_2": {
-              "description": "Slope parameter for interest rate model function when utilization_rate >= optimal_utilization_rate",
+              "description": "Slope parameter for interest rate model function when utilization_rate > optimal_utilization_rate",
               "allOf": [
                 {
                   "$ref": "#/definitions/Decimal"
