@@ -61,20 +61,33 @@ fn add_swap(
 ) -> StdResult<HealthComputer> {
     let mut new_h = h.clone();
 
-    let from_coin_index =
+    let from_deposit_coin_index =
         new_h.positions.deposits.iter().position(|c| c.denom == from_denom).unwrap();
+    let from_lend_coin_index = new_h.positions.lends.iter().position(|c| c.denom == from_denom);
 
-    let from_coin = new_h.positions.deposits.get_mut(from_coin_index).unwrap();
+    let from_deposit_coin = new_h.positions.deposits.get_mut(from_deposit_coin_index).unwrap();
+    let mut from_lend_coin = &mut Coin::default();
+    if let Some(from_lend_coin_index) = from_lend_coin_index {
+        from_lend_coin = new_h.positions.lends.get_mut(from_lend_coin_index).unwrap();
+    }
     let from_price = new_h.denoms_data.prices.get(from_denom).unwrap();
     let to_price = new_h.denoms_data.prices.get(to_denom).unwrap();
 
-    // Subtract the amount from current deposited balance
-    if amount < from_coin.amount {
-        from_coin.amount -= amount;
+    // Subtract the amount from current deposited and lent balance
+    let total_amount = from_deposit_coin.amount + from_lend_coin.amount;
+    if amount < from_deposit_coin.amount {
+        from_deposit_coin.amount -= amount;
+    } else if amount < total_amount {
+        let remaining_from_lends = amount - from_deposit_coin.amount;
+        from_deposit_coin.amount = Uint128::zero();
+        from_lend_coin.amount -= remaining_from_lends;
     } else {
         // If there the amount is larger than the balance of the coin, we need to add the remaining to the debts.
-        let debt_amount = amount - from_coin.amount;
-        new_h.positions.deposits.remove(from_coin_index);
+        let debt_amount = amount - total_amount;
+        new_h.positions.deposits.remove(from_deposit_coin_index);
+        if let Some(idx) = from_lend_coin_index {
+            new_h.positions.lends.remove(idx);
+        }
 
         if let Some(debt_coin_index) =
             new_h.positions.debts.iter().position(|c| c.denom == from_denom)

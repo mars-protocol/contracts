@@ -132,8 +132,8 @@ fn deposit_not_present() {
         vaults_data,
     };
 
-    let err: HealthError = h.max_withdraw_amount_estimate("xyz").unwrap_err();
-    assert_eq!(err, HealthError::DenomNotPresent("xyz".to_string()));
+    let max_withdraw_amount = h.max_withdraw_amount_estimate("xyz").unwrap();
+    assert_eq!(max_withdraw_amount, Uint128::zero());
 }
 
 #[test]

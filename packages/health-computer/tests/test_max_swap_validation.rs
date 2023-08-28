@@ -136,9 +136,9 @@ fn deposit_not_present() {
         vaults_data,
     };
 
-    let err: HealthError =
-        h.max_swap_amount_estimate("xyz", &udai.denom, &SwapKind::Default).unwrap_err();
-    assert_eq!(err, HealthError::DenomNotPresent("xyz".to_string()));
+    let max_withdraw_amount =
+        h.max_swap_amount_estimate("xyz", &udai.denom, &SwapKind::Default).unwrap();
+    assert_eq!(max_withdraw_amount, Uint128::zero());
 }
 
 #[test]

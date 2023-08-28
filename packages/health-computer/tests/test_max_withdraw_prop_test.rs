@@ -50,8 +50,16 @@ fn withdraw_amount_renders_healthy_max_ltv() {
 
 fn decrement(h: &HealthComputer, deposit: &str, withdraw: Uint128) -> StdResult<HealthComputer> {
     let mut new_h = h.clone();
-    let matched_coin =
+    let matched_deposit_coin =
         new_h.positions.deposits.iter_mut().find(|coin| coin.denom == deposit).unwrap();
-    matched_coin.amount = matched_coin.amount.checked_sub(withdraw)?;
+    if matched_deposit_coin.amount >= withdraw {
+        matched_deposit_coin.amount = matched_deposit_coin.amount.checked_sub(withdraw)?;
+    } else {
+        let remaining_from_lends = withdraw - matched_deposit_coin.amount;
+        matched_deposit_coin.amount = Uint128::zero();
+        let matched_lend_coin =
+            new_h.positions.lends.iter_mut().find(|coin| coin.denom == deposit).unwrap();
+        matched_lend_coin.amount = matched_lend_coin.amount.checked_sub(remaining_from_lends)?;
+    }
     Ok(new_h)
 }
