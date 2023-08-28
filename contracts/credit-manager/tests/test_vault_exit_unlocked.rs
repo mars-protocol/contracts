@@ -1,8 +1,8 @@
 use cosmwasm_std::{Addr, Uint128};
 use cw_utils::Duration;
 use mars_mock_vault::contract::STARTING_VAULT_SHARES;
+use mars_params::msg::VaultConfigUpdate;
 use mars_rover::{
-    adapters::vault::VaultUnchecked,
     error::ContractError,
     msg::{
         execute::Action::{Deposit, EnterVault, ExitVaultUnlocked, RequestVaultUnlock},
@@ -45,27 +45,6 @@ fn only_owner_can_withdraw_unlocked_for_account() {
             account_id,
         },
     );
-}
-
-#[test]
-fn can_only_take_action_on_whitelisted_vaults() {
-    let user = Addr::unchecked("user");
-    let mut mock = MockEnv::new().build().unwrap();
-
-    let vault = VaultUnchecked::new("xvault".to_string());
-    let account_id = mock.create_credit_account(&user).unwrap();
-
-    let res = mock.update_credit_account(
-        &account_id,
-        &user,
-        vec![ExitVaultUnlocked {
-            id: 234,
-            vault,
-        }],
-        &[],
-    );
-
-    assert_err(res, ContractError::NotWhitelisted("xvault".to_string()));
 }
 
 #[test]
@@ -380,6 +359,95 @@ fn withdraw_unlock_success_block_expiring() {
 
     let positions = mock.query_positions(&account_id);
     let lockup_id = get_lockup_id(&positions);
+
+    mock.update_credit_account(
+        &account_id,
+        &user,
+        vec![ExitVaultUnlocked {
+            id: lockup_id,
+            vault,
+        }],
+        &[],
+    )
+    .unwrap();
+
+    let Positions {
+        vaults,
+        deposits,
+        ..
+    } = mock.query_positions(&account_id);
+
+    // Users vault position decrements
+    assert_eq!(vaults.len(), 0);
+
+    // Users asset position increments
+    let lp = get_coin(&lp_token.denom, &deposits);
+    assert_eq!(lp.amount, Uint128::from(200u128));
+
+    // Assert Rover indeed has those on hand in the bank
+    let lp = mock.query_balance(&mock.rover, &lp_token.denom);
+    assert_eq!(lp.amount, Uint128::from(200u128));
+}
+
+#[test]
+fn exit_vault_if_vault_is_no_longer_whitelisted() {
+    let lp_token = lp_token_info();
+    let leverage_vault = generate_mock_vault(Some(Duration::Height(100_000)));
+
+    let user = Addr::unchecked("user");
+    let mut mock = MockEnv::new()
+        .set_params(&[lp_token.clone()])
+        .vault_configs(&[leverage_vault.clone()])
+        .fund_account(AccountToFund {
+            addr: user.clone(),
+            funds: vec![lp_token.to_coin(300)],
+        })
+        .build()
+        .unwrap();
+
+    let vault = mock.get_vault(&leverage_vault);
+    let account_id = mock.create_credit_account(&user).unwrap();
+
+    mock.update_credit_account(
+        &account_id,
+        &user,
+        vec![
+            Deposit(lp_token.to_coin(200)),
+            EnterVault {
+                vault: vault.clone(),
+                coin: lp_token.to_action_coin(200),
+            },
+            RequestVaultUnlock {
+                vault: vault.clone(),
+                amount: STARTING_VAULT_SHARES,
+            },
+        ],
+        &[lp_token.to_coin(200)],
+    )
+    .unwrap();
+
+    let Positions {
+        deposits,
+        ..
+    } = mock.query_positions(&account_id);
+    assert_eq!(deposits.len(), 0);
+
+    mock.app.update_block(|block| {
+        if let Duration::Height(h) = leverage_vault.lockup.unwrap() {
+            block.height += h;
+            block.time = block.time.plus_seconds(h * 6);
+        }
+    });
+
+    let positions = mock.query_positions(&account_id);
+    let lockup_id = get_lockup_id(&positions);
+
+    // Blacklist vault
+    let mut config = mock.query_vault_params(&vault.address);
+    config.whitelisted = false;
+    mock.update_vault_params(VaultConfigUpdate::AddOrUpdate {
+        config: config.into(),
+    });
 
     mock.update_credit_account(
         &account_id,

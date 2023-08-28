@@ -8,19 +8,15 @@ use mars_rover::{
     },
 };
 
-use crate::vault::utils::{
-    assert_vault_is_whitelisted, query_withdraw_denom_balance, update_vault_position,
-};
+use crate::vault::utils::{query_withdraw_denom_balance, update_vault_position};
 
 pub fn exit_vault(
-    mut deps: DepsMut,
+    deps: DepsMut,
     env: Env,
     account_id: &str,
     vault: Vault,
     amount: Uint128,
 ) -> ContractResult<Response> {
-    assert_vault_is_whitelisted(&mut deps, &vault)?;
-
     // Force indicates that the vault is one with a required lockup that needs to be broken
     // In this case, we'll need to withdraw from the locked bucket
     update_vault_position(

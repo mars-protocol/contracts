@@ -11,20 +11,16 @@ use mars_rover::{
 
 use crate::{
     state::VAULT_POSITIONS,
-    vault::utils::{
-        assert_vault_is_whitelisted, query_withdraw_denom_balance, update_vault_position,
-    },
+    vault::utils::{query_withdraw_denom_balance, update_vault_position},
 };
 
 pub fn exit_vault_unlocked(
-    mut deps: DepsMut,
+    deps: DepsMut,
     env: Env,
     account_id: &str,
     vault: Vault,
     position_id: u64,
 ) -> ContractResult<Response> {
-    assert_vault_is_whitelisted(&mut deps, &vault)?;
-
     let vault_position = VAULT_POSITIONS.load(deps.storage, (account_id, vault.address.clone()))?;
     let matching_unlock = vault_position
         .get_unlocking_position(position_id)
