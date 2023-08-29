@@ -187,6 +187,22 @@ pub fn query(deps: Deps, env: Env, msg: QueryMsg) -> Result<Binary, ContractErro
                 limit,
             )?)
         }
+        QueryMsg::UserCollateralsV2 {
+            user,
+            account_id,
+            start_after,
+            limit,
+        } => {
+            let user_addr = deps.api.addr_validate(&user)?;
+            to_binary(&query::query_user_collaterals_v2(
+                deps,
+                &env.block,
+                user_addr,
+                account_id,
+                start_after,
+                limit,
+            )?)
+        }
         QueryMsg::UserPosition {
             user,
             account_id,

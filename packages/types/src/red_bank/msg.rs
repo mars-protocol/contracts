@@ -195,6 +195,15 @@ pub enum QueryMsg {
         limit: Option<u32>,
     },
 
+    /// Get all collateral positions for a user
+    #[returns(Vec<crate::red_bank::PaginatedUserCollateralResponse>)]
+    UserCollateralsV2 {
+        user: String,
+        account_id: Option<String>,
+        start_after: Option<String>,
+        limit: Option<u32>,
+    },
+
     /// Get user position
     #[returns(crate::red_bank::UserPositionResponse)]
     UserPosition {

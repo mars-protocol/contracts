@@ -1,6 +1,8 @@
 use cosmwasm_schema::cw_serde;
 use cosmwasm_std::{Decimal, Uint128};
 
+use crate::PaginationResponse;
+
 /// Global configuration
 #[cw_serde]
 pub struct Config<T> {
@@ -95,6 +97,8 @@ pub struct UserCollateralResponse {
     /// Wether the user is using asset as collateral or not
     pub enabled: bool,
 }
+
+pub type PaginatedUserCollateralResponse = PaginationResponse<UserCollateralResponse>;
 
 #[cw_serde]
 pub struct UserPositionResponse {
