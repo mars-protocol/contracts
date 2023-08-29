@@ -4,7 +4,7 @@ use cosmwasm_std::{
     attr, to_binary, Addr, BankMsg, Binary, Coin, Coins, Decimal, Deps, DepsMut, Env, Event,
     MessageInfo, Order, Response, StdError, StdResult, Uint128,
 };
-use cw2::set_contract_version;
+use cw2::{get_contract_version, set_contract_version};
 use cw_storage_plus::Bound;
 use mars_owner::{OwnerInit::SetInitialOwner, OwnerUpdate};
 use mars_red_bank_types::{
@@ -764,6 +764,22 @@ pub fn query_emissions(
 /// MIGRATION
 
 #[cfg_attr(not(feature = "library"), entry_point)]
-pub fn migrate(_deps: DepsMut, _env: Env, _msg: MigrateMsg) -> Result<Response, ContractError> {
-    Ok(Response::default())
+pub fn migrate(deps: DepsMut, _env: Env, _msg: MigrateMsg) -> Result<Response, ContractError> {
+    let version = get_contract_version(deps.as_ref().storage)?;
+
+    if version.contract != CONTRACT_NAME {
+        return Err(ContractError::IncorrectContract {
+            expected: CONTRACT_NAME.to_string(),
+            found: version.contract,
+        });
+    }
+
+    set_contract_version(deps.storage, CONTRACT_NAME, CONTRACT_VERSION)?;
+
+    set_contract_version(deps.storage, CONTRACT_NAME, CONTRACT_VERSION)?;
+    Ok(Response::new()
+        .add_attribute("action", "migrate")
+        .add_attribute("contract", CONTRACT_NAME)
+        .add_attribute("old_version", version.version)
+        .add_attribute("new_version", CONTRACT_VERSION))
 }

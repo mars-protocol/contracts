@@ -66,6 +66,12 @@ pub enum ContractError {
     DuplicateDenom {
         denom: String,
     },
+
+    #[error("Wrong contract for migration")]
+    IncorrectContract {
+        expected: String,
+        found: String,
+    },
 }
 
 impl From<ContractError> for StdError {
