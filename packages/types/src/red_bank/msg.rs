@@ -196,7 +196,7 @@ pub enum QueryMsg {
     },
 
     /// Get all collateral positions for a user
-    #[returns(Vec<crate::red_bank::PaginatedUserCollateralResponse>)]
+    #[returns(crate::red_bank::PaginatedUserCollateralResponse)]
     UserCollateralsV2 {
         user: String,
         account_id: Option<String>,
