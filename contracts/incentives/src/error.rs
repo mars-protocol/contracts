@@ -67,7 +67,6 @@ pub enum ContractError {
         denom: String,
     },
 
-
     #[error("Wrong contract for migration")]
     IncorrectContract {
         expected: String,
