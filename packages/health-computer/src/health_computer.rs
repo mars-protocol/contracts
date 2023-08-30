@@ -143,9 +143,6 @@ impl HealthComputer {
         // Both deposits and lends should be considered, as the funds can automatically be un-lent and
         // and also used to swap.
         let from_coin = self.get_coin_from_deposits_and_lends(from_denom)?;
-        if from_coin.amount.is_zero() {
-            return Ok(Uint128::zero());
-        };
 
         // If no debt the total amount deposited can be swapped (only for default swaps)
         if kind == &SwapKind::Default && self.positions.debts.is_empty() {
