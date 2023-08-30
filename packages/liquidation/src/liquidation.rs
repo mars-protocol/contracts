@@ -79,8 +79,9 @@ pub fn calculate_liquidation_amounts(
     .min()
     .ok_or_else(|| StdError::generic_err("Minimum not found"))?;
 
-    let collateral_amount_to_liquidate = debt_amount_to_repay
-        .checked_mul_floor(debt_price)?
+    let debt_value_to_repay = debt_amount_to_repay.checked_mul_floor(debt_price)?;
+
+    let collateral_amount_to_liquidate = debt_value_to_repay
         .checked_mul_floor(liquidation_bonus.add(Decimal::one()))?
         .checked_div_floor(collateral_price)?;
 
@@ -97,11 +98,12 @@ pub fn calculate_liquidation_amounts(
         )));
     }
 
-    let lb_amount = collateral_amount_to_liquidate.checked_mul_floor(liquidation_bonus)?;
+    let lb_value = debt_value_to_repay.checked_mul_floor(liquidation_bonus)?;
 
     // Use ceiling in favour of protocol
-    let protocol_fee_amount =
-        lb_amount.checked_mul_ceil(collateral_params.protocol_liquidation_fee)?;
+    let protocol_fee_value =
+        lb_value.checked_mul_ceil(collateral_params.protocol_liquidation_fee)?;
+    let protocol_fee_amount = protocol_fee_value.checked_div_floor(collateral_price)?;
 
     let collateral_amount_received_by_liquidator =
         collateral_amount_to_liquidate - protocol_fee_amount;

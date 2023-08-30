@@ -226,7 +226,7 @@ fn target_health_factor_reached_after_max_debt_repayed() {
     // check liquidator positions
     let liquidator_collaterals = red_bank.query_user_collaterals(&mut mock_env, &liquidator);
     assert_eq!(liquidator_collaterals.len(), 1);
-    assert_eq!(liquidator_collaterals.get("uosmo").unwrap().amount.u128(), 7180);
+    assert_eq!(liquidator_collaterals.get("uosmo").unwrap().amount.u128(), 7182);
     let liquidator_debts = red_bank.query_user_debts(&mut mock_env, &liquidator);
     assert_eq!(liquidator_debts.len(), 0);
 
@@ -234,7 +234,7 @@ fn target_health_factor_reached_after_max_debt_repayed() {
     let rc_collaterals =
         red_bank.query_user_collaterals(&mut mock_env, &rewards_collector.contract_addr);
     assert_eq!(rc_collaterals.len(), 1);
-    assert_eq!(rc_collaterals.get("uosmo").unwrap().amount.u128(), 11);
+    assert_eq!(rc_collaterals.get("uosmo").unwrap().amount.u128(), 9);
     let rc_debts = red_bank.query_user_debts(&mut mock_env, &rewards_collector.contract_addr);
     assert_eq!(rc_debts.len(), 0);
 
@@ -316,7 +316,7 @@ fn debt_amt_adjusted_to_total_debt_then_refund() {
     // check liquidator positions
     let liquidator_collaterals = red_bank.query_user_collaterals(&mut mock_env, &liquidator);
     assert_eq!(liquidator_collaterals.len(), 1);
-    assert_eq!(liquidator_collaterals.get("uosmo").unwrap().amount.u128(), 9946);
+    assert_eq!(liquidator_collaterals.get("uosmo").unwrap().amount.u128(), 9948);
     let liquidator_debts = red_bank.query_user_debts(&mut mock_env, &liquidator);
     assert_eq!(liquidator_debts.len(), 0);
 
@@ -324,7 +324,7 @@ fn debt_amt_adjusted_to_total_debt_then_refund() {
     let rc_collaterals =
         red_bank.query_user_collaterals(&mut mock_env, &rewards_collector.contract_addr);
     assert_eq!(rc_collaterals.len(), 1);
-    assert_eq!(rc_collaterals.get("uosmo").unwrap().amount.u128(), 20);
+    assert_eq!(rc_collaterals.get("uosmo").unwrap().amount.u128(), 18);
     let rc_debts = red_bank.query_user_debts(&mut mock_env, &rewards_collector.contract_addr);
     assert_eq!(rc_debts.len(), 0);
 
@@ -405,7 +405,7 @@ fn debt_amt_adjusted_to_max_allowed_by_requested_coin() {
     // check liquidator positions
     let liquidator_collaterals = red_bank.query_user_collaterals(&mut mock_env, &liquidator);
     assert_eq!(liquidator_collaterals.len(), 1);
-    assert_eq!(liquidator_collaterals.get("uosmo").unwrap().amount.u128(), 9976);
+    assert_eq!(liquidator_collaterals.get("uosmo").unwrap().amount.u128(), 9978);
     let liquidator_debts = red_bank.query_user_debts(&mut mock_env, &liquidator);
     assert_eq!(liquidator_debts.len(), 0);
 
@@ -413,7 +413,7 @@ fn debt_amt_adjusted_to_max_allowed_by_requested_coin() {
     let rc_collaterals =
         red_bank.query_user_collaterals(&mut mock_env, &rewards_collector.contract_addr);
     assert_eq!(rc_collaterals.len(), 1);
-    assert_eq!(rc_collaterals.get("uosmo").unwrap().amount.u128(), 20);
+    assert_eq!(rc_collaterals.get("uosmo").unwrap().amount.u128(), 18);
     let rc_debts = red_bank.query_user_debts(&mut mock_env, &rewards_collector.contract_addr);
     assert_eq!(rc_debts.len(), 0);
 
@@ -501,15 +501,14 @@ fn debt_amt_no_adjustment_with_different_recipient() {
     // check recipient positions
     let recipient_collaterals = red_bank.query_user_collaterals(&mut mock_env, &recipient);
     assert_eq!(recipient_collaterals.len(), 1);
-    assert_eq!(recipient_collaterals.get("uosmo").unwrap().amount.u128(), 406);
+    assert_eq!(recipient_collaterals.get("uosmo").unwrap().amount.u128(), 407);
     let recipient_debts = red_bank.query_user_debts(&mut mock_env, &recipient);
     assert_eq!(recipient_debts.len(), 0);
 
     // check rewards-collector positions (protocol fee)
     let rc_collaterals =
         red_bank.query_user_collaterals(&mut mock_env, &rewards_collector.contract_addr);
-    assert_eq!(rc_collaterals.len(), 1);
-    assert_eq!(rc_collaterals.get("uosmo").unwrap().amount.u128(), 1);
+    assert_eq!(rc_collaterals.len(), 0);
     let rc_debts = red_bank.query_user_debts(&mut mock_env, &rewards_collector.contract_addr);
     assert_eq!(rc_debts.len(), 0);
 
