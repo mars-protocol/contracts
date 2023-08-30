@@ -223,14 +223,14 @@ pub fn query_user_collaterals_v2(
 
     let mut user_collaterals = user_collaterals_res?;
     let has_more = user_collaterals.len() > limit;
-    user_collaterals.pop(); // Remove the extra item used for checking if there are more items
-    let next_start_after = user_collaterals.last().map(|collateral| collateral.denom.clone());
+    if has_more {
+        user_collaterals.pop(); // Remove the extra item used for checking if there are more items
+    }
 
     Ok(PaginatedUserCollateralResponse {
         data: user_collaterals,
         metadata: Metadata {
             has_more,
-            next_start_after,
         },
     })
 }

@@ -17,5 +17,4 @@ pub struct PaginationResponse<T> {
 #[cw_serde]
 pub struct Metadata {
     pub has_more: bool,
-    pub next_start_after: Option<String>,
 }
