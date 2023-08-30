@@ -1,7 +1,7 @@
 use cosmwasm_std::{testing::mock_env, Addr, Decimal, Uint128};
 use mars_interest_rate::{get_scaled_debt_amount, get_underlying_debt_amount, SCALING_FACTOR};
 use mars_red_bank::{
-    query::{query_user_collaterals, query_user_debt, query_user_debts},
+    query::{query_user_collaterals, query_user_collaterals_v2, query_user_debt, query_user_debts},
     state::DEBTS,
 };
 use mars_red_bank_types::red_bank::{Debt, Market, UserCollateralResponse, UserDebtResponse};
@@ -65,6 +65,79 @@ fn query_collateral() {
             }
         ]
     );
+}
+
+#[test]
+fn paginate_user_collaterals_v2() {
+    let mut deps = th_setup(&[]);
+    let env = mock_env();
+
+    let user_addr = Addr::unchecked("user");
+
+    let market_1 = th_init_market(deps.as_mut(), "uosmo", &Default::default());
+    let market_2 = th_init_market(deps.as_mut(), "uatom", &Default::default());
+    let market_3 = th_init_market(deps.as_mut(), "untrn", &Default::default());
+    let market_4 = th_init_market(deps.as_mut(), "ujuno", &Default::default());
+    let market_5 = th_init_market(deps.as_mut(), "uusdc", &Default::default());
+    let market_6 = th_init_market(deps.as_mut(), "ujake", &Default::default());
+
+    set_collateral(deps.as_mut(), &user_addr, &market_1.denom, Uint128::one(), true);
+    set_collateral(deps.as_mut(), &user_addr, &market_2.denom, Uint128::one(), true);
+    set_collateral(deps.as_mut(), &user_addr, &market_3.denom, Uint128::one(), true);
+    set_collateral(deps.as_mut(), &user_addr, &market_4.denom, Uint128::one(), true);
+    set_collateral(deps.as_mut(), &user_addr, &market_5.denom, Uint128::one(), true);
+    set_collateral(deps.as_mut(), &user_addr, &market_6.denom, Uint128::one(), false);
+
+    // Check pagination with default params
+    let collaterals =
+        query_user_collaterals_v2(deps.as_ref(), &env.block, user_addr.clone(), None, None, None)
+            .unwrap();
+    assert_eq!(
+        to_denoms(&collaterals.data),
+        vec!["uatom", "ujake", "ujuno", "untrn", "uosmo", "uusdc"]
+    );
+    assert!(!collaterals.metadata.has_more);
+
+    // Paginate all collaterals
+    let collaterals = query_user_collaterals_v2(
+        deps.as_ref(),
+        &env.block,
+        user_addr.clone(),
+        None,
+        Some("uatom".to_string()),
+        Some(2),
+    )
+    .unwrap();
+    assert_eq!(to_denoms(&collaterals.data), vec!["ujake", "ujuno"]);
+    assert!(collaterals.metadata.has_more);
+
+    let collaterals = query_user_collaterals_v2(
+        deps.as_ref(),
+        &env.block,
+        user_addr.clone(),
+        None,
+        Some("ujuno".to_string()),
+        Some(2),
+    )
+    .unwrap();
+    assert_eq!(to_denoms(&collaterals.data), vec!["untrn", "uosmo"]);
+    assert!(collaterals.metadata.has_more);
+
+    let collaterals = query_user_collaterals_v2(
+        deps.as_ref(),
+        &env.block,
+        user_addr,
+        None,
+        Some("uosmo".to_string()),
+        Some(2),
+    )
+    .unwrap();
+    assert_eq!(to_denoms(&collaterals.data), vec!["uusdc"]);
+    assert!(!collaterals.metadata.has_more);
+}
+
+fn to_denoms(res: &[UserCollateralResponse]) -> Vec<&str> {
+    res.iter().map(|item| item.denom.as_str()).collect()
 }
 
 #[test]

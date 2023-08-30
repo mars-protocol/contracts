@@ -20,8 +20,8 @@ use crate::{
     state::{COLLATERALS, CONFIG, DEBTS, MARKETS, OWNER, UNCOLLATERALIZED_LOAN_LIMITS},
 };
 
-const DEFAULT_LIMIT: u32 = 5;
-const MAX_LIMIT: u32 = 10;
+const DEFAULT_LIMIT: u32 = 10;
+const MAX_LIMIT: u32 = 30;
 
 pub fn query_config(deps: Deps) -> StdResult<ConfigResponse> {
     let owner_state = OWNER.query(deps.storage)?;
