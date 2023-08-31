@@ -7,9 +7,11 @@ use mars_interest_rate::{
 use mars_red_bank_types::{
     address_provider::{self, MarsAddressType},
     red_bank::{
-        Collateral, ConfigResponse, Debt, Market, UncollateralizedLoanLimitResponse,
-        UserCollateralResponse, UserDebtResponse, UserHealthStatus, UserPositionResponse,
+        Collateral, ConfigResponse, Debt, Market, PaginatedUserCollateralResponse,
+        UncollateralizedLoanLimitResponse, UserCollateralResponse, UserDebtResponse,
+        UserHealthStatus, UserPositionResponse,
     },
+    Metadata,
 };
 
 use crate::{
@@ -18,8 +20,8 @@ use crate::{
     state::{COLLATERALS, CONFIG, DEBTS, MARKETS, OWNER, UNCOLLATERALIZED_LOAN_LIMITS},
 };
 
-const DEFAULT_LIMIT: u32 = 5;
-const MAX_LIMIT: u32 = 10;
+const DEFAULT_LIMIT: u32 = 10;
+const MAX_LIMIT: u32 = 30;
 
 pub fn query_config(deps: Deps) -> StdResult<ConfigResponse> {
     let owner_state = OWNER.query(deps.storage)?;
@@ -179,6 +181,18 @@ pub fn query_user_collaterals(
     start_after: Option<String>,
     limit: Option<u32>,
 ) -> Result<Vec<UserCollateralResponse>, ContractError> {
+    let res_v2 = query_user_collaterals_v2(deps, block, user_addr, account_id, start_after, limit)?;
+    Ok(res_v2.data)
+}
+
+pub fn query_user_collaterals_v2(
+    deps: Deps,
+    block: &BlockInfo,
+    user_addr: Addr,
+    account_id: Option<String>,
+    start_after: Option<String>,
+    limit: Option<u32>,
+) -> Result<PaginatedUserCollateralResponse, ContractError> {
     let block_time = block.time.seconds();
 
     let start = start_after.map(|denom| Bound::ExclusiveRaw(denom.into_bytes()));
@@ -186,10 +200,10 @@ pub fn query_user_collaterals(
 
     let acc_id = account_id.unwrap_or("".to_string());
 
-    COLLATERALS
+    let user_collaterals_res: Result<Vec<_>, ContractError> = COLLATERALS
         .prefix((&user_addr, &acc_id))
         .range(deps.storage, start, None, Order::Ascending)
-        .take(limit)
+        .take(limit + 1) // Fetch one extra item to determine if there are more
         .map(|item| {
             let (denom, collateral) = item?;
 
@@ -205,7 +219,20 @@ pub fn query_user_collaterals(
                 enabled: collateral.enabled,
             })
         })
-        .collect()
+        .collect();
+
+    let mut user_collaterals = user_collaterals_res?;
+    let has_more = user_collaterals.len() > limit;
+    if has_more {
+        user_collaterals.pop(); // Remove the extra item used for checking if there are more items
+    }
+
+    Ok(PaginatedUserCollateralResponse {
+        data: user_collaterals,
+        metadata: Metadata {
+            has_more,
+        },
+    })
 }
 
 pub fn query_scaled_liquidity_amount(
