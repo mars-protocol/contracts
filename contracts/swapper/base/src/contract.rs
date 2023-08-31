@@ -162,12 +162,7 @@ where
         slippage: Decimal,
     ) -> ContractResult<Response<M>> {
         let swap_msg = self
-            .routes
-            .load(deps.storage, (coin_in.denom.clone(), denom_out.clone()))
-            .map_err(|_| ContractError::NoRoute {
-                from: coin_in.denom.clone(),
-                to: denom_out.clone(),
-            })?
+            .get_route(deps.as_ref(), &coin_in.denom, &denom_out)?
             .build_exact_in_swap_msg(&deps.querier, &env, &coin_in, slippage)?;
 
         // Check balance of result of swapper and send back result to sender

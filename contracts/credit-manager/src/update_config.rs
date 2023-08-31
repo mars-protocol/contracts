@@ -138,7 +138,8 @@ pub fn update_nft_config(
                 updates,
             })?,
         });
-        response = response.add_message(update_config_msg).add_attribute("action", "update_config")
+        response =
+            response.add_message(update_config_msg).add_attribute("action", "update_nft_config")
     }
 
     if let Some(action) = ownership {
