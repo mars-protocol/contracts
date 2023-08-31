@@ -10,7 +10,7 @@ use mars_incentives::{
 };
 use mars_owner::OwnerError::NotOwner;
 use mars_red_bank_types::{
-    incentives::{ExecuteMsg, QueryMsg, WhitelistEntry},
+    incentives::{ConfigResponse, ExecuteMsg, QueryMsg, WhitelistEntry},
     red_bank::{Market, UserCollateralResponse},
 };
 use mars_testing::MockEnvParams;
@@ -356,8 +356,8 @@ fn cannot_whitelist_more_than_max_limit() {
     execute(deps.as_mut(), mock_env(), mock_info(owner, &[]), add_whitelist_msg).unwrap();
 
     // Check whitelist count. Should still be 10.
-    let whitelist_count = WHITELIST_COUNT.load(&deps.storage).unwrap();
-    assert_eq!(whitelist_count, 10);
+    let config: ConfigResponse = th_query(deps.as_ref(), QueryMsg::Config {});
+    assert_eq!(config.max_whitelisted_denoms, 10);
 }
 
 #[test]
