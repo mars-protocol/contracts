@@ -688,7 +688,8 @@
       "required": [
         "address_provider",
         "epoch_duration",
-        "max_whitelisted_denoms"
+        "max_whitelisted_denoms",
+        "whitelist_count"
       ],
       "properties": {
         "address_provider": {
@@ -724,6 +725,12 @@
             "string",
             "null"
           ]
+        },
+        "whitelist_count": {
+          "description": "The count of the number of whitelisted incentive denoms",
+          "type": "integer",
+          "format": "uint8",
+          "minimum": 0.0
         }
       },
       "additionalProperties": false,

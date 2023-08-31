@@ -134,6 +134,7 @@ export interface ConfigResponse {
   max_whitelisted_denoms: number
   owner?: string | null
   proposed_new_owner?: string | null
+  whitelist_count: number
 }
 export type ArrayOfEmissionResponse = EmissionResponse[]
 export interface EmissionResponse {
