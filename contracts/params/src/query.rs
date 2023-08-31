@@ -13,6 +13,7 @@ use crate::{
 };
 
 pub const DEFAULT_LIMIT: u32 = 10;
+pub const MAX_LIMIT: u32 = 30;
 
 pub fn query_all_asset_params(
     deps: Deps,
@@ -20,7 +21,7 @@ pub fn query_all_asset_params(
     limit: Option<u32>,
 ) -> StdResult<Vec<AssetParams>> {
     let start = start_after.as_ref().map(|denom| Bound::exclusive(denom.as_str()));
-    let limit = limit.unwrap_or(DEFAULT_LIMIT) as usize;
+    let limit = limit.unwrap_or(DEFAULT_LIMIT).min(MAX_LIMIT) as usize;
     ASSET_PARAMS
         .range(deps.storage, start, None, Order::Ascending)
         .take(limit)
@@ -47,7 +48,7 @@ pub fn query_all_vault_configs(
         None => None,
     };
 
-    let limit = limit.unwrap_or(DEFAULT_LIMIT) as usize;
+    let limit = limit.unwrap_or(DEFAULT_LIMIT).min(MAX_LIMIT) as usize;
 
     VAULT_CONFIGS
         .range(deps.storage, start, None, Order::Ascending)
