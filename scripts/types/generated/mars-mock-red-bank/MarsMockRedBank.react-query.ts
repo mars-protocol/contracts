@@ -25,6 +25,8 @@ import {
   ArrayOfUncollateralizedLoanLimitResponse,
   UserCollateralResponse,
   ArrayOfUserCollateralResponse,
+  PaginationResponseForUserCollateralResponse,
+  Metadata,
   UserDebtResponse,
   ArrayOfUserDebtResponse,
   UserHealthStatus,
@@ -82,6 +84,14 @@ export const marsMockRedBankQueryKeys = {
   userCollaterals: (contractAddress: string | undefined, args?: Record<string, unknown>) =>
     [
       { ...marsMockRedBankQueryKeys.address(contractAddress)[0], method: 'user_collaterals', args },
+    ] as const,
+  userCollateralsV2: (contractAddress: string | undefined, args?: Record<string, unknown>) =>
+    [
+      {
+        ...marsMockRedBankQueryKeys.address(contractAddress)[0],
+        method: 'user_collaterals_v2',
+        args,
+      },
     ] as const,
   userPosition: (contractAddress: string | undefined, args?: Record<string, unknown>) =>
     [
@@ -279,6 +289,32 @@ export function useMarsMockRedBankUserPositionQuery<TData = UserPositionResponse
       client
         ? client.userPosition({
             accountId: args.accountId,
+            user: args.user,
+          })
+        : Promise.reject(new Error('Invalid client')),
+    { ...options, enabled: !!client && (options?.enabled != undefined ? options.enabled : true) },
+  )
+}
+export interface MarsMockRedBankUserCollateralsV2Query<TData>
+  extends MarsMockRedBankReactQuery<PaginationResponseForUserCollateralResponse, TData> {
+  args: {
+    accountId?: string
+    limit?: number
+    startAfter?: string
+    user: string
+  }
+}
+export function useMarsMockRedBankUserCollateralsV2Query<
+  TData = PaginationResponseForUserCollateralResponse,
+>({ client, args, options }: MarsMockRedBankUserCollateralsV2Query<TData>) {
+  return useQuery<PaginationResponseForUserCollateralResponse, Error, TData>(
+    marsMockRedBankQueryKeys.userCollateralsV2(client?.contractAddress, args),
+    () =>
+      client
+        ? client.userCollateralsV2({
+            accountId: args.accountId,
+            limit: args.limit,
+            startAfter: args.startAfter,
             user: args.user,
           })
         : Promise.reject(new Error('Invalid client')),

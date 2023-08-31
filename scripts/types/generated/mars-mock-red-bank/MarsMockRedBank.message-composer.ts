@@ -26,6 +26,8 @@ import {
   ArrayOfUncollateralizedLoanLimitResponse,
   UserCollateralResponse,
   ArrayOfUserCollateralResponse,
+  PaginationResponseForUserCollateralResponse,
+  Metadata,
   UserDebtResponse,
   ArrayOfUserDebtResponse,
   UserHealthStatus,

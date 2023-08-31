@@ -7,7 +7,7 @@ use mars_red_bank_types::red_bank;
 
 use crate::{
     execute::{borrow, deposit, init_asset, repay, withdraw},
-    query::{query_collateral, query_collaterals, query_debt, query_market},
+    query::{query_collateral, query_collaterals, query_collaterals_v2, query_debt, query_market},
 };
 
 #[cfg_attr(not(feature = "library"), entry_point)]
@@ -74,8 +74,15 @@ pub fn query(deps: Deps, _env: Env, msg: red_bank::QueryMsg) -> StdResult<Binary
         red_bank::QueryMsg::UserCollaterals {
             user,
             account_id,
-            ..
-        } => to_binary(&query_collaterals(deps, user, account_id)?),
+            start_after,
+            limit,
+        } => to_binary(&query_collaterals(deps, user, account_id, start_after, limit)?),
+        red_bank::QueryMsg::UserCollateralsV2 {
+            user,
+            account_id,
+            start_after,
+            limit,
+        } => to_binary(&query_collaterals_v2(deps, user, account_id, start_after, limit)?),
         _ => unimplemented!("Query not supported!"),
     }
 }

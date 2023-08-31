@@ -1,6 +1,6 @@
 use std::ops::Add;
 
-use cosmwasm_std::{coin, coins, Addr, OverflowError, OverflowOperation, Uint128};
+use cosmwasm_std::{coin, coins, Addr, Coin, OverflowError, OverflowOperation, Uint128};
 use mars_rover::{
     error::ContractError,
     msg::execute::{
@@ -10,7 +10,8 @@ use mars_rover::{
 };
 
 use crate::helpers::{
-    assert_err, blacklisted_coin, uosmo_info, AccountToFund, MockEnv, DEFAULT_RED_BANK_COIN_BALANCE,
+    assert_err, blacklisted_coin, coin_info, uosmo_info, AccountToFund, MockEnv,
+    DEFAULT_RED_BANK_COIN_BALANCE,
 };
 
 pub mod helpers;
@@ -291,4 +292,73 @@ fn successful_account_balance_lend() {
     // Assert Rover's collateral balance in Red bank
     let red_bank_collateral = mock.query_red_bank_collateral(&account_id, &coin_info.denom);
     assert_eq!(red_bank_collateral.amount, lent_amount);
+}
+
+#[test]
+fn query_positions_successfully_with_paginated_lends() {
+    let coins_info = vec![
+        coin_info("coin_1"),
+        coin_info("coin_2"),
+        coin_info("coin_123"),
+        coin_info("coin_4"),
+        coin_info("coin_5"),
+        coin_info("coin_11"),
+        coin_info("coin_7"),
+    ];
+
+    let user = Addr::unchecked("user");
+
+    let funded_amt = 300u128;
+
+    let coins: Vec<_> = coins_info.iter().map(|coin| coin.to_coin(funded_amt)).collect();
+    let mut mock = MockEnv::new()
+        .set_params(&coins_info)
+        .fund_account(AccountToFund {
+            addr: user.clone(),
+            funds: coins.clone(),
+        })
+        .build()
+        .unwrap();
+
+    let account_id = mock.create_credit_account(&user).unwrap();
+
+    let position = mock.query_positions(&account_id);
+    assert_eq!(position.deposits.len(), 0);
+    assert_eq!(position.lends.len(), 0);
+
+    for coin in coins.iter() {
+        mock.update_credit_account(
+            &account_id,
+            &user,
+            vec![Deposit(coin.clone())],
+            &[coin.clone()],
+        )
+        .unwrap();
+
+        mock.update_credit_account(
+            &account_id,
+            &user,
+            vec![Lend(ActionCoin {
+                denom: coin.denom.clone(),
+                amount: ActionAmount::AccountBalance,
+            })],
+            &[],
+        )
+        .unwrap();
+    }
+
+    // Assert deposits decreased
+    let position = mock.query_positions(&account_id);
+    assert_eq!(position.deposits.len(), 0);
+
+    // Assert lends increased
+    assert_eq!(position.lends.len(), coins.len());
+    let expected_amt = funded_amt + 1; // account balance + simulated yield
+    assert_eq!(position.lends[0].clone(), Coin::new(expected_amt, "coin_1"));
+    assert_eq!(position.lends[1].clone(), Coin::new(expected_amt, "coin_2"));
+    assert_eq!(position.lends[2].clone(), Coin::new(expected_amt, "coin_123"));
+    assert_eq!(position.lends[3].clone(), Coin::new(expected_amt, "coin_4"));
+    assert_eq!(position.lends[4].clone(), Coin::new(expected_amt, "coin_5"));
+    assert_eq!(position.lends[5].clone(), Coin::new(expected_amt, "coin_11"));
+    assert_eq!(position.lends[6].clone(), Coin::new(expected_amt, "coin_7"));
 }

@@ -123,24 +123,39 @@ impl RedBank {
         querier: &QuerierWrapper,
         account_id: &str,
     ) -> StdResult<Vec<Coin>> {
-        let responses: Vec<red_bank::UserCollateralResponse> =
-            querier.query(&QueryRequest::Wasm(WasmQuery::Smart {
-                contract_addr: self.addr.to_string(),
-                msg: to_binary(&red_bank::QueryMsg::UserCollaterals {
-                    user: self.credit_manager.to_string(),
-                    account_id: Some(account_id.to_string()),
-                    start_after: None,
-                    limit: None,
-                })?,
-            }))?;
-        let all_lent_coins = responses
-            .iter()
-            .map(|r| Coin {
-                denom: r.denom.clone(),
-                amount: r.amount,
-            })
-            .collect();
+        let mut start_after = Option::<String>::None;
+        let mut has_more = true;
+        let mut all_lent_coins = Vec::new();
+        while has_more {
+            let response = self.query_lents(querier, account_id, start_after, None)?;
+            for item in response.data {
+                all_lent_coins.push(Coin {
+                    denom: item.denom,
+                    amount: item.amount,
+                });
+            }
+            start_after = all_lent_coins.last().map(|item| item.denom.clone());
+            has_more = response.metadata.has_more;
+        }
         Ok(all_lent_coins)
+    }
+
+    fn query_lents(
+        &self,
+        querier: &QuerierWrapper,
+        account_id: &str,
+        start_after: Option<String>,
+        limit: Option<u32>,
+    ) -> StdResult<red_bank::PaginatedUserCollateralResponse> {
+        querier.query(&QueryRequest::Wasm(WasmQuery::Smart {
+            contract_addr: self.addr.to_string(),
+            msg: to_binary(&red_bank::QueryMsg::UserCollateralsV2 {
+                user: self.credit_manager.to_string(),
+                account_id: Some(account_id.to_string()),
+                start_after,
+                limit,
+            })?,
+        }))
     }
 
     pub fn query_debt(&self, querier: &QuerierWrapper, denom: &str) -> StdResult<Uint128> {

@@ -24,6 +24,8 @@ import {
   ArrayOfUncollateralizedLoanLimitResponse,
   UserCollateralResponse,
   ArrayOfUserCollateralResponse,
+  PaginationResponseForUserCollateralResponse,
+  Metadata,
   UserDebtResponse,
   ArrayOfUserDebtResponse,
   UserHealthStatus,
@@ -86,6 +88,17 @@ export interface MarsMockRedBankReadOnlyInterface {
     startAfter?: string
     user: string
   }) => Promise<ArrayOfUserCollateralResponse>
+  userCollateralsV2: ({
+    accountId,
+    limit,
+    startAfter,
+    user,
+  }: {
+    accountId?: string
+    limit?: number
+    startAfter?: string
+    user: string
+  }) => Promise<PaginationResponseForUserCollateralResponse>
   userPosition: ({
     accountId,
     user,
@@ -133,6 +146,7 @@ export class MarsMockRedBankQueryClient implements MarsMockRedBankReadOnlyInterf
     this.userDebts = this.userDebts.bind(this)
     this.userCollateral = this.userCollateral.bind(this)
     this.userCollaterals = this.userCollaterals.bind(this)
+    this.userCollateralsV2 = this.userCollateralsV2.bind(this)
     this.userPosition = this.userPosition.bind(this)
     this.userPositionLiquidationPricing = this.userPositionLiquidationPricing.bind(this)
     this.scaledLiquidityAmount = this.scaledLiquidityAmount.bind(this)
@@ -259,6 +273,26 @@ export class MarsMockRedBankQueryClient implements MarsMockRedBankReadOnlyInterf
   }): Promise<ArrayOfUserCollateralResponse> => {
     return this.client.queryContractSmart(this.contractAddress, {
       user_collaterals: {
+        account_id: accountId,
+        limit,
+        start_after: startAfter,
+        user,
+      },
+    })
+  }
+  userCollateralsV2 = async ({
+    accountId,
+    limit,
+    startAfter,
+    user,
+  }: {
+    accountId?: string
+    limit?: number
+    startAfter?: string
+    user: string
+  }): Promise<PaginationResponseForUserCollateralResponse> => {
+    return this.client.queryContractSmart(this.contractAddress, {
+      user_collaterals_v2: {
         account_id: accountId,
         limit,
         start_after: startAfter,

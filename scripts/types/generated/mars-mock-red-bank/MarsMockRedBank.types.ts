@@ -162,6 +162,14 @@ export type QueryMsg =
       }
     }
   | {
+      user_collaterals_v2: {
+        account_id?: string | null
+        limit?: number | null
+        start_after?: string | null
+        user: string
+      }
+    }
+  | {
       user_position: {
         account_id?: string | null
         user: string
@@ -227,6 +235,13 @@ export interface UserCollateralResponse {
   enabled: boolean
 }
 export type ArrayOfUserCollateralResponse = UserCollateralResponse[]
+export interface PaginationResponseForUserCollateralResponse {
+  data: UserCollateralResponse[]
+  metadata: Metadata
+}
+export interface Metadata {
+  has_more: boolean
+}
 export interface UserDebtResponse {
   amount: Uint128
   amount_scaled: Uint128
