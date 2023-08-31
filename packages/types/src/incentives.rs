@@ -303,4 +303,6 @@ pub struct ConfigResponse {
     pub max_whitelisted_denoms: u8,
     /// The epoch duration in seconds
     pub epoch_duration: u64,
+    /// The count of the number of whitelisted incentive denoms
+    pub whitelist_count: u8,
 }
