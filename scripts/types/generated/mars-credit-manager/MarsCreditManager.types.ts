@@ -313,7 +313,7 @@ export type CallbackMsg =
       }
     }
   | {
-      assert_account_reqs: {
+      assert_hls_rules: {
         account_id: string
       }
     }

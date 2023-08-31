@@ -1332,10 +1332,10 @@
             "description": "Ensures that HLS accounts abide by specific rules",
             "type": "object",
             "required": [
-              "assert_account_reqs"
+              "assert_hls_rules"
             ],
             "properties": {
-              "assert_account_reqs": {
+              "assert_hls_rules": {
                 "type": "object",
                 "required": [
                   "account_id"

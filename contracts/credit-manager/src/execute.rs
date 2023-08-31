@@ -17,7 +17,7 @@ use crate::{
     claim_rewards::claim_rewards,
     deposit::{assert_deposit_caps, deposit},
     health::{assert_max_ltv, query_health_state},
-    hls::assert_account_requirements,
+    hls::assert_hls_rules,
     lend::lend,
     liquidate::assert_not_self_liquidation,
     liquidate_deposit::liquidate_deposit,
@@ -28,7 +28,7 @@ use crate::{
     state::{ACCOUNT_KINDS, ACCOUNT_NFT, REENTRANCY_GUARD},
     swap::swap_exact_in,
     update_coin_balances::{update_coin_balance, update_coin_balance_after_vault_liquidation},
-    utils::assert_is_token_owner,
+    utils::{assert_is_token_owner, get_account_kind},
     vault::{
         enter_vault, exit_vault, exit_vault_unlocked, liquidate_vault, request_vault_unlock,
         update_vault_coin_balance,
@@ -250,11 +250,15 @@ pub fn dispatch_actions(
         return Err(ContractError::ExtraFundsReceived(received_coins));
     }
 
-    callbacks.extend([
-        // Ensures the account state abides by the rules of the account kind
-        CallbackMsg::AssertAccountReqs {
+    // Ensures the account state abides by the rules of the HLS account kind
+    let kind = get_account_kind(deps.storage, account_id)?;
+    if kind == AccountKind::HighLeveredStrategy {
+        callbacks.push(CallbackMsg::AssertHlsRules {
             account_id: account_id.to_string(),
-        },
+        });
+    }
+
+    callbacks.extend([
         // After user selected actions, we assert LTV is either:
         // - Healthy, if prior to actions MaxLTV health factor >= 1 or None
         // - Not further weakened, if prior to actions MaxLTV health factor < 1
@@ -434,9 +438,9 @@ pub fn execute_callback(
         CallbackMsg::RefundAllCoinBalances {
             account_id,
         } => refund_coin_balances(deps, env, &account_id),
-        CallbackMsg::AssertAccountReqs {
+        CallbackMsg::AssertHlsRules {
             account_id,
-        } => assert_account_requirements(deps, account_id),
+        } => assert_hls_rules(deps.as_ref(), &account_id),
         CallbackMsg::RemoveReentrancyGuard {} => REENTRANCY_GUARD.try_unlock(deps.storage),
     }
 }

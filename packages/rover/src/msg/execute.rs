@@ -332,7 +332,7 @@ pub enum CallbackMsg {
         account_id: String,
     },
     /// Ensures that HLS accounts abide by specific rules
-    AssertAccountReqs {
+    AssertHlsRules {
         account_id: String,
     },
     /// At the end of the execution of dispatched actions, this callback removes the guard
