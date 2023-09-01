@@ -32,6 +32,9 @@ fn proper_initialization() {
     assert_eq!(config.owner, Some("owner".to_string()));
     assert_eq!(config.proposed_new_owner, None);
     assert_eq!(config.address_provider, "address_provider".to_string());
+    assert_eq!(config.epoch_duration, 604800);
+    assert_eq!(config.max_whitelisted_denoms, 10);
+    assert_eq!(config.whitelist_count, 0);
 }
 
 #[test]
@@ -87,5 +90,7 @@ fn update_config() {
     assert_eq!(new_config.owner, Some("owner".to_string()));
     assert_eq!(new_config.proposed_new_owner, None);
     assert_eq!(new_config.address_provider, Addr::unchecked("new_addr_provider"));
+    assert_eq!(new_config.epoch_duration, 604800);
+    assert_eq!(new_config.whitelist_count, 0);
     assert_eq!(new_config.max_whitelisted_denoms, 20);
 }
