@@ -57,6 +57,7 @@ import {
   VaultPositionResponseItem,
   ConfigResponse,
   OwnerResponse,
+  RewardsCollector,
   ArrayOfCoin,
   Positions,
   DebtAmount,

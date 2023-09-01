@@ -11,7 +11,7 @@ use mars_credit_manager::{
 use mars_rover::{
     adapters::{
         health::HealthContractUnchecked, incentives::IncentivesUnchecked, params::ParamsUnchecked,
-        rewards_collector::RewardsCollector, swap::SwapperUnchecked,
+        swap::SwapperUnchecked,
     },
     error::ContractError,
     msg::{migrate::V2Updates, MigrateMsg},
@@ -32,10 +32,6 @@ fn wrong_contract_name() {
             params: ParamsUnchecked::new("params".to_string()),
             incentives: IncentivesUnchecked::new("incentives".to_string()),
             swapper: SwapperUnchecked::new("swapper".to_string()),
-            rewards_collector: RewardsCollector {
-                address: "xyz".to_string(),
-                account_id: "123".to_string(),
-            },
         }),
     )
     .unwrap_err();
@@ -63,10 +59,6 @@ fn wrong_contract_version() {
             params: ParamsUnchecked::new("params".to_string()),
             incentives: IncentivesUnchecked::new("incentives".to_string()),
             swapper: SwapperUnchecked::new("swapper".to_string()),
-            rewards_collector: RewardsCollector {
-                address: "xyz".to_string(),
-                account_id: "123".to_string(),
-            },
         }),
     )
     .unwrap_err();
@@ -103,10 +95,6 @@ fn successful_migration() {
     let params = "params_addr_456".to_string();
     let incentives = "incentives_addr_789".to_string();
     let swapper = "swapper_addr_012".to_string();
-    let rewards_collector = RewardsCollector {
-        address: "rewards_collector_addr".to_string(),
-        account_id: "4117".to_string(),
-    };
 
     migrate(
         deps.as_mut(),
@@ -116,7 +104,6 @@ fn successful_migration() {
             params: ParamsUnchecked::new(params.clone()),
             incentives: IncentivesUnchecked::new(incentives.clone()),
             swapper: SwapperUnchecked::new(swapper.clone()),
-            rewards_collector: rewards_collector.clone(),
         }),
     )
     .unwrap();
@@ -134,8 +121,8 @@ fn successful_migration() {
     let set_swapper = SWAPPER.load(deps.as_ref().storage).unwrap().address().to_string();
     assert_eq!(swapper, set_swapper);
 
-    let set_rewards = REWARDS_COLLECTOR.load(deps.as_ref().storage).unwrap();
-    assert_eq!(rewards_collector, set_rewards);
+    let set_rewards = REWARDS_COLLECTOR.may_load(deps.as_ref().storage).unwrap();
+    assert_eq!(None, set_rewards);
 
     let o = OWNER.query(deps.as_ref().storage).unwrap();
     assert_eq!(old_owner.to_string(), o.owner.unwrap());

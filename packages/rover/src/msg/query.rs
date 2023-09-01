@@ -3,7 +3,10 @@ use cosmwasm_std::{Coin, Uint128};
 use mars_owner::OwnerResponse;
 
 use crate::{
-    adapters::vault::{Vault, VaultPosition, VaultUnchecked},
+    adapters::{
+        rewards_collector::RewardsCollector,
+        vault::{Vault, VaultPosition, VaultUnchecked},
+    },
     traits::Coins,
 };
 
@@ -166,7 +169,7 @@ pub struct ConfigResponse {
     pub swapper: String,
     pub zapper: String,
     pub health_contract: String,
-    pub rewards_collector: Option<String>,
+    pub rewards_collector: Option<RewardsCollector>,
 }
 
 #[cw_serde]

@@ -499,7 +499,7 @@ export interface ConfigResponse {
   ownership: OwnerResponse
   params: string
   red_bank: string
-  rewards_collector?: string | null
+  rewards_collector?: RewardsCollector | null
   swapper: string
   zapper: string
 }
@@ -509,6 +509,10 @@ export interface OwnerResponse {
   initialized: boolean
   owner?: string | null
   proposed?: string | null
+}
+export interface RewardsCollector {
+  account_id: string
+  address: string
 }
 export type ArrayOfCoin = Coin[]
 export interface Positions {

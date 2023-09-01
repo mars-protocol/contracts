@@ -2,7 +2,7 @@ use cosmwasm_schema::cw_serde;
 
 use crate::adapters::{
     health::HealthContractUnchecked, incentives::IncentivesUnchecked, params::ParamsUnchecked,
-    rewards_collector::RewardsCollector, swap::SwapperUnchecked,
+    swap::SwapperUnchecked,
 };
 
 #[cw_serde]
@@ -11,7 +11,6 @@ pub struct V2Updates {
     pub params: ParamsUnchecked,
     pub incentives: IncentivesUnchecked,
     pub swapper: SwapperUnchecked,
-    pub rewards_collector: RewardsCollector,
 }
 
 #[cw_serde]

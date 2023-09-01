@@ -2622,9 +2622,13 @@
           "type": "string"
         },
         "rewards_collector": {
-          "type": [
-            "string",
-            "null"
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RewardsCollector"
+            },
+            {
+              "type": "null"
+            }
           ]
         },
         "swapper": {
@@ -2667,6 +2671,22 @@
                 "string",
                 "null"
               ]
+            }
+          },
+          "additionalProperties": false
+        },
+        "RewardsCollector": {
+          "type": "object",
+          "required": [
+            "account_id",
+            "address"
+          ],
+          "properties": {
+            "account_id": {
+              "type": "string"
+            },
+            "address": {
+              "type": "string"
             }
           },
           "additionalProperties": false

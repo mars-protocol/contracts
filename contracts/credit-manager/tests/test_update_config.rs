@@ -5,10 +5,12 @@ use mars_red_bank_types::oracle::ActionKind;
 use mars_rover::{
     adapters::{
         health::HealthContractUnchecked, incentives::IncentivesUnchecked, oracle::OracleUnchecked,
-        red_bank::RedBankUnchecked, swap::SwapperBase, zapper::ZapperBase,
+        red_bank::RedBankUnchecked, rewards_collector::RewardsCollector, swap::SwapperBase,
+        zapper::ZapperBase,
     },
     msg::instantiate::ConfigUpdates,
 };
+use mars_rover_health_types::AccountKind;
 
 use crate::helpers::{mock_oracle_contract, mock_red_bank_contract, MockEnv};
 
@@ -98,7 +100,16 @@ fn update_config_works_with_full_config() {
     assert_eq!(&new_config.health_contract, new_health_contract.address());
     assert_ne!(new_config.health_contract, original_config.health_contract);
 
-    assert_eq!(new_config.rewards_collector.clone().unwrap(), new_rewards_collector);
+    let rc_accounts = mock.query_accounts(&new_rewards_collector, None, None);
+    let rc_account = rc_accounts.first().unwrap();
+    assert_eq!(rc_account.kind, AccountKind::Default);
+    assert_eq!(
+        new_config.rewards_collector.clone().unwrap(),
+        RewardsCollector {
+            address: new_rewards_collector,
+            account_id: rc_account.id.clone()
+        }
+    );
     assert_ne!(new_config.rewards_collector, original_config.rewards_collector);
 
     assert_eq!(&new_config.incentives, new_incentives.address());

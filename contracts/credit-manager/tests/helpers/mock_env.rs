@@ -457,7 +457,7 @@ impl MockEnv {
             .query_wasm_smart(
                 config.account_nft.unwrap(),
                 &NftQueryMsg::Tokens {
-                    owner: config.rewards_collector.unwrap(),
+                    owner: config.rewards_collector.unwrap().address,
                     start_after: None,
                     limit: None,
                 },

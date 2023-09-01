@@ -38,6 +38,7 @@ import {
   VaultPositionResponseItem,
   ConfigResponse,
   OwnerResponse,
+  RewardsCollector,
   ArrayOfCoin,
   VaultPositionValue,
   CoinValue,
