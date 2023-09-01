@@ -662,7 +662,7 @@ fn liquidate_unlocking_liquidation_order() {
     assert_eq!(position.deposits.len(), 1);
     assert_eq!(position.debts.len(), 0);
     let lp_balance = get_coin(&lp_token.denom, &position.deposits);
-    assert_eq!(lp_balance.amount, Uint128::new(88));
+    assert_eq!(lp_balance.amount, Uint128::new(86));
 
     // Assert rewards-collector's new position
     let rewards_collector_acc_id = mock.query_rewards_collector_account();
@@ -670,7 +670,7 @@ fn liquidate_unlocking_liquidation_order() {
     assert_eq!(position.deposits.len(), 1);
     assert_eq!(position.debts.len(), 0);
     let lp_balance = get_coin(&lp_token.denom, &position.deposits);
-    assert_eq!(lp_balance.amount, Uint128::new(1));
+    assert_eq!(lp_balance.amount, Uint128::new(3));
 
     // Liq HF should improve
     let account_kind = mock.query_account_kind(&liquidatee_account_id);
@@ -776,7 +776,7 @@ fn liquidation_calculation_adjustment() {
     let jake_balance = get_coin("ujake", &position.deposits);
     assert_eq!(jake_balance.amount, Uint128::new(411));
     let atom_balance = get_coin(&lp_token.denom, &position.deposits);
-    assert_eq!(atom_balance.amount, Uint128::new(197));
+    assert_eq!(atom_balance.amount, Uint128::new(191));
     assert_eq!(position.debts.len(), 0);
 
     // Assert rewards-collector's new position
@@ -784,7 +784,7 @@ fn liquidation_calculation_adjustment() {
     let position = mock.query_positions(&rewards_collector_acc_id);
     assert_eq!(position.deposits.len(), 1);
     let atom_balance = get_coin(&lp_token.denom, &position.deposits);
-    assert_eq!(atom_balance.amount, Uint128::new(1));
+    assert_eq!(atom_balance.amount, Uint128::new(7));
     assert_eq!(position.debts.len(), 0);
 
     // Liq HF should improve

@@ -525,7 +525,7 @@ fn target_health_factor_reached_after_max_debt_repayed() {
     let atom_balance = get_coin("uatom", &position.deposits);
     assert_eq!(atom_balance.amount, Uint128::new(56));
     let osmo_balance = get_coin("uosmo", &position.deposits);
-    assert_eq!(osmo_balance.amount, Uint128::new(2631));
+    assert_eq!(osmo_balance.amount, Uint128::new(2628));
 
     // Assert rewards-collector's new position
     let rewards_collector_acc_id = mock.query_rewards_collector_account();
@@ -533,7 +533,7 @@ fn target_health_factor_reached_after_max_debt_repayed() {
     assert_eq!(position.deposits.len(), 1);
     assert_eq!(position.debts.len(), 0);
     let atom_balance = get_coin("uosmo", &position.deposits);
-    assert_eq!(atom_balance.amount, Uint128::new(1));
+    assert_eq!(atom_balance.amount, Uint128::new(4));
 
     // Assert HF for liquidatee
     let account_kind = mock.query_account_kind(&liquidatee_account_id);
@@ -619,7 +619,7 @@ fn debt_amount_adjusted_to_total_debt_for_denom() {
     assert_eq!(position.deposits.len(), 1);
     assert_eq!(position.debts.len(), 0);
     let osmo_balance = get_coin("uosmo", &position.deposits);
-    assert_eq!(osmo_balance.amount, Uint128::new(971));
+    assert_eq!(osmo_balance.amount, Uint128::new(968));
 
     // Assert rewards-collector's new position
     let rewards_collector_acc_id = mock.query_rewards_collector_account();
@@ -627,7 +627,7 @@ fn debt_amount_adjusted_to_total_debt_for_denom() {
     assert_eq!(position.deposits.len(), 1);
     assert_eq!(position.debts.len(), 0);
     let atom_balance = get_coin("uosmo", &position.deposits);
-    assert_eq!(atom_balance.amount, Uint128::new(1));
+    assert_eq!(atom_balance.amount, Uint128::new(4));
 
     // Liq HF should improve
     let account_kind = mock.query_account_kind(&liquidatee_account_id);
@@ -705,7 +705,7 @@ fn debt_amount_adjusted_to_max_allowed_by_request_coin() {
     let atom_balance = get_coin("uatom", &position.deposits);
     assert_eq!(atom_balance.amount, Uint128::new(22));
     let osmo_balance = get_coin("uosmo", &position.deposits);
-    assert_eq!(osmo_balance.amount, Uint128::new(2975));
+    assert_eq!(osmo_balance.amount, Uint128::new(2972));
 
     // Assert rewards-collector's new position
     let rewards_collector_acc_id = mock.query_rewards_collector_account();
@@ -713,7 +713,7 @@ fn debt_amount_adjusted_to_max_allowed_by_request_coin() {
     assert_eq!(position.deposits.len(), 1);
     assert_eq!(position.debts.len(), 0);
     let atom_balance = get_coin("uosmo", &position.deposits);
-    assert_eq!(atom_balance.amount, Uint128::new(1));
+    assert_eq!(atom_balance.amount, Uint128::new(4));
 
     // Liq HF should improve
     let account_kind = mock.query_account_kind(&liquidatee_account_id);
@@ -790,7 +790,7 @@ fn debt_amount_no_adjustment() {
     assert_eq!(position.deposits.len(), 1);
     assert_eq!(position.debts.len(), 0);
     let osmo_balance = get_coin("uosmo", &position.deposits);
-    assert_eq!(osmo_balance.amount, Uint128::new(2391));
+    assert_eq!(osmo_balance.amount, Uint128::new(2388));
 
     // Assert rewards-collector's new position
     let rewards_collector_acc_id = mock.query_rewards_collector_account();
@@ -798,7 +798,7 @@ fn debt_amount_no_adjustment() {
     assert_eq!(position.deposits.len(), 1);
     assert_eq!(position.debts.len(), 0);
     let atom_balance = get_coin("uosmo", &position.deposits);
-    assert_eq!(atom_balance.amount, Uint128::new(1));
+    assert_eq!(atom_balance.amount, Uint128::new(4));
 
     // Liq HF should improve
     let account_kind = mock.query_account_kind(&liquidatee_account_id);
@@ -888,7 +888,7 @@ fn improve_hf_but_acc_unhealthy() {
     assert_eq!(position.deposits.len(), 2);
     assert_eq!(position.debts.len(), 0);
     let osmo_balance = get_coin("uosmo", &position.deposits);
-    assert_eq!(osmo_balance.amount, Uint128::new(1229));
+    assert_eq!(osmo_balance.amount, Uint128::new(1228));
     let jake_balance = get_coin("ujake", &position.deposits);
     assert_eq!(jake_balance.amount, Uint128::new(18));
 
@@ -898,7 +898,7 @@ fn improve_hf_but_acc_unhealthy() {
     assert_eq!(position.deposits.len(), 1);
     assert_eq!(position.debts.len(), 0);
     let atom_balance = get_coin("uosmo", &position.deposits);
-    assert_eq!(atom_balance.amount, Uint128::new(3));
+    assert_eq!(atom_balance.amount, Uint128::new(4));
 
     // Liq HF should improve
     let health = mock.query_health(&liquidatee_account_id, account_kind, ActionKind::Liquidation);

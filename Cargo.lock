@@ -1473,7 +1473,7 @@ dependencies = [
 [[package]]
 name = "mars-address-provider"
 version = "1.2.0"
-source = "git+https://github.com/mars-protocol/red-bank?rev=05cd222#05cd2225b1df320628c14d5a099c9337c60da1d8"
+source = "git+https://github.com/mars-protocol/red-bank?rev=8c90842#8c908426a9a472cf96acceed69857be6c6574a33"
 dependencies = [
  "bech32",
  "cosmwasm-std",
@@ -1530,7 +1530,7 @@ dependencies = [
 [[package]]
 name = "mars-health"
 version = "1.2.0"
-source = "git+https://github.com/mars-protocol/red-bank?rev=05cd222#05cd2225b1df320628c14d5a099c9337c60da1d8"
+source = "git+https://github.com/mars-protocol/red-bank?rev=8c90842#8c908426a9a472cf96acceed69857be6c6574a33"
 dependencies = [
  "cosmwasm-std",
  "mars-params",
@@ -1541,7 +1541,7 @@ dependencies = [
 [[package]]
 name = "mars-interest-rate"
 version = "1.2.0"
-source = "git+https://github.com/mars-protocol/red-bank?rev=05cd222#05cd2225b1df320628c14d5a099c9337c60da1d8"
+source = "git+https://github.com/mars-protocol/red-bank?rev=8c90842#8c908426a9a472cf96acceed69857be6c6574a33"
 dependencies = [
  "cosmwasm-schema",
  "cosmwasm-std",
@@ -1552,7 +1552,7 @@ dependencies = [
 [[package]]
 name = "mars-liquidation"
 version = "1.0.0"
-source = "git+https://github.com/mars-protocol/red-bank?rev=05cd222#05cd2225b1df320628c14d5a099c9337c60da1d8"
+source = "git+https://github.com/mars-protocol/red-bank?rev=8c90842#8c908426a9a472cf96acceed69857be6c6574a33"
 dependencies = [
  "cosmwasm-std",
  "mars-health 1.2.0",
@@ -1657,7 +1657,7 @@ dependencies = [
 [[package]]
 name = "mars-params"
 version = "1.2.0"
-source = "git+https://github.com/mars-protocol/red-bank?rev=05cd222#05cd2225b1df320628c14d5a099c9337c60da1d8"
+source = "git+https://github.com/mars-protocol/red-bank?rev=8c90842#8c908426a9a472cf96acceed69857be6c6574a33"
 dependencies = [
  "cosmwasm-schema",
  "cosmwasm-std",
@@ -1686,7 +1686,7 @@ dependencies = [
 [[package]]
 name = "mars-red-bank-types"
 version = "1.2.0"
-source = "git+https://github.com/mars-protocol/red-bank?rev=05cd222#05cd2225b1df320628c14d5a099c9337c60da1d8"
+source = "git+https://github.com/mars-protocol/red-bank?rev=8c90842#8c908426a9a472cf96acceed69857be6c6574a33"
 dependencies = [
  "cosmwasm-schema",
  "cosmwasm-std",
@@ -1838,7 +1838,7 @@ dependencies = [
 [[package]]
 name = "mars-utils"
 version = "1.2.0"
-source = "git+https://github.com/mars-protocol/red-bank?rev=05cd222#05cd2225b1df320628c14d5a099c9337c60da1d8"
+source = "git+https://github.com/mars-protocol/red-bank?rev=8c90842#8c908426a9a472cf96acceed69857be6c6574a33"
 dependencies = [
  "cosmwasm-std",
  "thiserror",

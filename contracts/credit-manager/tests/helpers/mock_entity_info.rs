@@ -129,7 +129,7 @@ pub fn lp_token_info() -> CoinInfo {
             min_lb: Decimal::percent(2u64),
             max_lb: Decimal::percent(10u64),
         },
-        protocol_liquidation_fee: Decimal::percent(2u64),
+        protocol_liquidation_fee: Decimal::percent(40u64),
         whitelisted: true,
         hls: Some(HlsParamsUnchecked {
             max_loan_to_value: Decimal::from_str("0.75").unwrap(),

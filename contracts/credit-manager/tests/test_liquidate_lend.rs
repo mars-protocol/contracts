@@ -245,14 +245,14 @@ fn lent_position_partially_liquidated() {
     assert_eq!(position.debts.len(), 0);
     assert_eq!(position.deposits.len(), 1);
     let osmo_deposited = get_coin("uosmo", &position.deposits);
-    assert_eq!(osmo_deposited.amount, Uint128::new(403));
+    assert_eq!(osmo_deposited.amount, Uint128::new(400));
 
     // Assert rewards-collector's new position
     let rewards_collector_acc_id = mock.query_rewards_collector_account();
     let position = mock.query_positions(&rewards_collector_acc_id);
     assert_eq!(position.deposits.len(), 1);
     let rc_osmo_deposited = get_coin("uosmo", &position.deposits);
-    assert_eq!(rc_osmo_deposited.amount, Uint128::new(1));
+    assert_eq!(rc_osmo_deposited.amount, Uint128::new(4));
     assert_eq!(position.lends.len(), 0);
     assert_eq!(position.debts.len(), 0);
 
