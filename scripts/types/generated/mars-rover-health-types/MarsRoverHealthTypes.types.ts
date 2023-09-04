@@ -6,6 +6,7 @@
  */
 
 export interface InstantiateMsg {
+  credit_manager?: string | null
   owner: string
 }
 export type ExecuteMsg =

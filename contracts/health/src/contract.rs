@@ -31,6 +31,11 @@ pub fn instantiate(
         },
     )?;
 
+    if let Some(cm) = msg.credit_manager {
+        let cm = deps.api.addr_validate(&cm)?;
+        CREDIT_MANAGER.save(deps.storage, &cm)?;
+    }
+
     Ok(Response::default())
 }
 

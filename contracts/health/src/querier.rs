@@ -1,4 +1,4 @@
-use cosmwasm_std::{Addr, Deps, QuerierWrapper, StdResult};
+use cosmwasm_std::{Addr, Deps, QuerierWrapper, StdError, StdResult};
 use mars_params::types::vault::VaultConfig;
 use mars_rover::{
     adapters::{oracle::Oracle, params::Params, vault::Vault},
@@ -17,7 +17,11 @@ pub struct HealthQuerier<'a> {
 
 impl<'a> HealthQuerier<'a> {
     pub fn new(deps: &'a Deps) -> StdResult<Self> {
-        let credit_manager = CREDIT_MANAGER.load(deps.storage)?;
+        let credit_manager = CREDIT_MANAGER.load(deps.storage).map_err(|_| {
+            StdError::generic_err(
+                "Credit Manager contract is currently not set up in the health contract",
+            )
+        })?;
         let config: ConfigResponse =
             deps.querier.query_wasm_smart(credit_manager.to_string(), &CmQueryMsg::Config {})?;
 

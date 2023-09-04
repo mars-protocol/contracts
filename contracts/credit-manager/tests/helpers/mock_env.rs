@@ -1055,6 +1055,7 @@ impl MockEnvBuilder {
                 owner.clone(),
                 &HealthInstantiateMsg {
                     owner: owner.to_string(),
+                    credit_manager: None,
                 },
                 &[],
                 "mock-health-contract",

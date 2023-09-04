@@ -8,6 +8,9 @@ use crate::AccountKind;
 pub struct InstantiateMsg {
     /// The address with privileged access to update config
     pub owner: String,
+
+    /// Credit Manager contract address
+    pub credit_manager: Option<String>,
 }
 
 #[cw_serde]

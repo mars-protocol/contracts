@@ -248,6 +248,7 @@ impl MockEnvBuilder {
                 self.deployer.clone(),
                 &InstantiateMsg {
                     owner: self.deployer.clone().into(),
+                    credit_manager: self.cm_contract.clone().map(|cm| cm.into()),
                 },
                 &[],
                 "mock-health-contract",

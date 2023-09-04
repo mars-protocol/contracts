@@ -10,6 +10,13 @@
       "owner"
     ],
     "properties": {
+      "credit_manager": {
+        "description": "Credit Manager contract address",
+        "type": [
+          "string",
+          "null"
+        ]
+      },
       "owner": {
         "description": "The address with privileged access to update config",
         "type": "string"

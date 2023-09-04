@@ -30,7 +30,7 @@ fn raises_when_credit_manager_not_set() {
     assert_eq!(
         err,
         StdError::generic_err(
-            "Querier contract error: cosmwasm_std::addresses::Addr not found".to_string()
+            "Querier contract error: Generic error: Credit Manager contract is currently not set up in the health contract".to_string()
         )
     );
 }
