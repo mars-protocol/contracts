@@ -22,6 +22,7 @@ use crate::{
     helpers::{
         self, compute_user_accrued_rewards, compute_user_unclaimed_rewards, update_incentive_index,
     },
+    migrations,
     state::{
         self, CONFIG, DEFAULT_LIMIT, EMISSIONS, EPOCH_DURATION, INCENTIVE_STATES, MAX_LIMIT, OWNER,
         USER_ASSET_INDICES, USER_UNCLAIMED_REWARDS, WHITELIST, WHITELIST_COUNT,
@@ -765,6 +766,8 @@ pub fn query_emissions(
 /// MIGRATION
 
 #[cfg_attr(not(feature = "library"), entry_point)]
-pub fn migrate(_deps: DepsMut, _env: Env, _msg: MigrateMsg) -> Result<Response, ContractError> {
-    Ok(Response::default())
+pub fn migrate(deps: DepsMut, env: Env, msg: MigrateMsg) -> Result<Response, ContractError> {
+    match msg {
+        MigrateMsg::V1_0_0ToV2_0_0(updates) => migrations::v2_0_0::migrate(deps, env, updates),
+    }
 }

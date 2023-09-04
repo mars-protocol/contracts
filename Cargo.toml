@@ -20,7 +20,7 @@ members = [
 resolver = "2"
 
 [workspace.package]
-version       = "1.2.0"
+version       = "2.0.0"
 authors       = [
   "Gabe R. <gabe.r@delphilabs.io>",
   "Larry Engineer <larry@delphidigital.io>",
@@ -65,13 +65,13 @@ proptest          = "1.2.0"
 test-case         = "3.1.0"
 
 # packages
-mars-health         = { path = "./packages/health" }
-mars-interest-rate  = { path = "./packages/interest-rate" }
-mars-liquidation    = { path = "./packages/liquidation" }
-mars-osmosis        = { path = "./packages/chains/osmosis" }
-mars-red-bank-types = { path = "./packages/types" }
-mars-testing        = { path = "./packages/testing" }
-mars-utils          = { path = "./packages/utils" }
+mars-health             = { path = "./packages/health" }
+mars-interest-rate      = { path = "./packages/interest-rate" }
+mars-liquidation        = { path = "./packages/liquidation" }
+mars-osmosis            = { path = "./packages/chains/osmosis" }
+mars-red-bank-types     = { path = "./packages/types" }
+mars-testing            = { path = "./packages/testing" }
+mars-utils              = { path = "./packages/utils" }
 
 # contracts
 mars-address-provider          = { path = "./contracts/address-provider" }

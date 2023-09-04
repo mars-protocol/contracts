@@ -66,6 +66,9 @@ pub enum ContractError {
     DuplicateDenom {
         denom: String,
     },
+
+    #[error("{0}")]
+    Version(#[from] cw2::VersionError),
 }
 
 impl From<ContractError> for StdError {

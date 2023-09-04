@@ -19,16 +19,21 @@ doctest    = false
 backtraces = ["cosmwasm-std/backtraces", "mars-testing/backtraces", "mars-utils/backtraces", "mars-red-bank/backtraces"]
 
 [dependencies]
-cosmwasm-std        = { workspace = true }
-cw2                 = { workspace = true }
-cw-storage-plus     = { workspace = true }
-mars-owner          = { workspace = true }
-mars-red-bank-types = { workspace = true }
-mars-utils          = { workspace = true }
-thiserror           = { workspace = true }
+cosmwasm-schema         = { workspace = true }
+cosmwasm-std            = { workspace = true }
+cw2                     = { workspace = true }
+cw-storage-plus         = { workspace = true }
+mars-owner              = { workspace = true }
+mars-red-bank-types     = { workspace = true }
+mars-utils              = { workspace = true }
+thiserror               = { workspace = true }
+
+# Old red-bank types used for migration.
+# It comes from v1.0.0 tag with one commit enabling library feature
+mars-incentives-old = { package = "mars-incentives", git = "https://github.com/mars-protocol/red-bank", rev = "29ee60b", features = ["library"] }
+mars-red-bank-types-old = { package = "mars-red-bank-types", git = "https://github.com/mars-protocol/red-bank", rev = "29ee60b" }
 
 [dev-dependencies]
-cosmwasm-schema     = { workspace = true }
 mars-testing        = { workspace = true }
 osmosis-std         = { workspace = true }
 mars-red-bank       = { workspace = true }
