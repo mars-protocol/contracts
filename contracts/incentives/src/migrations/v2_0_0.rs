@@ -8,7 +8,10 @@ use mars_red_bank_types::incentives::{Config, IncentiveState, V2Updates};
 use crate::{
     contract::{CONTRACT_NAME, CONTRACT_VERSION, MIN_EPOCH_DURATION},
     error::ContractError,
-    state::{CONFIG, EPOCH_DURATION, INCENTIVE_STATES, OWNER, USER_ASSET_INDICES},
+    state::{
+        CONFIG, EPOCH_DURATION, INCENTIVE_STATES, OWNER, USER_ASSET_INDICES,
+        USER_UNCLAIMED_REWARDS, WHITELIST, WHITELIST_COUNT,
+    },
 };
 
 const FROM_VERSION: &str = "1.0.0";
@@ -70,6 +73,10 @@ pub fn migrate(mut deps: DepsMut, env: Env, updates: V2Updates) -> Result<Respon
         },
     )?;
 
+    // WHITELIST not existent in v1, initializing
+    WHITELIST.save(deps.storage, &old_config_state.mars_denom, &Uint128::one())?;
+    WHITELIST_COUNT.save(deps.storage, &1)?;
+
     // EPOCH_DURATION not existent in v1, initializing
     if updates.epoch_duration < MIN_EPOCH_DURATION {
         return Err(ContractError::EpochDurationTooShort {
@@ -78,7 +85,7 @@ pub fn migrate(mut deps: DepsMut, env: Env, updates: V2Updates) -> Result<Respon
     }
     EPOCH_DURATION.save(deps.storage, &updates.epoch_duration)?;
 
-    migrate_idx(&mut deps, env, &old_config_state.mars_denom)?;
+    migrate_indices_and_unclaimed_rewards(&mut deps, env, &old_config_state.mars_denom)?;
 
     set_contract_version(deps.storage, format!("crates.io:{CONTRACT_NAME}"), CONTRACT_VERSION)?;
 
@@ -88,7 +95,16 @@ pub fn migrate(mut deps: DepsMut, env: Env, updates: V2Updates) -> Result<Respon
         .add_attribute("to_version", CONTRACT_VERSION))
 }
 
-fn migrate_idx(deps: &mut DepsMut, env: Env, mars_denom: &str) -> Result<(), ContractError> {
+// Migrate indices and unclaimed rewards from v1 to v2 with helpers from v1.0.0 tag:
+// https://github.com/mars-protocol/red-bank/blob/v1.0.0/contracts/incentives/src/helpers.rs
+//
+// This is done by querying the Red Bank contract for the collateral total supply and
+// user collateral amount for each collateral denom.
+fn migrate_indices_and_unclaimed_rewards(
+    deps: &mut DepsMut,
+    env: Env,
+    mars_denom: &str,
+) -> Result<(), ContractError> {
     let current_block_time = env.block.time.seconds();
 
     let config = CONFIG.load(deps.storage)?;
@@ -99,14 +115,15 @@ fn migrate_idx(deps: &mut DepsMut, env: Env, mars_denom: &str) -> Result<(), Con
         mars_red_bank_types::address_provider::MarsAddressType::RedBank,
     )?;
 
-    let asset_incentives: StdResult<HashMap<_, _>> =
-        v1_state::ASSET_INCENTIVES.range(deps.storage, None, None, Order::Ascending).collect();
-    let mut asset_incentives = asset_incentives?;
+    let mut asset_incentives = v1_state::ASSET_INCENTIVES
+        .range(deps.storage, None, None, Order::Ascending)
+        .collect::<StdResult<HashMap<_, _>>>()?;
+    v1_state::ASSET_INCENTIVES.clear(deps.storage);
 
     for (denom, asset_incentive) in asset_incentives.iter_mut() {
-        let market: mars_red_bank_types_old::red_bank::Market = deps.querier.query_wasm_smart(
+        let market: mars_red_bank_types::red_bank::Market = deps.querier.query_wasm_smart(
             red_bank_addr.clone(),
-            &mars_red_bank_types_old::red_bank::QueryMsg::Market {
+            &mars_red_bank_types::red_bank::QueryMsg::Market {
                 denom: denom.clone(),
             },
         )?;
@@ -128,34 +145,34 @@ fn migrate_idx(deps: &mut DepsMut, env: Env, mars_denom: &str) -> Result<(), Con
         )?;
     }
 
-    let user_asset_indices: StdResult<Vec<_>> =
-        v1_state::USER_ASSET_INDICES.range(deps.storage, None, None, Order::Ascending).collect();
-    let user_asset_indices = user_asset_indices?;
-
-    let user_unclaimed_rewards: StdResult<HashMap<_, _>> = v1_state::USER_UNCLAIMED_REWARDS
+    let user_asset_indices = v1_state::USER_ASSET_INDICES
         .range(deps.storage, None, None, Order::Ascending)
-        .collect();
-    let mut user_unclaimed_rewards = user_unclaimed_rewards?;
+        .collect::<StdResult<Vec<_>>>()?;
+    v1_state::USER_ASSET_INDICES.clear(deps.storage);
+
+    let mut user_unclaimed_rewards = v1_state::USER_UNCLAIMED_REWARDS
+        .range(deps.storage, None, None, Order::Ascending)
+        .collect::<StdResult<HashMap<_, _>>>()?;
+    v1_state::USER_UNCLAIMED_REWARDS.clear(deps.storage);
 
     for ((user, denom), user_asset_index) in user_asset_indices {
-        let collateral: mars_red_bank_types_old::red_bank::UserCollateralResponse =
+        let collateral: mars_red_bank_types::red_bank::UserCollateralResponse =
             deps.querier.query_wasm_smart(
                 red_bank_addr.clone(),
-                &mars_red_bank_types_old::red_bank::QueryMsg::UserCollateral {
+                &mars_red_bank_types::red_bank::QueryMsg::UserCollateral {
                     user: user.to_string(),
+                    account_id: None,
                     denom: denom.clone(),
                 },
             )?;
 
-        // If user's balance is 0 there should be no rewards to accrue, so we don't care about
-        // updating indexes. If the user's balance changes, the indexes will be updated correctly at
-        // that point in time.
-        if collateral.amount_scaled.is_zero() {
-            continue;
-        }
-
+        // Get asset incentive for a denom. It should be available but just in case we don't unwrap
         let denom_idx = asset_incentives.get(&denom);
         if let Some(asset_incentive) = denom_idx {
+            // Since we didn't track unclaimed rewards per collateral denom in v1 we add them
+            // to the user unclaimed rewards for the first user collateral denom.
+            let mut unclaimed_rewards = user_unclaimed_rewards.remove(&user).unwrap_or_default();
+
             if user_asset_index != asset_incentive.index {
                 // Compute user accrued rewards
                 let asset_accrued_rewards =
@@ -165,9 +182,16 @@ fn migrate_idx(deps: &mut DepsMut, env: Env, mars_denom: &str) -> Result<(), Con
                         asset_incentive.index,
                     )?;
 
+                unclaimed_rewards += asset_accrued_rewards;
+            }
+
+            if !unclaimed_rewards.is_zero() {
                 // Update user unclaimed rewards
-                *user_unclaimed_rewards.entry(user.clone()).or_insert_with(Uint128::zero) +=
-                    asset_accrued_rewards;
+                USER_UNCLAIMED_REWARDS.save(
+                    deps.storage,
+                    ((&user, ""), &denom, mars_denom),
+                    &unclaimed_rewards,
+                )?;
             }
 
             // Update user asset index

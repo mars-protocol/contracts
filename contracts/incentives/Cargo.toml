@@ -30,7 +30,7 @@ thiserror               = { workspace = true }
 
 # Old red-bank types used for migration.
 # It comes from v1.0.0 tag with one commit enabling library feature
-mars-incentives-old = { package = "mars-incentives", git = "https://github.com/mars-protocol/red-bank", rev = "29ee60b", features = ["library"] }
+mars-incentives-old     = { package = "mars-incentives", git = "https://github.com/mars-protocol/red-bank", rev = "29ee60b", features = ["library"] }
 mars-red-bank-types-old = { package = "mars-red-bank-types", git = "https://github.com/mars-protocol/red-bank", rev = "29ee60b" }
 
 [dev-dependencies]
