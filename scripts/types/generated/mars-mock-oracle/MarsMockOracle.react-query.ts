@@ -62,6 +62,29 @@ export function useMarsMockOraclePriceQuery<TData = PriceResponse>({
     { ...options, enabled: !!client && (options?.enabled != undefined ? options.enabled : true) },
   )
 }
+export interface MarsMockOracleRemovePriceMutation {
+  client: MarsMockOracleClient
+  msg: {
+    denom: string
+    pricing: ActionKind
+  }
+  args?: {
+    fee?: number | StdFee | 'auto'
+    memo?: string
+    funds?: Coin[]
+  }
+}
+export function useMarsMockOracleRemovePriceMutation(
+  options?: Omit<
+    UseMutationOptions<ExecuteResult, Error, MarsMockOracleRemovePriceMutation>,
+    'mutationFn'
+  >,
+) {
+  return useMutation<ExecuteResult, Error, MarsMockOracleRemovePriceMutation>(
+    ({ client, msg, args: { fee, memo, funds } = {} }) => client.removePrice(msg, fee, memo, funds),
+    options,
+  )
+}
 export interface MarsMockOracleChangePriceMutation {
   client: MarsMockOracleClient
   msg: {

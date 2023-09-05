@@ -74,7 +74,27 @@ pub fn dispatch_actions(
     let mut response = Response::new();
     let mut callbacks: Vec<CallbackMsg> = vec![];
     let mut received_coins = Coins::try_from(info.funds)?;
-    let prev_health_state = query_health_state(deps.as_ref(), account_id, ActionKind::Default)?;
+
+    // deposit / repay actions don't require health check.
+    // It allows users to save some positions in cases of extreme volatility.
+    let no_health_check = actions.iter().all(|action| {
+        matches!(
+            action,
+            Action::Deposit(..)
+                | Action::Repay {
+                    recipient_account_id: None,
+                    ..
+                }
+        )
+    });
+
+    // If needed (i.e. if health check is required), we query the health state
+    let prev_health_state = if !no_health_check {
+        let health_state = query_health_state(deps.as_ref(), account_id, ActionKind::Default)?;
+        Some(health_state)
+    } else {
+        None
+    };
 
     // We use a Set to record all denoms whose deposited amount may go up as the
     // result of any action. We invoke the AssertDepositCaps callback in the end
@@ -258,15 +278,18 @@ pub fn dispatch_actions(
         });
     }
 
-    callbacks.extend([
+    if let Some(phs) = prev_health_state {
         // After user selected actions, we assert LTV is either:
         // - Healthy, if prior to actions MaxLTV health factor >= 1 or None
         // - Not further weakened, if prior to actions MaxLTV health factor < 1
         // Else, throw error and revert all actions
-        CallbackMsg::AssertMaxLTV {
+        callbacks.push(CallbackMsg::AssertMaxLTV {
             account_id: account_id.to_string(),
-            prev_health_state,
-        },
+            prev_health_state: phs,
+        });
+    }
+
+    callbacks.extend([
         // After user selected actions, we assert that the relevant deposit caps
         // are not exceeded.
         CallbackMsg::AssertDepositCaps {

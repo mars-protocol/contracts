@@ -31,6 +31,10 @@ pub fn execute(
 ) -> StdResult<Response> {
     match msg {
         ExecuteMsg::ChangePrice(coin) => change_price(deps, coin),
+        ExecuteMsg::RemovePrice {
+            denom,
+            pricing,
+        } => remove_price(deps, denom, pricing),
     }
 }
 
@@ -42,6 +46,14 @@ fn change_price(deps: DepsMut, coin: CoinPrice) -> StdResult<Response> {
         ActionKind::Liquidation => {
             LIQUIDATION_COIN_PRICE.save(deps.storage, coin.denom, &coin.price)?
         }
+    }
+    Ok(Response::new())
+}
+
+fn remove_price(deps: DepsMut, denom: String, pricing: ActionKind) -> StdResult<Response> {
+    match pricing {
+        ActionKind::Default => DEFAULT_COIN_PRICE.remove(deps.storage, denom),
+        ActionKind::Liquidation => LIQUIDATION_COIN_PRICE.remove(deps.storage, denom),
     }
     Ok(Response::new())
 }

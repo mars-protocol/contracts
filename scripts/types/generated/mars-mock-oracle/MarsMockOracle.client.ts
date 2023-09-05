@@ -56,6 +56,18 @@ export interface MarsMockOracleInterface extends MarsMockOracleReadOnlyInterface
     memo?: string,
     _funds?: Coin[],
   ) => Promise<ExecuteResult>
+  removePrice: (
+    {
+      denom,
+      pricing,
+    }: {
+      denom: string
+      pricing: ActionKind
+    },
+    fee?: number | StdFee | 'auto',
+    memo?: string,
+    _funds?: Coin[],
+  ) => Promise<ExecuteResult>
 }
 export class MarsMockOracleClient
   extends MarsMockOracleQueryClient
@@ -71,6 +83,7 @@ export class MarsMockOracleClient
     this.sender = sender
     this.contractAddress = contractAddress
     this.changePrice = this.changePrice.bind(this)
+    this.removePrice = this.removePrice.bind(this)
   }
 
   changePrice = async (
@@ -94,6 +107,32 @@ export class MarsMockOracleClient
         change_price: {
           denom,
           price,
+          pricing,
+        },
+      },
+      fee,
+      memo,
+      _funds,
+    )
+  }
+  removePrice = async (
+    {
+      denom,
+      pricing,
+    }: {
+      denom: string
+      pricing: ActionKind
+    },
+    fee: number | StdFee | 'auto' = 'auto',
+    memo?: string,
+    _funds?: Coin[],
+  ): Promise<ExecuteResult> => {
+    return await this.client.execute(
+      this.sender,
+      this.contractAddress,
+      {
+        remove_price: {
+          denom,
           pricing,
         },
       },

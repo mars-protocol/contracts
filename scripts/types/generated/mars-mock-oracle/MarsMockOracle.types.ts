@@ -15,9 +15,16 @@ export interface CoinPrice {
   price: Decimal
   pricing: ActionKind
 }
-export type ExecuteMsg = {
-  change_price: CoinPrice
-}
+export type ExecuteMsg =
+  | {
+      change_price: CoinPrice
+    }
+  | {
+      remove_price: {
+        denom: string
+        pricing: ActionKind
+      }
+    }
 export type QueryMsg = {
   price: {
     denom: string

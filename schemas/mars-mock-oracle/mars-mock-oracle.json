@@ -68,6 +68,31 @@
           }
         },
         "additionalProperties": false
+      },
+      {
+        "type": "object",
+        "required": [
+          "remove_price"
+        ],
+        "properties": {
+          "remove_price": {
+            "type": "object",
+            "required": [
+              "denom",
+              "pricing"
+            ],
+            "properties": {
+              "denom": {
+                "type": "string"
+              },
+              "pricing": {
+                "$ref": "#/definitions/ActionKind"
+              }
+            },
+            "additionalProperties": false
+          }
+        },
+        "additionalProperties": false
       }
     ],
     "definitions": {

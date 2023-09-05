@@ -18,6 +18,14 @@ pub struct InstantiateMsg {
 pub enum ExecuteMsg {
     // Meant to simulate price changes for tests. Not available in prod.
     ChangePrice(CoinPrice),
+
+    // Used to remove a price from the store. It can be used to simulate problem with the oracle for example circuit breakers are activated
+    // for Default pricing. It means that the price is not available and the contract should not allow HF check.
+    // This message is not available in prod.
+    RemovePrice {
+        denom: String,
+        pricing: ActionKind,
+    },
 }
 
 #[cw_serde]

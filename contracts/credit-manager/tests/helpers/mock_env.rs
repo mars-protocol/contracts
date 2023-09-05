@@ -299,6 +299,20 @@ impl MockEnv {
             .unwrap();
     }
 
+    pub fn remove_price(&mut self, denom: &str, pricing: ActionKind) {
+        self.app
+            .execute_contract(
+                Addr::unchecked("anyone"),
+                self.mars_oracle.clone(),
+                &OracleExecuteMsg::RemovePrice {
+                    denom: denom.to_string(),
+                    pricing,
+                },
+                &[],
+            )
+            .unwrap();
+    }
+
     pub fn execute_callback(&mut self, sender: &Addr, msg: CallbackMsg) -> AnyResult<AppResponse> {
         self.app.execute_contract(
             sender.clone(),

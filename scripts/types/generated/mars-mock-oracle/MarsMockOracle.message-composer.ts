@@ -33,6 +33,16 @@ export interface MarsMockOracleMessage {
     },
     _funds?: Coin[],
   ) => MsgExecuteContractEncodeObject
+  removePrice: (
+    {
+      denom,
+      pricing,
+    }: {
+      denom: string
+      pricing: ActionKind
+    },
+    _funds?: Coin[],
+  ) => MsgExecuteContractEncodeObject
 }
 export class MarsMockOracleMessageComposer implements MarsMockOracleMessage {
   sender: string
@@ -42,6 +52,7 @@ export class MarsMockOracleMessageComposer implements MarsMockOracleMessage {
     this.sender = sender
     this.contractAddress = contractAddress
     this.changePrice = this.changePrice.bind(this)
+    this.removePrice = this.removePrice.bind(this)
   }
 
   changePrice = (
@@ -66,6 +77,33 @@ export class MarsMockOracleMessageComposer implements MarsMockOracleMessage {
             change_price: {
               denom,
               price,
+              pricing,
+            },
+          }),
+        ),
+        funds: _funds,
+      }),
+    }
+  }
+  removePrice = (
+    {
+      denom,
+      pricing,
+    }: {
+      denom: string
+      pricing: ActionKind
+    },
+    _funds?: Coin[],
+  ): MsgExecuteContractEncodeObject => {
+    return {
+      typeUrl: '/cosmwasm.wasm.v1.MsgExecuteContract',
+      value: MsgExecuteContract.fromPartial({
+        sender: this.sender,
+        contract: this.contractAddress,
+        msg: toUtf8(
+          JSON.stringify({
+            remove_price: {
+              denom,
               pricing,
             },
           }),
