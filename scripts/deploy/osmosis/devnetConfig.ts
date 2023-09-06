@@ -462,7 +462,7 @@ export const osmosisDevnet: DeploymentConfig = {
   deployerMnemonic: 'TODO',
   slippage_tolerance: '0.01',
   base_asset_symbol: 'OSMO',
-  multisigAddr: 'osmo14w4x949nwcrqgfe53pxs3k7x53p0gvlrq34l5n',
+  // multisigAddr: 'osmo14w4x949nwcrqgfe53pxs3k7x53p0gvlrq34l5n',
   runTests: false,
   mainnet: false,
   feeCollectorDenom: mars,
