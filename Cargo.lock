@@ -1752,27 +1752,12 @@ dependencies = [
 
 [[package]]
 name = "mars-incentives"
-version = "1.0.0"
-source = "git+https://github.com/mars-protocol/red-bank?rev=29ee60b#29ee60bf560033b7de99a463479d1cda3390343a"
-dependencies = [
- "cosmwasm-std",
- "cw-storage-plus 1.1.0",
- "cw2 1.1.0",
- "mars-owner 1.2.0",
- "mars-red-bank-types 1.0.0",
- "mars-utils 1.0.0",
- "thiserror",
-]
-
-[[package]]
-name = "mars-incentives"
 version = "2.0.0"
 dependencies = [
  "cosmwasm-schema",
  "cosmwasm-std",
  "cw-storage-plus 1.1.0",
  "cw2 1.1.0",
- "mars-incentives 1.0.0",
  "mars-owner 2.0.0",
  "mars-red-bank",
  "mars-red-bank-types 1.0.0",
@@ -1792,7 +1777,7 @@ dependencies = [
  "cosmwasm-std",
  "cw-it",
  "cw-multi-test",
- "mars-incentives 2.0.0",
+ "mars-incentives",
  "mars-oracle-base",
  "mars-oracle-osmosis",
  "mars-osmosis",
@@ -1974,7 +1959,7 @@ dependencies = [
 [[package]]
 name = "mars-red-bank-types"
 version = "1.0.0"
-source = "git+https://github.com/mars-protocol/red-bank?rev=29ee60b#29ee60bf560033b7de99a463479d1cda3390343a"
+source = "git+https://github.com/mars-protocol/red-bank?tag=v1.0.0#13fcc446fe687dfb8f08ffacd57b1ab6ad6cfcc9"
 dependencies = [
  "cosmwasm-schema",
  "cosmwasm-std",
@@ -2104,7 +2089,7 @@ dependencies = [
  "cw-it",
  "cw-multi-test",
  "mars-address-provider",
- "mars-incentives 2.0.0",
+ "mars-incentives",
  "mars-mock-pyth",
  "mars-oracle-osmosis",
  "mars-oracle-wasm",
@@ -2123,7 +2108,7 @@ dependencies = [
 [[package]]
 name = "mars-utils"
 version = "1.0.0"
-source = "git+https://github.com/mars-protocol/red-bank?rev=29ee60b#29ee60bf560033b7de99a463479d1cda3390343a"
+source = "git+https://github.com/mars-protocol/red-bank?tag=v1.0.0#13fcc446fe687dfb8f08ffacd57b1ab6ad6cfcc9"
 dependencies = [
  "cosmwasm-std",
  "thiserror",

@@ -44,6 +44,86 @@ pub mod v1_state {
             OwnerState::B(b) => b.owner,
         }
     }
+
+    // Copy of helpers from v1.0.0 tag:
+    // https://github.com/mars-protocol/red-bank/blob/v1.0.0/contracts/incentives/src/helpers.rs
+    // Included as dependency coudn't generate proper schema for mars-incentive, even with specified
+    // version.
+    pub mod helpers {
+        use std::cmp::{max, min};
+
+        use cosmwasm_std::{
+            Decimal, OverflowError, OverflowOperation, StdError, StdResult, Uint128,
+        };
+        use mars_red_bank_types_old::incentives::AssetIncentive;
+
+        /// Updates asset incentive index and last updated timestamp by computing
+        /// how many rewards were accrued since last time updated given incentive's
+        /// emission per second.
+        /// Total supply is the total (liquidity) token supply during the period being computed.
+        /// Note that this method does not commit updates to state as that should be executed by the
+        /// caller
+        pub fn update_asset_incentive_index(
+            asset_incentive: &mut AssetIncentive,
+            total_amount_scaled: Uint128,
+            current_block_time: u64,
+        ) -> StdResult<()> {
+            let end_time_sec = asset_incentive.start_time + asset_incentive.duration;
+            if (current_block_time != asset_incentive.last_updated)
+                && current_block_time > asset_incentive.start_time
+                && asset_incentive.last_updated < end_time_sec
+                && !total_amount_scaled.is_zero()
+                && !asset_incentive.emission_per_second.is_zero()
+            {
+                let time_start = max(asset_incentive.start_time, asset_incentive.last_updated);
+                let time_end = min(current_block_time, end_time_sec);
+                asset_incentive.index = compute_asset_incentive_index(
+                    asset_incentive.index,
+                    asset_incentive.emission_per_second,
+                    total_amount_scaled,
+                    time_start,
+                    time_end,
+                )?;
+            }
+            asset_incentive.last_updated = current_block_time;
+            Ok(())
+        }
+
+        pub fn compute_asset_incentive_index(
+            previous_index: Decimal,
+            emission_per_second: Uint128,
+            total_amount_scaled: Uint128,
+            time_start: u64,
+            time_end: u64,
+        ) -> StdResult<Decimal> {
+            if time_start > time_end {
+                return Err(StdError::overflow(OverflowError::new(
+                    OverflowOperation::Sub,
+                    time_start,
+                    time_end,
+                )));
+            }
+            let seconds_elapsed = time_end - time_start;
+            let emission_for_elapsed_seconds =
+                emission_per_second.checked_mul(Uint128::from(seconds_elapsed))?;
+            let new_index = previous_index
+                + Decimal::from_ratio(emission_for_elapsed_seconds, total_amount_scaled);
+            Ok(new_index)
+        }
+
+        /// Computes user accrued rewards using the difference between asset_incentive index and
+        /// user current index
+        /// asset_incentives index should be up to date.
+        pub fn compute_user_accrued_rewards(
+            user_amount_scaled: Uint128,
+            user_asset_index: Decimal,
+            asset_incentive_index: Decimal,
+        ) -> StdResult<Uint128> {
+            let result = (user_amount_scaled * asset_incentive_index)
+                .checked_sub(user_amount_scaled * user_asset_index)?;
+            Ok(result)
+        }
+    }
 }
 
 pub fn migrate(mut deps: DepsMut, env: Env, updates: V2Updates) -> Result<Response, ContractError> {
@@ -128,7 +208,7 @@ fn migrate_indices_and_unclaimed_rewards(
             },
         )?;
 
-        mars_incentives_old::helpers::update_asset_incentive_index(
+        v1_state::helpers::update_asset_incentive_index(
             asset_incentive,
             market.collateral_total_scaled,
             current_block_time,
@@ -175,12 +255,11 @@ fn migrate_indices_and_unclaimed_rewards(
 
             if user_asset_index != asset_incentive.index {
                 // Compute user accrued rewards
-                let asset_accrued_rewards =
-                    mars_incentives_old::helpers::compute_user_accrued_rewards(
-                        collateral.amount_scaled,
-                        user_asset_index,
-                        asset_incentive.index,
-                    )?;
+                let asset_accrued_rewards = v1_state::helpers::compute_user_accrued_rewards(
+                    collateral.amount_scaled,
+                    user_asset_index,
+                    asset_incentive.index,
+                )?;
 
                 unclaimed_rewards += asset_accrued_rewards;
             }

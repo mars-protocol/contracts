@@ -255,7 +255,7 @@ fn successful_migration() {
 
     // Update asset incentive indices and check if indices changed
     let mut new_atom_incentive = atom_incentive.clone();
-    mars_incentives_old::helpers::update_asset_incentive_index(
+    v1_state::helpers::update_asset_incentive_index(
         &mut new_atom_incentive,
         atom_collateral_total_scaled,
         migration_time,
@@ -263,7 +263,7 @@ fn successful_migration() {
     .unwrap();
     assert_ne!(atom_incentive.index, new_atom_incentive.index);
     let mut new_usdc_incentive = usdc_incentive.clone();
-    mars_incentives_old::helpers::update_asset_incentive_index(
+    v1_state::helpers::update_asset_incentive_index(
         &mut new_usdc_incentive,
         usdc_collateral_total_scaled,
         migration_time,
@@ -271,7 +271,7 @@ fn successful_migration() {
     .unwrap();
     assert_ne!(usdc_incentive.index, new_usdc_incentive.index);
     let mut new_osmo_incentive = osmo_incentive.clone();
-    mars_incentives_old::helpers::update_asset_incentive_index(
+    v1_state::helpers::update_asset_incentive_index(
         &mut new_osmo_incentive,
         osmo_collateral_total_scaled,
         migration_time,
@@ -332,7 +332,7 @@ fn successful_migration() {
     assert_eq!(user_3_atom_idx, new_atom_incentive.index);
 
     // Check if user unclaimed rewards are migrated correctly
-    let user_1_atom_rewards = mars_incentives_old::helpers::compute_user_accrued_rewards(
+    let user_1_atom_rewards = v1_state::helpers::compute_user_accrued_rewards(
         user_1_atom_amount_scaled,
         user_1_atom_idx_old,
         new_atom_incentive.index,
@@ -342,7 +342,7 @@ fn successful_migration() {
         .load(deps.as_ref().storage, ((&user_1, ""), atom_denom, mars_denom))
         .unwrap();
     assert_eq!(user_1_atom_rewards_migrated, user_1_unclaimed_rewards + user_1_atom_rewards);
-    let user_1_usdc_rewards = mars_incentives_old::helpers::compute_user_accrued_rewards(
+    let user_1_usdc_rewards = v1_state::helpers::compute_user_accrued_rewards(
         user_1_usdc_amount_scaled,
         user_1_usdc_idx_old,
         new_usdc_incentive.index,
@@ -352,7 +352,7 @@ fn successful_migration() {
         .load(deps.as_ref().storage, ((&user_1, ""), usdc_denom, mars_denom))
         .unwrap();
     assert_eq!(user_1_usdc_rewards_migrated, user_1_usdc_rewards);
-    let user_1_osmo_rewards = mars_incentives_old::helpers::compute_user_accrued_rewards(
+    let user_1_osmo_rewards = v1_state::helpers::compute_user_accrued_rewards(
         user_1_osmo_amount_scaled,
         user_1_osmo_idx_old,
         new_osmo_incentive.index,
@@ -363,7 +363,7 @@ fn successful_migration() {
         .unwrap();
     assert_eq!(user_1_osmo_rewards_migrated, user_1_osmo_rewards);
 
-    let user_2_osmo_rewards = mars_incentives_old::helpers::compute_user_accrued_rewards(
+    let user_2_osmo_rewards = v1_state::helpers::compute_user_accrued_rewards(
         user_2_osmo_amount_scaled,
         user_2_osmo_idx_old,
         new_osmo_incentive.index,
@@ -371,7 +371,7 @@ fn successful_migration() {
     .unwrap();
     assert_eq!(user_2_osmo_rewards, Uint128::zero());
 
-    let user_3_atom_rewards = mars_incentives_old::helpers::compute_user_accrued_rewards(
+    let user_3_atom_rewards = v1_state::helpers::compute_user_accrued_rewards(
         user_3_atom_amount_scaled,
         user_3_atom_idx_old,
         new_atom_incentive.index,
