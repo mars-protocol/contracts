@@ -1,0 +1,1514 @@
+diff --git a/packages/types/Cargo.toml b/packages/types/Cargo.toml
+index 7d900594..d4475675 100644
+--- a/packages/types/Cargo.toml
++++ b/packages/types/Cargo.toml
+@@ -1,5 +1,6 @@
+ [package]
+ name          = "mars-red-bank-types"
++description   = "Messages and types for Red Bank smart contracts"
+ version       = { workspace = true }
+ authors       = { workspace = true }
+ edition       = { workspace = true }
+@@ -22,7 +23,5 @@ cosmwasm-schema = { workspace = true }
+ cosmwasm-std    = { workspace = true }
+ mars-owner      = { workspace = true }
+ mars-utils      = { workspace = true }
++strum           = { workspace = true, features = ["derive"] }
+ thiserror       = { workspace = true }
+-
+-[dev-dependencies]
+-mars-testing = { workspace = true }
+diff --git a/packages/types/src/address_provider.rs b/packages/types/src/address_provider.rs
+index cab8fbfd..c212ec89 100644
+--- a/packages/types/src/address_provider.rs
++++ b/packages/types/src/address_provider.rs
+@@ -3,14 +3,17 @@ use std::{any::type_name, fmt, str::FromStr};
+ use cosmwasm_schema::{cw_serde, QueryResponses};
+ use cosmwasm_std::StdError;
+ use mars_owner::OwnerUpdate;
++use strum::EnumIter;
+ 
+ #[cw_serde]
+-#[derive(Copy, Eq, Hash)]
++#[derive(Copy, Eq, Hash, EnumIter)]
+ pub enum MarsAddressType {
+     Incentives,
+     Oracle,
+     RedBank,
+     RewardsCollector,
++    Params,
++    CreditManager,
+     /// Protocol admin is an ICS-27 interchain account controlled by Mars Hub's x/gov module.
+     /// This account will take the owner and admin roles of red-bank contracts.
+     ///
+@@ -30,18 +33,23 @@ pub enum MarsAddressType {
+     /// NOTE: This is a Mars Hub address with the `mars` bech32 prefix, which may not be recognized
+     /// by the `api.addr_validate` method.
+     SafetyFund,
++    /// The swapper contract on the chain
++    Swapper,
+ }
+ 
+ impl fmt::Display for MarsAddressType {
+     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+         let s = match self {
++            MarsAddressType::CreditManager => "credit_manager",
+             MarsAddressType::FeeCollector => "fee_collector",
+             MarsAddressType::Incentives => "incentives",
+             MarsAddressType::Oracle => "oracle",
++            MarsAddressType::Params => "params",
+             MarsAddressType::ProtocolAdmin => "protocol_admin",
+             MarsAddressType::RedBank => "red_bank",
+             MarsAddressType::RewardsCollector => "rewards_collector",
+             MarsAddressType::SafetyFund => "safety_fund",
++            MarsAddressType::Swapper => "swapper",
+         };
+         write!(f, "{s}")
+     }
+@@ -52,13 +60,16 @@ impl FromStr for MarsAddressType {
+ 
+     fn from_str(s: &str) -> Result<Self, Self::Err> {
+         match s {
++            "credit_manager" => Ok(MarsAddressType::CreditManager),
+             "fee_collector" => Ok(MarsAddressType::FeeCollector),
+             "incentives" => Ok(MarsAddressType::Incentives),
+             "oracle" => Ok(MarsAddressType::Oracle),
++            "params" => Ok(MarsAddressType::Params),
+             "protocol_admin" => Ok(MarsAddressType::ProtocolAdmin),
+             "red_bank" => Ok(MarsAddressType::RedBank),
+             "rewards_collector" => Ok(MarsAddressType::RewardsCollector),
+             "safety_fund" => Ok(MarsAddressType::SafetyFund),
++            "swapper" => Ok(MarsAddressType::Swapper),
+             _ => Err(StdError::parse_err(type_name::<Self>(), s)),
+         }
+     }
+@@ -194,3 +205,25 @@ pub mod helpers {
+             .map(|res| res.address)
+     }
+ }
++
++#[cfg(test)]
++mod tests {
++    use std::str::FromStr;
++
++    use strum::IntoEnumIterator;
++
++    use super::MarsAddressType;
++
++    #[test]
++    fn mars_address_type_fmt_and_from_string() {
++        for address_type in MarsAddressType::iter() {
++            assert_eq!(MarsAddressType::from_str(&address_type.to_string()).unwrap(), address_type);
++        }
++    }
++
++    #[test]
++    #[should_panic]
++    fn mars_address_type_from_str_invalid_string() {
++        MarsAddressType::from_str("invalid_address_type").unwrap();
++    }
++}
+diff --git a/packages/types/src/error.rs b/packages/types/src/error.rs
+index 0a2c667d..e9cb6311 100644
+--- a/packages/types/src/error.rs
++++ b/packages/types/src/error.rs
+@@ -1,4 +1,6 @@
+-use cosmwasm_std::StdError;
++use cosmwasm_std::{
++    CheckedFromRatioError, CheckedMultiplyFractionError, DivideByZeroError, OverflowError, StdError,
++};
+ use thiserror::Error;
+ 
+ #[derive(Error, Debug, PartialEq)]
+@@ -22,6 +24,18 @@ pub enum MarsError {
+     Deserialize {
+         target_type: String,
+     },
++
++    #[error("{0}")]
++    Overflow(#[from] OverflowError),
++
++    #[error("{0}")]
++    DivideByZero(#[from] DivideByZeroError),
++
++    #[error("{0}")]
++    CheckedFromRatio(#[from] CheckedFromRatioError),
++
++    #[error("{0}")]
++    CheckedMultiplyFraction(#[from] CheckedMultiplyFractionError),
+ }
+ 
+ impl From<MarsError> for StdError {
+diff --git a/packages/types/src/incentives.rs b/packages/types/src/incentives.rs
+index 1ec39a76..c94cad79 100644
+--- a/packages/types/src/incentives.rs
++++ b/packages/types/src/incentives.rs
+@@ -1,5 +1,5 @@
+ use cosmwasm_schema::{cw_serde, QueryResponses};
+-use cosmwasm_std::{Addr, Decimal, Uint128};
++use cosmwasm_std::{Addr, Coin, Decimal, Uint128};
+ use mars_owner::OwnerUpdate;
+ 
+ /// Global configuration
+@@ -7,20 +7,15 @@ use mars_owner::OwnerUpdate;
+ pub struct Config {
+     /// Address provider
+     pub address_provider: Addr,
+-    /// Mars Token Denom
+-    pub mars_denom: String,
++    /// The maximum number of incentive denoms that can be whitelisted at any given time. This is
++    /// a guard against accidentally whitelisting too many denoms, which could cause max gas errors.
++    pub max_whitelisted_denoms: u8,
+ }
+ 
+ /// Incentive Metadata for a given incentive
+ #[cw_serde]
+-pub struct AssetIncentive {
+-    /// How much MARS per second is emitted to be then distributed to all Red Bank depositors
+-    pub emission_per_second: Uint128,
+-    /// Start time of the incentive (in seconds) since the UNIX epoch (00:00:00 on 1970-01-01 UTC)
+-    pub start_time: u64,
+-    /// How many seconds the incentives last
+-    pub duration: u64,
+-    /// Total MARS assigned for distribution since the start of the incentive
++pub struct IncentiveState {
++    /// An index that represents how many incentive tokens have been distributed per unit of collateral
+     pub index: Decimal,
+     /// Last time (in seconds) index was updated
+     pub last_updated: u64,
+@@ -28,30 +23,54 @@ pub struct AssetIncentive {
+ 
+ /// Incentive Metadata for a given incentive denom
+ #[cw_serde]
+-pub struct AssetIncentiveResponse {
+-    /// Asset denom
+-    pub denom: String,
+-    /// How much MARS per second is emitted to be then distributed to all Red Bank depositors
+-    pub emission_per_second: Uint128,
+-    /// Start time of the incentive (in seconds) since the UNIX epoch (00:00:00 on 1970-01-01 UTC)
+-    pub start_time: u64,
+-    /// How many seconds the incentives last
+-    pub duration: u64,
+-    /// Total MARS assigned for distribution since the start of the incentive
++pub struct IncentiveStateResponse {
++    /// The denom for which users get the incentive if they provide collateral in the Red Bank
++    pub collateral_denom: String,
++    /// The denom of the token these incentives are paid with
++    pub incentive_denom: String,
++    /// An index that represents how many incentive tokens have been distributed per unit of collateral
+     pub index: Decimal,
+     /// Last time (in seconds) index was updated
+     pub last_updated: u64,
+ }
+ 
+-impl AssetIncentiveResponse {
+-    pub fn from(denom: String, ai: AssetIncentive) -> Self {
++impl IncentiveStateResponse {
++    pub fn from(
++        collateral_denom: impl Into<String>,
++        incentive_denom: impl Into<String>,
++        is: IncentiveState,
++    ) -> Self {
++        Self {
++            collateral_denom: collateral_denom.into(),
++            incentive_denom: incentive_denom.into(),
++            index: is.index,
++            last_updated: is.last_updated,
++        }
++    }
++}
++
++#[cw_serde]
++pub struct WhitelistEntry {
++    /// The incentive token denom that is whitelisted
++    pub denom: String,
++    /// The minimum emission rate per second for this incentive token
++    pub min_emission_rate: Uint128,
++}
++
++impl From<&(&str, u128)> for WhitelistEntry {
++    fn from((denom, min_emission_rate): &(&str, u128)) -> Self {
++        Self {
++            denom: denom.to_string(),
++            min_emission_rate: Uint128::from(*min_emission_rate),
++        }
++    }
++}
++
++impl From<(String, Uint128)> for WhitelistEntry {
++    fn from((denom, min_emission_rate): (String, Uint128)) -> Self {
+         Self {
+             denom,
+-            emission_per_second: ai.emission_per_second,
+-            start_time: ai.start_time,
+-            duration: ai.duration,
+-            index: ai.index,
+-            last_updated: ai.last_updated,
++            min_emission_rate,
+         }
+     }
+ }
+@@ -62,26 +81,41 @@ pub struct InstantiateMsg {
+     pub owner: String,
+     /// Address provider
+     pub address_provider: String,
+-    /// Mars token denom
+-    pub mars_denom: String,
++    /// The amount of time in seconds for each incentive epoch. This is the minimum amount of time
++    /// that an incentive can last, and each incentive must be a multiple of this duration.
++    pub epoch_duration: u64,
++    /// The maximum number of incentive denoms that can be whitelisted at any given time. This is
++    /// a guard against accidentally whitelisting too many denoms, which could cause max gas errors.
++    pub max_whitelisted_denoms: u8,
+ }
+ 
+ #[cw_serde]
+ pub enum ExecuteMsg {
+-    /// Set incentive params for an asset to its depositor at Red Bank.
+-    ///
+-    /// If there is no incentive for the asset, all params are required.
+-    /// New incentive can be set (rescheduled) if current one has finished (current_block_time > start_time + duration).
++    /// Add or remove incentive denoms from the whitelist. Only admin can do this.
++    UpdateWhitelist {
++        /// The denoms to add to the whitelist as well as a minimum emission rate per second for
++        /// each. If the denom is already in the whitelist, the minimum emission rate will be updated.
++        add_denoms: Vec<WhitelistEntry>,
++        /// The denoms to remove from the whitelist. This will update the index of the incentive
++        /// state and then remove any active incentive schedules.
++        ///
++        /// NB: If any incentive schedules are still active for this incentive denom, the incentive
++        /// tokens will be trapped forever in the contract.
++        remove_denoms: Vec<String>,
++    },
++    /// Add incentives for a given collateral denom and incentive denom pair
+     SetAssetIncentive {
+-        /// Asset denom associated with the incentives
+-        denom: String,
+-        /// How many MARS will be assigned per second to be distributed among all Red Bank
+-        /// depositors
+-        emission_per_second: Option<Uint128>,
++        /// The denom of the collatearal token to receive incentives
++        collateral_denom: String,
++        /// The denom of the token to give incentives with
++        incentive_denom: String,
++        /// How many `incentive_denom` tokens will be assigned per second to be distributed among
++        /// all Red Bank depositors
++        emission_per_second: Uint128,
+         /// Start time of the incentive (in seconds) since the UNIX epoch (00:00:00 on 1970-01-01 UTC).
+-        start_time: Option<u64>,
++        start_time: u64,
+         /// How many seconds the incentives last
+-        duration: Option<u64>,
++        duration: u64,
+     },
+ 
+     /// Handle balance change updating user and asset rewards.
+@@ -91,6 +125,8 @@ pub enum ExecuteMsg {
+         /// User address. Address is trusted as it must be validated by the Red Bank
+         /// contract before calling this method
+         user_addr: Addr,
++        /// Credit account id (Rover)
++        account_id: Option<String>,
+         /// Denom of the asset of which deposited balance is changed
+         denom: String,
+         /// The user's scaled collateral amount up to the instant before the change
+@@ -101,12 +137,26 @@ pub enum ExecuteMsg {
+ 
+     /// Claim rewards. MARS rewards accrued by the user will be staked into xMARS before
+     /// being sent.
+-    ClaimRewards {},
++    ClaimRewards {
++        /// Credit account id (Rover)
++        account_id: Option<String>,
++        /// Start pagination after this collateral denom
++        start_after_collateral_denom: Option<String>,
++        /// Start pagination after this incentive denom. If supplied you must also supply
++        /// start_after_collateral_denom.
++        start_after_incentive_denom: Option<String>,
++        /// The maximum number of results to return. If not set, 5 is used. If larger than 10,
++        /// 10 is used.
++        limit: Option<u32>,
++    },
+ 
+     /// Update contract config (only callable by owner)
+     UpdateConfig {
++        /// The address provider contract address
+         address_provider: Option<String>,
+-        mars_denom: Option<String>,
++        /// The maximum number of incentive denoms that can be whitelisted at any given time. This is
++        /// a guard against accidentally whitelisting too many denoms, which could cause max gas errors.
++        max_whitelisted_denoms: Option<u8>,
+     },
+ 
+     /// Manages admin role state
+@@ -116,28 +166,128 @@ pub enum ExecuteMsg {
+ #[cw_serde]
+ #[derive(QueryResponses)]
+ pub enum QueryMsg {
++    /// Query all active incentive emissions for a collateral denom
++    #[returns(Vec<ActiveEmission>)]
++    ActiveEmissions {
++        /// The denom of the token that users supply as collateral to receive incentives
++        collateral_denom: String,
++    },
++
+     /// Query contract config
+     #[returns(ConfigResponse)]
+     Config {},
+ 
+-    /// Query info about asset incentive for a given denom
+-    #[returns(AssetIncentiveResponse)]
+-    AssetIncentive {
+-        denom: String,
++    /// Query info about the state of an incentive for a given collateral and incentive denom pair
++    #[returns(IncentiveStateResponse)]
++    IncentiveState {
++        /// The denom of the token that users supply as collateral to receive incentives
++        collateral_denom: String,
++        /// The denom of the token which is used to give incentives with
++        incentive_denom: String,
+     },
+ 
+-    /// Enumerate asset incentives with pagination
+-    #[returns(Vec<AssetIncentiveResponse>)]
+-    AssetIncentives {
+-        start_after: Option<String>,
++    /// Enumerate incentive states with pagination
++    #[returns(Vec<IncentiveStateResponse>)]
++    IncentiveStates {
++        /// Start pagination after this collateral denom
++        start_after_collateral_denom: Option<String>,
++        /// Start pagination after this incentive denom. If supplied you must also supply
++        /// start_after_collateral_denom.
++        start_after_incentive_denom: Option<String>,
++        /// The maximum number of results to return. If not set, 5 is used. If larger than 10,
++        /// 10 is used.
+         limit: Option<u32>,
+     },
+ 
+-    /// Query user current unclaimed rewards
++    /// Queries the planned emission rate for a given collateral and incentive denom tuple at the
++    /// specified unix timestamp. The emission rate returned is the amount of incentive tokens
++    /// that will be emitted per second for each unit of collateral supplied during the epoch.
++    /// NB: that the returned value can change if someone adds incentives to the contract.
+     #[returns(Uint128)]
++    Emission {
++        /// The denom of the token that users supply as collateral to receive incentives
++        collateral_denom: String,
++        /// The denom of the token which is used to give incentives with
++        incentive_denom: String,
++        /// The unix timestamp in second to query the emission rate at.
++        timestamp: u64,
++    },
++
++    /// Enumerate all incentive emission rates with pagination for a specified collateral and
++    /// indentive denom pair
++    #[returns(Vec<EmissionResponse>)]
++    Emissions {
++        /// The denom of the token that users supply as collateral to receive incentives
++        collateral_denom: String,
++        /// The denom of the token which is used to give incentives with
++        incentive_denom: String,
++        /// Start pagination after this timestamp
++        start_after_timestamp: Option<u64>,
++        /// The maximum number of results to return. If not set, 5 is used. If larger than 10,
++        /// 10 is used.
++        limit: Option<u32>,
++    },
++
++    /// Query user current unclaimed rewards
++    #[returns(Vec<Coin>)]
+     UserUnclaimedRewards {
++        /// The user address for which to query unclaimed rewards
+         user: String,
++        /// Credit account id (Rover)
++        account_id: Option<String>,
++        /// Start pagination after this collateral denom
++        start_after_collateral_denom: Option<String>,
++        /// Start pagination after this incentive denom. If supplied you must also supply
++        /// start_after_collateral_denom.
++        start_after_incentive_denom: Option<String>,
++        /// The maximum number of results to return. If not set, 5 is used. If larger than 10,
++        /// 10 is used.
++        limit: Option<u32>,
+     },
++
++    /// Queries the incentive denom whitelist. Returns a Vec<(String, Uint128)> containing the
++    /// denoms of all whitelisted incentive denoms, as well as the minimum emission rate for each.
++    #[returns(Vec<WhitelistEntry>)]
++    Whitelist {},
++}
++
++#[cw_serde]
++pub struct MigrateMsg {}
++
++#[cw_serde]
++pub struct EmissionResponse {
++    /// The unix timestamp in seconds at which the emission epoch starts
++    pub epoch_start: u64,
++    /// The emission rate returned is the amount of incentive tokens that will be emitted per
++    /// second for each unit of collateral supplied during the epoch.
++    pub emission_rate: Uint128,
++}
++
++impl From<(u64, Uint128)> for EmissionResponse {
++    fn from((epoch_start, emission_rate): (u64, Uint128)) -> Self {
++        Self {
++            epoch_start,
++            emission_rate,
++        }
++    }
++}
++
++#[cw_serde]
++/// The currently active emission for a given incentive denom
++pub struct ActiveEmission {
++    /// The denom for which incentives are being distributed
++    pub denom: String,
++    /// The amount of incentive tokens that are being emitted per second
++    pub emission_rate: Uint128,
++}
++
++impl From<(String, Uint128)> for ActiveEmission {
++    fn from((denom, emission_rate): (String, Uint128)) -> Self {
++        Self {
++            denom,
++            emission_rate,
++        }
++    }
+ }
+ 
+ #[cw_serde]
+@@ -148,6 +298,11 @@ pub struct ConfigResponse {
+     pub proposed_new_owner: Option<String>,
+     /// Address provider
+     pub address_provider: Addr,
+-    /// Mars Token Denom
+-    pub mars_denom: String,
++    /// The maximum number of incentive denoms that can be whitelisted at any given time. This is
++    /// a guard against accidentally whitelisting too many denoms, which could cause max gas errors.
++    pub max_whitelisted_denoms: u8,
++    /// The epoch duration in seconds
++    pub epoch_duration: u64,
++    /// The count of the number of whitelisted incentive denoms
++    pub whitelist_count: u8,
+ }
+diff --git a/packages/types/src/lib.rs b/packages/types/src/lib.rs
+index 7ec7c2e0..5750ce35 100644
+--- a/packages/types/src/lib.rs
++++ b/packages/types/src/lib.rs
+@@ -4,3 +4,17 @@ pub mod incentives;
+ pub mod oracle;
+ pub mod red_bank;
+ pub mod rewards_collector;
++pub mod swapper;
++
++use cosmwasm_schema::cw_serde;
++
++#[cw_serde]
++pub struct PaginationResponse<T> {
++    pub data: Vec<T>,
++    pub metadata: Metadata,
++}
++
++#[cw_serde]
++pub struct Metadata {
++    pub has_more: bool,
++}
+diff --git a/packages/types/src/oracle/mod.rs b/packages/types/src/oracle/mod.rs
+new file mode 100644
+index 00000000..65238184
+--- /dev/null
++++ b/packages/types/src/oracle/mod.rs
+@@ -0,0 +1,5 @@
++pub mod msg;
++pub mod wasm_oracle;
++
++pub use msg::*;
++pub use wasm_oracle::*;
+diff --git a/packages/types/src/oracle.rs b/packages/types/src/oracle/msg.rs
+similarity index 65%
+rename from packages/types/src/oracle.rs
+rename to packages/types/src/oracle/msg.rs
+index d5b9d02c..572aae9b 100644
+--- a/packages/types/src/oracle.rs
++++ b/packages/types/src/oracle/msg.rs
+@@ -1,13 +1,15 @@
+ use cosmwasm_schema::{cw_serde, QueryResponses};
+-use cosmwasm_std::Decimal;
++use cosmwasm_std::{Decimal, Empty};
+ use mars_owner::OwnerUpdate;
+ 
+ #[cw_serde]
+-pub struct InstantiateMsg {
++pub struct InstantiateMsg<C = Empty> {
+     /// The contract's owner, who can update config and price sources
+     pub owner: String,
+     /// The asset in which prices are denominated in
+     pub base_denom: String,
++    /// Custom init params
++    pub custom_init: Option<C>,
+ }
+ 
+ #[cw_serde]
+@@ -17,7 +19,7 @@ pub struct Config {
+ }
+ 
+ #[cw_serde]
+-pub enum ExecuteMsg<T> {
++pub enum ExecuteMsg<T, C = Empty> {
+     /// Specify the price source to be used for a coin
+     ///
+     /// NOTE: The input parameters for method are chain-specific.
+@@ -31,6 +33,19 @@ pub enum ExecuteMsg<T> {
+     },
+     /// Manages admin role state
+     UpdateOwner(OwnerUpdate),
++    /// Update contract config (only callable by owner)
++    UpdateConfig {
++        base_denom: Option<String>,
++    },
++    /// Custom messages defined by the contract
++    Custom(C),
++}
++
++/// Differentiator for the action (liquidate, withdraw, borrow etc.) being performed.
++#[cw_serde]
++pub enum ActionKind {
++    Default,
++    Liquidation,
+ }
+ 
+ #[cw_serde]
+@@ -61,6 +76,7 @@ pub enum QueryMsg {
+     #[returns(PriceResponse)]
+     Price {
+         denom: String,
++        kind: Option<ActionKind>,
+     },
+     /// Enumerate all coins' prices.
+     ///
+@@ -70,6 +86,7 @@ pub enum QueryMsg {
+     Prices {
+         start_after: Option<String>,
+         limit: Option<u32>,
++        kind: Option<ActionKind>,
+     },
+ }
+ 
+@@ -96,19 +113,44 @@ pub struct PriceResponse {
+ }
+ 
+ pub mod helpers {
+-    use cosmwasm_std::{Decimal, QuerierWrapper, StdResult};
++    use cosmwasm_std::{Decimal, QuerierWrapper, StdError, StdResult};
+ 
+-    use super::{PriceResponse, QueryMsg};
++    use super::{ActionKind, PriceResponse, QueryMsg};
++    use crate::oracle::ActionKind::Liquidation;
+ 
+     pub fn query_price(
+         querier: &QuerierWrapper,
+         oracle: impl Into<String>,
+         denom: impl Into<String>,
++    ) -> StdResult<Decimal> {
++        let denom = denom.into();
++        let res: PriceResponse = querier
++            .query_wasm_smart(
++                oracle.into(),
++                &QueryMsg::Price {
++                    denom: denom.clone(),
++                    kind: Some(ActionKind::Default),
++                },
++            )
++            .map_err(|e| {
++                StdError::generic_err(format!(
++                    "failed to query price for denom: {}. Error: {}",
++                    denom, e
++                ))
++            })?;
++        Ok(res.price)
++    }
++
++    pub fn query_price_for_liquidate(
++        querier: &QuerierWrapper,
++        oracle: impl Into<String>,
++        denom: impl Into<String>,
+     ) -> StdResult<Decimal> {
+         let res: PriceResponse = querier.query_wasm_smart(
+             oracle.into(),
+             &QueryMsg::Price {
+                 denom: denom.into(),
++                kind: Some(Liquidation),
+             },
+         )?;
+         Ok(res.price)
+diff --git a/packages/types/src/oracle/wasm_oracle.rs b/packages/types/src/oracle/wasm_oracle.rs
+new file mode 100644
+index 00000000..1d772612
+--- /dev/null
++++ b/packages/types/src/oracle/wasm_oracle.rs
+@@ -0,0 +1,23 @@
++use cosmwasm_schema::cw_serde;
++use cosmwasm_std::Uint128;
++
++#[cw_serde]
++pub struct WasmOracleCustomInitParams {
++    /// The Astroport factory contract address
++    pub astroport_factory: String,
++}
++
++#[cw_serde]
++pub enum WasmOracleCustomExecuteMsg {
++    RecordTwapSnapshots {
++        denoms: Vec<String>,
++    },
++}
++
++#[cw_serde]
++pub struct AstroportTwapSnapshot {
++    /// Timestamp of the most recent TWAP data update
++    pub timestamp: u64,
++    /// Cumulative price of the asset retrieved by the most recent TWAP data update
++    pub price_cumulative: Uint128,
++}
+diff --git a/packages/types/src/red_bank/interest_rate_model.rs b/packages/types/src/red_bank/interest_rate_model.rs
+index 9e2af312..26f844ea 100644
+--- a/packages/types/src/red_bank/interest_rate_model.rs
++++ b/packages/types/src/red_bank/interest_rate_model.rs
+@@ -1,6 +1,8 @@
+ use cosmwasm_schema::cw_serde;
+-use cosmwasm_std::{Decimal, StdError, StdResult};
+-use mars_utils::{error::ValidationError, helpers::decimal_param_le_one, math};
++use cosmwasm_std::Decimal;
++use mars_utils::{error::ValidationError, helpers::decimal_param_le_one};
++
++use crate::error::MarsError;
+ 
+ #[cw_serde]
+ #[derive(Eq, Default)]
+@@ -9,40 +11,47 @@ pub struct InterestRateModel {
+     pub optimal_utilization_rate: Decimal,
+     /// Base rate
+     pub base: Decimal,
+-    /// Slope parameter for interest rate model function when utilization_rate < optimal_utilization_rate
++    /// Slope parameter for interest rate model function when utilization_rate <= optimal_utilization_rate
+     pub slope_1: Decimal,
+-    /// Slope parameter for interest rate model function when utilization_rate >= optimal_utilization_rate
++    /// Slope parameter for interest rate model function when utilization_rate > optimal_utilization_rate
+     pub slope_2: Decimal,
+ }
+ 
+ impl InterestRateModel {
+     pub fn validate(&self) -> Result<(), ValidationError> {
+         decimal_param_le_one(self.optimal_utilization_rate, "optimal_utilization_rate")?;
++
++        if self.slope_1 >= self.slope_2 {
++            return Err(ValidationError::InvalidParam {
++                param_name: "slope_1".to_string(),
++                invalid_value: self.slope_1.to_string(),
++                predicate: format!("< {}", self.slope_2),
++            });
++        }
++
+         Ok(())
+     }
+ 
+-    pub fn get_borrow_rate(&self, current_utilization_rate: Decimal) -> StdResult<Decimal> {
++    pub fn get_borrow_rate(&self, current_utilization_rate: Decimal) -> Result<Decimal, MarsError> {
+         let new_borrow_rate = if current_utilization_rate <= self.optimal_utilization_rate {
+             if current_utilization_rate.is_zero() {
+-                // prevent division by zero when optimal_utilization_rate is zero
++                // prevent division by zero when current_utilization_rate is zero
+                 self.base
+             } else {
+                 // The borrow interest rates increase slowly with utilization
+                 self.base
+-                    + self.slope_1.checked_mul(math::divide_decimal_by_decimal(
+-                        current_utilization_rate,
+-                        self.optimal_utilization_rate,
+-                    )?)?
++                    + self.slope_1.checked_mul(
++                        current_utilization_rate.checked_div(self.optimal_utilization_rate)?,
++                    )?
+             }
+         } else {
+             // The borrow interest rates increase sharply with utilization
+             self.base
+                 + self.slope_1
+-                + math::divide_decimal_by_decimal(
+-                    self.slope_2
+-                        .checked_mul(current_utilization_rate - self.optimal_utilization_rate)?,
+-                    Decimal::one() - self.optimal_utilization_rate,
+-                )?
++                + self
++                    .slope_2
++                    .checked_mul(current_utilization_rate - self.optimal_utilization_rate)?
++                    .checked_div(Decimal::one() - self.optimal_utilization_rate)?
+         };
+         Ok(new_borrow_rate)
+     }
+@@ -52,12 +61,11 @@ impl InterestRateModel {
+         borrow_rate: Decimal,
+         current_utilization_rate: Decimal,
+         reserve_factor: Decimal,
+-    ) -> StdResult<Decimal> {
+-        borrow_rate
++    ) -> Result<Decimal, MarsError> {
++        Ok(borrow_rate
+             .checked_mul(current_utilization_rate)?
+             // This operation should not underflow as reserve_factor is checked to be <= 1
+-            .checked_mul(Decimal::one() - reserve_factor)
+-            .map_err(StdError::from)
++            .checked_mul(Decimal::one() - reserve_factor)?)
+     }
+ }
+ 
+@@ -91,21 +99,13 @@ mod tests {
+ 
+         market.update_interest_rates(utilization_rate).unwrap();
+ 
+-        let expected_borrow_rate = model.base
+-            + math::divide_decimal_by_decimal(
+-                model.slope_1.checked_mul(utilization_rate).unwrap(),
+-                model.optimal_utilization_rate,
+-            )
+-            .unwrap();
++        let expected_borrow_rate =
++            model.base + model.slope_1 * utilization_rate / model.optimal_utilization_rate;
+ 
+         assert_eq!(market.borrow_rate, expected_borrow_rate);
+         assert_eq!(
+             market.liquidity_rate,
+-            expected_borrow_rate
+-                .checked_mul(utilization_rate)
+-                .unwrap()
+-                .checked_mul(Decimal::one() - reserve_factor)
+-                .unwrap()
++            expected_borrow_rate * utilization_rate * (Decimal::one() - reserve_factor)
+         );
+     }
+ 
+@@ -124,11 +124,7 @@ mod tests {
+             let new_borrow_rate = model.get_borrow_rate(current_utilization_rate).unwrap();
+ 
+             let expected_borrow_rate = model.base
+-                + math::divide_decimal_by_decimal(
+-                    model.slope_1.checked_mul(current_utilization_rate).unwrap(),
+-                    model.optimal_utilization_rate,
+-                )
+-                .unwrap();
++                + model.slope_1 * current_utilization_rate / model.optimal_utilization_rate;
+ 
+             assert_eq!(new_borrow_rate, expected_borrow_rate);
+         }
+@@ -139,11 +135,7 @@ mod tests {
+             let new_borrow_rate = model.get_borrow_rate(current_utilization_rate).unwrap();
+ 
+             let expected_borrow_rate = model.base
+-                + math::divide_decimal_by_decimal(
+-                    model.slope_1.checked_mul(current_utilization_rate).unwrap(),
+-                    model.optimal_utilization_rate,
+-                )
+-                .unwrap();
++                + model.slope_1 * current_utilization_rate / model.optimal_utilization_rate;
+ 
+             assert_eq!(new_borrow_rate, expected_borrow_rate);
+         }
+@@ -155,14 +147,8 @@ mod tests {
+ 
+             let expected_borrow_rate = model.base
+                 + model.slope_1
+-                + math::divide_decimal_by_decimal(
+-                    model
+-                        .slope_2
+-                        .checked_mul(current_utilization_rate - model.optimal_utilization_rate)
+-                        .unwrap(),
+-                    Decimal::one() - model.optimal_utilization_rate,
+-                )
+-                .unwrap();
++                + model.slope_2 * (current_utilization_rate - model.optimal_utilization_rate)
++                    / (Decimal::one() - model.optimal_utilization_rate);
+ 
+             assert_eq!(new_borrow_rate, expected_borrow_rate);
+         }
+@@ -179,9 +165,7 @@ mod tests {
+             let current_utilization_rate = Decimal::percent(100);
+             let new_borrow_rate = model.get_borrow_rate(current_utilization_rate).unwrap();
+ 
+-            let expected_borrow_rate = Decimal::percent(7);
+-
+-            assert_eq!(new_borrow_rate, expected_borrow_rate);
++            assert_eq!(new_borrow_rate, Decimal::percent(7));
+         }
+ 
+         // current utilization rate == 0% and optimal utilization rate == 0%
+@@ -196,9 +180,7 @@ mod tests {
+             let current_utilization_rate = Decimal::percent(0);
+             let new_borrow_rate = model.get_borrow_rate(current_utilization_rate).unwrap();
+ 
+-            let expected_borrow_rate = Decimal::percent(2);
+-
+-            assert_eq!(new_borrow_rate, expected_borrow_rate);
++            assert_eq!(new_borrow_rate, Decimal::percent(2));
+         }
+ 
+         // current utilization rate == 20% and optimal utilization rate == 0%
+@@ -213,9 +195,8 @@ mod tests {
+             let current_utilization_rate = Decimal::percent(20);
+             let new_borrow_rate = model.get_borrow_rate(current_utilization_rate).unwrap();
+ 
+-            let expected_borrow_rate = model.base
+-                + model.slope_1
+-                + model.slope_2.checked_mul(current_utilization_rate).unwrap();
++            let expected_borrow_rate =
++                model.base + model.slope_1 + model.slope_2 * current_utilization_rate;
+ 
+             assert_eq!(new_borrow_rate, expected_borrow_rate);
+         }
+diff --git a/packages/types/src/red_bank/market.rs b/packages/types/src/red_bank/market.rs
+index cb5f9688..2ffe0a04 100644
+--- a/packages/types/src/red_bank/market.rs
++++ b/packages/types/src/red_bank/market.rs
+@@ -1,9 +1,6 @@
+ use cosmwasm_schema::cw_serde;
+ use cosmwasm_std::{Decimal, StdResult, Uint128};
+-use mars_utils::{
+-    error::ValidationError,
+-    helpers::{decimal_param_le_one, decimal_param_lt_one},
+-};
++use mars_utils::{error::ValidationError, helpers::decimal_param_lt_one};
+ 
+ use crate::red_bank::InterestRateModel;
+ 
+@@ -11,14 +8,6 @@ use crate::red_bank::InterestRateModel;
+ pub struct Market {
+     /// Denom of the asset
+     pub denom: String,
+-
+-    /// Max base asset that can be borrowed per "base asset" collateral when using the asset as collateral
+-    pub max_loan_to_value: Decimal,
+-    /// Base asset amount in debt position per "base asset" of asset collateral that if surpassed makes the user's position liquidatable.
+-    pub liquidation_threshold: Decimal,
+-    /// Bonus amount of collateral liquidator get when repaying user's debt (Will get collateral
+-    /// from user in an amount equal to debt repayed + bonus)
+-    pub liquidation_bonus: Decimal,
+     /// Portion of the borrow rate that is kept as protocol rewards
+     pub reserve_factor: Decimal,
+ 
+@@ -40,13 +29,6 @@ pub struct Market {
+     pub collateral_total_scaled: Uint128,
+     /// Total debt scaled for the market's currency
+     pub debt_total_scaled: Uint128,
+-
+-    /// If false cannot deposit
+-    pub deposit_enabled: bool,
+-    /// If false cannot borrow
+-    pub borrow_enabled: bool,
+-    /// Deposit Cap (defined in terms of the asset)
+-    pub deposit_cap: Uint128,
+ }
+ 
+ impl Default for Market {
+@@ -57,18 +39,11 @@ impl Default for Market {
+             liquidity_index: Decimal::one(),
+             borrow_rate: Decimal::zero(),
+             liquidity_rate: Decimal::zero(),
+-            max_loan_to_value: Decimal::zero(),
+             reserve_factor: Decimal::zero(),
+             indexes_last_updated: 0,
+             collateral_total_scaled: Uint128::zero(),
+             debt_total_scaled: Uint128::zero(),
+-            liquidation_threshold: Decimal::one(),
+-            liquidation_bonus: Decimal::zero(),
+             interest_rate_model: InterestRateModel::default(),
+-            deposit_enabled: true,
+-            borrow_enabled: true,
+-            // By default the cap should be unlimited (no cap)
+-            deposit_cap: Uint128::MAX,
+         }
+     }
+ }
+@@ -76,18 +51,6 @@ impl Default for Market {
+ impl Market {
+     pub fn validate(&self) -> Result<(), ValidationError> {
+         decimal_param_lt_one(self.reserve_factor, "reserve_factor")?;
+-        decimal_param_le_one(self.max_loan_to_value, "max_loan_to_value")?;
+-        decimal_param_le_one(self.liquidation_threshold, "liquidation_threshold")?;
+-        decimal_param_le_one(self.liquidation_bonus, "liquidation_bonus")?;
+-
+-        // liquidation_threshold should be greater than max_loan_to_value
+-        if self.liquidation_threshold <= self.max_loan_to_value {
+-            return Err(ValidationError::InvalidParam {
+-                param_name: "liquidation_threshold".to_string(),
+-                invalid_value: self.liquidation_threshold.to_string(),
+-                predicate: format!("> {} (max LTV)", self.max_loan_to_value),
+-            });
+-        }
+ 
+         self.interest_rate_model.validate()?;
+ 
+diff --git a/packages/types/src/red_bank/msg.rs b/packages/types/src/red_bank/msg.rs
+index c7ad2029..b80f7ec8 100644
+--- a/packages/types/src/red_bank/msg.rs
++++ b/packages/types/src/red_bank/msg.rs
+@@ -8,8 +8,6 @@ use crate::red_bank::InterestRateModel;
+ pub struct InstantiateMsg {
+     /// Contract's owner
+     pub owner: String,
+-    /// Contract's emergency owner
+-    pub emergency_owner: String,
+     /// Market configuration
+     pub config: CreateOrUpdateConfig,
+ }
+@@ -19,9 +17,6 @@ pub enum ExecuteMsg {
+     /// Manages owner state
+     UpdateOwner(OwnerUpdate),
+ 
+-    /// Manages emergency owner state
+-    UpdateEmergencyOwner(OwnerUpdate),
+-
+     /// Update contract config (only owner can call)
+     UpdateConfig {
+         config: CreateOrUpdateConfig,
+@@ -59,8 +54,8 @@ pub enum ExecuteMsg {
+     /// Deposit native coins. Deposited coins must be sent in the transaction
+     /// this call is made
+     Deposit {
+-        /// Address that will receive the coins
+-        on_behalf_of: Option<String>,
++        /// Credit account id (Rover)
++        account_id: Option<String>,
+     },
+ 
+     /// Withdraw native coins
+@@ -71,6 +66,11 @@ pub enum ExecuteMsg {
+         amount: Option<Uint128>,
+         /// The address where the withdrawn amount is sent
+         recipient: Option<String>,
++        /// Credit account id (Rover)
++        account_id: Option<String>,
++        // Withdraw action related to liquidation process initiated in credit manager.
++        // This flag is used to identify different way for pricing assets during liquidation.
++        liquidation_related: Option<bool>,
+     },
+ 
+     /// Borrow native coins. If borrow allowed, amount is added to caller's debt
+@@ -117,30 +117,15 @@ pub enum ExecuteMsg {
+ #[cw_serde]
+ pub struct CreateOrUpdateConfig {
+     pub address_provider: Option<String>,
+-    pub close_factor: Option<Decimal>,
+ }
+ 
+ #[cw_serde]
+ pub struct InitOrUpdateAssetParams {
+     /// Portion of the borrow rate that is kept as protocol rewards
+     pub reserve_factor: Option<Decimal>,
+-    /// Max uusd that can be borrowed per uusd of collateral when using the asset as collateral
+-    pub max_loan_to_value: Option<Decimal>,
+-    /// uusd amount in debt position per uusd of asset collateral that if surpassed makes the user's position liquidatable.
+-    pub liquidation_threshold: Option<Decimal>,
+-    /// Bonus amount of collateral liquidator get when repaying user's debt (Will get collateral
+-    /// from user in an amount equal to debt repayed + bonus)
+-    pub liquidation_bonus: Option<Decimal>,
+ 
+     /// Interest rate strategy to calculate borrow_rate and liquidity_rate
+     pub interest_rate_model: Option<InterestRateModel>,
+-
+-    /// If false cannot deposit
+-    pub deposit_enabled: Option<bool>,
+-    /// If false cannot borrow
+-    pub borrow_enabled: Option<bool>,
+-    /// Deposit Cap defined in terms of the asset (Unlimited by default)
+-    pub deposit_cap: Option<Uint128>,
+ }
+ 
+ #[cw_serde]
+@@ -197,6 +182,7 @@ pub enum QueryMsg {
+     #[returns(crate::red_bank::UserCollateralResponse)]
+     UserCollateral {
+         user: String,
++        account_id: Option<String>,
+         denom: String,
+     },
+ 
+@@ -204,6 +190,16 @@ pub enum QueryMsg {
+     #[returns(Vec<crate::red_bank::UserCollateralResponse>)]
+     UserCollaterals {
+         user: String,
++        account_id: Option<String>,
++        start_after: Option<String>,
++        limit: Option<u32>,
++    },
++
++    /// Get all collateral positions for a user
++    #[returns(crate::red_bank::PaginatedUserCollateralResponse)]
++    UserCollateralsV2 {
++        user: String,
++        account_id: Option<String>,
+         start_after: Option<String>,
+         limit: Option<u32>,
+     },
+@@ -212,6 +208,14 @@ pub enum QueryMsg {
+     #[returns(crate::red_bank::UserPositionResponse)]
+     UserPosition {
+         user: String,
++        account_id: Option<String>,
++    },
++
++    /// Get user position for liquidation
++    #[returns(crate::red_bank::UserPositionResponse)]
++    UserPositionLiquidationPricing {
++        user: String,
++        account_id: Option<String>,
+     },
+ 
+     /// Get liquidity scaled amount for a given underlying asset amount.
+diff --git a/packages/types/src/red_bank/types.rs b/packages/types/src/red_bank/types.rs
+index c6cd1202..d6b14044 100644
+--- a/packages/types/src/red_bank/types.rs
++++ b/packages/types/src/red_bank/types.rs
+@@ -1,21 +1,13 @@
+ use cosmwasm_schema::cw_serde;
+ use cosmwasm_std::{Decimal, Uint128};
+-use mars_utils::{error::ValidationError, helpers::decimal_param_le_one};
++
++use crate::PaginationResponse;
+ 
+ /// Global configuration
+ #[cw_serde]
+ pub struct Config<T> {
+     /// Address provider returns addresses for all protocol contracts
+     pub address_provider: T,
+-    /// Maximum percentage of outstanding debt that can be covered by a liquidator
+-    pub close_factor: Decimal,
+-}
+-
+-impl<T> Config<T> {
+-    pub fn validate(&self) -> Result<(), ValidationError> {
+-        decimal_param_le_one(self.close_factor, "close_factor")?;
+-        Ok(())
+-    }
+ }
+ 
+ #[cw_serde]
+@@ -70,14 +62,8 @@ pub struct ConfigResponse {
+     pub owner: Option<String>,
+     /// The contract's proposed owner
+     pub proposed_new_owner: Option<String>,
+-    /// The contract's emergency owner
+-    pub emergency_owner: Option<String>,
+-    /// The contract's proposed emergency owner
+-    pub proposed_new_emergency_owner: Option<String>,
+     /// Address provider returns addresses for all protocol contracts
+     pub address_provider: String,
+-    /// Maximum percentage of outstanding debt that can be covered by a liquidator
+-    pub close_factor: Decimal,
+ }
+ 
+ #[cw_serde]
+@@ -112,6 +98,8 @@ pub struct UserCollateralResponse {
+     pub enabled: bool,
+ }
+ 
++pub type PaginatedUserCollateralResponse = PaginationResponse<UserCollateralResponse>;
++
+ #[cw_serde]
+ pub struct UserPositionResponse {
+     /// Total value of all enabled collateral assets.
+diff --git a/packages/types/src/rewards_collector.rs b/packages/types/src/rewards_collector.rs
+index ce69309a..149490eb 100644
+--- a/packages/types/src/rewards_collector.rs
++++ b/packages/types/src/rewards_collector.rs
+@@ -1,11 +1,13 @@
+ use cosmwasm_schema::{cw_serde, QueryResponses};
+-use cosmwasm_std::{Addr, Api, Decimal, StdResult, Uint128};
++use cosmwasm_std::{Addr, Api, Coin, Decimal, StdResult, Uint128};
+ use mars_owner::OwnerUpdate;
+ use mars_utils::{
+     error::ValidationError,
+     helpers::{decimal_param_le_one, integer_param_gt_zero, validate_native_denom},
+ };
+ 
++use self::credit_manager::Action;
++
+ const MAX_SLIPPAGE_TOLERANCE_PERCENTAGE: u64 = 50;
+ 
+ #[cw_serde]
+@@ -26,6 +28,8 @@ pub struct InstantiateMsg {
+     pub timeout_seconds: u64,
+     /// Maximum percentage of price movement (minimum amount you accept to receive during swap)
+     pub slippage_tolerance: Decimal,
++    /// Neutron Ibc config
++    pub neutron_ibc_config: Option<NeutronIbcConfig>,
+ }
+ 
+ #[cw_serde]
+@@ -44,6 +48,15 @@ pub struct Config {
+     pub timeout_seconds: u64,
+     /// Maximum percentage of price movement (minimum amount you accept to receive during swap)
+     pub slippage_tolerance: Decimal,
++    /// Neutron IBC config
++    pub neutron_ibc_config: Option<NeutronIbcConfig>,
++}
++
++#[cw_serde]
++pub struct NeutronIbcConfig {
++    pub source_port: String,
++    pub acc_fee: Vec<Coin>,
++    pub timeout_fee: Vec<Coin>,
+ }
+ 
+ impl Config {
+@@ -77,6 +90,7 @@ impl Config {
+             channel_id: msg.channel_id,
+             timeout_seconds: msg.timeout_seconds,
+             slippage_tolerance: msg.slippage_tolerance,
++            neutron_ibc_config: msg.neutron_ibc_config,
+         })
+     }
+ }
+@@ -98,10 +112,12 @@ pub struct UpdateConfig {
+     pub timeout_seconds: Option<u64>,
+     /// Maximum percentage of price movement (minimum amount you accept to receive during swap)
+     pub slippage_tolerance: Option<Decimal>,
++    /// Neutron Ibc config
++    pub neutron_ibc_config: Option<NeutronIbcConfig>,
+ }
+ 
+ #[cw_serde]
+-pub enum ExecuteMsg<Route> {
++pub enum ExecuteMsg {
+     /// Manages admin role state
+     UpdateOwner(OwnerUpdate),
+ 
+@@ -110,22 +126,18 @@ pub enum ExecuteMsg<Route> {
+         new_cfg: UpdateConfig,
+     },
+ 
+-    /// Configure the route for swapping an asset
+-    ///
+-    /// This is chain-specific, and can include parameters such as slippage tolerance and the routes
+-    /// for multi-step swaps
+-    SetRoute {
+-        denom_in: String,
+-        denom_out: String,
+-        route: Route,
+-    },
+-
+     /// Withdraw coins from the red bank
+     WithdrawFromRedBank {
+         denom: String,
+         amount: Option<Uint128>,
+     },
+ 
++    /// Withdraw coins from the credit manager
++    WithdrawFromCreditManager {
++        account_id: String,
++        actions: Vec<Action>,
++    },
++
+     /// Distribute the accrued protocol income between the safety fund and the fee modules on mars hub,
+     /// according to the split set in config.
+     /// Callable by any address.
+@@ -144,7 +156,16 @@ pub enum ExecuteMsg<Route> {
+     ///
+     /// We wanted to leave protocol rewards in the red-bank so they continue to work as liquidity (until the bot invokes WithdrawFromRedBank).
+     /// As an side effect to this, if the market is incentivised with MARS tokens, the contract will also accrue MARS token incentives.
+-    ClaimIncentiveRewards {},
++    ClaimIncentiveRewards {
++        /// Start pagination after this collateral denom
++        start_after_collateral_denom: Option<String>,
++        /// Start pagination after this incentive denom. If supplied you must also supply
++        /// start_after_collateral_denom.
++        start_after_incentive_denom: Option<String>,
++        /// The maximum number of results to return. If not set, 5 is used. If larger than 10,
++        /// 10 is used.
++        limit: Option<u32>,
++    },
+ }
+ 
+ #[cw_serde]
+@@ -167,6 +188,8 @@ pub struct ConfigResponse {
+     pub timeout_seconds: u64,
+     /// Maximum percentage of price movement (minimum amount you accept to receive during swap)
+     pub slippage_tolerance: Decimal,
++    /// Neutron Ibc config
++    pub neutron_ibc_config: Option<NeutronIbcConfig>,
+ }
+ 
+ #[cw_serde]
+@@ -175,29 +198,40 @@ pub enum QueryMsg {
+     /// Get config parameters
+     #[returns(ConfigResponse)]
+     Config {},
+-    /// Get routes for swapping an input denom into an output denom.
+-    ///
+-    /// NOTE: The response type of this query is chain-specific.
+-    #[returns(RouteResponse<String>)]
+-    Route {
+-        denom_in: String,
+-        denom_out: String,
+-    },
+-    /// Enumerate all swap routes.
+-    ///
+-    /// NOTE: The response type of this query is chain-specific.
+-    #[returns(Vec<RouteResponse<String>>)]
+-    Routes {
+-        start_after: Option<(String, String)>,
+-        limit: Option<u32>,
+-    },
+ }
+ 
+-#[cw_serde]
+-pub struct RouteResponse<Route> {
+-    pub denom_in: String,
+-    pub denom_out: String,
+-    pub route: Route,
+-}
++// TODO: rover is private repo for now so can't use it as a dependency. Use rover types once repo is public.
++pub mod credit_manager {
++    use cosmwasm_schema::cw_serde;
++    use cosmwasm_std::{Coin, Uint128};
++
++    #[cw_serde]
++    pub enum ExecuteMsg {
++        UpdateCreditAccount {
++            account_id: String,
++            actions: Vec<Action>,
++        },
++    }
+ 
+-pub type RoutesResponse<Route> = Vec<RouteResponse<Route>>;
++    #[cw_serde]
++    pub enum Action {
++        Withdraw(Coin),
++        WithdrawLiquidity {
++            lp_token: ActionCoin,
++            minimum_receive: Vec<Coin>,
++        },
++        Unknown {}, // Used to simulate allowance only for: Withdraw and WithdrawLiquidity
++    }
++
++    #[cw_serde]
++    pub struct ActionCoin {
++        pub denom: String,
++        pub amount: ActionAmount,
++    }
++
++    #[cw_serde]
++    pub enum ActionAmount {
++        Exact(Uint128),
++        AccountBalance,
++    }
++}
+diff --git a/packages/types/src/swapper/adapter.rs b/packages/types/src/swapper/adapter.rs
+new file mode 100644
+index 00000000..e5390172
+--- /dev/null
++++ b/packages/types/src/swapper/adapter.rs
+@@ -0,0 +1,110 @@
++use cosmwasm_schema::cw_serde;
++use cosmwasm_std::{to_binary, Addr, Api, Coin, CosmosMsg, Decimal, Empty, StdResult, WasmMsg};
++
++use crate::swapper::ExecuteMsg;
++
++#[cw_serde]
++pub struct SwapperBase<T>(T);
++
++impl<T> SwapperBase<T> {
++    pub fn new(address: T) -> SwapperBase<T> {
++        SwapperBase(address)
++    }
++
++    pub fn address(&self) -> &T {
++        &self.0
++    }
++}
++
++pub type SwapperUnchecked = SwapperBase<String>;
++pub type Swapper = SwapperBase<Addr>;
++
++impl From<Swapper> for SwapperUnchecked {
++    fn from(s: Swapper) -> Self {
++        Self(s.address().to_string())
++    }
++}
++
++impl SwapperUnchecked {
++    pub fn check(&self, api: &dyn Api) -> StdResult<Swapper> {
++        Ok(SwapperBase::new(api.addr_validate(self.address())?))
++    }
++}
++
++impl Swapper {
++    /// Generate message for performing a swapper
++    pub fn swap_exact_in_msg(
++        &self,
++        coin_in: &Coin,
++        denom_out: &str,
++        slippage: Decimal,
++    ) -> StdResult<CosmosMsg> {
++        Ok(CosmosMsg::Wasm(WasmMsg::Execute {
++            contract_addr: self.address().to_string(),
++            msg: to_binary(&ExecuteMsg::<Empty>::SwapExactIn {
++                coin_in: coin_in.clone(),
++                denom_out: denom_out.to_string(),
++                slippage,
++            })?,
++            funds: vec![coin_in.clone()],
++        }))
++    }
++}
++
++#[cfg(test)]
++mod tests {
++    use cosmwasm_std::testing::MockApi;
++
++    use super::*;
++
++    #[test]
++    fn test_swapper_unchecked_from_swapper() {
++        let swapper = Swapper::new(Addr::unchecked("swapper"));
++        let swapper_unchecked = SwapperUnchecked::from(swapper.clone());
++        assert_eq!(swapper_unchecked.address(), "swapper");
++        assert_eq!(swapper_unchecked.check(&MockApi::default()).unwrap(), swapper);
++    }
++
++    #[test]
++    fn test_swapper_unchecked_check() {
++        let swapper = SwapperUnchecked::new("swapper".to_string());
++        assert_eq!(
++            swapper.check(&MockApi::default()).unwrap(),
++            Swapper::new(Addr::unchecked("swapper".to_string()))
++        );
++    }
++
++    #[test]
++    fn test_new_and_address() {
++        // Swapper
++        let swapper = Swapper::new(Addr::unchecked("swapper"));
++        assert_eq!(swapper.address(), &Addr::unchecked("swapper"));
++
++        // SwapperUnchecked
++        let swapper_unchecked = SwapperUnchecked::new("swapper".to_string());
++        assert_eq!(swapper_unchecked.address(), "swapper");
++    }
++
++    #[test]
++    fn test_swapper_swap_exact_in_msg() {
++        let swapper = Swapper::new(Addr::unchecked("swapper"));
++        let coin_in = Coin::new(100, "in");
++        let denom_out = "out";
++        let slippage = Decimal::percent(1);
++
++        let msg = swapper.swap_exact_in_msg(&coin_in, denom_out, slippage).unwrap();
++        assert_eq!(
++            msg,
++            CosmosMsg::Wasm(WasmMsg::Execute {
++                contract_addr: "swapper".to_string(),
++                msg: to_binary(&ExecuteMsg::<Empty>::SwapExactIn {
++                    coin_in: coin_in.clone(),
++                    denom_out: denom_out.to_string(),
++                    slippage,
++                })
++                .unwrap(),
++                funds: vec![coin_in],
++            })
++        );
++    }
++}
+diff --git a/packages/types/src/swapper/mod.rs b/packages/types/src/swapper/mod.rs
+new file mode 100644
+index 00000000..6071d783
+--- /dev/null
++++ b/packages/types/src/swapper/mod.rs
+@@ -0,0 +1,4 @@
++pub mod adapter;
++pub mod msgs;
++
++pub use self::{adapter::*, msgs::*};
+diff --git a/packages/types/src/swapper/msgs.rs b/packages/types/src/swapper/msgs.rs
+new file mode 100644
+index 00000000..bd270548
+--- /dev/null
++++ b/packages/types/src/swapper/msgs.rs
+@@ -0,0 +1,77 @@
++use cosmwasm_schema::{cw_serde, QueryResponses};
++use cosmwasm_std::{Addr, Coin, Decimal, Uint128};
++use mars_owner::OwnerUpdate;
++
++#[cw_serde]
++pub struct InstantiateMsg {
++    /// The contract's owner, who can update config
++    pub owner: String,
++}
++
++#[cw_serde]
++pub enum ExecuteMsg<Route> {
++    /// Manges owner role state
++    UpdateOwner(OwnerUpdate),
++    /// Configure the route for swapping an asset
++    ///
++    /// This is chain-specific, and can include parameters such as slippage tolerance and the routes
++    /// for multi-step swaps
++    SetRoute {
++        denom_in: String,
++        denom_out: String,
++        route: Route,
++    },
++    /// Perform a swapper with an exact-in amount. Requires slippage allowance %.
++    SwapExactIn {
++        coin_in: Coin,
++        denom_out: String,
++        slippage: Decimal,
++    },
++    /// Send swapper results back to swapper. Also refunds extra if sent more than needed. Internal use only.
++    TransferResult {
++        recipient: Addr,
++        denom_in: String,
++        denom_out: String,
++    },
++}
++
++#[cw_serde]
++#[derive(QueryResponses)]
++pub enum QueryMsg {
++    /// Query contract owner config
++    #[returns(mars_owner::OwnerResponse)]
++    Owner {},
++    /// Get route for swapping an input denom into an output denom
++    #[returns(RouteResponse<cosmwasm_std::Empty>)]
++    Route {
++        denom_in: String,
++        denom_out: String,
++    },
++    /// Enumerate all swapper routes
++    #[returns(RoutesResponse<cosmwasm_std::Empty>)]
++    Routes {
++        start_after: Option<(String, String)>,
++        limit: Option<u32>,
++    },
++    /// Return current spot price swapping In for Out
++    /// Warning: Do not use this as an oracle price feed. Use Mars-Oracle for pricing.
++    #[returns(EstimateExactInSwapResponse)]
++    EstimateExactInSwap {
++        coin_in: Coin,
++        denom_out: String,
++    },
++}
++
++#[cw_serde]
++pub struct RouteResponse<Route> {
++    pub denom_in: String,
++    pub denom_out: String,
++    pub route: Route,
++}
++
++pub type RoutesResponse<Route> = Vec<RouteResponse<Route>>;
++
++#[cw_serde]
++pub struct EstimateExactInSwapResponse {
++    pub amount: Uint128,
++}
