@@ -43,6 +43,7 @@ export type ExecuteMsg =
   | {
       deposit: {
         account_id?: string | null
+        on_behalf_of?: string | null
       }
     }
   | {

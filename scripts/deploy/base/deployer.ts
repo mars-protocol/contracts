@@ -130,6 +130,7 @@ export class Deployer {
       owner: this.deployerAddress,
       config: {
         address_provider: this.storage.addresses['address-provider']!,
+        close_factor: '0.5',
       },
     }
     await this.instantiate('red-bank', this.storage.codeIds['red-bank']!, msg)

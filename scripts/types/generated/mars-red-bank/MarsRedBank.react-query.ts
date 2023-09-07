@@ -636,6 +636,7 @@ export interface MarsRedBankDepositMutation {
   client: MarsRedBankClient
   msg: {
     accountId?: string
+    onBehalfOf?: string
   }
   args?: {
     fee?: number | StdFee | 'auto'
