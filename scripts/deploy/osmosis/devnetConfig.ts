@@ -443,11 +443,93 @@ export const usdOracle: OracleConfig = {
   }
 }
 
+// TWAP
+
+export const atomOracleTwap: OracleConfig = {
+  denom: atom,
+  price_source: {
+    geometric_twap: {
+      downtime_detector: { downtime: 'duration30m', recovery: 7200 },
+      window_size: 1800,
+      pool_id: 1,
+    },
+  },
+}
+
+export const axlOracleTwap: OracleConfig = {
+  denom: axl,
+  price_source: {
+    geometric_twap: {
+      downtime_detector: { downtime: 'duration30m', recovery: 7200 },
+      window_size: 1800,
+      pool_id: 812,
+    },
+  },
+}
+
+export const stAtomOracleTwap: OracleConfig = {
+  denom: stAtom,
+  price_source: {
+    staked_geometric_twap: {
+      downtime_detector: {
+        downtime: 'duration30m',
+        recovery: 7200
+      },
+      pool_id: 803,
+      transitive_denom: atom,
+      window_size: 1800
+    }
+  }
+}
+
+export const wbtcOracleTwap: OracleConfig = {
+  denom: wbtc,
+  price_source: {
+    geometric_twap: {
+      downtime_detector: { downtime: 'duration30m', recovery: 7200 },
+      window_size: 1800,
+      pool_id: 712,
+    },
+  },
+}
+
+export const axlUSDCOracleTwap: OracleConfig = {
+  denom: axlUSDC,
+  price_source: {
+    geometric_twap: {
+      downtime_detector: { downtime: 'duration30m', recovery: 7200 },
+      window_size: 1800,
+      pool_id: 678,
+    },
+  },
+}
+
+export const ethOracleTwap: OracleConfig = {
+  denom: eth,
+  price_source: {
+    geometric_twap: {
+      downtime_detector: { downtime: 'duration30m', recovery: 7200 },
+      window_size: 1800,
+      pool_id: 704,
+    },
+  },
+}
+
+export const osmoOracleTwap: OracleConfig = {
+  denom: osmo,
+  price_source: {
+    fixed: {
+      price: "1"
+    }
+  },
+}
+
 // ----------------------------------- Deployment -----------------------------------
 
 export const osmosisDevnet: DeploymentConfig = {
   oracleName: 'osmosis',
-  oracleBaseDenom: 'uusd',
+  // oracleBaseDenom: 'uusd',
+  oracleBaseDenom: 'uosmo',
   rewardsCollectorName: 'osmosis',
   atomDenom: atom,
   baseAssetDenom: osmo,
@@ -505,7 +587,8 @@ export const osmosisDevnet: DeploymentConfig = {
   swapperDexName: 'osmosis',
   assets: [osmoAsset, atomAsset, axlAsset, stAtomAsset, wbtcAsset, axlUSDCAsset, ethAsset],
   vaults: [atomOsmoVault, usdcOsmoVault, ethOsmoVault, wbtcOsmoVault, atomStAtomVault],
-  oracleConfigs: [usdOracle, osmoOracle, atomOracle, axlOracle, wbtcOracle, axlOracle, ethOracle, atomOsmoOracle, usdcOsmoOracle, ethOsmoOracle, wbtcOsmoOracle, atomStAtomOracle],
+  // oracleConfigs: [usdOracle, osmoOracle, atomOracle, axlOracle, stAtomOracle, wbtcOracle, axlUSDCOracle, ethOracle, atomOsmoOracle, usdcOsmoOracle, ethOsmoOracle, wbtcOsmoOracle, atomStAtomOracle],
+  oracleConfigs: [osmoOracleTwap, atomOracleTwap, axlOracleTwap, stAtomOracleTwap, wbtcOracleTwap, axlUSDCOracleTwap, ethOracleTwap, atomOsmoOracle, usdcOsmoOracle, ethOsmoOracle, wbtcOsmoOracle, atomStAtomOracle],
   targetHealthFactor: '1.2',
   incentiveEpochDuration: 604800, // 1 week
   maxWhitelistedIncentiveDenoms: 10,
