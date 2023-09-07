@@ -17,6 +17,7 @@ use mars_red_bank::{
 };
 use mars_red_bank_types::{
     address_provider::MarsAddressType,
+    error::MarsError,
     incentives,
     red_bank::{Collateral, ExecuteMsg, Market},
 };
@@ -586,4 +587,41 @@ fn depositing_on_behalf_of_cannot_enable_collateral() {
     let collateral =
         COLLATERALS.load(deps.as_ref().storage, (&on_behalf_of_addr, "", denom)).unwrap();
     assert!(!collateral.enabled);
+}
+
+#[test]
+fn depositing_by_credit_manager_on_behalf_of() {
+    let TestSuite {
+        mut deps,
+        denom,
+        ..
+    } = setup_test();
+
+    // disable the market
+    deps.querier.set_redbank_params(
+        denom,
+        AssetParams {
+            credit_manager: CmSettings {
+                whitelisted: false,
+                hls: None,
+            },
+            red_bank: RedBankSettings {
+                deposit_enabled: true,
+                borrow_enabled: true,
+            },
+            ..th_default_asset_params()
+        },
+    );
+
+    let err = execute(
+        deps.as_mut(),
+        mock_env(),
+        mock_info("credit_manager", &coins(123, denom)),
+        ExecuteMsg::Deposit {
+            account_id: None,
+            on_behalf_of: Some("some_user".to_string()),
+        },
+    )
+    .unwrap_err();
+    assert_eq!(err, ContractError::Mars(MarsError::Unauthorized {}));
 }

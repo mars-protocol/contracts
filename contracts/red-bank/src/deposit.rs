@@ -1,6 +1,9 @@
 use cosmwasm_std::{Addr, DepsMut, Env, MessageInfo, Response, Uint128};
 use mars_interest_rate::get_scaled_liquidity_amount;
-use mars_red_bank_types::address_provider::{self, MarsAddressType};
+use mars_red_bank_types::{
+    address_provider::{self, MarsAddressType},
+    error::MarsError,
+};
 
 use crate::{
     error::ContractError,
@@ -20,8 +23,8 @@ pub fn deposit(
     account_id: Option<String>,
 ) -> Result<Response, ContractError> {
     let user_addr: Addr;
-    let user = if let Some(address) = on_behalf_of {
-        user_addr = deps.api.addr_validate(&address)?;
+    let user = if let Some(address) = on_behalf_of.as_ref() {
+        user_addr = deps.api.addr_validate(address)?;
         User(&user_addr)
     } else {
         User(&info.sender)
@@ -38,11 +41,18 @@ pub fn deposit(
             MarsAddressType::Incentives,
             MarsAddressType::RewardsCollector,
             MarsAddressType::Params,
+            MarsAddressType::CreditManager,
         ],
     )?;
     let rewards_collector_addr = &addresses[&MarsAddressType::RewardsCollector];
     let incentives_addr = &addresses[&MarsAddressType::Incentives];
     let params_addr = &addresses[&MarsAddressType::Params];
+    let credit_manager_addr = &addresses[&MarsAddressType::CreditManager];
+
+    // credit manager can't deposit on behalf of users
+    if on_behalf_of.is_some() && info.sender == credit_manager_addr {
+        return Err(ContractError::Mars(MarsError::Unauthorized {}));
+    }
 
     let asset_params = query_asset_params(&deps.querier, params_addr, &denom)?;
 
