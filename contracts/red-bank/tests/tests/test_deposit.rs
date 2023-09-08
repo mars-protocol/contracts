@@ -590,10 +590,11 @@ fn depositing_on_behalf_of_cannot_enable_collateral() {
 }
 
 #[test]
-fn depositing_by_credit_manager_on_behalf_of() {
+fn depositing_on_behalf_of_credit_manager() {
     let TestSuite {
         mut deps,
         denom,
+        depositor_addr,
         ..
     } = setup_test();
 
@@ -616,10 +617,10 @@ fn depositing_by_credit_manager_on_behalf_of() {
     let err = execute(
         deps.as_mut(),
         mock_env(),
-        mock_info("credit_manager", &coins(123, denom)),
+        mock_info(depositor_addr.as_str(), &coins(123, denom)),
         ExecuteMsg::Deposit {
             account_id: None,
-            on_behalf_of: Some("some_user".to_string()),
+            on_behalf_of: Some("credit_manager".to_string()),
         },
     )
     .unwrap_err();

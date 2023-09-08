@@ -22,16 +22,6 @@ pub fn deposit(
     deposit_amount: Uint128,
     account_id: Option<String>,
 ) -> Result<Response, ContractError> {
-    let user_addr: Addr;
-    let user = if let Some(address) = on_behalf_of.as_ref() {
-        user_addr = deps.api.addr_validate(address)?;
-        User(&user_addr)
-    } else {
-        User(&info.sender)
-    };
-
-    let mut market = MARKETS.load(deps.storage, &denom)?;
-
     let config = CONFIG.load(deps.storage)?;
 
     let addresses = address_provider::helpers::query_contract_addrs(
@@ -49,10 +39,24 @@ pub fn deposit(
     let params_addr = &addresses[&MarsAddressType::Params];
     let credit_manager_addr = &addresses[&MarsAddressType::CreditManager];
 
-    // credit manager can't deposit on behalf of users
-    if on_behalf_of.is_some() && info.sender == credit_manager_addr {
-        return Err(ContractError::Mars(MarsError::Unauthorized {}));
-    }
+    let user_addr: Addr;
+    let user = match on_behalf_of.as_ref() {
+        // A malicious user can permanently disable the lend action in credit-manager contract by performing the following steps:
+        // 1.) Wait for a new asset XXX to be listed and makes sure there is no coin lent out for XXX from the credit-manager to red-bank.
+        // 2.) Calls deposit on red-bank and sends 1 XXX and deposits on behalf of credit-manager.
+        // 3.) A user wants to lend out XXX from credit-manager but the call fails because TOTAL_LENT_SHARES is never initialized
+        // because this query red_bank.query_lent(&deps.querier, &env.contract.address, &coin.denom)? returns one.
+        Some(address) if address == credit_manager_addr.as_str() => {
+            return Err(ContractError::Mars(MarsError::Unauthorized {}));
+        }
+        Some(address) => {
+            user_addr = deps.api.addr_validate(address)?;
+            User(&user_addr)
+        }
+        None => User(&info.sender),
+    };
+
+    let mut market = MARKETS.load(deps.storage, &denom)?;
 
     let asset_params = query_asset_params(&deps.querier, params_addr, &denom)?;
 
