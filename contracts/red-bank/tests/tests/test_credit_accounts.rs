@@ -17,7 +17,7 @@ fn deposit_and_withdraw_for_credit_account_works() {
 
     let funded_amt = 1_000_000_000_000u128;
     let provider = Addr::unchecked("provider"); // provides collateral to be borrowed by others
-    let credit_manager = Addr::unchecked("credit_manager");
+    let credit_manager = mock_env.credit_manager.clone();
     let account_id = "111".to_string();
 
     // setup red-bank

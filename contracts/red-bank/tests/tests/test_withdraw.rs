@@ -17,6 +17,7 @@ use mars_red_bank::{
 };
 use mars_red_bank_types::{
     address_provider::MarsAddressType,
+    error::MarsError,
     incentives,
     red_bank::{Collateral, Debt, ExecuteMsg, Market},
 };
@@ -938,4 +939,46 @@ fn withdraw_if_oracle_circuit_breakers_activated() {
     assert_err_with_str(res, expected_msg);
     let res = red_bank.withdraw_with_acc_id(&mut mock_env, &user, "uosmo", None, None, Some(true));
     assert_err_with_str(res, expected_msg);
+}
+
+#[test]
+fn withdrawing_with_account_id_by_non_credit_manager_user() {
+    let TestSuite {
+        mut deps,
+        denom,
+        withdrawer_addr,
+        ..
+    } = setup_test();
+
+    // non-credit-manager user cannot withdraw with account_id (even with empty string)
+    let err = execute(
+        deps.as_mut(),
+        mock_env(),
+        mock_info(withdrawer_addr.as_str(), &[]),
+        ExecuteMsg::Withdraw {
+            denom: denom.to_string(),
+            amount: Some(Uint128::from(2000u128)),
+            recipient: None,
+            account_id: Some("".to_string()),
+            liquidation_related: None,
+        },
+    )
+    .unwrap_err();
+    assert_eq!(err, ContractError::Mars(MarsError::Unauthorized {}));
+
+    // non-credit-manager user cannot withdraw with account_id
+    let err = execute(
+        deps.as_mut(),
+        mock_env(),
+        mock_info(withdrawer_addr.as_str(), &[]),
+        ExecuteMsg::Withdraw {
+            denom: denom.to_string(),
+            amount: Some(Uint128::from(2000u128)),
+            recipient: None,
+            account_id: Some("1234".to_string()),
+            liquidation_related: None,
+        },
+    )
+    .unwrap_err();
+    assert_eq!(err, ContractError::Mars(MarsError::Unauthorized {}));
 }
