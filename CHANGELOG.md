@@ -2,6 +2,15 @@
 
 All notable changes to this project will be documented in this file.
 
+## v1.2.0
+
+- Allow Credit account to lend/reclaim to the Red Bank (calls Deposit/Withdraw in Red Bank), claim incentive rewards from lending to the Red Bank (pass account_id to track Credit Manager users in `red-bank` and `incentives` contract).
+- Pyth oracle price sourcing support for EMA, confidence. Different price query for liquidation and other actions (Deposit / Borrow / Repay etc.).
+- New liquidation mechanism on Red Bank and Credit Manager to allow variable liquidation bonus and close factors (similar to Euler model).
+- Previously Red Bank and Credit Manager had separate deposit caps to protect against holding to many assets in relation to chain liquidity - consolidated these deposit caps into one `params` contract.
+- Common `swapper` contract for Red Bank and Credit Manager.
+- Credit Manager and Red Bank use `params` contract for common asset params (see new [types](/contracts/params/src/types)). Previous `Market` / `Markets` queries has changed - part of the params are moved to `params` contract (see [diff](./files/types_diff_v1_0_0__mars_v2.txt)).
+
 ## v1.0.0-rc0
 
 This section documents the API changes compared to the Terra Classic deployment, found in the [`mars-core`](https://github.com/mars-protocol/mars-core) repository. This section is **not comprehensive**, as the changes are numerous. Changelog for later version start here should be made comprehensive.
