@@ -54,15 +54,24 @@ pub fn calculate_liquidation_amounts(
         collateral_params,
     )?;
 
+    // All debt is liquidatable: When MDR < 0, it means even repaying the whole debt is not going to be enough
+    // to bring the account back to the THF, so the liquidator should be able to repay all the available debt.
+    // Given the numerator in the MDR formula is always > 0, MDR < 0 happens when the denominator is < 0
+    // (we include the case where it’s 0 given it would make MDR = infinite).
     let max_debt_repayable_numerator = (target_health_factor * health.total_debt_value)
         - health.liquidation_threshold_adjusted_collateral;
-    let max_debt_repayable_denominator = target_health_factor
-        - (collateral_params.liquidation_threshold * (Decimal::one() + liquidation_bonus));
+    let formula = collateral_params.liquidation_threshold * (Decimal::one() + liquidation_bonus);
+    let max_debt_repayable_amount = if formula < target_health_factor {
+        let max_debt_repayable_denominator = target_health_factor - formula;
 
-    let max_debt_repayable_value =
-        max_debt_repayable_numerator.checked_div_floor(max_debt_repayable_denominator)?;
+        let max_debt_repayable_value =
+            max_debt_repayable_numerator.checked_div_floor(max_debt_repayable_denominator)?;
 
-    let max_debt_repayable_amount = max_debt_repayable_value.checked_div_floor(debt_price)?;
+        let max_debt_repayable_amount = max_debt_repayable_value.checked_div_floor(debt_price)?;
+        Some(max_debt_repayable_amount)
+    } else {
+        None
+    };
 
     // calculate possible debt to repay based on available collateral
     let debt_amount_possible_to_repay = user_collateral_value
@@ -70,12 +79,13 @@ pub fn calculate_liquidation_amounts(
         .checked_div_floor(debt_price)?;
 
     let debt_amount_to_repay = *[
-        debt_amount,
-        debt_requested_to_repay,
+        Some(debt_amount),
+        Some(debt_requested_to_repay),
         max_debt_repayable_amount,
-        debt_amount_possible_to_repay,
+        Some(debt_amount_possible_to_repay),
     ]
     .iter()
+    .flatten()
     .min()
     .ok_or_else(|| StdError::generic_err("Minimum not found"))?;
 

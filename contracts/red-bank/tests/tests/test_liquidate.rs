@@ -603,6 +603,85 @@ fn same_asset_for_debt_and_collateral_with_refund() {
 }
 
 #[test]
+fn mdr_negative() {
+    let mut mock_env = MockEnvBuilder::new(None, Addr::unchecked("owner"))
+        .target_health_factor(Decimal::from_ratio(104u128, 100u128))
+        .build();
+
+    let red_bank = mock_env.red_bank.clone();
+    let params = mock_env.params.clone();
+    let oracle = mock_env.oracle.clone();
+
+    let funded_amt = 1_000_000_000_000u128;
+    let provider = Addr::unchecked("provider"); // provides collateral to be borrowed by others
+    let liquidatee = Addr::unchecked("liquidatee");
+    let liquidator = Addr::unchecked("liquidator");
+
+    // setup red-bank
+    let (market_params, asset_params) = _default_asset_params_with(
+        "uosmo",
+        Decimal::percent(70),
+        Decimal::percent(98),
+        LiquidationBonus {
+            starting_lb: Decimal::percent(10),
+            slope: Decimal::from_str("2.0").unwrap(),
+            min_lb: Decimal::percent(10),
+            max_lb: Decimal::percent(10),
+        },
+    );
+    red_bank.init_asset(&mut mock_env, &asset_params.denom, market_params);
+    params.init_params(&mut mock_env, asset_params);
+    let (market_params, asset_params) =
+        default_asset_params_with("ujake", Decimal::percent(50), Decimal::percent(55));
+    red_bank.init_asset(&mut mock_env, &asset_params.denom, market_params);
+    params.init_params(&mut mock_env, asset_params);
+    let (market_params, asset_params) =
+        default_asset_params_with("uusdc", Decimal::percent(82), Decimal::percent(90));
+    red_bank.init_asset(&mut mock_env, &asset_params.denom, market_params);
+    params.init_params(&mut mock_env, asset_params);
+
+    // setup oracle
+    oracle.set_price_source_fixed(&mut mock_env, "uosmo", Decimal::from_ratio(3u128, 1u128));
+    oracle.set_price_source_fixed(&mut mock_env, "ujake", Decimal::one());
+    oracle.set_price_source_fixed(&mut mock_env, "uusdc", Decimal::from_ratio(2u128, 1u128));
+
+    // fund accounts
+    mock_env.fund_accounts(
+        &[&provider, &liquidatee, &liquidator],
+        funded_amt,
+        &["uosmo", "ujake", "uusdc"],
+    );
+
+    // provider deposits collaterals
+    red_bank.deposit(&mut mock_env, &provider, coin(1000000, "uusdc")).unwrap();
+
+    // liquidatee deposits and borrows
+    red_bank.deposit(&mut mock_env, &liquidatee, coin(10000, "uosmo")).unwrap();
+    red_bank.deposit(&mut mock_env, &liquidatee, coin(2000, "ujake")).unwrap();
+    red_bank.borrow(&mut mock_env, &liquidatee, "uusdc", 3000).unwrap();
+
+    // change price to be able to liquidate
+    oracle.set_price_source_fixed(&mut mock_env, "uusdc", Decimal::from_ratio(12u128, 1u128));
+
+    // liquidate user
+    let usdc_repay_amt = 3000;
+    let error_res = red_bank.liquidate(
+        &mut mock_env,
+        &liquidator,
+        &liquidatee,
+        "uosmo",
+        &[coin(usdc_repay_amt, "uusdc")],
+    );
+    assert_err(
+        error_res,
+        ContractError::HealthNotImproved {
+            prev_hf: "0.847222222222222222".to_string(),
+            new_hf: "0.127174908424908424".to_string(),
+        },
+    );
+}
+
+#[test]
 fn liquidate_uncollateralized_loan() {
     let owner = Addr::unchecked("owner");
     let mut mock_env = MockEnvBuilder::new(None, owner.clone()).build();
@@ -1111,6 +1190,25 @@ fn default_asset_params_with(
     max_loan_to_value: Decimal,
     liquidation_threshold: Decimal,
 ) -> (InitOrUpdateAssetParams, AssetParams) {
+    _default_asset_params_with(
+        denom,
+        max_loan_to_value,
+        liquidation_threshold,
+        LiquidationBonus {
+            starting_lb: Decimal::percent(1),
+            slope: Decimal::from_str("2.0").unwrap(),
+            min_lb: Decimal::percent(2),
+            max_lb: Decimal::percent(10),
+        },
+    )
+}
+
+fn _default_asset_params_with(
+    denom: &str,
+    max_loan_to_value: Decimal,
+    liquidation_threshold: Decimal,
+    liquidation_bonus: LiquidationBonus,
+) -> (InitOrUpdateAssetParams, AssetParams) {
     let market_params = InitOrUpdateAssetParams {
         reserve_factor: Some(Decimal::percent(20)),
         interest_rate_model: Some(InterestRateModel {
@@ -1132,12 +1230,7 @@ fn default_asset_params_with(
         },
         max_loan_to_value,
         liquidation_threshold,
-        liquidation_bonus: LiquidationBonus {
-            starting_lb: Decimal::percent(1),
-            slope: Decimal::from_str("2.0").unwrap(),
-            min_lb: Decimal::percent(2),
-            max_lb: Decimal::percent(10),
-        },
+        liquidation_bonus,
         protocol_liquidation_fee: Decimal::percent(2),
         deposit_cap: Uint128::MAX,
     };
