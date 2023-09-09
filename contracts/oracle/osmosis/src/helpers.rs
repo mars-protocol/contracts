@@ -15,22 +15,25 @@ pub fn assert_osmosis_pool_assets(
     denom: &str,
     base_denom: &str,
 ) -> ContractResult<()> {
+    assert_pool_has_two_assets(pool)?;
+    assert_pool_contains_assets(pool, denom, base_denom)?;
+
     match pool {
         Pool::Balancer(balancer_pool) => {
-            assert_osmosis_xyk_pool(balancer_pool)?;
+            assert_equal_asset_weights(balancer_pool)?;
         }
         Pool::StableSwap(_) => {}
     };
-
-    assert_osmosis_pool_contains_two_assets(pool, denom, base_denom)?;
 
     Ok(())
 }
 
 /// Assert the Osmosis pool indicated by `pool_id` is Balancer XYK type
 pub fn assert_osmosis_xyk_lp_pool(pool: &Pool) -> ContractResult<()> {
+    assert_pool_has_two_assets(pool)?;
+
     match pool {
-        Pool::Balancer(balancer_pool) => assert_osmosis_xyk_pool(balancer_pool)?,
+        Pool::Balancer(balancer_pool) => assert_equal_asset_weights(balancer_pool)?,
         Pool::StableSwap(stable_swap_pool) => {
             return Err(ContractError::InvalidPriceSource {
                 reason: format!("StableSwap pool not supported. Pool id {}", stable_swap_pool.id),
@@ -41,11 +44,25 @@ pub fn assert_osmosis_xyk_lp_pool(pool: &Pool) -> ContractResult<()> {
     Ok(())
 }
 
-fn assert_osmosis_pool_contains_two_assets(
-    pool: &Pool,
-    denom: &str,
-    base_denom: &str,
-) -> ContractResult<()> {
+/// Assert the Osmosis pool has exactly two assets
+fn assert_pool_has_two_assets(pool: &Pool) -> ContractResult<()> {
+    let pool_id = pool.get_pool_id();
+    let pool_denoms = pool.get_pool_denoms();
+    if pool_denoms.len() != 2 {
+        return Err(ContractError::InvalidPriceSource {
+            reason: format!(
+                "expecting pool {} to contain exactly two coins; found {}",
+                pool_id,
+                pool_denoms.len()
+            ),
+        });
+    }
+
+    Ok(())
+}
+
+/// Assert the Osmosis pool contains both `denom` and `base_denom`, and they are not the same
+fn assert_pool_contains_assets(pool: &Pool, denom: &str, base_denom: &str) -> ContractResult<()> {
     let pool_id = pool.get_pool_id();
     let pool_denoms = pool.get_pool_denoms();
 
@@ -70,18 +87,8 @@ fn assert_osmosis_pool_contains_two_assets(
     Ok(())
 }
 
-/// Assert the Osmosis pool indicated by `pool_id` is of XYK type
-pub fn assert_osmosis_xyk_pool(pool: &BalancerPool) -> ContractResult<()> {
-    if pool.pool_assets.len() != 2 {
-        return Err(ContractError::InvalidPriceSource {
-            reason: format!(
-                "expecting pool {} to contain exactly two coins; found {}",
-                pool.id,
-                pool.pool_assets.len()
-            ),
-        });
-    }
-
+/// Assert the Osmosis pool has assets with equal weights (for XYK pools)
+fn assert_equal_asset_weights(pool: &BalancerPool) -> ContractResult<()> {
     if pool.pool_assets[0].weight != pool.pool_assets[1].weight {
         return Err(ContractError::InvalidPriceSource {
             reason: format!("assets in pool {} do not have equal weights", pool.id),

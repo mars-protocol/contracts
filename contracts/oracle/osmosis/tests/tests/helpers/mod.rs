@@ -91,6 +91,11 @@ pub fn setup_test_with_pools() -> OwnedDeps<MockStorage, MockApi, MarsMockQuerie
     deps.querier
         .set_query_pool_response(5555, prepare_query_stable_swap_pool_response(5555, &assets));
 
+    // Set StableSwap pool with more than 3 assets
+    let assets = vec![coin(42069, "uatom"), coin(69420, "uosmo"), coin(69420, "uusdc")];
+    deps.querier
+        .set_query_pool_response(6666, prepare_query_stable_swap_pool_response(6666, &assets));
+
     deps
 }
 

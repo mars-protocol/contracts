@@ -190,6 +190,15 @@ fn setting_price_source_spot() {
         }
     );
 
+    // attempting to use a StableSwap pool that contains more than two assets; should fail
+    let err = set_price_source_spot("uatom", 6666).unwrap_err();
+    assert_eq!(
+        err,
+        ContractError::InvalidPriceSource {
+            reason: "expecting pool 6666 to contain exactly two coins; found 3".to_string()
+        }
+    );
+
     // properly set spot price source
     let res = set_price_source_spot("umars", 89).unwrap();
     assert_eq!(res.messages.len(), 0);
@@ -274,6 +283,15 @@ fn setting_price_source_arithmetic_twap_with_invalid_params() {
         err,
         ContractError::InvalidPriceSource {
             reason: "assets in pool 4444 do not have equal weights".to_string()
+        }
+    );
+
+    // attempting to use a StableSwap pool that contains more than two assets; should fail
+    let err = set_price_source_twap("uatom", 6666, 86400, None).unwrap_err();
+    assert_eq!(
+        err,
+        ContractError::InvalidPriceSource {
+            reason: "expecting pool 6666 to contain exactly two coins; found 3".to_string()
         }
     );
 
@@ -446,6 +464,15 @@ fn setting_price_source_geometric_twap_with_invalid_params() {
         err,
         ContractError::InvalidPriceSource {
             reason: "assets in pool 4444 do not have equal weights".to_string()
+        }
+    );
+
+    // attempting to use a StableSwap pool that contains more than two assets; should fail
+    let err = set_price_source_twap("uatom", 6666, 86400, None).unwrap_err();
+    assert_eq!(
+        err,
+        ContractError::InvalidPriceSource {
+            reason: "expecting pool 6666 to contain exactly two coins; found 3".to_string()
         }
     );
 
@@ -622,11 +649,20 @@ fn setting_price_source_staked_geometric_twap_with_invalid_params() {
     );
 
     // attempting to use not XYK pool
-    let err = set_price_source_twap("ustatom", "uatom", 4444, 86400, None).unwrap_err();
+    let err = set_price_source_twap("uion", "uosmo", 4444, 86400, None).unwrap_err();
     assert_eq!(
         err,
         ContractError::InvalidPriceSource {
             reason: "assets in pool 4444 do not have equal weights".to_string()
+        }
+    );
+
+    // attempting to use a StableSwap pool that contains more than two assets; should fail
+    let err = set_price_source_twap("uatom", "uusdc", 6666, 86400, None).unwrap_err();
+    assert_eq!(
+        err,
+        ContractError::InvalidPriceSource {
+            reason: "expecting pool 6666 to contain exactly two coins; found 3".to_string()
         }
     );
 
@@ -814,11 +850,20 @@ fn setting_price_source_lsd_with_invalid_params() {
     );
 
     // attempting to use not XYK pool
-    let err = set_price_source_twap("ustatom", "uatom", 4444, 86400, None).unwrap_err();
+    let err = set_price_source_twap("uion", "uosmo", 4444, 86400, None).unwrap_err();
     assert_eq!(
         err,
         ContractError::InvalidPriceSource {
             reason: "assets in pool 4444 do not have equal weights".to_string()
+        }
+    );
+
+    // attempting to use a StableSwap pool that contains more than two assets; should fail
+    let err = set_price_source_twap("uatom", "uusdc", 6666, 86400, None).unwrap_err();
+    assert_eq!(
+        err,
+        ContractError::InvalidPriceSource {
+            reason: "expecting pool 6666 to contain exactly two coins; found 3".to_string()
         }
     );
 
