@@ -1,6 +1,9 @@
-use cosmwasm_std::{DepsMut, Env, MessageInfo, Response, Uint128};
+use cosmwasm_std::{Addr, DepsMut, Env, MessageInfo, Response, Uint128};
 use mars_interest_rate::get_scaled_liquidity_amount;
-use mars_red_bank_types::address_provider::{self, MarsAddressType};
+use mars_red_bank_types::{
+    address_provider::{self, MarsAddressType},
+    error::MarsError,
+};
 
 use crate::{
     error::ContractError,
@@ -14,12 +17,11 @@ pub fn deposit(
     deps: DepsMut,
     env: Env,
     info: MessageInfo,
+    on_behalf_of: Option<String>,
     denom: String,
     deposit_amount: Uint128,
     account_id: Option<String>,
 ) -> Result<Response, ContractError> {
-    let mut market = MARKETS.load(deps.storage, &denom)?;
-
     let config = CONFIG.load(deps.storage)?;
 
     let addresses = address_provider::helpers::query_contract_addrs(
@@ -29,11 +31,32 @@ pub fn deposit(
             MarsAddressType::Incentives,
             MarsAddressType::RewardsCollector,
             MarsAddressType::Params,
+            MarsAddressType::CreditManager,
         ],
     )?;
     let rewards_collector_addr = &addresses[&MarsAddressType::RewardsCollector];
     let incentives_addr = &addresses[&MarsAddressType::Incentives];
     let params_addr = &addresses[&MarsAddressType::Params];
+    let credit_manager_addr = &addresses[&MarsAddressType::CreditManager];
+
+    let user_addr: Addr;
+    let user = match on_behalf_of.as_ref() {
+        // A malicious user can permanently disable the lend action in credit-manager contract by performing the following steps:
+        // 1.) Wait for a new asset XXX to be listed and makes sure there is no coin lent out for XXX from the credit-manager to red-bank.
+        // 2.) Calls deposit on red-bank and sends 1 XXX and deposits on behalf of credit-manager.
+        // 3.) A user wants to lend out XXX from credit-manager but the call fails because TOTAL_LENT_SHARES is never initialized
+        // because this query red_bank.query_lent(&deps.querier, &env.contract.address, &coin.denom)? returns one.
+        Some(address) if address == credit_manager_addr.as_str() => {
+            return Err(ContractError::Mars(MarsError::Unauthorized {}));
+        }
+        Some(address) => {
+            user_addr = deps.api.addr_validate(address)?;
+            User(&user_addr)
+        }
+        None => User(&info.sender),
+    };
+
+    let mut market = MARKETS.load(deps.storage, &denom)?;
 
     let asset_params = query_asset_params(&deps.querier, params_addr, &denom)?;
 
@@ -68,7 +91,7 @@ pub fn deposit(
     let deposit_amount_scaled =
         get_scaled_liquidity_amount(deposit_amount, &market, env.block.time.seconds())?;
 
-    response = User(&info.sender).increase_collateral(
+    response = user.increase_collateral(
         deps.storage,
         &market,
         deposit_amount_scaled,
@@ -86,6 +109,7 @@ pub fn deposit(
     Ok(response
         .add_attribute("action", "deposit")
         .add_attribute("sender", &info.sender)
+        .add_attribute("on_behalf_of", user)
         .add_attribute("denom", denom)
         .add_attribute("amount", deposit_amount)
         .add_attribute("amount_scaled", deposit_amount_scaled))

@@ -746,6 +746,7 @@ fn response_verification() {
         mock_info(provider.as_str(), &[coin(1000000, "uusdc")]),
         ExecuteMsg::Deposit {
             account_id: None,
+            on_behalf_of: None,
         },
     )
     .unwrap();
@@ -755,6 +756,7 @@ fn response_verification() {
         mock_info(provider.as_str(), &[coin(1000000, "untrn")]),
         ExecuteMsg::Deposit {
             account_id: None,
+            on_behalf_of: None,
         },
     )
     .unwrap();
@@ -766,6 +768,7 @@ fn response_verification() {
         mock_info(liquidatee.as_str(), &[coin(10000, "uosmo")]),
         ExecuteMsg::Deposit {
             account_id: None,
+            on_behalf_of: None,
         },
     )
     .unwrap();
@@ -775,6 +778,7 @@ fn response_verification() {
         mock_info(liquidatee.as_str(), &[coin(900, "uatom")]),
         ExecuteMsg::Deposit {
             account_id: None,
+            on_behalf_of: None,
         },
     )
     .unwrap();

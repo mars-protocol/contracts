@@ -56,6 +56,9 @@ pub enum ExecuteMsg {
     Deposit {
         /// Credit account id (Rover)
         account_id: Option<String>,
+
+        /// Address that will receive the coins
+        on_behalf_of: Option<String>,
     },
 
     /// Withdraw native coins

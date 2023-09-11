@@ -445,8 +445,10 @@ export interface MarsRedBankInterface extends MarsRedBankReadOnlyInterface {
   deposit: (
     {
       accountId,
+      onBehalfOf,
     }: {
       accountId?: string
+      onBehalfOf?: string
     },
     fee?: number | StdFee | 'auto',
     memo?: string,
@@ -668,8 +670,10 @@ export class MarsRedBankClient extends MarsRedBankQueryClient implements MarsRed
   deposit = async (
     {
       accountId,
+      onBehalfOf,
     }: {
       accountId?: string
+      onBehalfOf?: string
     },
     fee: number | StdFee | 'auto' = 'auto',
     memo?: string,
@@ -681,6 +685,7 @@ export class MarsRedBankClient extends MarsRedBankQueryClient implements MarsRed
       {
         deposit: {
           account_id: accountId,
+          on_behalf_of: onBehalfOf,
         },
       },
       fee,

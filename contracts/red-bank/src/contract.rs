@@ -50,9 +50,18 @@ pub fn execute(
         }
         ExecuteMsg::Deposit {
             account_id,
+            on_behalf_of,
         } => {
             let sent_coin = cw_utils::one_coin(&info)?;
-            deposit::deposit(deps, env, info, sent_coin.denom, sent_coin.amount, account_id)
+            deposit::deposit(
+                deps,
+                env,
+                info,
+                on_behalf_of,
+                sent_coin.denom,
+                sent_coin.amount,
+                account_id,
+            )
         }
         ExecuteMsg::Withdraw {
             denom,

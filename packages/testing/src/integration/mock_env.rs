@@ -355,6 +355,7 @@ impl RedBank {
             self.contract_addr.clone(),
             &red_bank::ExecuteMsg::Deposit {
                 account_id,
+                on_behalf_of: None,
             },
             &[coin],
         )
