@@ -1,6 +1,6 @@
 use cosmwasm_std::{DepsMut, Env, MessageInfo, Response, Uint128};
 use mars_interest_rate::{get_scaled_liquidity_amount, get_underlying_liquidity_amount};
-use mars_red_bank_types::{address_provider, address_provider::MarsAddressType};
+use mars_red_bank_types::{address_provider, address_provider::MarsAddressType, error::MarsError};
 use mars_utils::helpers::build_send_asset_msg;
 
 use crate::{
@@ -21,6 +21,32 @@ pub fn withdraw(
     account_id: Option<String>,
     liquidation_related: bool,
 ) -> Result<Response, ContractError> {
+    let config = CONFIG.load(deps.storage)?;
+
+    let addresses = address_provider::helpers::query_contract_addrs(
+        deps.as_ref(),
+        &config.address_provider,
+        vec![
+            MarsAddressType::Oracle,
+            MarsAddressType::Incentives,
+            MarsAddressType::RewardsCollector,
+            MarsAddressType::Params,
+            MarsAddressType::CreditManager,
+        ],
+    )?;
+    let rewards_collector_addr = &addresses[&MarsAddressType::RewardsCollector];
+    let incentives_addr = &addresses[&MarsAddressType::Incentives];
+    let oracle_addr = &addresses[&MarsAddressType::Oracle];
+    let params_addr = &addresses[&MarsAddressType::Params];
+    let credit_manager_addr = &addresses[&MarsAddressType::CreditManager];
+
+    // Don't allow red-bank users to create alternative account ids.
+    // Only allow credit-manager contract to create them.
+    // Even if account_id contains empty string we won't allow it.
+    if account_id.is_some() && info.sender != credit_manager_addr {
+        return Err(ContractError::Mars(MarsError::Unauthorized {}));
+    }
+
     let withdrawer = User(&info.sender);
     let acc_id = account_id.clone().unwrap_or("".to_string());
 
@@ -53,25 +79,6 @@ pub fn withdraw(
         // If no amount is specified, the full balance is withdrawn
         None => withdrawer_balance_before,
     };
-
-    let config = CONFIG.load(deps.storage)?;
-
-    let addresses = address_provider::helpers::query_contract_addrs(
-        deps.as_ref(),
-        &config.address_provider,
-        vec![
-            MarsAddressType::Oracle,
-            MarsAddressType::Incentives,
-            MarsAddressType::RewardsCollector,
-            MarsAddressType::Params,
-            MarsAddressType::CreditManager,
-        ],
-    )?;
-    let rewards_collector_addr = &addresses[&MarsAddressType::RewardsCollector];
-    let incentives_addr = &addresses[&MarsAddressType::Incentives];
-    let oracle_addr = &addresses[&MarsAddressType::Oracle];
-    let params_addr = &addresses[&MarsAddressType::Params];
-    let credit_manager_addr = &addresses[&MarsAddressType::CreditManager];
 
     // if withdraw is part of the liquidation in credit manager we need to use correct pricing for the assets
     let liquidation_related = info.sender == credit_manager_addr && liquidation_related;

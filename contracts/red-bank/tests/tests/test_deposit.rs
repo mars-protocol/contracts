@@ -598,22 +598,6 @@ fn depositing_on_behalf_of_credit_manager() {
         ..
     } = setup_test();
 
-    // disable the market
-    deps.querier.set_redbank_params(
-        denom,
-        AssetParams {
-            credit_manager: CmSettings {
-                whitelisted: false,
-                hls: None,
-            },
-            red_bank: RedBankSettings {
-                deposit_enabled: true,
-                borrow_enabled: true,
-            },
-            ..th_default_asset_params()
-        },
-    );
-
     let err = execute(
         deps.as_mut(),
         mock_env(),
@@ -621,6 +605,42 @@ fn depositing_on_behalf_of_credit_manager() {
         ExecuteMsg::Deposit {
             account_id: None,
             on_behalf_of: Some("credit_manager".to_string()),
+        },
+    )
+    .unwrap_err();
+    assert_eq!(err, ContractError::Mars(MarsError::Unauthorized {}));
+}
+
+#[test]
+fn depositing_with_account_id_by_non_credit_manager_user() {
+    let TestSuite {
+        mut deps,
+        denom,
+        depositor_addr,
+        ..
+    } = setup_test();
+
+    // non-credit-manager user cannot deposit with account_id (even with empty string)
+    let err = execute(
+        deps.as_mut(),
+        mock_env(),
+        mock_info(depositor_addr.as_str(), &coins(123, denom)),
+        ExecuteMsg::Deposit {
+            account_id: Some("".to_string()),
+            on_behalf_of: None,
+        },
+    )
+    .unwrap_err();
+    assert_eq!(err, ContractError::Mars(MarsError::Unauthorized {}));
+
+    // non-credit-manager user cannot deposit with account_id
+    let err = execute(
+        deps.as_mut(),
+        mock_env(),
+        mock_info(depositor_addr.as_str(), &coins(123, denom)),
+        ExecuteMsg::Deposit {
+            account_id: Some("1234".to_string()),
+            on_behalf_of: None,
         },
     )
     .unwrap_err();

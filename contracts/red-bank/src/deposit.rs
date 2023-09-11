@@ -39,6 +39,13 @@ pub fn deposit(
     let params_addr = &addresses[&MarsAddressType::Params];
     let credit_manager_addr = &addresses[&MarsAddressType::CreditManager];
 
+    // Don't allow red-bank users to create alternative account ids.
+    // Only allow credit-manager contract to create them.
+    // Even if account_id contains empty string we won't allow it.
+    if account_id.is_some() && info.sender != credit_manager_addr {
+        return Err(ContractError::Mars(MarsError::Unauthorized {}));
+    }
+
     let user_addr: Addr;
     let user = match on_behalf_of.as_ref() {
         // A malicious user can permanently disable the lend action in credit-manager contract by performing the following steps:
