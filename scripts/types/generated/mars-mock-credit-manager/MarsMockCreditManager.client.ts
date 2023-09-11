@@ -16,6 +16,7 @@ import {
   VaultAmount1,
   UnlockingPositions,
   Addr,
+  AccountKind,
   Positions,
   DebtAmount,
   Coin,
@@ -25,7 +26,6 @@ import {
   VaultBaseForAddr,
   QueryMsg,
   VaultBaseForString,
-  AccountKind,
   ArrayOfAccount,
   Account,
   ArrayOfCoinBalanceResponseItem,
@@ -280,6 +280,18 @@ export interface MarsMockCreditManagerInterface extends MarsMockCreditManagerRea
     memo?: string,
     _funds?: Coin[],
   ) => Promise<ExecuteResult>
+  setAccountKindResponse: (
+    {
+      accountId,
+      kind,
+    }: {
+      accountId: string
+      kind: AccountKind
+    },
+    fee?: number | StdFee | 'auto',
+    memo?: string,
+    _funds?: Coin[],
+  ) => Promise<ExecuteResult>
 }
 export class MarsMockCreditManagerClient
   extends MarsMockCreditManagerQueryClient
@@ -295,6 +307,7 @@ export class MarsMockCreditManagerClient
     this.sender = sender
     this.contractAddress = contractAddress
     this.setPositionsResponse = this.setPositionsResponse.bind(this)
+    this.setAccountKindResponse = this.setAccountKindResponse.bind(this)
   }
 
   setPositionsResponse = async (
@@ -316,6 +329,32 @@ export class MarsMockCreditManagerClient
         set_positions_response: {
           account_id: accountId,
           positions,
+        },
+      },
+      fee,
+      memo,
+      _funds,
+    )
+  }
+  setAccountKindResponse = async (
+    {
+      accountId,
+      kind,
+    }: {
+      accountId: string
+      kind: AccountKind
+    },
+    fee: number | StdFee | 'auto' = 'auto',
+    memo?: string,
+    _funds?: Coin[],
+  ): Promise<ExecuteResult> => {
+    return await this.client.execute(
+      this.sender,
+      this.contractAddress,
+      {
+        set_account_kind_response: {
+          account_id: accountId,
+          kind,
         },
       },
       fee,

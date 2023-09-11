@@ -366,6 +366,7 @@ export interface ConfigUpdates {
   zapper?: ZapperBaseForString | null
 }
 export interface NftConfigUpdates {
+  credit_manager_contract_addr?: string | null
   health_contract_addr?: string | null
   max_value_for_burn?: Uint128 | null
 }

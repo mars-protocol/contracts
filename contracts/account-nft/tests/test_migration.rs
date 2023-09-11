@@ -9,9 +9,9 @@ use cw721_base_v16::{
     msg::InstantiateMsg as Cw721v16InstantiateMsg, Cw721Contract as Cw721ContractV16,
 };
 use mars_account_nft::{
-    contract::migrate, error::ContractError, migrations::v2_0_0::v1_state, nft_config::NftConfig,
-    state::CONFIG,
+    contract::migrate, error::ContractError, migrations::v2_0_0::v1_state, state::CONFIG,
 };
+use mars_account_nft_types::nft_config::NftConfig;
 
 pub mod helpers;
 
@@ -153,7 +153,8 @@ fn proper_migration() {
         config,
         NftConfig {
             max_value_for_burn: old_max_value_for_burn,
-            health_contract_addr: None
+            health_contract_addr: None,
+            credit_manager_contract_addr: None
         }
     );
 }

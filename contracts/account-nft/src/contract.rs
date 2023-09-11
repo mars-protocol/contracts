@@ -1,19 +1,19 @@
-use std::convert::TryInto;
-
 #[cfg(not(feature = "library"))]
 use cosmwasm_std::entry_point;
 use cosmwasm_std::{
-    to_binary, Binary, Deps, DepsMut, Empty, Env, MessageInfo, Response, StdResult,
+    to_binary, Addr, Binary, Deps, DepsMut, Empty, Env, MessageInfo, Response, StdResult,
 };
 use cw2::set_contract_version;
 use cw721_base::Cw721Contract;
+use mars_account_nft_types::{
+    msg::{ExecuteMsg, InstantiateMsg, QueryMsg},
+    nft_config::NftConfig,
+};
 
 use crate::{
     error::ContractError,
     execute::{burn, mint, update_config},
     migrations,
-    msg::{ExecuteMsg, InstantiateMsg, QueryMsg},
-    nft_config::NftConfig,
     query::{query_config, query_next_id},
     state::{CONFIG, NEXT_ID},
 };
@@ -35,17 +35,19 @@ pub fn instantiate(
 
     NEXT_ID.save(deps.storage, &1)?;
 
-    let health_contract_addr = msg
-        .health_contract
-        .as_ref()
-        .map(|unchecked| deps.api.addr_validate(unchecked))
-        .transpose()?;
+    let validate_func = |contract: Option<&String>| -> StdResult<Option<Addr>> {
+        contract.map(|unchecked| deps.api.addr_validate(unchecked)).transpose()
+    };
+
+    let health_contract_addr = validate_func(msg.health_contract.as_ref())?;
+    let credit_manager_contract_addr = validate_func(msg.credit_manager_contract.as_ref())?;
 
     CONFIG.save(
         deps.storage,
         &NftConfig {
             max_value_for_burn: msg.max_value_for_burn,
             health_contract_addr,
+            credit_manager_contract_addr,
         },
     )?;
 

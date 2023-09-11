@@ -1462,12 +1462,26 @@ dependencies = [
  "cw721 0.18.0",
  "cw721-base 0.16.0",
  "cw721-base 0.18.0",
+ "mars-account-nft-types",
+ "mars-mock-credit-manager",
  "mars-mock-rover-health",
+ "mars-owner 2.0.0",
  "mars-red-bank-types 1.2.0",
  "mars-rover 1.0.0",
+ "mars-rover 2.0.0",
  "mars-rover-health-types",
  "serde_json",
  "thiserror",
+]
+
+[[package]]
+name = "mars-account-nft-types"
+version = "2.0.0"
+dependencies = [
+ "cosmwasm-schema",
+ "cosmwasm-std",
+ "cw721 0.18.0",
+ "cw721-base 0.18.0",
 ]
 
 [[package]]
@@ -1501,6 +1515,7 @@ dependencies = [
  "cw721-base 0.18.0",
  "itertools 0.11.0",
  "mars-account-nft",
+ "mars-account-nft-types",
  "mars-address-provider",
  "mars-liquidation",
  "mars-mock-incentives",
@@ -1728,7 +1743,7 @@ dependencies = [
  "cw2 1.1.0",
  "cw721 0.18.0",
  "cw721-base 0.18.0",
- "mars-account-nft",
+ "mars-account-nft-types",
  "mars-liquidation",
  "mars-owner 2.0.0",
  "mars-params",

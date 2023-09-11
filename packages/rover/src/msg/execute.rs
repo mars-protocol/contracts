@@ -2,7 +2,7 @@ use std::collections::BTreeSet;
 
 use cosmwasm_schema::cw_serde;
 use cosmwasm_std::{to_binary, Addr, Coin, CosmosMsg, Decimal, StdResult, Uint128, WasmMsg};
-use mars_account_nft::nft_config::NftConfigUpdates;
+use mars_account_nft_types::nft_config::NftConfigUpdates;
 use mars_owner::OwnerUpdate;
 use mars_rover_health_types::{AccountKind, HealthState};
 

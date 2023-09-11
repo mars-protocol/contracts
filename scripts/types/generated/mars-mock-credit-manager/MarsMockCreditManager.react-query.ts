@@ -17,6 +17,7 @@ import {
   VaultAmount1,
   UnlockingPositions,
   Addr,
+  AccountKind,
   Positions,
   DebtAmount,
   Coin,
@@ -26,7 +27,6 @@ import {
   VaultBaseForAddr,
   QueryMsg,
   VaultBaseForString,
-  AccountKind,
   ArrayOfAccount,
   Account,
   ArrayOfCoinBalanceResponseItem,
@@ -436,6 +436,30 @@ export function useMarsMockCreditManagerAccountKindQuery<TData = AccountKind>({
           })
         : Promise.reject(new Error('Invalid client')),
     { ...options, enabled: !!client && (options?.enabled != undefined ? options.enabled : true) },
+  )
+}
+export interface MarsMockCreditManagerSetAccountKindResponseMutation {
+  client: MarsMockCreditManagerClient
+  msg: {
+    accountId: string
+    kind: AccountKind
+  }
+  args?: {
+    fee?: number | StdFee | 'auto'
+    memo?: string
+    funds?: Coin[]
+  }
+}
+export function useMarsMockCreditManagerSetAccountKindResponseMutation(
+  options?: Omit<
+    UseMutationOptions<ExecuteResult, Error, MarsMockCreditManagerSetAccountKindResponseMutation>,
+    'mutationFn'
+  >,
+) {
+  return useMutation<ExecuteResult, Error, MarsMockCreditManagerSetAccountKindResponseMutation>(
+    ({ client, msg, args: { fee, memo, funds } = {} }) =>
+      client.setAccountKindResponse(msg, fee, memo, funds),
+    options,
   )
 }
 export interface MarsMockCreditManagerSetPositionsResponseMutation {

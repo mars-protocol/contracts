@@ -17,6 +17,7 @@ members  = [
     "contracts/mock-vault",
 
     # packages
+    "packages/account-nft-types",
     "packages/health-computer",
     "packages/health-types",
     "packages/rover",
@@ -64,6 +65,7 @@ tsify              = "0.4.5"
 wasm-bindgen       = "0.2.87"
 
 # mars packages
+mars-account-nft-types     = { version = "2.0.0", path = "./packages/account-nft-types" }
 mars-health                = { git = "https://github.com/mars-protocol/red-bank", rev = "8c90842" }
 mars-liquidation           = { git = "https://github.com/mars-protocol/red-bank", rev = "8c90842" }
 mars-osmosis               = { git = "https://github.com/mars-protocol/red-bank", rev = "8c90842" }

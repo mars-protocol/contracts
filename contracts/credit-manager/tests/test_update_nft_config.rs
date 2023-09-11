@@ -2,7 +2,7 @@ extern crate core;
 
 use cosmwasm_std::{Addr, Uint128};
 use cw_multi_test::Executor;
-use mars_account_nft::{msg::ExecuteMsg, nft_config::NftConfigUpdates};
+use mars_account_nft_types::{msg::ExecuteMsg, nft_config::NftConfigUpdates};
 use mars_owner::OwnerError::NotOwner;
 use mars_rover::error::ContractError;
 
@@ -36,6 +36,7 @@ fn only_owner_can_update_nft_config() {
                 updates: NftConfigUpdates {
                     max_value_for_burn: None,
                     health_contract_addr: None,
+                    credit_manager_contract_addr: None,
                 },
             },
             &[],
@@ -82,12 +83,14 @@ fn update_config_works_with_full_config() {
     let new_max_value = Some(Uint128::new(1122334455));
     let new_proposed = Some(Addr::unchecked("spiderman_12345"));
     let new_health_contract = Some("new_health_contract_xyz".to_string());
+    let new_cm_contract = Some("new_cm_contract_xyz".to_string());
 
     mock.update_nft_config(
         &Addr::unchecked(mock.query_config().ownership.owner.unwrap()),
         Some(NftConfigUpdates {
             max_value_for_burn: new_max_value,
             health_contract_addr: new_health_contract.clone(),
+            credit_manager_contract_addr: new_cm_contract.clone(),
         }),
         Some(cw721_base::Action::TransferOwnership {
             new_owner: new_proposed.clone().unwrap().into(),
@@ -99,9 +102,14 @@ fn update_config_works_with_full_config() {
     let new_config = mock.query_nft_config();
     assert_eq!(Some(new_config.max_value_for_burn), new_max_value);
     assert_eq!(new_config.health_contract_addr, new_health_contract);
+    assert_eq!(new_config.credit_manager_contract_addr, new_cm_contract);
 
     assert_ne!(new_config.max_value_for_burn, original_config.max_value_for_burn);
     assert_ne!(new_config.health_contract_addr, original_config.health_contract_addr);
+    assert_ne!(
+        new_config.credit_manager_contract_addr,
+        original_config.credit_manager_contract_addr
+    );
 
     let new_ownership = mock.query_nft_ownership();
     assert_eq!(new_ownership.pending_owner, new_proposed);

@@ -5,7 +5,7 @@ use cosmwasm_std::{Binary, Empty, StdError};
 use cw721::Expiration;
 use cw721_base::{Action, ExecuteMsg as ParentExecuteMsg};
 
-use crate::{error::ContractError, nft_config::NftConfigUpdates};
+use crate::nft_config::NftConfigUpdates;
 
 #[cw_serde]
 pub enum ExecuteMsg {
@@ -68,7 +68,7 @@ pub enum ExecuteMsg {
 }
 
 impl TryInto<ParentExecuteMsg<Empty, Empty>> for ExecuteMsg {
-    type Error = ContractError;
+    type Error = StdError;
 
     fn try_into(self) -> Result<ParentExecuteMsg<Empty, Empty>, Self::Error> {
         match self {
@@ -119,8 +119,7 @@ impl TryInto<ParentExecuteMsg<Empty, Empty>> for ExecuteMsg {
             ExecuteMsg::UpdateOwnership(action) => Ok(ParentExecuteMsg::UpdateOwnership(action)),
             _ => Err(StdError::generic_err(
                 "Attempting to convert to a non-cw721 compatible message",
-            )
-            .into()),
+            )),
         }
     }
 }

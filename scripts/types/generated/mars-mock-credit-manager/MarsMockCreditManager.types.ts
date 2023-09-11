@@ -8,12 +8,19 @@
 export interface InstantiateMsg {
   [k: string]: unknown
 }
-export type ExecuteMsg = {
-  set_positions_response: {
-    account_id: string
-    positions: Positions
-  }
-}
+export type ExecuteMsg =
+  | {
+      set_positions_response: {
+        account_id: string
+        positions: Positions
+      }
+    }
+  | {
+      set_account_kind_response: {
+        account_id: string
+        kind: AccountKind
+      }
+    }
 export type Uint128 = string
 export type VaultPositionAmount =
   | {
@@ -26,6 +33,7 @@ export type VaultAmount = string
 export type VaultAmount1 = string
 export type UnlockingPositions = VaultUnlockingPosition[]
 export type Addr = string
+export type AccountKind = 'default' | 'high_levered_strategy'
 export interface Positions {
   account_id: string
   debts: DebtAmount[]
@@ -130,7 +138,6 @@ export type QueryMsg =
 export interface VaultBaseForString {
   address: string
 }
-export type AccountKind = 'default' | 'high_levered_strategy'
 export type ArrayOfAccount = Account[]
 export interface Account {
   id: string

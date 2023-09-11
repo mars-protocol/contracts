@@ -17,6 +17,7 @@ import {
   VaultAmount1,
   UnlockingPositions,
   Addr,
+  AccountKind,
   Positions,
   DebtAmount,
   Coin,
@@ -26,7 +27,6 @@ import {
   VaultBaseForAddr,
   QueryMsg,
   VaultBaseForString,
-  AccountKind,
   ArrayOfAccount,
   Account,
   ArrayOfCoinBalanceResponseItem,
@@ -58,6 +58,16 @@ export interface MarsMockCreditManagerMessage {
     },
     _funds?: Coin[],
   ) => MsgExecuteContractEncodeObject
+  setAccountKindResponse: (
+    {
+      accountId,
+      kind,
+    }: {
+      accountId: string
+      kind: AccountKind
+    },
+    _funds?: Coin[],
+  ) => MsgExecuteContractEncodeObject
 }
 export class MarsMockCreditManagerMessageComposer implements MarsMockCreditManagerMessage {
   sender: string
@@ -67,6 +77,7 @@ export class MarsMockCreditManagerMessageComposer implements MarsMockCreditManag
     this.sender = sender
     this.contractAddress = contractAddress
     this.setPositionsResponse = this.setPositionsResponse.bind(this)
+    this.setAccountKindResponse = this.setAccountKindResponse.bind(this)
   }
 
   setPositionsResponse = (
@@ -89,6 +100,33 @@ export class MarsMockCreditManagerMessageComposer implements MarsMockCreditManag
             set_positions_response: {
               account_id: accountId,
               positions,
+            },
+          }),
+        ),
+        funds: _funds,
+      }),
+    }
+  }
+  setAccountKindResponse = (
+    {
+      accountId,
+      kind,
+    }: {
+      accountId: string
+      kind: AccountKind
+    },
+    _funds?: Coin[],
+  ): MsgExecuteContractEncodeObject => {
+    return {
+      typeUrl: '/cosmwasm.wasm.v1.MsgExecuteContract',
+      value: MsgExecuteContract.fromPartial({
+        sender: this.sender,
+        contract: this.contractAddress,
+        msg: toUtf8(
+          JSON.stringify({
+            set_account_kind_response: {
+              account_id: accountId,
+              kind,
             },
           }),
         ),

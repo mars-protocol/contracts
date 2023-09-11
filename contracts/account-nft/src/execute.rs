@@ -6,16 +6,16 @@ use cw721_base::{
     ContractError::Ownership,
     OwnershipError::{NoOwner, NotOwner},
 };
+use mars_account_nft_types::nft_config::NftConfigUpdates;
 use mars_red_bank_types::oracle::ActionKind;
-use mars_rover_health_types::{AccountKind, HealthValuesResponse, QueryMsg::HealthValues};
+use mars_rover::msg::QueryMsg;
+use mars_rover_health_types::{HealthValuesResponse, QueryMsg::HealthValues};
 
 use crate::{
     contract::Parent,
-    error::{
-        ContractError,
-        ContractError::{BaseError, BurnNotAllowed, HealthContractNotSet},
+    error::ContractError::{
+        self, BaseError, BurnNotAllowed, CreditManagerContractNotSet, HealthContractNotSet,
     },
-    nft_config::NftConfigUpdates,
     state::{CONFIG, NEXT_ID},
 };
 
@@ -40,13 +40,24 @@ pub fn burn(
     let Some(health_contract_addr) = config.health_contract_addr else {
         return Err(HealthContractNotSet);
     };
+    let Some(cm_contract_addr) = config.credit_manager_contract_addr else {
+        return Err(CreditManagerContractNotSet);
+    };
+
+    let acc_kind: mars_rover_health_types::AccountKind =
+        deps.querier.query(&QueryRequest::Wasm(WasmQuery::Smart {
+            contract_addr: cm_contract_addr.into(),
+            msg: to_binary(&QueryMsg::AccountKind {
+                account_id: token_id.clone(),
+            })?,
+        }))?;
 
     let response: HealthValuesResponse =
         deps.querier.query(&QueryRequest::Wasm(WasmQuery::Smart {
             contract_addr: health_contract_addr.into(),
             msg: to_binary(&HealthValues {
                 account_id: token_id.clone(),
-                kind: AccountKind::Default,
+                kind: acc_kind,
                 action: ActionKind::Default,
             })?,
         }))?;
@@ -89,6 +100,14 @@ pub fn update_config(
         config.health_contract_addr = Some(addr.clone());
         response = response
             .add_attribute("key", "health_contract_addr")
+            .add_attribute("value", addr.to_string());
+    }
+
+    if let Some(unchecked) = updates.credit_manager_contract_addr {
+        let addr = deps.api.addr_validate(&unchecked)?;
+        config.credit_manager_contract_addr = Some(addr.clone());
+        response = response
+            .add_attribute("key", "credit_manager_contract_addr")
             .add_attribute("value", addr.to_string());
     }
 

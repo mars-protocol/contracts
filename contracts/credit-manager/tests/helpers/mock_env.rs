@@ -9,7 +9,7 @@ use cw_vault_standard::{
     extensions::lockup::{LockupQueryMsg, UnlockingPosition},
     msg::{ExtensionQueryMsg, VaultStandardQueryMsg::VaultExtension},
 };
-use mars_account_nft::{
+use mars_account_nft_types::{
     msg::{
         ExecuteMsg as NftExecuteMsg, InstantiateMsg as NftInstantiateMsg, QueryMsg as NftQueryMsg,
     },
@@ -1384,6 +1384,7 @@ fn deploy_nft_contract(app: &mut App, minter: &Addr) -> Addr {
             name: "Rover Credit Account".to_string(),
             symbol: "RCA".to_string(),
             minter: minter.to_string(),
+            credit_manager_contract: None,
         },
         &[],
         "manager-mock-account-nft",

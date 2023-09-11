@@ -1638,6 +1638,12 @@
       "NftConfigUpdates": {
         "type": "object",
         "properties": {
+          "credit_manager_contract_addr": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
           "health_contract_addr": {
             "type": [
               "string",

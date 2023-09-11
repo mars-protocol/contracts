@@ -13,6 +13,13 @@
       "symbol"
     ],
     "properties": {
+      "credit_manager_contract": {
+        "description": "Used to query the account kind",
+        "type": [
+          "string",
+          "null"
+        ]
+      },
       "health_contract": {
         "description": "Used to validate the account id's health status allows for burning. Can be set later, but no burning allowed until set.",
         "type": [
@@ -411,6 +418,12 @@
       "NftConfigUpdates": {
         "type": "object",
         "properties": {
+          "credit_manager_contract_addr": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
           "health_contract_addr": {
             "type": [
               "string",
@@ -1271,6 +1284,12 @@
         "max_value_for_burn"
       ],
       "properties": {
+        "credit_manager_contract_addr": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
         "health_contract_addr": {
           "type": [
             "string",

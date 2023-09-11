@@ -5,6 +5,7 @@ use cosmwasm_std::{Addr, Uint128};
 pub struct NftConfigBase<T> {
     pub max_value_for_burn: Uint128,
     pub health_contract_addr: Option<T>,
+    pub credit_manager_contract_addr: Option<T>,
 }
 
 pub type NftConfig = NftConfigBase<Addr>;
@@ -15,6 +16,7 @@ impl From<NftConfig> for UncheckedNftConfig {
         Self {
             max_value_for_burn: config.max_value_for_burn,
             health_contract_addr: config.health_contract_addr.map(Into::into),
+            credit_manager_contract_addr: config.credit_manager_contract_addr.map(Into::into),
         }
     }
 }
@@ -23,4 +25,5 @@ impl From<NftConfig> for UncheckedNftConfig {
 pub struct NftConfigUpdates {
     pub max_value_for_burn: Option<Uint128>,
     pub health_contract_addr: Option<String>,
+    pub credit_manager_contract_addr: Option<String>,
 }

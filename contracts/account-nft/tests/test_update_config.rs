@@ -1,5 +1,5 @@
 use cosmwasm_std::{Addr, Uint128};
-use mars_account_nft::nft_config::NftConfigUpdates;
+use mars_account_nft_types::nft_config::NftConfigUpdates;
 
 use crate::helpers::MockEnv;
 
@@ -15,6 +15,7 @@ fn only_minter_can_update_config() {
         &NftConfigUpdates {
             max_value_for_burn: None,
             health_contract_addr: None,
+            credit_manager_contract_addr: None,
         },
     );
 
@@ -29,10 +30,12 @@ fn minter_can_update_config() {
 
     let new_max_burn_val = Uint128::new(4918453);
     let new_health_contract = "new_health_contract_123".to_string();
+    let new_cm_contract = "new_cm_contract_123".to_string();
 
     let updates = NftConfigUpdates {
         max_value_for_burn: Some(new_max_burn_val),
         health_contract_addr: Some(new_health_contract.clone()),
+        credit_manager_contract_addr: Some(new_cm_contract.clone()),
     };
 
     mock.update_config(&mock.minter.clone(), &updates).unwrap();
@@ -40,4 +43,5 @@ fn minter_can_update_config() {
     let config = mock.query_config();
     assert_eq!(config.max_value_for_burn, new_max_burn_val);
     assert_eq!(config.health_contract_addr.unwrap(), new_health_contract);
+    assert_eq!(config.credit_manager_contract_addr.unwrap(), new_cm_contract);
 }

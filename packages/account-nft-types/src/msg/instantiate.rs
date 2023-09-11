@@ -13,6 +13,8 @@ pub struct InstantiateMsg {
     /// Used to validate the account id's health status allows for burning.
     /// Can be set later, but no burning allowed until set.
     pub health_contract: Option<String>,
+    /// Used to query the account kind
+    pub credit_manager_contract: Option<String>,
 
     //--------------------------------------------------------------------------------------------------
     // Base cw721 messages

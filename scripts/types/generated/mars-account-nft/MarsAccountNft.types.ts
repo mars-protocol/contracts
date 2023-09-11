@@ -7,6 +7,7 @@
 
 export type Uint128 = string
 export interface InstantiateMsg {
+  credit_manager_contract?: string | null
   health_contract?: string | null
   max_value_for_burn: Uint128
   minter: string
@@ -92,6 +93,7 @@ export type Action =
   | 'accept_ownership'
   | 'renounce_ownership'
 export interface NftConfigUpdates {
+  credit_manager_contract_addr?: string | null
   health_contract_addr?: string | null
   max_value_for_burn?: Uint128 | null
 }
@@ -197,6 +199,7 @@ export interface ApprovalsResponse {
   approvals: Approval[]
 }
 export interface NftConfigBaseForString {
+  credit_manager_contract_addr?: string | null
   health_contract_addr?: string | null
   max_value_for_burn: Uint128
 }

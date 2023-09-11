@@ -3,7 +3,7 @@ use std::collections::BTreeSet;
 use cosmwasm_std::{
     to_binary, Addr, CosmosMsg, DepsMut, Env, MessageInfo, Response, StdResult, WasmMsg,
 };
-use mars_account_nft::msg::ExecuteMsg as NftExecuteMsg;
+use mars_account_nft_types::msg::ExecuteMsg as NftExecuteMsg;
 use mars_red_bank_types::oracle::ActionKind;
 use mars_rover::{
     coins::Coins,
