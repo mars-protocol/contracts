@@ -85,12 +85,12 @@ export type OwnerUpdate =
   | 'clear_emergency_owner'
 export type Action =
   | {
-      withdraw: Coin
+      withdraw: ActionCoin
     }
   | {
       withdraw_liquidity: {
         lp_token: ActionCoin
-        minimum_receive: Coin[]
+        slippage: Decimal
       }
     }
   | {

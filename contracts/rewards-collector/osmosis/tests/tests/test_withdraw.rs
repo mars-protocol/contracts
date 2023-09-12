@@ -1,4 +1,4 @@
-use cosmwasm_std::{coin, testing::mock_env, to_binary, CosmosMsg, SubMsg, Uint128, WasmMsg};
+use cosmwasm_std::{testing::mock_env, to_binary, CosmosMsg, Decimal, SubMsg, Uint128, WasmMsg};
 use mars_red_bank_types::rewards_collector::{
     credit_manager::{self, Action, ActionAmount, ActionCoin},
     ExecuteMsg,
@@ -55,14 +55,17 @@ fn withdrawing_from_cm_if_action_not_allowed() {
         ExecuteMsg::WithdrawFromCreditManager {
             account_id: "random_id".to_string(),
             actions: vec![
-                Action::Withdraw(coin(100u128, "uatom")),
+                Action::Withdraw(ActionCoin {
+                    denom: "uatom".to_string(),
+                    amount: ActionAmount::Exact(Uint128::new(100)),
+                }),
                 Action::Unknown {},
                 Action::WithdrawLiquidity {
                     lp_token: ActionCoin {
                         denom: "gamm/pool/1".to_string(),
                         amount: ActionAmount::AccountBalance,
                     },
-                    minimum_receive: vec![],
+                    slippage: Decimal::percent(5),
                 },
             ],
         },
@@ -77,16 +80,25 @@ fn withdrawing_from_cm_successfully() {
 
     let account_id = "random_id".to_string();
     let actions = vec![
-        Action::Withdraw(coin(100u128, "uusdc")),
+        Action::Withdraw(ActionCoin {
+            denom: "uusdc".to_string(),
+            amount: ActionAmount::Exact(Uint128::new(100)),
+        }),
         Action::WithdrawLiquidity {
             lp_token: ActionCoin {
                 denom: "gamm/pool/1".to_string(),
                 amount: ActionAmount::AccountBalance,
             },
-            minimum_receive: vec![],
+            slippage: Decimal::percent(5),
         },
-        Action::Withdraw(coin(120u128, "uatom")),
-        Action::Withdraw(coin(140u128, "uosmo")),
+        Action::Withdraw(ActionCoin {
+            denom: "uatom".to_string(),
+            amount: ActionAmount::Exact(Uint128::new(120)),
+        }),
+        Action::Withdraw(ActionCoin {
+            denom: "uosmo".to_string(),
+            amount: ActionAmount::Exact(Uint128::new(140)),
+        }),
     ];
 
     // anyone can execute a withdrawal

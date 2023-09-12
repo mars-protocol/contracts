@@ -338,7 +338,7 @@
             ],
             "properties": {
               "withdraw": {
-                "$ref": "#/definitions/Coin"
+                "$ref": "#/definitions/ActionCoin"
               }
             },
             "additionalProperties": false
@@ -353,17 +353,14 @@
                 "type": "object",
                 "required": [
                   "lp_token",
-                  "minimum_receive"
+                  "slippage"
                 ],
                 "properties": {
                   "lp_token": {
                     "$ref": "#/definitions/ActionCoin"
                   },
-                  "minimum_receive": {
-                    "type": "array",
-                    "items": {
-                      "$ref": "#/definitions/Coin"
-                    }
+                  "slippage": {
+                    "$ref": "#/definitions/Decimal"
                   }
                 },
                 "additionalProperties": false
