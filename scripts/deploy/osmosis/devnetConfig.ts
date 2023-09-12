@@ -23,7 +23,7 @@ const protocolAdminAddr = 'osmo14w4x949nwcrqgfe53pxs3k7x53p0gvlrq34l5n'
 const safetyFundAddr = 'mars1s4hgh56can3e33e0zqpnjxh0t5wdf7u3pze575'
 const feeCollectorAddr = 'mars17xpfvakm2amg962yls6f84z3kell8c5ldy6e7x'
 
-// ----------------------------------- Markets ----------------------------------- 
+// ----------------------------------- Markets -----------------------------------
 
 export const osmoAsset: AssetConfig = {
   credit_manager: {
@@ -294,8 +294,8 @@ export const atomOsmoOracle: OracleConfig = {
   denom: atomOsmoPool,
   price_source: {
     xyk_liquidity_token: {
-      pool_id: 1
-    }
+      pool_id: 1,
+    },
   },
 }
 
@@ -303,8 +303,8 @@ export const usdcOsmoOracle: OracleConfig = {
   denom: usdcOsmoPool,
   price_source: {
     xyk_liquidity_token: {
-      pool_id: 678
-    }
+      pool_id: 678,
+    },
   },
 }
 
@@ -312,8 +312,8 @@ export const ethOsmoOracle: OracleConfig = {
   denom: ethOsmoPool,
   price_source: {
     xyk_liquidity_token: {
-      pool_id: 704
-    }
+      pool_id: 704,
+    },
   },
 }
 
@@ -321,8 +321,8 @@ export const wbtcOsmoOracle: OracleConfig = {
   denom: wbtcOsmoPool,
   price_source: {
     xyk_liquidity_token: {
-      pool_id: 712
-    }
+      pool_id: 712,
+    },
   },
 }
 
@@ -330,8 +330,8 @@ export const atomStAtomOracle: OracleConfig = {
   denom: atomStAtomPool,
   price_source: {
     xyk_liquidity_token: {
-      pool_id: 803
-    }
+      pool_id: 803,
+    },
   },
 }
 
@@ -369,13 +369,13 @@ export const stAtomOracle: OracleConfig = {
     staked_geometric_twap: {
       downtime_detector: {
         downtime: 'duration30m',
-        recovery: 7200
+        recovery: 7200,
       },
       pool_id: 803,
       transitive_denom: atom,
-      window_size: 1800
-    }
-  }
+      window_size: 1800,
+    },
+  },
 }
 
 export const wbtcOracle: OracleConfig = {
@@ -435,12 +435,12 @@ export const osmoOracle: OracleConfig = {
 }
 
 export const usdOracle: OracleConfig = {
-  denom: "usd",
+  denom: 'usd',
   price_source: {
     fixed: {
-      price: "1000000"
-    }
-  }
+      price: '1000000',
+    },
+  },
 }
 
 // TWAP
@@ -473,13 +473,13 @@ export const stAtomOracleTwap: OracleConfig = {
     staked_geometric_twap: {
       downtime_detector: {
         downtime: 'duration30m',
-        recovery: 7200
+        recovery: 7200,
       },
       pool_id: 803,
       transitive_denom: atom,
-      window_size: 1800
-    }
-  }
+      window_size: 1800,
+    },
+  },
 }
 
 export const wbtcOracleTwap: OracleConfig = {
@@ -519,8 +519,8 @@ export const osmoOracleTwap: OracleConfig = {
   denom: osmo,
   price_source: {
     fixed: {
-      price: "1"
-    }
+      price: '1',
+    },
   },
 }
 
@@ -528,8 +528,8 @@ export const osmoOracleTwap: OracleConfig = {
 
 export const osmosisDevnet: DeploymentConfig = {
   oracleName: 'osmosis',
-  // oracleBaseDenom: 'uusd',
-  oracleBaseDenom: 'uosmo',
+  oracleBaseDenom: 'uusd',
+  // oracleBaseDenom: 'uosmo',
   rewardsCollectorName: 'osmosis',
   atomDenom: atom,
   baseAssetDenom: osmo,
@@ -541,7 +541,8 @@ export const osmosisDevnet: DeploymentConfig = {
   rewardsCollectorTimeoutSeconds: 600,
   rpcEndpoint: 'https://rpc.devnet.osmosis.zone',
   safetyFundFeeShare: '0.5',
-  deployerMnemonic: 'TODO',
+  deployerMnemonic:
+    'TODO',
   slippage_tolerance: '0.01',
   base_asset_symbol: 'OSMO',
   // multisigAddr: 'osmo14w4x949nwcrqgfe53pxs3k7x53p0gvlrq34l5n',
@@ -587,8 +588,22 @@ export const osmosisDevnet: DeploymentConfig = {
   swapperDexName: 'osmosis',
   assets: [osmoAsset, atomAsset, axlAsset, stAtomAsset, wbtcAsset, axlUSDCAsset, ethAsset],
   vaults: [atomOsmoVault, usdcOsmoVault, ethOsmoVault, wbtcOsmoVault, atomStAtomVault],
-  // oracleConfigs: [usdOracle, osmoOracle, atomOracle, axlOracle, stAtomOracle, wbtcOracle, axlUSDCOracle, ethOracle, atomOsmoOracle, usdcOsmoOracle, ethOsmoOracle, wbtcOsmoOracle, atomStAtomOracle],
-  oracleConfigs: [osmoOracleTwap, atomOracleTwap, axlOracleTwap, stAtomOracleTwap, wbtcOracleTwap, axlUSDCOracleTwap, ethOracleTwap, atomOsmoOracle, usdcOsmoOracle, ethOsmoOracle, wbtcOsmoOracle, atomStAtomOracle],
+  oracleConfigs: [
+    usdOracle,
+    osmoOracle,
+    atomOracle,
+    axlOracle,
+    stAtomOracle,
+    wbtcOracle,
+    axlUSDCOracle,
+    ethOracle,
+    atomOsmoOracle,
+    usdcOsmoOracle,
+    ethOsmoOracle,
+    wbtcOsmoOracle,
+    atomStAtomOracle,
+  ],
+  // oracleConfigs: [osmoOracleTwap, atomOracleTwap, axlOracleTwap, stAtomOracleTwap, wbtcOracleTwap, axlUSDCOracleTwap, ethOracleTwap, atomOsmoOracle, usdcOsmoOracle, ethOsmoOracle, wbtcOsmoOracle, atomStAtomOracle],
   targetHealthFactor: '1.2',
   incentiveEpochDuration: 604800, // 1 week
   maxWhitelistedIncentiveDenoms: 10,
