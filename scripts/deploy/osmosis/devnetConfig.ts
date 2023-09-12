@@ -541,8 +541,7 @@ export const osmosisDevnet: DeploymentConfig = {
   rewardsCollectorTimeoutSeconds: 600,
   rpcEndpoint: 'https://rpc.devnet.osmosis.zone',
   safetyFundFeeShare: '0.5',
-  deployerMnemonic:
-    'TODO',
+  deployerMnemonic: 'TODO',
   slippage_tolerance: '0.01',
   base_asset_symbol: 'OSMO',
   // multisigAddr: 'osmo14w4x949nwcrqgfe53pxs3k7x53p0gvlrq34l5n',
