@@ -695,12 +695,263 @@ export const osmosisDevnet: DeploymentConfig = {
   feeCollectorDenom: mars,
   safetyFundDenom: axlUSDC,
   swapRoutes: [
+    { denom_in: osmo, denom_out: atom, route: [{ pool_id: 1, token_out_denom: atom }] },
+    { denom_in: osmo, denom_out: axl, route: [{ pool_id: 812, token_out_denom: axl }] },
+    {
+      denom_in: osmo,
+      denom_out: stAtom,
+      route: [
+        { pool_id: 1, token_out_denom: atom },
+        { pool_id: 803, token_out_denom: stAtom },
+      ],
+    },
+    { denom_in: osmo, denom_out: wbtc, route: [{ pool_id: 712, token_out_denom: wbtc }] },
     { denom_in: osmo, denom_out: axlUSDC, route: [{ pool_id: 678, token_out_denom: axlUSDC }] },
+    { denom_in: osmo, denom_out: eth, route: [{ pool_id: 704, token_out_denom: eth }] },
+    { denom_in: atom, denom_out: osmo, route: [{ pool_id: 1, token_out_denom: osmo }] },
+    {
+      denom_in: atom,
+      denom_out: axl,
+      route: [
+        { pool_id: 1, token_out_denom: osmo },
+        { pool_id: 812, token_out_denom: axl },
+      ],
+    },
+    { denom_in: atom, denom_out: stAtom, route: [{ pool_id: 803, token_out_denom: stAtom }] },
+    {
+      denom_in: atom,
+      denom_out: wbtc,
+      route: [
+        { pool_id: 1, token_out_denom: osmo },
+        { pool_id: 712, token_out_denom: wbtc },
+      ],
+    },
     {
       denom_in: atom,
       denom_out: axlUSDC,
       route: [
         { pool_id: 1, token_out_denom: osmo },
+        { pool_id: 678, token_out_denom: axlUSDC },
+      ],
+    },
+    {
+      denom_in: atom,
+      denom_out: eth,
+      route: [
+        { pool_id: 1, token_out_denom: osmo },
+        { pool_id: 704, token_out_denom: eth },
+      ],
+    },
+    { denom_in: axl, denom_out: osmo, route: [{ pool_id: 812, token_out_denom: osmo }] },
+    {
+      denom_in: axl,
+      denom_out: atom,
+      route: [
+        { pool_id: 812, token_out_denom: osmo },
+        { pool_id: 1, token_out_denom: atom },
+      ],
+    },
+    {
+      denom_in: axl,
+      denom_out: stAtom,
+      route: [
+        { pool_id: 812, token_out_denom: osmo },
+        { pool_id: 1, token_out_denom: atom },
+        { pool_id: 803, token_out_denom: stAtom },
+      ],
+    },
+    {
+      denom_in: axl,
+      denom_out: wbtc,
+      route: [
+        { pool_id: 812, token_out_denom: osmo },
+        { pool_id: 712, token_out_denom: wbtc },
+      ],
+    },
+    {
+      denom_in: axl,
+      denom_out: axlUSDC,
+      route: [
+        { pool_id: 812, token_out_denom: osmo },
+        { pool_id: 678, token_out_denom: axlUSDC },
+      ],
+    },
+    {
+      denom_in: axl,
+      denom_out: eth,
+      route: [
+        { pool_id: 812, token_out_denom: osmo },
+        { pool_id: 704, token_out_denom: eth },
+      ],
+    },
+    {
+      denom_in: stAtom,
+      denom_out: osmo,
+      route: [
+        { pool_id: 803, token_out_denom: atom },
+        { pool_id: 1, token_out_denom: osmo },
+      ],
+    },
+    { denom_in: stAtom, denom_out: atom, route: [{ pool_id: 803, token_out_denom: atom }] },
+    {
+      denom_in: stAtom,
+      denom_out: axl,
+      route: [
+        { pool_id: 803, token_out_denom: atom },
+        { pool_id: 1, token_out_denom: osmo },
+        { pool_id: 812, token_out_denom: axl },
+      ],
+    },
+    {
+      denom_in: stAtom,
+      denom_out: wbtc,
+      route: [
+        { pool_id: 803, token_out_denom: atom },
+        { pool_id: 1, token_out_denom: osmo },
+        { pool_id: 712, token_out_denom: wbtc },
+      ],
+    },
+    {
+      denom_in: stAtom,
+      denom_out: axlUSDC,
+      route: [
+        { pool_id: 803, token_out_denom: atom },
+        { pool_id: 1, token_out_denom: osmo },
+        { pool_id: 678, token_out_denom: axlUSDC },
+      ],
+    },
+    {
+      denom_in: stAtom,
+      denom_out: eth,
+      route: [
+        { pool_id: 803, token_out_denom: atom },
+        { pool_id: 1, token_out_denom: osmo },
+        { pool_id: 704, token_out_denom: eth },
+      ],
+    },
+    { denom_in: wbtc, denom_out: osmo, route: [{ pool_id: 712, token_out_denom: osmo }] },
+    {
+      denom_in: wbtc,
+      denom_out: atom,
+      route: [
+        { pool_id: 712, token_out_denom: osmo },
+        { pool_id: 1, token_out_denom: atom },
+      ],
+    },
+    {
+      denom_in: wbtc,
+      denom_out: axl,
+      route: [
+        { pool_id: 712, token_out_denom: osmo },
+        { pool_id: 812, token_out_denom: axl },
+      ],
+    },
+    {
+      denom_in: wbtc,
+      denom_out: stAtom,
+      route: [
+        { pool_id: 712, token_out_denom: osmo },
+        { pool_id: 1, token_out_denom: atom },
+        { pool_id: 803, token_out_denom: stAtom },
+      ],
+    },
+    {
+      denom_in: wbtc,
+      denom_out: axlUSDC,
+      route: [
+        { pool_id: 712, token_out_denom: osmo },
+        { pool_id: 678, token_out_denom: axlUSDC },
+      ],
+    },
+    {
+      denom_in: wbtc,
+      denom_out: eth,
+      route: [
+        { pool_id: 712, token_out_denom: osmo },
+        { pool_id: 704, token_out_denom: eth },
+      ],
+    },
+    { denom_in: axlUSDC, denom_out: osmo, route: [{ pool_id: 678, token_out_denom: osmo }] },
+    {
+      denom_in: axlUSDC,
+      denom_out: atom,
+      route: [
+        { pool_id: 678, token_out_denom: osmo },
+        { pool_id: 1, token_out_denom: atom },
+      ],
+    },
+    {
+      denom_in: axlUSDC,
+      denom_out: axl,
+      route: [
+        { pool_id: 678, token_out_denom: osmo },
+        { pool_id: 812, token_out_denom: axl },
+      ],
+    },
+    {
+      denom_in: axlUSDC,
+      denom_out: stAtom,
+      route: [
+        { pool_id: 678, token_out_denom: osmo },
+        { pool_id: 1, token_out_denom: atom },
+        { pool_id: 803, token_out_denom: stAtom },
+      ],
+    },
+    {
+      denom_in: axlUSDC,
+      denom_out: wbtc,
+      route: [
+        { pool_id: 678, token_out_denom: osmo },
+        { pool_id: 712, token_out_denom: wbtc },
+      ],
+    },
+    {
+      denom_in: axlUSDC,
+      denom_out: eth,
+      route: [
+        { pool_id: 678, token_out_denom: osmo },
+        { pool_id: 704, token_out_denom: eth },
+      ],
+    },
+    { denom_in: eth, denom_out: osmo, route: [{ pool_id: 704, token_out_denom: osmo }] },
+    {
+      denom_in: eth,
+      denom_out: atom,
+      route: [
+        { pool_id: 704, token_out_denom: osmo },
+        { pool_id: 1, token_out_denom: atom },
+      ],
+    },
+    {
+      denom_in: eth,
+      denom_out: axl,
+      route: [
+        { pool_id: 704, token_out_denom: osmo },
+        { pool_id: 812, token_out_denom: axl },
+      ],
+    },
+    {
+      denom_in: eth,
+      denom_out: stAtom,
+      route: [
+        { pool_id: 704, token_out_denom: osmo },
+        { pool_id: 1, token_out_denom: atom },
+        { pool_id: 803, token_out_denom: stAtom },
+      ],
+    },
+    {
+      denom_in: eth,
+      denom_out: wbtc,
+      route: [
+        { pool_id: 704, token_out_denom: osmo },
+        { pool_id: 712, token_out_denom: wbtc },
+      ],
+    },
+    {
+      denom_in: eth,
+      denom_out: axlUSDC,
+      route: [
+        { pool_id: 704, token_out_denom: osmo },
         { pool_id: 678, token_out_denom: axlUSDC },
       ],
     },
