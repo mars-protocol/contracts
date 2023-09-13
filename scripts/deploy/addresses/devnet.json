@@ -1,9 +1,9 @@
 {
-  "address-provider": "osmo1x7udlkawmkz2u5th5x3cjxht2yvjgph7pg8l9rumaa3lak922dgsr3lmhc",
-  "red-bank": "osmo1pvrlpmdv3ee6lgmxd37n29gtdahy4tec7c5nyer9aphvfr526z6sff9zdg",
-  "incentives": "osmo1aemnaq5x3jkttnd38g7lewh24nh90r9zwh8853qv3tkf47p2hnasaae0e4",
-  "oracle": "osmo1dh8f3rhg4eruc9w7c9d5e06eupqqrth7v32ladwkyphvnn66muzqxcfe60",
-  "rewards-collector": "osmo19fppgzdenrxwdg2k3te0a48mfee4npdrctghzrcqltwck7e4y6ts7t8428",
-  "swapper": "osmo17c4retwuyxjxzv9f2q9r0272s8smktpzhjetssttxxdavarjtujsjqafa2",
-  "params": "osmo1dpwu03xc45vpqur6ry69xjhltq4v0snrhaukcp4fvhucx0wypzhs978lnp"
+  "address-provider": "osmo1c59a0jj0e7erenwekxhq3ylq3w3kakhwxtj9ll778n8av8tu5q4qarp2mv",
+  "red-bank": "osmo1vxpdcw092n9rngvekve8g324c2yjx56496ck98ag4sdxr4p4zd4q0wr7x6",
+  "incentives": "osmo1r9w7k774vcxeuvq6ctq0z2j6wkkxpskucgjkqt0uu7u07l03s3js6ukge4",
+  "oracle": "osmo156elt2tp5455q9a6vfrvnpncxyd33cxm9z2lgguwg6dgws9tedps5tq3rc",
+  "rewards-collector": "osmo1q4raqxysx3hymgzkg3rmy6982x8kjd8x85q3mfhsq3npc3u5phhsrfudrm",
+  "swapper": "osmo1xmhhdxgk9e83n4kmtlluzx38mya8q9r4hku5nys8cr7jg7sgpx5s8zkkg2",
+  "params": "osmo1pzszwkyy0x9cu6p2uknwa3wccr79xwmqn9gj66fnjnayr28tzp6qh2n4qg"
 }
