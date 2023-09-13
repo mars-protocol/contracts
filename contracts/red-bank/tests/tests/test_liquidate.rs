@@ -550,6 +550,7 @@ fn same_asset_for_debt_and_collateral_with_refund() {
     let red_bank = mock_env.red_bank.clone();
     let params = mock_env.params.clone();
     let oracle = mock_env.oracle.clone();
+    let rewards_collector = mock_env.rewards_collector.clone();
 
     let funded_amt = 1_000_000_000_000u128;
     let provider = Addr::unchecked("provider"); // provides collateral to be borrowed by others
@@ -584,22 +585,223 @@ fn same_asset_for_debt_and_collateral_with_refund() {
     // change price to be able to liquidate
     oracle.set_price_source_fixed(&mut mock_env, "uatom", Decimal::from_ratio(2u128, 1u128));
 
+    // liquidatee should be liquidatable
+    let liquidatee_position = red_bank.query_user_position(&mut mock_env, &liquidatee);
+    let prev_liq_threshold_hf = liq_threshold_hf(&liquidatee_position);
+
     // liquidate user
     let osmo_repay_amt = 1000;
-    let error_res = red_bank.liquidate(
-        &mut mock_env,
-        &liquidator,
-        &liquidatee,
-        "uosmo",
-        &[coin(osmo_repay_amt, "uosmo")],
+    red_bank
+        .liquidate(
+            &mut mock_env,
+            &liquidator,
+            &liquidatee,
+            "uosmo",
+            &[coin(osmo_repay_amt, "uosmo")],
+        )
+        .unwrap();
+
+    // check provider positions
+    let provider_collaterals = red_bank.query_user_collaterals(&mut mock_env, &provider);
+    assert_eq!(provider_collaterals.len(), 1);
+    assert_eq!(provider_collaterals.get("uosmo").unwrap().amount.u128(), 1000000);
+    let provider_debts = red_bank.query_user_debts(&mut mock_env, &provider);
+    assert_eq!(provider_debts.len(), 0);
+
+    // check liquidatee positions
+    let liquidatee_collaterals = red_bank.query_user_collaterals(&mut mock_env, &liquidatee);
+    assert_eq!(liquidatee_collaterals.len(), 2);
+    assert_eq!(liquidatee_collaterals.get("uosmo").unwrap().amount.u128(), 1);
+    assert_eq!(liquidatee_collaterals.get("uatom").unwrap().amount.u128(), 1000);
+    let liquidatee_debts = red_bank.query_user_debts(&mut mock_env, &liquidatee);
+    assert_eq!(liquidatee_debts.len(), 1);
+    assert_eq!(liquidatee_debts.get("uosmo").unwrap().amount.u128(), 2020);
+
+    // check liquidator positions
+    let liquidator_collaterals = red_bank.query_user_collaterals(&mut mock_env, &liquidator);
+    assert_eq!(liquidator_collaterals.len(), 1);
+    assert_eq!(liquidator_collaterals.get("uosmo").unwrap().amount.u128(), 999);
+    let liquidator_debts = red_bank.query_user_debts(&mut mock_env, &liquidator);
+    assert_eq!(liquidator_debts.len(), 0);
+
+    // check rewards-collector positions (protocol fee)
+    let rc_collaterals =
+        red_bank.query_user_collaterals(&mut mock_env, &rewards_collector.contract_addr);
+    assert_eq!(rc_collaterals.len(), 0);
+    let rc_debts = red_bank.query_user_debts(&mut mock_env, &rewards_collector.contract_addr);
+    assert_eq!(rc_debts.len(), 0);
+
+    let (merged_collaterals, merged_debts, merged_balances) = merge_collaterals_and_debts(
+        &[&provider_collaterals, &liquidatee_collaterals, &liquidator_collaterals, &rc_collaterals],
+        &[&provider_debts, &liquidatee_debts, &liquidator_debts, &rc_debts],
     );
-    assert_err(
-        error_res,
-        ContractError::HealthNotImproved {
-            prev_hf: "0.66".to_string(),
-            new_hf: "0.594059405940594059".to_string(),
+
+    // check if users collaterals and debts are equal to markets scaled amounts
+    let markets = red_bank.query_markets(&mut mock_env);
+    assert_eq!(markets.len(), 2);
+    let osmo_market = markets.get("uosmo").unwrap();
+    let atom_market = markets.get("uatom").unwrap();
+    assert_eq!(merged_collaterals.get_or_default("uosmo"), osmo_market.collateral_total_scaled);
+    assert_eq!(merged_debts.get_or_default("uosmo"), osmo_market.debt_total_scaled);
+    assert_eq!(merged_collaterals.get_or_default("uatom"), atom_market.collateral_total_scaled);
+    assert_eq!(merged_debts.get_or_default("uatom"), atom_market.debt_total_scaled);
+
+    // check red bank underlying balances
+    let balances = mock_env.query_all_balances(&red_bank.contract_addr);
+    assert_eq!(merged_balances.get("uosmo"), balances.get("uosmo"));
+    assert_eq!(merged_balances.get("uatom"), balances.get("uatom"));
+
+    // check liquidator account balance
+    let usdc_liquidator_balance = mock_env.query_balance(&liquidator, "uosmo").unwrap();
+    assert_eq!(usdc_liquidator_balance.amount.u128(), funded_amt - osmo_repay_amt + 20); // 20 refunded
+
+    // liquidatee hf degradated
+    let liquidatee_position = red_bank.query_user_position(&mut mock_env, &liquidatee);
+    let liq_threshold_hf = liq_threshold_hf(&liquidatee_position);
+    assert!(liq_threshold_hf < prev_liq_threshold_hf);
+}
+
+#[test]
+fn mdr_negative() {
+    let mut mock_env = MockEnvBuilder::new(None, Addr::unchecked("owner"))
+        .target_health_factor(Decimal::from_ratio(104u128, 100u128))
+        .build();
+
+    let red_bank = mock_env.red_bank.clone();
+    let params = mock_env.params.clone();
+    let oracle = mock_env.oracle.clone();
+    let rewards_collector = mock_env.rewards_collector.clone();
+
+    let funded_amt = 1_000_000_000_000u128;
+    let provider = Addr::unchecked("provider"); // provides collateral to be borrowed by others
+    let liquidatee = Addr::unchecked("liquidatee");
+    let liquidator = Addr::unchecked("liquidator");
+
+    // setup red-bank
+    let (market_params, asset_params) = _default_asset_params_with(
+        "uosmo",
+        Decimal::percent(70),
+        Decimal::percent(98),
+        LiquidationBonus {
+            starting_lb: Decimal::percent(10),
+            slope: Decimal::from_str("2.0").unwrap(),
+            min_lb: Decimal::percent(10),
+            max_lb: Decimal::percent(10),
         },
     );
+    red_bank.init_asset(&mut mock_env, &asset_params.denom, market_params);
+    params.init_params(&mut mock_env, asset_params);
+    let (market_params, asset_params) =
+        default_asset_params_with("ujake", Decimal::percent(50), Decimal::percent(55));
+    red_bank.init_asset(&mut mock_env, &asset_params.denom, market_params);
+    params.init_params(&mut mock_env, asset_params);
+    let (market_params, asset_params) =
+        default_asset_params_with("uusdc", Decimal::percent(82), Decimal::percent(90));
+    red_bank.init_asset(&mut mock_env, &asset_params.denom, market_params);
+    params.init_params(&mut mock_env, asset_params);
+
+    // setup oracle
+    oracle.set_price_source_fixed(&mut mock_env, "uosmo", Decimal::from_ratio(3u128, 1u128));
+    oracle.set_price_source_fixed(&mut mock_env, "ujake", Decimal::one());
+    oracle.set_price_source_fixed(&mut mock_env, "uusdc", Decimal::from_ratio(2u128, 1u128));
+
+    // fund accounts
+    mock_env.fund_accounts(
+        &[&provider, &liquidatee, &liquidator],
+        funded_amt,
+        &["uosmo", "ujake", "uusdc"],
+    );
+
+    // provider deposits collaterals
+    red_bank.deposit(&mut mock_env, &provider, coin(1000000, "uusdc")).unwrap();
+
+    // liquidatee deposits and borrows
+    red_bank.deposit(&mut mock_env, &liquidatee, coin(10000, "uosmo")).unwrap();
+    red_bank.deposit(&mut mock_env, &liquidatee, coin(2000, "ujake")).unwrap();
+    red_bank.borrow(&mut mock_env, &liquidatee, "uusdc", 3000).unwrap();
+
+    // change price to be able to liquidate
+    oracle.set_price_source_fixed(&mut mock_env, "uusdc", Decimal::from_ratio(12u128, 1u128));
+
+    // liquidatee should be liquidatable
+    let liquidatee_position = red_bank.query_user_position(&mut mock_env, &liquidatee);
+    let prev_liq_threshold_hf = liq_threshold_hf(&liquidatee_position);
+
+    // liquidate user
+    let usdc_repay_amt = 3000;
+    red_bank
+        .liquidate(
+            &mut mock_env,
+            &liquidator,
+            &liquidatee,
+            "uosmo",
+            &[coin(usdc_repay_amt, "uusdc")],
+        )
+        .unwrap();
+
+    // check provider positions
+    let provider_collaterals = red_bank.query_user_collaterals(&mut mock_env, &provider);
+    assert_eq!(provider_collaterals.len(), 1);
+    assert_eq!(provider_collaterals.get("uusdc").unwrap().amount.u128(), 1000000);
+    let provider_debts = red_bank.query_user_debts(&mut mock_env, &provider);
+    assert_eq!(provider_debts.len(), 0);
+
+    // check liquidatee positions
+    let liquidatee_collaterals = red_bank.query_user_collaterals(&mut mock_env, &liquidatee);
+    assert_eq!(liquidatee_collaterals.len(), 2);
+    assert_eq!(liquidatee_collaterals.get("uosmo").unwrap().amount.u128(), 4);
+    assert_eq!(liquidatee_collaterals.get("ujake").unwrap().amount.u128(), 2000);
+    let liquidatee_debts = red_bank.query_user_debts(&mut mock_env, &liquidatee);
+    assert_eq!(liquidatee_debts.len(), 1);
+    assert_eq!(liquidatee_debts.get("uusdc").unwrap().amount.u128(), 728);
+
+    // check liquidator positions
+    let liquidator_collaterals = red_bank.query_user_collaterals(&mut mock_env, &liquidator);
+    assert_eq!(liquidator_collaterals.len(), 1);
+    assert_eq!(liquidator_collaterals.get("uosmo").unwrap().amount.u128(), 9978);
+    let liquidator_debts = red_bank.query_user_debts(&mut mock_env, &liquidator);
+    assert_eq!(liquidator_debts.len(), 0);
+
+    // check rewards-collector positions (protocol fee)
+    let rc_collaterals =
+        red_bank.query_user_collaterals(&mut mock_env, &rewards_collector.contract_addr);
+    assert_eq!(rc_collaterals.len(), 1);
+    assert_eq!(rc_collaterals.get("uosmo").unwrap().amount.u128(), 18);
+    let rc_debts = red_bank.query_user_debts(&mut mock_env, &rewards_collector.contract_addr);
+    assert_eq!(rc_debts.len(), 0);
+
+    let (merged_collaterals, merged_debts, merged_balances) = merge_collaterals_and_debts(
+        &[&provider_collaterals, &liquidatee_collaterals, &liquidator_collaterals, &rc_collaterals],
+        &[&provider_debts, &liquidatee_debts, &liquidator_debts, &rc_debts],
+    );
+
+    // check if users collaterals and debts are equal to markets scaled amounts
+    let markets = red_bank.query_markets(&mut mock_env);
+    assert_eq!(markets.len(), 3);
+    let osmo_market = markets.get("uosmo").unwrap();
+    let jake_market = markets.get("ujake").unwrap();
+    let usdc_market = markets.get("uusdc").unwrap();
+    assert_eq!(merged_collaterals.get_or_default("uosmo"), osmo_market.collateral_total_scaled);
+    assert_eq!(merged_debts.get_or_default("uosmo"), osmo_market.debt_total_scaled);
+    assert_eq!(merged_collaterals.get_or_default("ujake"), jake_market.collateral_total_scaled);
+    assert_eq!(merged_debts.get_or_default("ujake"), jake_market.debt_total_scaled);
+    assert_eq!(merged_collaterals.get_or_default("uusdc"), usdc_market.collateral_total_scaled);
+    assert_eq!(merged_debts.get_or_default("uusdc"), usdc_market.debt_total_scaled);
+
+    // check red bank underlying balances
+    let balances = mock_env.query_all_balances(&red_bank.contract_addr);
+    assert_eq!(merged_balances.get("uosmo"), balances.get("uosmo"));
+    assert_eq!(merged_balances.get("ujake"), balances.get("ujake"));
+    assert_eq!(merged_balances.get("uusdc"), balances.get("uusdc"));
+
+    // check liquidator account balance
+    let usdc_liquidator_balance = mock_env.query_balance(&liquidator, "uusdc").unwrap();
+    assert_eq!(usdc_liquidator_balance.amount.u128(), funded_amt - usdc_repay_amt + 728); // 728 refunded
+
+    // liquidatee hf degradated
+    let liquidatee_position = red_bank.query_user_position(&mut mock_env, &liquidatee);
+    let liq_threshold_hf = liq_threshold_hf(&liquidatee_position);
+    assert!(liq_threshold_hf < prev_liq_threshold_hf);
 }
 
 #[test]
@@ -1115,6 +1317,25 @@ fn default_asset_params_with(
     max_loan_to_value: Decimal,
     liquidation_threshold: Decimal,
 ) -> (InitOrUpdateAssetParams, AssetParams) {
+    _default_asset_params_with(
+        denom,
+        max_loan_to_value,
+        liquidation_threshold,
+        LiquidationBonus {
+            starting_lb: Decimal::percent(1),
+            slope: Decimal::from_str("2.0").unwrap(),
+            min_lb: Decimal::percent(2),
+            max_lb: Decimal::percent(10),
+        },
+    )
+}
+
+fn _default_asset_params_with(
+    denom: &str,
+    max_loan_to_value: Decimal,
+    liquidation_threshold: Decimal,
+    liquidation_bonus: LiquidationBonus,
+) -> (InitOrUpdateAssetParams, AssetParams) {
     let market_params = InitOrUpdateAssetParams {
         reserve_factor: Some(Decimal::percent(20)),
         interest_rate_model: Some(InterestRateModel {
@@ -1136,12 +1357,7 @@ fn default_asset_params_with(
         },
         max_loan_to_value,
         liquidation_threshold,
-        liquidation_bonus: LiquidationBonus {
-            starting_lb: Decimal::percent(1),
-            slope: Decimal::from_str("2.0").unwrap(),
-            min_lb: Decimal::percent(2),
-            max_lb: Decimal::percent(10),
-        },
+        liquidation_bonus,
         protocol_liquidation_fee: Decimal::percent(2),
         deposit_cap: Uint128::MAX,
     };
