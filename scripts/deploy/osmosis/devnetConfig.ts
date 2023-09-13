@@ -25,6 +25,151 @@ const feeCollectorAddr = 'mars17xpfvakm2amg962yls6f84z3kell8c5ldy6e7x'
 
 // ----------------------------------- Markets -----------------------------------
 
+export const atomOsmoPoolAsset: AssetConfig = {
+  credit_manager: {
+    whitelisted: true,
+  },
+  symbol: atomOsmoPool,
+  denom: atomOsmoPool,
+  liquidation_bonus: {
+    max_lb: '0.05',
+    min_lb: '0',
+    slope: '2',
+    starting_lb: '0',
+  },
+  protocol_liquidation_fee: '0.1',
+  liquidation_threshold: '0.75',
+  max_loan_to_value: '0.73',
+  red_bank: {
+    borrow_enabled: false,
+    deposit_enabled: false,
+  },
+  deposit_cap: '10000000000000',
+  reserve_factor: '0.1',
+  interest_rate_model: {
+    optimal_utilization_rate: '0.6',
+    base: '0',
+    slope_1: '0.15',
+    slope_2: '3',
+  },
+}
+
+export const usdcOsmoPoolAsset: AssetConfig = {
+  credit_manager: {
+    whitelisted: true,
+  },
+  symbol: usdcOsmoPool,
+  denom: usdcOsmoPool,
+  liquidation_bonus: {
+    max_lb: '0.05',
+    min_lb: '0',
+    slope: '2',
+    starting_lb: '0',
+  },
+  protocol_liquidation_fee: '0.1',
+  liquidation_threshold: '0.77',
+  max_loan_to_value: '0.75',
+  red_bank: {
+    borrow_enabled: false,
+    deposit_enabled: false,
+  },
+  deposit_cap: '10000000000000',
+  reserve_factor: '0.1',
+  interest_rate_model: {
+    optimal_utilization_rate: '0.6',
+    base: '0',
+    slope_1: '0.15',
+    slope_2: '3',
+  },
+}
+
+export const ethOsmoPoolAsset: AssetConfig = {
+  credit_manager: {
+    whitelisted: true,
+  },
+  symbol: ethOsmoPool,
+  denom: ethOsmoPool,
+  liquidation_bonus: {
+    max_lb: '0.05',
+    min_lb: '0',
+    slope: '2',
+    starting_lb: '0',
+  },
+  protocol_liquidation_fee: '0.1',
+  liquidation_threshold: '0.77',
+  max_loan_to_value: '0.75',
+  red_bank: {
+    borrow_enabled: false,
+    deposit_enabled: false,
+  },
+  deposit_cap: '10000000000000',
+  reserve_factor: '0.1',
+  interest_rate_model: {
+    optimal_utilization_rate: '0.6',
+    base: '0',
+    slope_1: '0.15',
+    slope_2: '3',
+  },
+}
+
+export const wbtcOsmoPoolAsset: AssetConfig = {
+  credit_manager: {
+    whitelisted: true,
+  },
+  symbol: wbtcOsmoPool,
+  denom: wbtcOsmoPool,
+  liquidation_bonus: {
+    max_lb: '0.05',
+    min_lb: '0',
+    slope: '2',
+    starting_lb: '0',
+  },
+  protocol_liquidation_fee: '0.1',
+  liquidation_threshold: '0.77',
+  max_loan_to_value: '0.75',
+  red_bank: {
+    borrow_enabled: false,
+    deposit_enabled: false,
+  },
+  deposit_cap: '10000000000000',
+  reserve_factor: '0.1',
+  interest_rate_model: {
+    optimal_utilization_rate: '0.6',
+    base: '0',
+    slope_1: '0.15',
+    slope_2: '3',
+  },
+}
+
+export const atomStAtomPoolAsset: AssetConfig = {
+  credit_manager: {
+    whitelisted: true,
+  },
+  symbol: atomStAtomPool,
+  denom: atomStAtomPool,
+  liquidation_bonus: {
+    max_lb: '0.05',
+    min_lb: '0',
+    slope: '2',
+    starting_lb: '0',
+  },
+  protocol_liquidation_fee: '0.1',
+  liquidation_threshold: '0.65',
+  max_loan_to_value: '0.64',
+  red_bank: {
+    borrow_enabled: false,
+    deposit_enabled: false,
+  },
+  deposit_cap: '10000000000000',
+  reserve_factor: '0.1',
+  interest_rate_model: {
+    optimal_utilization_rate: '0.6',
+    base: '0',
+    slope_1: '0.15',
+    slope_2: '3',
+  },
+}
+
 export const osmoAsset: AssetConfig = {
   credit_manager: {
     whitelisted: true,
@@ -585,7 +730,20 @@ export const osmosisDevnet: DeploymentConfig = {
   protocolAdminAddr: protocolAdminAddr,
   feeCollectorAddr: feeCollectorAddr,
   swapperDexName: 'osmosis',
-  assets: [osmoAsset, atomAsset, axlAsset, stAtomAsset, wbtcAsset, axlUSDCAsset, ethAsset],
+  assets: [
+    osmoAsset,
+    atomAsset,
+    axlAsset,
+    stAtomAsset,
+    wbtcAsset,
+    axlUSDCAsset,
+    ethAsset,
+    atomOsmoPoolAsset,
+    usdcOsmoPoolAsset,
+    ethOsmoPoolAsset,
+    wbtcOsmoPoolAsset,
+    atomStAtomPoolAsset,
+  ],
   vaults: [atomOsmoVault, usdcOsmoVault, ethOsmoVault, wbtcOsmoVault, atomStAtomVault],
   oracleConfigs: [
     usdOracle,
