@@ -90,14 +90,14 @@ pub fn decrement_coin_balance(
 
 pub fn update_balance_msg(
     querier: &QuerierWrapper,
-    rover_addr: &Addr,
+    credit_manager_addr: &Addr,
     account_id: &str,
     denom: &str,
     change: ChangeExpected,
 ) -> StdResult<CosmosMsg> {
-    let previous_balance = query_balance(querier, rover_addr, denom)?;
+    let previous_balance = query_balance(querier, credit_manager_addr, denom)?;
     Ok(CosmosMsg::Wasm(WasmMsg::Execute {
-        contract_addr: rover_addr.to_string(),
+        contract_addr: credit_manager_addr.to_string(),
         funds: vec![],
         msg: to_binary(&ExecuteMsg::Callback(CallbackMsg::UpdateCoinBalance {
             account_id: account_id.to_string(),
@@ -109,27 +109,29 @@ pub fn update_balance_msg(
 
 pub fn update_balances_msgs(
     querier: &QuerierWrapper,
-    rover_addr: &Addr,
+    credit_manager_addr: &Addr,
     account_id: &str,
     denoms: Vec<&str>,
     change: ChangeExpected,
 ) -> StdResult<Vec<CosmosMsg>> {
     denoms
         .iter()
-        .map(|denom| update_balance_msg(querier, rover_addr, account_id, denom, change.clone()))
+        .map(|denom| {
+            update_balance_msg(querier, credit_manager_addr, account_id, denom, change.clone())
+        })
         .collect()
 }
 
 pub fn update_balance_after_vault_liquidation_msg(
     querier: &QuerierWrapper,
-    rover_addr: &Addr,
+    credit_manager_addr: &Addr,
     account_id: &str,
     denom: &str,
     protocol_fee: Decimal,
 ) -> StdResult<CosmosMsg> {
-    let previous_balance = query_balance(querier, rover_addr, denom)?;
+    let previous_balance = query_balance(querier, credit_manager_addr, denom)?;
     Ok(CosmosMsg::Wasm(WasmMsg::Execute {
-        contract_addr: rover_addr.to_string(),
+        contract_addr: credit_manager_addr.to_string(),
         funds: vec![],
         msg: to_binary(&ExecuteMsg::Callback(
             CallbackMsg::UpdateCoinBalanceAfterVaultLiquidation {
