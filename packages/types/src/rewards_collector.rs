@@ -203,7 +203,7 @@ pub enum QueryMsg {
 // TODO: rover is private repo for now so can't use it as a dependency. Use rover types once repo is public.
 pub mod credit_manager {
     use cosmwasm_schema::cw_serde;
-    use cosmwasm_std::{Coin, Uint128};
+    use cosmwasm_std::{Decimal, Uint128};
 
     #[cw_serde]
     pub enum ExecuteMsg {
@@ -215,10 +215,10 @@ pub mod credit_manager {
 
     #[cw_serde]
     pub enum Action {
-        Withdraw(Coin),
+        Withdraw(ActionCoin),
         WithdrawLiquidity {
             lp_token: ActionCoin,
-            minimum_receive: Vec<Coin>,
+            slippage: Decimal, // value validated in credit-manager
         },
         Unknown {}, // Used to simulate allowance only for: Withdraw and WithdrawLiquidity
     }
