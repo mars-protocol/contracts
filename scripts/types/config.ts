@@ -30,6 +30,7 @@ export interface DeploymentConfig {
   allowedCoins: string[]
   maxValueForBurn: string
   maxUnlockingPositions: string
+  maxSlippage: string
   testActions?: TestActions
   swapperContractName: string
   zapperContractName: string

@@ -1,7 +1,7 @@
 use std::mem::take;
 
 use anyhow::Result as AnyResult;
-use cosmwasm_std::{Addr, Empty};
+use cosmwasm_std::{Addr, Decimal, Empty};
 use cw_multi_test::{BasicApp, Executor};
 use mars_account_nft_types::msg::InstantiateMsg;
 use mars_mock_credit_manager::msg::InstantiateMsg as CmMockInstantiateMsg;
@@ -147,6 +147,7 @@ impl MockEnvBuilder {
                         params: "n/a".to_string(),
                         account_nft: None,
                         max_unlocking_positions: Default::default(),
+                        max_slippage: Decimal::percent(99),
                         swapper: "n/a".to_string(),
                         zapper: "n/a".to_string(),
                         health_contract: "n/a".to_string(),

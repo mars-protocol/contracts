@@ -16,7 +16,10 @@ use mars_rover::{
 use mars_rover_health_types::AccountKind;
 
 use crate::{
-    state::{ACCOUNT_KINDS, ACCOUNT_NFT, COIN_BALANCES, PARAMS, RED_BANK, TOTAL_DEBT_SHARES},
+    state::{
+        ACCOUNT_KINDS, ACCOUNT_NFT, COIN_BALANCES, MAX_SLIPPAGE, PARAMS, RED_BANK,
+        TOTAL_DEBT_SHARES,
+    },
     update_coin_balances::query_balance,
 };
 
@@ -26,6 +29,26 @@ pub fn assert_is_token_owner(deps: &DepsMut, user: &Addr, account_id: &str) -> C
         return Err(ContractError::NotTokenOwner {
             user: user.to_string(),
             account_id: account_id.to_string(),
+        });
+    }
+    Ok(())
+}
+
+pub fn assert_max_slippage(max_slippage: Decimal) -> ContractResult<()> {
+    if max_slippage.is_zero() || max_slippage >= Decimal::one() {
+        return Err(ContractError::InvalidConfig {
+            reason: "Max slippage must be greater than 0 and less than 1".to_string(),
+        });
+    }
+    Ok(())
+}
+
+pub fn assert_slippage(storage: &dyn Storage, slippage: Decimal) -> ContractResult<()> {
+    let max_slippage = MAX_SLIPPAGE.load(storage)?;
+    if slippage > max_slippage {
+        return Err(ContractError::SlippageExceeded {
+            slippage,
+            max_slippage,
         });
     }
     Ok(())

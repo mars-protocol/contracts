@@ -1,5 +1,5 @@
 use cosmwasm_schema::{cw_serde, QueryResponses};
-use cosmwasm_std::{Coin, Uint128};
+use cosmwasm_std::{Coin, Decimal, Uint128};
 use mars_owner::OwnerResponse;
 
 use crate::{
@@ -166,6 +166,7 @@ pub struct ConfigResponse {
     pub oracle: String,
     pub params: String,
     pub max_unlocking_positions: Uint128,
+    pub max_slippage: Decimal,
     pub swapper: String,
     pub zapper: String,
     pub health_contract: String,

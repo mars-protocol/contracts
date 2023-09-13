@@ -1,6 +1,6 @@
 use std::ops::Mul;
 
-use cosmwasm_std::{Addr, OverflowError, OverflowOperation::Sub, Uint128};
+use cosmwasm_std::{Addr, Decimal, OverflowError, OverflowOperation::Sub, Uint128};
 use mars_rover::{
     error::ContractError as RoverError,
     msg::execute::{
@@ -29,7 +29,7 @@ fn only_token_owner_can_zap_for_account() {
         vec![ProvideLiquidity {
             coins_in: vec![],
             lp_token_out: "".to_string(),
-            minimum_receive: Default::default(),
+            slippage: Decimal::percent(5),
         }],
         &[],
     );
@@ -69,7 +69,7 @@ fn does_not_have_enough_tokens_to_provide_liq() {
             ProvideLiquidity {
                 coins_in: vec![atom.to_action_coin(100), osmo.to_action_coin(200)],
                 lp_token_out: lp_token.denom,
-                minimum_receive: Uint128::zero(),
+                slippage: Decimal::zero(),
             },
         ],
         &[atom.to_coin(100), osmo.to_coin(50)],
@@ -111,7 +111,7 @@ fn lp_token_out_must_be_whitelisted() {
             ProvideLiquidity {
                 coins_in: vec![atom.to_action_coin(100), osmo.to_action_coin(200)],
                 lp_token_out: lp_token.denom.clone(),
-                minimum_receive: Uint128::zero(),
+                slippage: Decimal::zero(),
             },
         ],
         &[atom.to_coin(100), osmo.to_coin(50)],
@@ -143,7 +143,7 @@ fn coins_in_must_be_whitelisted() {
         vec![ProvideLiquidity {
             coins_in: vec![atom.to_action_coin(100), osmo.to_action_coin(200)],
             lp_token_out: lp_token.denom,
-            minimum_receive: Uint128::zero(),
+            slippage: Decimal::zero(),
         }],
         &[],
     );
@@ -152,14 +152,16 @@ fn coins_in_must_be_whitelisted() {
 }
 
 #[test]
-fn min_received_too_high() {
+fn slippage_too_high() {
     let atom = uatom_info();
     let osmo = uosmo_info();
     let lp_token = lp_token_info();
 
     let user = Addr::unchecked("user");
+    let max_slippage = Decimal::percent(20);
     let mut mock = MockEnv::new()
         .set_params(&[lp_token.clone(), atom.clone(), osmo.clone()])
+        .max_slippage(max_slippage)
         .fund_account(AccountToFund {
             addr: user.clone(),
             funds: vec![atom.to_coin(300), osmo.to_coin(300)],
@@ -168,6 +170,7 @@ fn min_received_too_high() {
         .unwrap();
 
     let account_id = mock.create_credit_account(&user).unwrap();
+    let slippage = max_slippage + Decimal::one();
     let err = mock
         .update_credit_account(
             &account_id,
@@ -178,15 +181,21 @@ fn min_received_too_high() {
                 ProvideLiquidity {
                     coins_in: vec![atom.to_action_coin(100), osmo.to_action_coin(50)],
                     lp_token_out: lp_token.denom,
-                    minimum_receive: Uint128::new(100_000_000_000),
+                    slippage,
                 },
             ],
             &[atom.to_coin(100), osmo.to_coin(50)],
         )
         .unwrap_err();
 
-    let contract_err: ContractError = err.downcast().unwrap();
-    assert_eq!(contract_err, ContractError::ReceivedBelowMinimum);
+    let contract_err: mars_rover::error::ContractError = err.downcast().unwrap();
+    assert_eq!(
+        contract_err,
+        mars_rover::error::ContractError::SlippageExceeded {
+            slippage,
+            max_slippage
+        }
+    );
 }
 
 #[test]
@@ -216,7 +225,7 @@ fn wrong_denom_provided() {
                 ProvideLiquidity {
                     coins_in: vec![atom.to_action_coin(100), jake.to_action_coin(50)],
                     lp_token_out: lp_token.denom,
-                    minimum_receive: Uint128::zero(),
+                    slippage: Decimal::zero(),
                 },
             ],
             &[atom.to_coin(100), jake.to_coin(50)],
@@ -249,7 +258,8 @@ fn successful_zap() {
     let account_id = mock.create_credit_account(&user).unwrap();
     let estimate =
         mock.estimate_provide_liquidity(&lp_token.denom, &[atom.to_coin(100), osmo.to_coin(50)]);
-    let slippage_adjusted = estimate.multiply_ratio(Uint128::new(95), Uint128::new(100));
+    let slippage = Decimal::percent(5);
+    let slippage_adjusted = estimate * (Decimal::one() - slippage);
     assert_eq!(slippage_adjusted, Uint128::new(950_000)); // 1_000_000 * .95
 
     mock.update_credit_account(
@@ -261,7 +271,7 @@ fn successful_zap() {
             ProvideLiquidity {
                 coins_in: vec![atom.to_action_coin(100), osmo.to_action_coin(50)],
                 lp_token_out: lp_token.denom.clone(),
-                minimum_receive: slippage_adjusted,
+                slippage,
             },
         ],
         &[atom.to_coin(100), osmo.to_coin(50)],
@@ -314,8 +324,6 @@ fn can_provide_unbalanced() {
         .unwrap();
 
     let account_id = mock.create_credit_account(&user).unwrap();
-    let estimate = mock.estimate_provide_liquidity(&lp_token.denom, &[atom.to_coin(100)]);
-    let slippage_adjusted = estimate.multiply_ratio(Uint128::new(95), Uint128::new(100));
 
     mock.update_credit_account(
         &account_id,
@@ -325,7 +333,7 @@ fn can_provide_unbalanced() {
             ProvideLiquidity {
                 coins_in: vec![atom.to_action_coin(100)],
                 lp_token_out: lp_token.denom.clone(),
-                minimum_receive: slippage_adjusted,
+                slippage: Decimal::percent(5),
             },
         ],
         &[atom.to_coin(100)],
@@ -352,7 +360,7 @@ fn can_provide_unbalanced() {
                 denom: lp_token.denom.clone(),
                 amount: ActionAmount::Exact(STARTING_LP_POOL_TOKENS.multiply_ratio(1u128, 2u128)),
             },
-            minimum_receive: vec![],
+            slippage: Decimal::zero(),
         }],
         &[],
     )
@@ -390,7 +398,8 @@ fn order_does_not_matter() {
     let account_id = mock.create_credit_account(&user).unwrap();
     let estimate =
         mock.estimate_provide_liquidity(&lp_token.denom, &[atom.to_coin(100), osmo.to_coin(50)]);
-    let slippage_adjusted = estimate.multiply_ratio(Uint128::new(95), Uint128::new(100));
+    let slippage = Decimal::percent(5);
+    let slippage_adjusted = estimate * (Decimal::one() - slippage);
     assert_eq!(slippage_adjusted, Uint128::new(950_000)); // 1_000_000 * .95
 
     // order A
@@ -403,7 +412,7 @@ fn order_does_not_matter() {
             ProvideLiquidity {
                 coins_in: vec![atom.to_action_coin(100), osmo.to_action_coin(50)],
                 lp_token_out: lp_token.denom.clone(),
-                minimum_receive: slippage_adjusted,
+                slippage,
             },
         ],
         &[atom.to_coin(100), osmo.to_coin(50)],
@@ -420,7 +429,7 @@ fn order_does_not_matter() {
             ProvideLiquidity {
                 coins_in: vec![osmo.to_action_coin(50), atom.to_action_coin(100)],
                 lp_token_out: lp_token.denom.clone(),
-                minimum_receive: slippage_adjusted,
+                slippage,
             },
         ],
         &[atom.to_coin(100), osmo.to_coin(50)],

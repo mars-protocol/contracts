@@ -7,6 +7,7 @@
 
 export type HealthContractBaseForString = string
 export type IncentivesUnchecked = string
+export type Decimal = string
 export type Uint128 = string
 export type OracleBaseForString = string
 export type ParamsBaseForString = string
@@ -16,6 +17,7 @@ export type ZapperBaseForString = string
 export interface InstantiateMsg {
   health_contract: HealthContractBaseForString
   incentives: IncentivesUnchecked
+  max_slippage: Decimal
   max_unlocking_positions: Uint128
   oracle: OracleBaseForString
   owner: string
@@ -124,13 +126,13 @@ export type Action =
       provide_liquidity: {
         coins_in: ActionCoin[]
         lp_token_out: string
-        minimum_receive: Uint128
+        slippage: Decimal
       }
     }
   | {
       withdraw_liquidity: {
         lp_token: ActionCoin
-        minimum_receive: Coin[]
+        slippage: Decimal
       }
     }
   | {
@@ -155,7 +157,6 @@ export type LiquidateRequestForVaultBaseForString =
       }
     }
 export type VaultPositionType = 'u_n_l_o_c_k_e_d' | 'l_o_c_k_e_d' | 'u_n_l_o_c_k_i_n_g'
-export type Decimal = string
 export type AccountNftBaseForString = string
 export type OwnerUpdate =
   | {
@@ -298,14 +299,14 @@ export type CallbackMsg =
         account_id: string
         coins_in: ActionCoin[]
         lp_token_out: string
-        minimum_receive: Uint128
+        slippage: Decimal
       }
     }
   | {
       withdraw_liquidity: {
         account_id: string
         lp_token: ActionCoin
-        minimum_receive: Coin[]
+        slippage: Decimal
       }
     }
   | {
@@ -366,6 +367,7 @@ export interface ConfigUpdates {
   account_nft?: AccountNftBaseForString | null
   health_contract?: HealthContractBaseForString | null
   incentives?: IncentivesUnchecked | null
+  max_slippage?: Decimal | null
   max_unlocking_positions?: Uint128 | null
   oracle?: OracleBaseForString | null
   red_bank?: RedBankUnchecked | null
@@ -503,6 +505,7 @@ export interface ConfigResponse {
   account_nft?: string | null
   health_contract: string
   incentives: string
+  max_slippage: Decimal
   max_unlocking_positions: Uint128
   oracle: string
   ownership: OwnerResponse

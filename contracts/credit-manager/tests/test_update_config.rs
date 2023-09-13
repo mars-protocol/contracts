@@ -1,5 +1,6 @@
 use cosmwasm_std::{Addr, Decimal, Empty, Uint128};
 use cw_multi_test::{BasicApp, Executor};
+use helpers::assert_err;
 use mars_mock_oracle::msg::{CoinPrice, InstantiateMsg as OracleInstantiateMsg};
 use mars_red_bank_types::oracle::ActionKind;
 use mars_rover::{
@@ -8,6 +9,7 @@ use mars_rover::{
         red_bank::RedBankUnchecked, rewards_collector::RewardsCollector, swap::SwapperBase,
         zapper::ZapperBase,
     },
+    error::ContractError,
     msg::instantiate::ConfigUpdates,
 };
 use mars_rover_health_types::AccountKind;
@@ -29,6 +31,7 @@ fn only_owner_can_update_config() {
             red_bank: None,
             incentives: None,
             max_unlocking_positions: None,
+            max_slippage: None,
             swapper: None,
             zapper: None,
             health_contract: None,
@@ -42,6 +45,40 @@ fn only_owner_can_update_config() {
 }
 
 #[test]
+fn invalid_max_slippage() {
+    let mut mock = MockEnv::new().build().unwrap();
+    let original_config = mock.query_config();
+
+    let res = mock.update_config(
+        &Addr::unchecked(original_config.ownership.owner.clone().unwrap()),
+        ConfigUpdates {
+            max_slippage: Some(Decimal::zero()),
+            ..Default::default()
+        },
+    );
+    assert_err(
+        res,
+        ContractError::InvalidConfig {
+            reason: "Max slippage must be greater than 0 and less than 1".to_string(),
+        },
+    );
+
+    let res = mock.update_config(
+        &Addr::unchecked(original_config.ownership.owner.unwrap()),
+        ConfigUpdates {
+            max_slippage: Some(Decimal::one()),
+            ..Default::default()
+        },
+    );
+    assert_err(
+        res,
+        ContractError::InvalidConfig {
+            reason: "Max slippage must be greater than 0 and less than 1".to_string(),
+        },
+    );
+}
+
+#[test]
 fn update_config_works_with_full_config() {
     let mut mock = MockEnv::new().build().unwrap();
     let original_config = mock.query_config();
@@ -52,6 +89,7 @@ fn update_config_works_with_full_config() {
     let new_incentives = IncentivesUnchecked::new("new_incentives".to_string());
     let new_zapper = ZapperBase::new("new_zapper".to_string());
     let new_unlocking_max = Uint128::new(321);
+    let new_max_slippage = Decimal::percent(12);
     let new_swapper = SwapperBase::new("new_swapper".to_string());
     let new_health_contract = HealthContractUnchecked::new("new_health_contract".to_string());
     let new_rewards_collector = "rewards_collector_contract_new".to_string();
@@ -64,6 +102,7 @@ fn update_config_works_with_full_config() {
             red_bank: Some(new_red_bank.clone()),
             incentives: Some(new_incentives.clone()),
             max_unlocking_positions: Some(new_unlocking_max),
+            max_slippage: Some(new_max_slippage),
             swapper: Some(new_swapper.clone()),
             zapper: Some(new_zapper.clone()),
             health_contract: Some(new_health_contract.clone()),
@@ -93,6 +132,9 @@ fn update_config_works_with_full_config() {
 
     assert_eq!(new_config.max_unlocking_positions, new_unlocking_max);
     assert_ne!(new_config.max_unlocking_positions, original_config.max_unlocking_positions);
+
+    assert_eq!(new_config.max_slippage, new_max_slippage);
+    assert_ne!(new_config.max_slippage, original_config.max_slippage);
 
     assert_eq!(&new_config.swapper, new_swapper.address());
     assert_ne!(new_config.swapper, original_config.swapper);

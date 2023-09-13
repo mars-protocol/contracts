@@ -5,7 +5,8 @@ use mars_rover::{error::ContractResult, msg::migrate::V2Updates};
 
 use crate::{
     contract::{CONTRACT_NAME, CONTRACT_VERSION},
-    state::{HEALTH_CONTRACT, INCENTIVES, OWNER, PARAMS, SWAPPER},
+    state::{HEALTH_CONTRACT, INCENTIVES, MAX_SLIPPAGE, OWNER, PARAMS, SWAPPER},
+    utils::assert_max_slippage,
 };
 
 const FROM_VERSION: &str = "1.0.0";
@@ -43,6 +44,9 @@ pub fn migrate(deps: DepsMut, env: Env, updates: V2Updates) -> ContractResult<Re
     PARAMS.save(deps.storage, &updates.params.check(deps.api)?)?;
     INCENTIVES.save(deps.storage, &updates.incentives.check(deps.api, env.contract.address)?)?;
     SWAPPER.save(deps.storage, &updates.swapper.check(deps.api)?)?;
+
+    assert_max_slippage(updates.max_slippage)?;
+    MAX_SLIPPAGE.save(deps.storage, &updates.max_slippage)?;
 
     // Owner package updated, re-initializing
     let old_owner_state = v1_state::OWNER.load(deps.storage)?;

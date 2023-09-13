@@ -6,7 +6,9 @@ use mars_rover::{
 
 use crate::{
     state::{COIN_BALANCES, SWAPPER},
-    utils::{assert_coin_is_whitelisted, decrement_coin_balance, update_balance_msg},
+    utils::{
+        assert_coin_is_whitelisted, assert_slippage, decrement_coin_balance, update_balance_msg,
+    },
 };
 
 pub fn swap_exact_in(
@@ -17,6 +19,8 @@ pub fn swap_exact_in(
     denom_out: &str,
     slippage: Decimal,
 ) -> ContractResult<Response> {
+    assert_slippage(deps.storage, slippage)?;
+
     assert_coin_is_whitelisted(&mut deps, denom_out)?;
 
     let coin_in_to_trade = Coin {

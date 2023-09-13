@@ -11,6 +11,7 @@ import { StdFee } from '@cosmjs/amino'
 import {
   HealthContractBaseForString,
   IncentivesUnchecked,
+  Decimal,
   Uint128,
   OracleBaseForString,
   ParamsBaseForString,
@@ -24,7 +25,6 @@ import {
   ActionAmount,
   LiquidateRequestForVaultBaseForString,
   VaultPositionType,
-  Decimal,
   AccountNftBaseForString,
   OwnerUpdate,
   CallbackMsg,

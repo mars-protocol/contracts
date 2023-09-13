@@ -1,4 +1,5 @@
 use cosmwasm_schema::cw_serde;
+use cosmwasm_std::Decimal;
 
 use crate::adapters::{
     health::HealthContractUnchecked, incentives::IncentivesUnchecked, params::ParamsUnchecked,
@@ -11,6 +12,7 @@ pub struct V2Updates {
     pub params: ParamsUnchecked,
     pub incentives: IncentivesUnchecked,
     pub swapper: SwapperUnchecked,
+    pub max_slippage: Decimal,
 }
 
 #[cw_serde]

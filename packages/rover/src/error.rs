@@ -1,5 +1,5 @@
 use cosmwasm_std::{
-    CheckedFromRatioError, CheckedMultiplyFractionError, CheckedMultiplyRatioError, Coin,
+    CheckedFromRatioError, CheckedMultiplyFractionError, CheckedMultiplyRatioError, Coin, Decimal,
     DecimalRangeExceeded, OverflowError, StdError, Uint128,
 };
 use cw2::VersionError;
@@ -174,4 +174,10 @@ pub enum ContractError {
 
     #[error("{0}")]
     Liquidation(#[from] LiquidationError),
+
+    #[error("Slippage {slippage:?} exceeded max slippage {max_slippage:?}")]
+    SlippageExceeded {
+        slippage: Decimal,
+        max_slippage: Decimal,
+    },
 }

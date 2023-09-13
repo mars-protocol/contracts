@@ -1,4 +1,4 @@
-use cosmwasm_std::{Addr, Uint128};
+use cosmwasm_std::{Addr, Decimal, Uint128};
 use cw_storage_plus::{Item, Map};
 use mars_owner::Owner;
 use mars_rover::{
@@ -27,6 +27,7 @@ pub const INCENTIVES: Item<Incentives> = Item::new("incentives");
 pub const OWNER: Owner = Owner::new("owner");
 pub const MAX_UNLOCKING_POSITIONS: Item<Uint128> = Item::new("max_unlocking_positions");
 pub const REENTRANCY_GUARD: ReentrancyGuard = ReentrancyGuard::new("reentrancy_guard");
+pub const MAX_SLIPPAGE: Item<Decimal> = Item::new("max_slippage");
 
 // Positions
 pub const ACCOUNT_KINDS: Map<&str, AccountKind> = Map::new("account_types"); // Map<AccountId, AccountKind>

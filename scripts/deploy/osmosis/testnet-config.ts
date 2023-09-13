@@ -39,6 +39,7 @@ export const osmosisTestnetConfig: DeploymentConfig = {
   deployerMnemonic:
     'rely wonder join knock during sudden slow plate segment state agree also arrest mandate grief ordinary lonely lawsuit hurt super banana rule velvet cart',
   maxUnlockingPositions: '10',
+  maxSlippage: '0.2',
   maxValueForBurn: '1000000',
   // Latest from: https://github.com/mars-protocol/outposts/blob/master/scripts/deploy/addresses/osmo-test-5.json
   redBank: { addr: 'osmo1hs4sm0fah9rk4mz8e56v4n76g0q9fffdkkjm3f8tjagkdx78pqcq75pk0a' },

@@ -172,17 +172,19 @@ pub enum Action {
         denom_out: String,
         slippage: Decimal,
     },
-    /// Add Vec<Coin> to liquidity pool in exchange for LP tokens
+    /// Add Vec<Coin> to liquidity pool in exchange for LP tokens.
+    /// Slippage allowance (%) is used to calculate the minimum amount of LP tokens to receive.
     ProvideLiquidity {
         coins_in: Vec<ActionCoin>,
         lp_token_out: String,
-        minimum_receive: Uint128,
+        slippage: Decimal,
     },
     /// Send LP token and withdraw corresponding reserve assets from pool.
     /// If `lp_token.amount: AccountBalance`, the account balance of `lp_token.denom` will be used.
+    /// /// Slippage allowance (%) is used to calculate the minimum amount of reserve assets to receive.
     WithdrawLiquidity {
         lp_token: ActionCoin,
-        minimum_receive: Vec<Coin>,
+        slippage: Decimal,
     },
     /// Refunds all coin balances back to user wallet
     RefundAllCoinBalances {},
@@ -317,19 +319,19 @@ pub enum CallbackMsg {
         /// Protocol fee percentage transfered to rewards-collector account
         protocol_fee: Decimal,
     },
-    /// Add Vec<Coin> to liquidity pool in exchange for LP tokens
+    /// Add Vec<Coin> to liquidity pool in exchange for LP tokens.
     ProvideLiquidity {
         account_id: String,
         coins_in: Vec<ActionCoin>,
         lp_token_out: String,
-        minimum_receive: Uint128,
+        slippage: Decimal,
     },
     /// Send LP token and withdraw corresponding reserve assets from pool.
     /// If `lp_token.amount: AccountBalance`, the account balance of `lp_token.denom` will be used.
     WithdrawLiquidity {
         account_id: String,
         lp_token: ActionCoin,
-        minimum_receive: Vec<Coin>,
+        slippage: Decimal,
     },
     /// Refunds all coin balances back to user wallet
     RefundAllCoinBalances {

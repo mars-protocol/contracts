@@ -164,7 +164,7 @@ export class Rover {
             amount: { exact: c.amount },
           })),
           lp_token_out,
-          minimum_receive: '1',
+          slippage: '0.05',
         },
       },
     ])
@@ -186,7 +186,7 @@ export class Rover {
       {
         withdraw_liquidity: {
           lp_token: { amount: { exact: lpToken.amount }, denom: lpToken.denom },
-          minimum_receive: [],
+          slippage: '0.05',
         },
       },
     ])

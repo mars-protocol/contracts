@@ -59,7 +59,7 @@ use crate::helpers::{uatom_info, uosmo_info, AccountToFund, MockEnv};
                 amount: ActionAmount::AccountBalance,
             },
             denom_out: "uosmo".into(),
-            slippage: Decimal::one(),
+            slippage: Decimal::percent(5),
         }
     ],
     true;
@@ -80,7 +80,7 @@ use crate::helpers::{uatom_info, uosmo_info, AccountToFund, MockEnv};
                 amount: ActionAmount::AccountBalance,
             },
             denom_out: "uosmo".into(),
-            slippage: Decimal::one(),
+            slippage: Decimal::percent(5),
         }
     ],
     false;

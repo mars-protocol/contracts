@@ -1,12 +1,15 @@
 use cosmwasm_std::{
     testing::{mock_dependencies, mock_env},
-    Addr,
+    Addr, Decimal,
 };
 use cw2::VersionError;
 use mars_credit_manager::{
     contract::migrate,
     migrations::v2_0_0::{v1_state, v1_state::OwnerSetNoneProposed},
-    state::{ACCOUNT_NFT, HEALTH_CONTRACT, INCENTIVES, OWNER, PARAMS, REWARDS_COLLECTOR, SWAPPER},
+    state::{
+        ACCOUNT_NFT, HEALTH_CONTRACT, INCENTIVES, MAX_SLIPPAGE, OWNER, PARAMS, REWARDS_COLLECTOR,
+        SWAPPER,
+    },
 };
 use mars_rover::{
     adapters::{
@@ -32,6 +35,7 @@ fn wrong_contract_name() {
             params: ParamsUnchecked::new("params".to_string()),
             incentives: IncentivesUnchecked::new("incentives".to_string()),
             swapper: SwapperUnchecked::new("swapper".to_string()),
+            max_slippage: Decimal::percent(1),
         }),
     )
     .unwrap_err();
@@ -59,6 +63,7 @@ fn wrong_contract_version() {
             params: ParamsUnchecked::new("params".to_string()),
             incentives: IncentivesUnchecked::new("incentives".to_string()),
             swapper: SwapperUnchecked::new("swapper".to_string()),
+            max_slippage: Decimal::percent(1),
         }),
     )
     .unwrap_err();
@@ -95,6 +100,7 @@ fn successful_migration() {
     let params = "params_addr_456".to_string();
     let incentives = "incentives_addr_789".to_string();
     let swapper = "swapper_addr_012".to_string();
+    let max_slippage = Decimal::percent(5);
 
     migrate(
         deps.as_mut(),
@@ -104,6 +110,7 @@ fn successful_migration() {
             params: ParamsUnchecked::new(params.clone()),
             incentives: IncentivesUnchecked::new(incentives.clone()),
             swapper: SwapperUnchecked::new(swapper.clone()),
+            max_slippage,
         }),
     )
     .unwrap();
@@ -123,6 +130,9 @@ fn successful_migration() {
 
     let set_rewards = REWARDS_COLLECTOR.may_load(deps.as_ref().storage).unwrap();
     assert_eq!(None, set_rewards);
+
+    let set_slippage = MAX_SLIPPAGE.load(deps.as_ref().storage).unwrap();
+    assert_eq!(max_slippage, set_slippage);
 
     let o = OWNER.query(deps.as_ref().storage).unwrap();
     assert_eq!(old_owner.to_string(), o.owner.unwrap());

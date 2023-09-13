@@ -242,20 +242,20 @@ pub fn dispatch_actions(
             Action::ProvideLiquidity {
                 coins_in,
                 lp_token_out,
-                minimum_receive,
+                slippage,
             } => callbacks.push(CallbackMsg::ProvideLiquidity {
                 account_id: account_id.to_string(),
                 lp_token_out,
                 coins_in,
-                minimum_receive,
+                slippage,
             }),
             Action::WithdrawLiquidity {
                 lp_token,
-                minimum_receive,
+                slippage,
             } => callbacks.push(CallbackMsg::WithdrawLiquidity {
                 account_id: account_id.to_string(),
                 lp_token,
-                minimum_receive,
+                slippage,
             }),
             Action::RefundAllCoinBalances {} => {
                 callbacks.push(CallbackMsg::RefundAllCoinBalances {
@@ -453,13 +453,13 @@ pub fn execute_callback(
             account_id,
             coins_in,
             lp_token_out,
-            minimum_receive,
-        } => provide_liquidity(deps, env, &account_id, coins_in, &lp_token_out, minimum_receive),
+            slippage,
+        } => provide_liquidity(deps, env, &account_id, coins_in, &lp_token_out, slippage),
         CallbackMsg::WithdrawLiquidity {
             account_id,
             lp_token,
-            minimum_receive,
-        } => withdraw_liquidity(deps, env, &account_id, &lp_token, minimum_receive),
+            slippage,
+        } => withdraw_liquidity(deps, env, &account_id, &lp_token, slippage),
         CallbackMsg::RefundAllCoinBalances {
             account_id,
         } => refund_coin_balances(deps, env, &account_id),

@@ -139,6 +139,7 @@ export class Deployer {
     const msg: RoverInstantiateMsg = {
       params: this.config.params.addr,
       max_unlocking_positions: this.config.maxUnlockingPositions,
+      max_slippage: this.config.maxSlippage,
       oracle: this.config.oracle.addr,
       owner: this.deployerAddr,
       red_bank: this.config.redBank.addr,

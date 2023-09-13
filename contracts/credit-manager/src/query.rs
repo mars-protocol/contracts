@@ -15,8 +15,8 @@ use mars_rover_health_types::AccountKind;
 use crate::{
     state::{
         ACCOUNT_KINDS, ACCOUNT_NFT, COIN_BALANCES, DEBT_SHARES, HEALTH_CONTRACT, INCENTIVES,
-        MAX_UNLOCKING_POSITIONS, ORACLE, OWNER, PARAMS, RED_BANK, REWARDS_COLLECTOR, SWAPPER,
-        TOTAL_DEBT_SHARES, VAULT_POSITIONS, ZAPPER,
+        MAX_SLIPPAGE, MAX_UNLOCKING_POSITIONS, ORACLE, OWNER, PARAMS, RED_BANK, REWARDS_COLLECTOR,
+        SWAPPER, TOTAL_DEBT_SHARES, VAULT_POSITIONS, ZAPPER,
     },
     utils::debt_shares_to_amount,
     vault::vault_utilization_in_deposit_cap_denom,
@@ -54,6 +54,7 @@ pub fn query_config(deps: Deps) -> ContractResult<ConfigResponse> {
         oracle: ORACLE.load(deps.storage)?.address().into(),
         params: PARAMS.load(deps.storage)?.address().into(),
         max_unlocking_positions: MAX_UNLOCKING_POSITIONS.load(deps.storage)?,
+        max_slippage: MAX_SLIPPAGE.load(deps.storage)?,
         swapper: SWAPPER.load(deps.storage)?.address().into(),
         zapper: ZAPPER.load(deps.storage)?.address().into(),
         health_contract: HEALTH_CONTRACT.load(deps.storage)?.address().into(),

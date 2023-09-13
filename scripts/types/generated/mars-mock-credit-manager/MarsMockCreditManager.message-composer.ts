@@ -37,6 +37,7 @@ import {
   DebtShares,
   ArrayOfVaultPositionResponseItem,
   VaultPositionResponseItem,
+  Decimal,
   ConfigResponse,
   OwnerResponse,
   RewardsCollector,

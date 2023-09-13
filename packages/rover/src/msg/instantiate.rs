@@ -1,5 +1,5 @@
 use cosmwasm_schema::cw_serde;
-use cosmwasm_std::Uint128;
+use cosmwasm_std::{Decimal, Uint128};
 
 use crate::adapters::{
     account_nft::AccountNftUnchecked, health::HealthContractUnchecked,
@@ -19,6 +19,8 @@ pub struct InstantiateMsg {
     /// Note: As health checking requires looping through each, this number must not be too large.
     ///       If so, having too many could prevent the account from being liquidated due to gas constraints.
     pub max_unlocking_positions: Uint128,
+    /// The maximum slippage allowed for swaps, provide liquidity and withdraw liquidity
+    pub max_slippage: Decimal,
     /// Helper contract for making swaps
     pub swapper: SwapperUnchecked,
     /// Helper contract for adding/removing liquidity
@@ -40,6 +42,7 @@ pub struct ConfigUpdates {
     pub red_bank: Option<RedBankUnchecked>,
     pub incentives: Option<IncentivesUnchecked>,
     pub max_unlocking_positions: Option<Uint128>,
+    pub max_slippage: Option<Decimal>,
     pub swapper: Option<SwapperUnchecked>,
     pub zapper: Option<ZapperUnchecked>,
     pub health_contract: Option<HealthContractUnchecked>,

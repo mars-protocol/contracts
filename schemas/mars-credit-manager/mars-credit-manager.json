@@ -9,6 +9,7 @@
     "required": [
       "health_contract",
       "incentives",
+      "max_slippage",
       "max_unlocking_positions",
       "oracle",
       "owner",
@@ -31,6 +32,14 @@
         "allOf": [
           {
             "$ref": "#/definitions/IncentivesUnchecked"
+          }
+        ]
+      },
+      "max_slippage": {
+        "description": "The maximum slippage allowed for swaps, provide liquidity and withdraw liquidity",
+        "allOf": [
+          {
+            "$ref": "#/definitions/Decimal"
           }
         ]
       },
@@ -89,6 +98,10 @@
     },
     "additionalProperties": false,
     "definitions": {
+      "Decimal": {
+        "description": "A fixed-point decimal value with 18 fractional digits, i.e. Decimal(1_000_000_000_000_000_000) == 1.0\n\nThe greatest possible value that can be represented is 340282366920938463463.374607431768211455 (which is (2^128 - 1) / 10^18)",
+        "type": "string"
+      },
       "HealthContractBase_for_String": {
         "type": "string"
       },
@@ -568,7 +581,7 @@
             "additionalProperties": false
           },
           {
-            "description": "Add Vec<Coin> to liquidity pool in exchange for LP tokens",
+            "description": "Add Vec<Coin> to liquidity pool in exchange for LP tokens. Slippage allowance (%) is used to calculate the minimum amount of LP tokens to receive.",
             "type": "object",
             "required": [
               "provide_liquidity"
@@ -579,7 +592,7 @@
                 "required": [
                   "coins_in",
                   "lp_token_out",
-                  "minimum_receive"
+                  "slippage"
                 ],
                 "properties": {
                   "coins_in": {
@@ -591,8 +604,8 @@
                   "lp_token_out": {
                     "type": "string"
                   },
-                  "minimum_receive": {
-                    "$ref": "#/definitions/Uint128"
+                  "slippage": {
+                    "$ref": "#/definitions/Decimal"
                   }
                 },
                 "additionalProperties": false
@@ -601,7 +614,7 @@
             "additionalProperties": false
           },
           {
-            "description": "Send LP token and withdraw corresponding reserve assets from pool. If `lp_token.amount: AccountBalance`, the account balance of `lp_token.denom` will be used.",
+            "description": "Send LP token and withdraw corresponding reserve assets from pool. If `lp_token.amount: AccountBalance`, the account balance of `lp_token.denom` will be used. /// Slippage allowance (%) is used to calculate the minimum amount of reserve assets to receive.",
             "type": "object",
             "required": [
               "withdraw_liquidity"
@@ -611,17 +624,14 @@
                 "type": "object",
                 "required": [
                   "lp_token",
-                  "minimum_receive"
+                  "slippage"
                 ],
                 "properties": {
                   "lp_token": {
                     "$ref": "#/definitions/ActionCoin"
                   },
-                  "minimum_receive": {
-                    "type": "array",
-                    "items": {
-                      "$ref": "#/definitions/Coin"
-                    }
+                  "slippage": {
+                    "$ref": "#/definitions/Decimal"
                   }
                 },
                 "additionalProperties": false
@@ -1241,7 +1251,7 @@
             "additionalProperties": false
           },
           {
-            "description": "Add Vec<Coin> to liquidity pool in exchange for LP tokens",
+            "description": "Add Vec<Coin> to liquidity pool in exchange for LP tokens.",
             "type": "object",
             "required": [
               "provide_liquidity"
@@ -1253,7 +1263,7 @@
                   "account_id",
                   "coins_in",
                   "lp_token_out",
-                  "minimum_receive"
+                  "slippage"
                 ],
                 "properties": {
                   "account_id": {
@@ -1268,8 +1278,8 @@
                   "lp_token_out": {
                     "type": "string"
                   },
-                  "minimum_receive": {
-                    "$ref": "#/definitions/Uint128"
+                  "slippage": {
+                    "$ref": "#/definitions/Decimal"
                   }
                 },
                 "additionalProperties": false
@@ -1289,7 +1299,7 @@
                 "required": [
                   "account_id",
                   "lp_token",
-                  "minimum_receive"
+                  "slippage"
                 ],
                 "properties": {
                   "account_id": {
@@ -1298,11 +1308,8 @@
                   "lp_token": {
                     "$ref": "#/definitions/ActionCoin"
                   },
-                  "minimum_receive": {
-                    "type": "array",
-                    "items": {
-                      "$ref": "#/definitions/Coin"
-                    }
+                  "slippage": {
+                    "$ref": "#/definitions/Decimal"
                   }
                 },
                 "additionalProperties": false
@@ -1453,6 +1460,16 @@
             "anyOf": [
               {
                 "$ref": "#/definitions/IncentivesUnchecked"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "max_slippage": {
+            "anyOf": [
+              {
+                "$ref": "#/definitions/Decimal"
               },
               {
                 "type": "null"
@@ -2628,6 +2645,7 @@
       "required": [
         "health_contract",
         "incentives",
+        "max_slippage",
         "max_unlocking_positions",
         "oracle",
         "ownership",
@@ -2648,6 +2666,9 @@
         },
         "incentives": {
           "type": "string"
+        },
+        "max_slippage": {
+          "$ref": "#/definitions/Decimal"
         },
         "max_unlocking_positions": {
           "$ref": "#/definitions/Uint128"
@@ -2683,6 +2704,10 @@
       },
       "additionalProperties": false,
       "definitions": {
+        "Decimal": {
+          "description": "A fixed-point decimal value with 18 fractional digits, i.e. Decimal(1_000_000_000_000_000_000) == 1.0\n\nThe greatest possible value that can be represented is 340282366920938463463.374607431768211455 (which is (2^128 - 1) / 10^18)",
+          "type": "string"
+        },
         "OwnerResponse": {
           "description": "Returned from Owner.query()",
           "type": "object",

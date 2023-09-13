@@ -110,6 +110,7 @@ pub struct MockEnvBuilder {
     pub accounts_to_fund: Vec<AccountToFund>,
     pub target_health_factor: Option<Decimal>,
     pub max_unlocking_positions: Option<Uint128>,
+    pub max_slippage: Option<Decimal>,
     pub health_contract: Option<HealthContract>,
     pub evil_vault: Option<String>,
 }
@@ -133,6 +134,7 @@ impl MockEnv {
             accounts_to_fund: vec![],
             target_health_factor: None,
             max_unlocking_positions: None,
+            max_slippage: None,
             health_contract: None,
             evil_vault: None,
         }
@@ -898,6 +900,7 @@ impl MockEnvBuilder {
         let incentives = self.get_incentives();
         let swapper = self.deploy_swapper().into();
         let max_unlocking_positions = self.get_max_unlocking_positions();
+        let max_slippage = self.get_max_slippage();
 
         let oracle = self.get_oracle().into();
         let zapper = self.deploy_zapper(&oracle)?.into();
@@ -914,6 +917,7 @@ impl MockEnvBuilder {
                     red_bank,
                     oracle,
                     max_unlocking_positions,
+                    max_slippage,
                     swapper,
                     zapper,
                     health_contract,
@@ -1289,6 +1293,10 @@ impl MockEnvBuilder {
         self.max_unlocking_positions.unwrap_or_else(|| Uint128::new(100))
     }
 
+    fn get_max_slippage(&self) -> Decimal {
+        self.max_slippage.unwrap_or_else(|| Decimal::percent(99))
+    }
+
     //--------------------------------------------------------------------------------------------------
     // Setter functions
     //--------------------------------------------------------------------------------------------------
@@ -1360,6 +1368,11 @@ impl MockEnvBuilder {
 
     pub fn max_unlocking_positions(&mut self, max: u128) -> &mut Self {
         self.max_unlocking_positions = Some(Uint128::new(max));
+        self
+    }
+
+    pub fn max_slippage(&mut self, max: Decimal) -> &mut Self {
+        self.max_slippage = Some(max);
         self
     }
 

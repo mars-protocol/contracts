@@ -1,3 +1,5 @@
+use std::str::FromStr;
+
 use cosmwasm_std::{coins, Addr, Coin, Decimal, OverflowError, OverflowOperation::Sub, Uint128};
 use mars_rover::{
     error::ContractError,
@@ -118,6 +120,41 @@ fn user_has_zero_balance_for_swap_req() {
             operand1: "0".to_string(),
             operand2: "10000".to_string(),
         }),
+    )
+}
+
+#[test]
+fn slippage_too_high() {
+    let osmo_info = uosmo_info();
+    let atom_info = uatom_info();
+
+    let user = Addr::unchecked("user");
+    let max_slippage = Decimal::percent(50);
+    let mut mock = MockEnv::new()
+        .set_params(&[osmo_info.clone(), atom_info.clone()])
+        .max_slippage(max_slippage)
+        .build()
+        .unwrap();
+    let account_id = mock.create_credit_account(&user).unwrap();
+
+    let slippage = max_slippage + Decimal::from_str("0.000001").unwrap();
+    let res = mock.update_credit_account(
+        &account_id,
+        &user,
+        vec![SwapExactIn {
+            coin_in: osmo_info.to_action_coin(10_000),
+            denom_out: atom_info.denom,
+            slippage,
+        }],
+        &[],
+    );
+
+    assert_err(
+        res,
+        ContractError::SlippageExceeded {
+            slippage,
+            max_slippage,
+        },
     )
 }
 

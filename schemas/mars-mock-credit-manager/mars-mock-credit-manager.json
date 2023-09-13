@@ -1073,6 +1073,7 @@
       "required": [
         "health_contract",
         "incentives",
+        "max_slippage",
         "max_unlocking_positions",
         "oracle",
         "ownership",
@@ -1093,6 +1094,9 @@
         },
         "incentives": {
           "type": "string"
+        },
+        "max_slippage": {
+          "$ref": "#/definitions/Decimal"
         },
         "max_unlocking_positions": {
           "$ref": "#/definitions/Uint128"
@@ -1128,6 +1132,10 @@
       },
       "additionalProperties": false,
       "definitions": {
+        "Decimal": {
+          "description": "A fixed-point decimal value with 18 fractional digits, i.e. Decimal(1_000_000_000_000_000_000) == 1.0\n\nThe greatest possible value that can be represented is 340282366920938463463.374607431768211455 (which is (2^128 - 1) / 10^18)",
+          "type": "string"
+        },
         "OwnerResponse": {
           "description": "Returned from Owner.query()",
           "type": "object",

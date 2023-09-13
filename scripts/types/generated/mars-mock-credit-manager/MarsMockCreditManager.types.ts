@@ -165,10 +165,12 @@ export interface VaultPositionResponseItem {
   account_id: string
   position: VaultPosition
 }
+export type Decimal = string
 export interface ConfigResponse {
   account_nft?: string | null
   health_contract: string
   incentives: string
+  max_slippage: Decimal
   max_unlocking_positions: Uint128
   oracle: string
   ownership: OwnerResponse

@@ -11,9 +11,10 @@ use mars_rover_health_types::AccountKind;
 use crate::{
     execute::create_credit_account,
     state::{
-        ACCOUNT_NFT, HEALTH_CONTRACT, INCENTIVES, MAX_UNLOCKING_POSITIONS, ORACLE, OWNER, RED_BANK,
-        REWARDS_COLLECTOR, SWAPPER, ZAPPER,
+        ACCOUNT_NFT, HEALTH_CONTRACT, INCENTIVES, MAX_SLIPPAGE, MAX_UNLOCKING_POSITIONS, ORACLE,
+        OWNER, RED_BANK, REWARDS_COLLECTOR, SWAPPER, ZAPPER,
     },
+    utils::assert_max_slippage,
 };
 
 pub fn update_config(
@@ -72,6 +73,13 @@ pub fn update_config(
         response = response
             .add_attribute("key", "max_unlocking_positions")
             .add_attribute("value", num.to_string());
+    }
+
+    if let Some(num) = updates.max_slippage {
+        assert_max_slippage(num)?;
+        MAX_SLIPPAGE.save(deps.storage, &num)?;
+        response =
+            response.add_attribute("key", "max_slippage").add_attribute("value", num.to_string());
     }
 
     if let Some(unchecked) = updates.health_contract {

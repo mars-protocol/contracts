@@ -11,6 +11,7 @@ import { toUtf8 } from '@cosmjs/encoding'
 import {
   HealthContractBaseForString,
   IncentivesUnchecked,
+  Decimal,
   Uint128,
   OracleBaseForString,
   ParamsBaseForString,
@@ -24,7 +25,6 @@ import {
   ActionAmount,
   LiquidateRequestForVaultBaseForString,
   VaultPositionType,
-  Decimal,
   AccountNftBaseForString,
   OwnerUpdate,
   CallbackMsg,
