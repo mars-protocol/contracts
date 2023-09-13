@@ -58,10 +58,11 @@ pub fn calculate_liquidation_amounts(
     // to bring the account back to the THF, so the liquidator should be able to repay all the available debt.
     // Given the numerator in the MDR formula is always > 0, MDR < 0 happens when the denominator is < 0
     // (we include the case where it’s 0 given it would make MDR = infinite).
-    let max_debt_repayable_numerator = (target_health_factor * health.total_debt_value)
-        - health.liquidation_threshold_adjusted_collateral;
     let formula = collateral_params.liquidation_threshold * (Decimal::one() + liquidation_bonus);
     let max_debt_repayable_amount = if formula < target_health_factor {
+        let max_debt_repayable_numerator = (target_health_factor * health.total_debt_value)
+            - health.liquidation_threshold_adjusted_collateral;
+
         let max_debt_repayable_denominator = target_health_factor - formula;
 
         let max_debt_repayable_value =
