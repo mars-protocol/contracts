@@ -10,32 +10,28 @@ documentation = { workspace = true }
 keywords      = { workspace = true }
 
 [lib]
-crate-type = [
-    "cdylib",
-    "rlib",
-]
 doctest = false
 
 [features]
 # for more explicit tests, cargo test --features=backtraces
-backtraces = [
-    "cosmwasm-std/backtraces",
-]
+backtraces = ["cosmwasm-std/backtraces"]
 
 [dev-dependencies]
 anyhow                         = { workspace = true }
 cosmwasm-std                   = { workspace = true }
-cw-multi-test                  = { workspace = true }
 cw-it                          = { workspace = true, features = ["osmosis-test-tube"] }
-mars-oracle-osmosis            = { workspace = true }
+cw-multi-test                  = { workspace = true }
+mars-incentives                = { workspace = true }
 mars-oracle-base               = { workspace = true }
+mars-oracle-osmosis            = { workspace = true }
 mars-osmosis                   = { workspace = true }
+mars-params                    = { workspace = true }
 mars-red-bank                  = { workspace = true }
 mars-red-bank-types            = { workspace = true }
 mars-rewards-collector-osmosis = { workspace = true }
+mars-swapper-osmosis           = { workspace = true }
 mars-testing                   = { workspace = true }
 mars-utils                     = { workspace = true }
 osmosis-std                    = { workspace = true }
 osmosis-test-tube              = { workspace = true }
 serde                          = { workspace = true }
-mars-swapper-osmosis           = { workspace = true }

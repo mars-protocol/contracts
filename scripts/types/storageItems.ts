@@ -20,8 +20,9 @@ export interface StorageItems {
 
   execute: {
     addressProviderUpdated: Record<string, boolean>
-    assetsInitialized: string[]
-    secondAssetInitialized?: boolean
+    assetsUpdated: string[]
+    marketsUpdated: string[]
+    vaultsUpdated: string[]
     oraclePriceSet?: boolean
     smokeTest?: boolean
   }

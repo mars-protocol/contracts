@@ -1,6 +1,6 @@
 {
   "contract_name": "mars-incentives",
-  "contract_version": "1.2.0",
+  "contract_version": "2.0.0",
   "idl_version": "1.0.0",
   "instantiate": {
     "$schema": "http://json-schema.org/draft-07/schema#",
@@ -141,6 +141,13 @@
               "user_amount_scaled_before"
             ],
             "properties": {
+              "account_id": {
+                "description": "Credit account id (Rover)",
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
               "denom": {
                 "description": "Denom of the asset of which deposited balance is changed",
                 "type": "string"
@@ -185,6 +192,13 @@
           "claim_rewards": {
             "type": "object",
             "properties": {
+              "account_id": {
+                "description": "Credit account id (Rover)",
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
               "limit": {
                 "description": "The maximum number of results to return. If not set, 5 is used. If larger than 10, 10 is used.",
                 "type": [
@@ -571,6 +585,13 @@
               "user"
             ],
             "properties": {
+              "account_id": {
+                "description": "Credit account id (Rover)",
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
               "limit": {
                 "description": "The maximum number of results to return. If not set, 5 is used. If larger than 10, 10 is used.",
                 "type": [
@@ -667,7 +688,8 @@
       "required": [
         "address_provider",
         "epoch_duration",
-        "max_whitelisted_denoms"
+        "max_whitelisted_denoms",
+        "whitelist_count"
       ],
       "properties": {
         "address_provider": {
@@ -703,6 +725,12 @@
             "string",
             "null"
           ]
+        },
+        "whitelist_count": {
+          "description": "The count of the number of whitelisted incentive denoms",
+          "type": "integer",
+          "format": "uint8",
+          "minimum": 0.0
         }
       },
       "additionalProperties": false,

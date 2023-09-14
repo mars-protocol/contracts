@@ -9,11 +9,11 @@ use mars_oracle_osmosis::{
     stride::{Price, RedemptionRateResponse},
     DowntimeDetector,
 };
-use mars_osmosis::helpers::QueryPoolResponse;
+use mars_params::types::asset::AssetParams;
 use mars_red_bank_types::{address_provider, incentives, oracle, red_bank};
 use osmosis_std::types::osmosis::{
     downtimedetector::v1beta1::RecoveredSinceDowntimeOfLengthResponse,
-    poolmanager::v1beta1::SpotPriceResponse,
+    poolmanager::v1beta1::{PoolResponse, SpotPriceResponse},
     twap::v1beta1::{ArithmeticTwapToNowResponse, GeometricTwapToNowResponse},
 };
 use pyth_sdk_cw::{PriceFeedResponse, PriceIdentifier};
@@ -23,6 +23,7 @@ use crate::{
     mock_address_provider,
     oracle_querier::OracleQuerier,
     osmosis_querier::{OsmosisQuerier, PriceKey},
+    params_querier::ParamsQuerier,
     pyth_querier::PythQuerier,
     red_bank_querier::RedBankQuerier,
     redemption_rate_querier::RedemptionRateQuerier,
@@ -36,6 +37,7 @@ pub struct MarsMockQuerier {
     pyth_querier: PythQuerier,
     redbank_querier: RedBankQuerier,
     redemption_rate_querier: RedemptionRateQuerier,
+    params_querier: ParamsQuerier,
 }
 
 impl Querier for MarsMockQuerier {
@@ -64,6 +66,7 @@ impl MarsMockQuerier {
             pyth_querier: PythQuerier::default(),
             redbank_querier: RedBankQuerier::default(),
             redemption_rate_querier: Default::default(),
+            params_querier: ParamsQuerier::default(),
         }
     }
 
@@ -71,6 +74,10 @@ impl MarsMockQuerier {
     pub fn set_contract_balances(&mut self, contract_balances: &[Coin]) {
         let contract_addr = Addr::unchecked(MOCK_CONTRACT_ADDR);
         self.base.update_balance(contract_addr.to_string(), contract_balances.to_vec());
+    }
+
+    pub fn update_balances(&mut self, addr: impl Into<String>, balance: Vec<Coin>) {
+        self.base.update_balance(addr, balance);
     }
 
     pub fn set_oracle_price(&mut self, denom: &str, price: Decimal) {
@@ -93,7 +100,7 @@ impl MarsMockQuerier {
         );
     }
 
-    pub fn set_query_pool_response(&mut self, pool_id: u64, pool_response: QueryPoolResponse) {
+    pub fn set_query_pool_response(&mut self, pool_id: u64, pool_response: PoolResponse) {
         self.osmosis_querier.pools.insert(pool_id, pool_response);
     }
 
@@ -182,12 +189,32 @@ impl MarsMockQuerier {
             .insert((user.into(), collateral.denom.clone()), collateral);
     }
 
+    pub fn set_red_bank_user_debt(
+        &mut self,
+        user: impl Into<String>,
+        debt: red_bank::UserDebtResponse,
+    ) {
+        self.redbank_querier.users_denoms_debts.insert((user.into(), debt.denom.clone()), debt);
+    }
+
     pub fn set_redbank_user_position(
         &mut self,
         user_address: String,
         position: red_bank::UserPositionResponse,
     ) {
         self.redbank_querier.users_positions.insert(user_address, position);
+    }
+
+    pub fn set_redbank_params(&mut self, denom: &str, params: AssetParams) {
+        self.params_querier.params.insert(denom.to_string(), params);
+    }
+
+    pub fn set_target_health_factor(&mut self, thf: Decimal) {
+        self.params_querier.target_health_factor = thf;
+    }
+
+    pub fn set_total_deposit(&mut self, denom: impl Into<String>, amount: impl Into<Uint128>) {
+        self.params_querier.total_deposits.insert(denom.into(), amount.into());
     }
 
     pub fn handle_query(&self, request: &QueryRequest<Empty>) -> QuerierResult {
@@ -238,6 +265,11 @@ impl MarsMockQuerier {
                 // Redemption Rate Queries
                 if let Ok(redemption_rate_req) = from_binary::<stride::RedemptionRateRequest>(msg) {
                     return self.redemption_rate_querier.handle_query(redemption_rate_req);
+                }
+
+                // Params Queries
+                if let Ok(params_query) = from_binary::<mars_params::msg::QueryMsg>(msg) {
+                    return self.params_querier.handle_query(params_query);
                 }
 
                 panic!("[mock]: Unsupported wasm query: {msg:?}");

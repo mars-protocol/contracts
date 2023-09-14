@@ -1,4 +1,10 @@
-import { AssetConfig, DeploymentConfig, OracleConfig, isAstroportRoute } from '../../types/config'
+import {
+  AssetConfig,
+  DeploymentConfig,
+  OracleConfig,
+  isAstroportRoute,
+  VaultConfig,
+} from '../../types/config'
 import { SigningCosmWasmClient } from '@cosmjs/cosmwasm-stargate'
 import * as fs from 'fs'
 import { printBlue, printGreen, printRed, printYellow } from '../../utils/chalk'
@@ -11,11 +17,17 @@ import assert from 'assert'
 import { SwapperExecuteMsg } from '../../types/config'
 import { InstantiateMsg as AstroportSwapperInstantiateMsg } from '../../types/generated/mars-swapper-astroport/MarsSwapperAstroport.types'
 import { InstantiateMsg as OsmosisSwapperInstantiateMsg } from '../../types/generated/mars-swapper-osmosis/MarsSwapperOsmosis.types'
+import { InstantiateMsg as ParamsInstantiateMsg } from '../../types/generated/mars-params/MarsParams.types'
+import { ExecuteMsg as ParamsExecuteMsg } from '../../types/generated/mars-params/MarsParams.types'
 import {
   InstantiateMsg as RedBankInstantiateMsg,
+  ExecuteMsg as RedBankExecuteMsg,
   QueryMsg as RedBankQueryMsg,
 } from '../../types/generated/mars-red-bank/MarsRedBank.types'
-import { InstantiateMsg as AddressProviderInstantiateMsg } from '../../types/generated/mars-address-provider/MarsAddressProvider.types'
+import {
+  AddressResponseItem,
+  InstantiateMsg as AddressProviderInstantiateMsg,
+} from '../../types/generated/mars-address-provider/MarsAddressProvider.types'
 import { InstantiateMsg as IncentivesInstantiateMsg } from '../../types/generated/mars-incentives/MarsIncentives.types'
 import { InstantiateMsg as RewardsInstantiateMsg } from '../../types/generated/mars-rewards-collector-base/MarsRewardsCollectorBase.types'
 import {
@@ -51,7 +63,7 @@ export class Deployer {
         Number(accountBalance.amount) / 1e6
       } ${this.config.chainPrefix})`,
     )
-    if (Number(accountBalance.amount) < 1_000_000 && this.config.chainId === 'osmo-test-4') {
+    if (Number(accountBalance.amount) < 1_000_000 && this.config.chainId === 'osmo-test-5') {
       printRed(
         `not enough ${this.config.chainPrefix} tokens to complete action, you may need to go to a test faucet to get more tokens.`,
       )
@@ -118,7 +130,6 @@ export class Deployer {
       owner: this.deployerAddress,
       config: {
         address_provider: this.storage.addresses['address-provider']!,
-        close_factor: '0.5',
       },
     }
     await this.instantiate('red-bank', this.storage.codeIds['red-bank']!, msg)
@@ -166,6 +177,109 @@ export class Deployer {
     await this.instantiate('swapper', this.storage.codeIds.swapper!, msg)
   }
 
+  async instantiateParams() {
+    const msg: ParamsInstantiateMsg = {
+      owner: this.deployerAddress,
+      address_provider: this.storage.addresses['address-provider']!,
+      target_health_factor: this.config.targetHealthFactor,
+    }
+    await this.instantiate('params', this.storage.codeIds.params!, msg)
+  }
+
+  async updateAssetParams(assetConfig: AssetConfig) {
+    if (this.storage.execute.assetsUpdated.includes(assetConfig.denom)) {
+      printBlue(`${assetConfig.symbol} already updated in Params contract`)
+      return
+    }
+    printBlue(`Updating ${assetConfig.symbol}...`)
+
+    const msg: ParamsExecuteMsg = {
+      update_asset_params: {
+        add_or_update: {
+          params: {
+            credit_manager: {
+              hls: assetConfig.credit_manager.hls,
+              whitelisted: assetConfig.credit_manager.whitelisted,
+            },
+            denom: assetConfig.denom,
+            liquidation_bonus: assetConfig.liquidation_bonus,
+            liquidation_threshold: assetConfig.liquidation_threshold,
+            protocol_liquidation_fee: assetConfig.protocol_liquidation_fee,
+            max_loan_to_value: assetConfig.max_loan_to_value,
+            red_bank: {
+              borrow_enabled: assetConfig.red_bank.borrow_enabled,
+              deposit_enabled: assetConfig.red_bank.borrow_enabled,
+            },
+            deposit_cap: assetConfig.deposit_cap,
+          },
+        },
+      },
+    }
+
+    await this.client.execute(this.deployerAddress, this.storage.addresses['params']!, msg, 'auto')
+
+    printYellow(`${assetConfig.symbol} updated.`)
+  }
+
+  async initializeMarket(assetConfig: AssetConfig) {
+    if (this.storage.execute.marketsUpdated.includes(assetConfig.denom)) {
+      printBlue(`${assetConfig.symbol} already initialized in red-bank contract`)
+      return
+    }
+    printBlue(`Initializing ${assetConfig.symbol}...`)
+
+    const msg: RedBankExecuteMsg = {
+      init_asset: {
+        denom: assetConfig.denom,
+        params: {
+          reserve_factor: assetConfig.reserve_factor,
+          interest_rate_model: {
+            optimal_utilization_rate: assetConfig.interest_rate_model.optimal_utilization_rate,
+            base: assetConfig.interest_rate_model.base,
+            slope_1: assetConfig.interest_rate_model.slope_1,
+            slope_2: assetConfig.interest_rate_model.slope_2,
+          },
+        },
+      },
+    }
+
+    await this.client.execute(
+      this.deployerAddress,
+      this.storage.addresses['red-bank']!,
+      msg,
+      'auto',
+    )
+
+    printYellow(`${assetConfig.symbol} initialized`)
+
+    this.storage.execute.marketsUpdated.push(assetConfig.denom)
+  }
+
+  async updateVaultConfig(vaultConfig: VaultConfig) {
+    if (this.storage.execute.vaultsUpdated.includes(vaultConfig.addr)) {
+      printBlue(`${vaultConfig.symbol} already updated in Params contract`)
+      return
+    }
+    printBlue(`Updating ${vaultConfig.symbol}...`)
+
+    const msg: ParamsExecuteMsg = {
+      update_vault_config: {
+        add_or_update: {
+          config: {
+            addr: vaultConfig.addr,
+            deposit_cap: vaultConfig.deposit_cap,
+            liquidation_threshold: vaultConfig.liquidation_threshold,
+            whitelisted: vaultConfig.whitelisted,
+            max_loan_to_value: vaultConfig.max_loan_to_value,
+          },
+        },
+      },
+    }
+
+    await this.client.execute(this.deployerAddress, this.storage.addresses['params']!, msg, 'auto')
+
+    printYellow(`${vaultConfig.symbol} updated.`)
+  }
   async setRoutes() {
     printBlue('Setting Swapper Routes')
     for (const route of this.config.swapRoutes) {
@@ -197,38 +311,42 @@ export class Deployer {
 
   async updateAddressProvider() {
     printBlue('Updating addresses in Address Provider...')
-    const addressesToSet = [
+    const addressesToSet: AddressResponseItem[] = [
       {
+        address: this.storage.addresses['rewards-collector']!,
         address_type: 'rewards_collector',
-        address: this.storage.addresses['rewards-collector'],
       },
       {
+        address: this.storage.addresses.incentives!,
         address_type: 'incentives',
-        address: this.storage.addresses.incentives,
       },
       {
+        address: this.storage.addresses.oracle!,
         address_type: 'oracle',
-        address: this.storage.addresses.oracle,
       },
       {
+        address: this.storage.addresses['red-bank']!,
         address_type: 'red_bank',
-        address: this.storage.addresses['red-bank'],
       },
       {
-        address_type: 'fee_collector',
         address: this.config.feeCollectorAddr,
+        address_type: 'fee_collector',
       },
       {
-        address_type: 'safety_fund',
         address: this.config.safetyFundAddr,
+        address_type: 'safety_fund',
       },
       {
-        address_type: 'protocol_admin',
         address: this.config.protocolAdminAddr,
+        address_type: 'protocol_admin',
       },
       {
+        address: this.storage.addresses.swapper!,
         address_type: 'swapper',
-        address: this.storage.addresses.swapper,
+      },
+      {
+        address: this.storage.addresses.params!,
+        address_type: 'params',
       },
     ]
 
@@ -247,46 +365,6 @@ export class Deployer {
       this.storage.execute.addressProviderUpdated[addrObj.address_type] = true
     }
     printGreen('Address Provider update completed')
-  }
-
-  async initializeAsset(assetConfig: AssetConfig) {
-    if (this.storage.execute.assetsInitialized.includes(assetConfig.denom)) {
-      printBlue(`${assetConfig.symbol} already initialized.`)
-      return
-    }
-    printBlue(`Initializing ${assetConfig.symbol}...`)
-
-    const msg = {
-      init_asset: {
-        denom: assetConfig.denom,
-        params: {
-          max_loan_to_value: assetConfig.max_loan_to_value,
-          reserve_factor: assetConfig.reserve_factor,
-          liquidation_threshold: assetConfig.liquidation_threshold,
-          liquidation_bonus: assetConfig.liquidation_bonus,
-          interest_rate_model: {
-            optimal_utilization_rate: assetConfig.interest_rate_model.optimal_utilization_rate,
-            base: assetConfig.interest_rate_model.base,
-            slope_1: assetConfig.interest_rate_model.slope_1,
-            slope_2: assetConfig.interest_rate_model.slope_2,
-          },
-          deposit_cap: assetConfig.deposit_cap,
-          deposit_enabled: assetConfig.deposit_enabled,
-          borrow_enabled: assetConfig.borrow_enabled,
-        },
-      },
-    }
-
-    await this.client.execute(
-      this.deployerAddress,
-      this.storage.addresses['red-bank']!,
-      msg,
-      'auto',
-    )
-
-    printYellow(`${assetConfig.symbol} initialized`)
-
-    this.storage.execute.assetsInitialized.push(assetConfig.denom)
   }
 
   async recordTwapSnapshots(denoms: string[]) {
@@ -597,6 +675,23 @@ export class Deployer {
     })) as { proposed: string }
 
     assert.equal(swapperConfig.proposed, this.config.multisigAddr)
+  }
+
+  async updateParamsContractOwner() {
+    const msg = {
+      update_owner: {
+        propose_new_owner: {
+          proposed: this.storage.owner,
+        },
+      },
+    }
+    await this.client.execute(this.deployerAddress, this.storage.addresses.params!, msg, 'auto')
+    printYellow('Owner updated to Mutlisig for Params')
+    const paramsConfig = (await this.client.queryContractSmart(this.storage.addresses.params!, {
+      owner: {},
+    })) as { proposed: string }
+
+    assert.equal(paramsConfig.proposed, this.config.multisigAddr)
   }
 
   async updateAddressProviderContractOwner() {

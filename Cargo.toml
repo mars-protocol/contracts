@@ -2,12 +2,16 @@
 members = [
   "contracts/address-provider",
   "contracts/incentives",
+  "contracts/mock-pyth",
   "contracts/oracle/*",
+  "contracts/params",
   "contracts/swapper/*",
   "contracts/red-bank",
   "contracts/rewards-collector/*",
   "packages/chains/*",
   "packages/health",
+  "packages/interest-rate",
+  "packages/liquidation",
   "packages/testing",
   "packages/types",
   "packages/utils",
@@ -16,7 +20,7 @@ members = [
 resolver = "2"
 
 [workspace.package]
-version       = "1.2.0"
+version       = "2.0.0"
 authors       = [
   "Gabe R. <gabe.r@delphilabs.io>",
   "Larry Engineer <larry@delphidigital.io>",
@@ -26,62 +30,63 @@ authors       = [
   "Ahmad Kaouk",
   "Harry Scholes",
 ]
-edition = "2021"
-license = "GPL-3.0-or-later"
-repository = "https://github.com/mars-protocol/red-bank"
-homepage = "https://marsprotocol.io"
+edition       = "2021"
+license       = "GPL-3.0-or-later"
+repository    = "https://github.com/mars-protocol/red-bank"
+homepage      = "https://marsprotocol.io"
 documentation = "https://docs.marsprotocol.io/"
-keywords = [
-  "mars",
-  "cosmos",
-  "cosmwasm",
-]
+keywords      = ["mars", "cosmos", "cosmwasm"]
 
 [workspace.dependencies]
-anyhow            = "1.0.71"
-bech32            = "0.9.1"
-cosmwasm-schema   = "1.2.6"
-cosmwasm-std      = "1.2.6"
-cw2               = "1.1.0"
-cw-storage-plus   = "1.0.1"
-cw-utils          = "1.0.1"
-mars-owner        = { version = "1.2.0", features = ["emergency-owner"] }
-osmosis-std       = "0.16.1"
-prost             = { version = "0.11.5", default-features = false, features = ["prost-derive"] }
-schemars          = "0.8.12"
-serde             = { version = "1.0.163", default-features = false, features = ["derive"] }
-thiserror         = "1.0.40"
-pyth-sdk-cw        = "1.2.0"
-cw-paginate       = "0.2.1"
+anyhow            = "1.0.72"
 astroport         = "2.8.0"
-strum             = "0.24.1"
-neutron-sdk       = "0.6.0"
+bech32            = "0.9.1"
+cosmwasm-schema   = "1.3.1"
+cosmwasm-std      = "1.3.1"
+cw2               = "1.1.0"
+cw-paginate       = "0.2.1"
+cw-storage-plus   = "1.1.0"
+cw-utils          = "1.0.1"
+mars-owner        = { version = "2.0.0", features = ["emergency-owner"] }
+neutron-sdk       = "0.6.1"
+osmosis-std       = "0.16.2"
+prost             = { version = "0.11.9", default-features = false }
+pyth-sdk-cw       = "1.2.0"
+schemars          = "0.8.12"
+serde             = { version = "1.0.181", default-features = false }
+strum             = "0.25.0"
+thiserror         = "1.0.44"
 
 # dev-dependencies
 cw-multi-test     = "0.16.5"
-cw-it             = "0.1.0"
-osmosis-test-tube = "16.0.0"
-test-case         = "3.0.0"
-proptest          = "1.1.0"
+cw-it             = "0.1.1"
+osmosis-test-tube = "=16.1.1"
+proptest          = "1.2.0"
+test-case         = "3.1.0"
 
 # packages
-mars-health         = { path = "./packages/health" }
-mars-osmosis        = { path = "./packages/chains/osmosis" }
-mars-red-bank-types = { path = "./packages/types" }
-mars-testing        = { path = "./packages/testing" }
-mars-utils          = { path = "./packages/utils" }
+mars-health             = { path = "./packages/health" }
+mars-interest-rate      = { path = "./packages/interest-rate" }
+mars-liquidation        = { path = "./packages/liquidation" }
+mars-osmosis            = { path = "./packages/chains/osmosis" }
+mars-red-bank-types     = { path = "./packages/types" }
+mars-testing            = { path = "./packages/testing" }
+mars-utils              = { path = "./packages/utils" }
 
 # contracts
 mars-address-provider          = { path = "./contracts/address-provider" }
 mars-incentives                = { path = "./contracts/incentives" }
+mars-mock-pyth                 = { path = "./contracts/mock-pyth" }
 mars-oracle-base               = { path = "./contracts/oracle/base" }
 mars-oracle-osmosis            = { path = "./contracts/oracle/osmosis" }
 mars-oracle-wasm               = { path = "./contracts/oracle/wasm" }
+mars-params                    = { path = "./contracts/params" }
 mars-red-bank                  = { path = "./contracts/red-bank" }
 mars-rewards-collector-base    = { path = "./contracts/rewards-collector/base" }
+mars-rewards-collector-neutron = { path = "./contracts/rewards-collector/neutron" }
 mars-rewards-collector-osmosis = { path = "./contracts/rewards-collector/osmosis" }
-mars-swapper-base              = { path = "./contracts/swapper/base" }
 mars-swapper-astroport         = { path = "./contracts/swapper/astroport" }
+mars-swapper-base              = { path = "./contracts/swapper/base" }
 mars-swapper-osmosis           = { path = "./contracts/swapper/osmosis" }
 
 [profile.release]

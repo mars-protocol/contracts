@@ -16,7 +16,10 @@ import {
   Coin,
   ExecuteMsg,
   OwnerUpdate,
+  Action,
+  ActionAmount,
   UpdateConfig,
+  ActionCoin,
   QueryMsg,
   ConfigResponse,
 } from './MarsRewardsCollectorBase.types'
@@ -127,6 +130,38 @@ export function useMarsRewardsCollectorBaseDistributeRewardsMutation(
   return useMutation<ExecuteResult, Error, MarsRewardsCollectorBaseDistributeRewardsMutation>(
     ({ client, msg, args: { fee, memo, funds } = {} }) =>
       client.distributeRewards(msg, fee, memo, funds),
+    options,
+  )
+}
+export interface MarsRewardsCollectorBaseWithdrawFromCreditManagerMutation {
+  client: MarsRewardsCollectorBaseClient
+  msg: {
+    accountId: string
+    actions: Action[]
+  }
+  args?: {
+    fee?: number | StdFee | 'auto'
+    memo?: string
+    funds?: Coin[]
+  }
+}
+export function useMarsRewardsCollectorBaseWithdrawFromCreditManagerMutation(
+  options?: Omit<
+    UseMutationOptions<
+      ExecuteResult,
+      Error,
+      MarsRewardsCollectorBaseWithdrawFromCreditManagerMutation
+    >,
+    'mutationFn'
+  >,
+) {
+  return useMutation<
+    ExecuteResult,
+    Error,
+    MarsRewardsCollectorBaseWithdrawFromCreditManagerMutation
+  >(
+    ({ client, msg, args: { fee, memo, funds } = {} }) =>
+      client.withdrawFromCreditManager(msg, fee, memo, funds),
     options,
   )
 }

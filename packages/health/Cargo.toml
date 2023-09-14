@@ -20,6 +20,7 @@ backtraces = ["cosmwasm-std/backtraces"]
 
 [dependencies]
 cosmwasm-std        = { workspace = true }
+mars-params         = { workspace = true }
 mars-red-bank-types = { workspace = true }
 thiserror           = { workspace = true }
 

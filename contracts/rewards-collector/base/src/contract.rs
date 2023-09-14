@@ -8,6 +8,7 @@ use mars_red_bank_types::{
     address_provider::{self, AddressResponseItem, MarsAddressType},
     incentives, red_bank,
     rewards_collector::{
+        credit_manager::{self, Action},
         Config, ConfigResponse, ExecuteMsg, InstantiateMsg, QueryMsg, UpdateConfig,
     },
 };
@@ -85,6 +86,10 @@ where
                 denom,
                 amount,
             } => self.withdraw_from_red_bank(deps, denom, amount),
+            ExecuteMsg::WithdrawFromCreditManager {
+                account_id,
+                actions,
+            } => self.withdraw_from_credit_manager(deps, account_id, actions),
             ExecuteMsg::DistributeRewards {
                 denom,
                 amount,
@@ -182,6 +187,8 @@ where
                 denom: denom.clone(),
                 amount,
                 recipient: None,
+                account_id: None,
+                liquidation_related: None,
             })?,
             funds: vec![],
         });
@@ -191,6 +198,42 @@ where
             .add_attribute("action", "withdraw_from_red_bank")
             .add_attribute("denom", denom)
             .add_attribute("amount", stringify_option_amount(amount)))
+    }
+
+    pub fn withdraw_from_credit_manager(
+        &self,
+        deps: DepsMut,
+        account_id: String,
+        actions: Vec<Action>,
+    ) -> ContractResult<Response<M>> {
+        let cfg = self.config.load(deps.storage)?;
+
+        let valid_actions = actions.iter().all(|action| {
+            matches!(action, Action::Withdraw(..) | Action::WithdrawLiquidity { .. })
+        });
+        if !valid_actions {
+            return Err(ContractError::InvalidActionsForCreditManager {});
+        }
+
+        let cm_addr = address_provider::helpers::query_contract_addr(
+            deps.as_ref(),
+            &cfg.address_provider,
+            MarsAddressType::CreditManager,
+        )?;
+
+        let withdraw_from_cm_msg = CosmosMsg::Wasm(WasmMsg::Execute {
+            contract_addr: cm_addr.to_string(),
+            msg: to_binary(&credit_manager::ExecuteMsg::UpdateCreditAccount {
+                account_id: account_id.clone(),
+                actions,
+            })?,
+            funds: vec![],
+        });
+
+        Ok(Response::new()
+            .add_message(withdraw_from_cm_msg)
+            .add_attribute("action", "withdraw_from_credit_manager")
+            .add_attribute("account_id", account_id))
     }
 
     pub fn claim_incentive_rewards(
@@ -211,6 +254,7 @@ where
         let claim_msg = CosmosMsg::Wasm(WasmMsg::Execute {
             contract_addr: incentives_addr.to_string(),
             msg: to_binary(&incentives::ExecuteMsg::ClaimRewards {
+                account_id: None,
                 start_after_collateral_denom,
                 start_after_incentive_denom,
                 limit,

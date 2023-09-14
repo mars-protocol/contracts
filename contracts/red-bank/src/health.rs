@@ -2,25 +2,37 @@ use std::collections::{HashMap, HashSet};
 
 use cosmwasm_std::{Addr, Deps, Env, Order, StdError, StdResult, Uint128};
 use mars_health::health::{Health, Position as HealthPosition};
+use mars_interest_rate::{get_underlying_debt_amount, get_underlying_liquidity_amount};
 use mars_red_bank_types::{oracle, red_bank::Position};
 
 use crate::{
     error::ContractError,
-    interest_rates::{get_underlying_debt_amount, get_underlying_liquidity_amount},
+    helpers::query_asset_params,
     state::{COLLATERALS, DEBTS, MARKETS},
 };
 
-/// Check the Health Factor for a given user
-pub fn assert_liquidatable(
+/// Get health and positions for a given user
+pub fn get_health_and_positions(
     deps: &Deps,
     env: &Env,
     user_addr: &Addr,
+    account_id: &str,
     oracle_addr: &Addr,
-) -> Result<(bool, HashMap<String, Position>), ContractError> {
-    let positions = get_user_positions_map(deps, env, user_addr, oracle_addr)?;
+    params_addr: &Addr,
+    is_liquidation: bool,
+) -> Result<(Health, HashMap<String, Position>), ContractError> {
+    let positions = get_user_positions_map(
+        deps,
+        env,
+        user_addr,
+        account_id,
+        oracle_addr,
+        params_addr,
+        is_liquidation,
+    )?;
     let health = compute_position_health(&positions)?;
 
-    Ok((health.is_liquidatable(), positions))
+    Ok((health, positions))
 }
 
 /// Check the Health Factor for a given user after a withdraw
@@ -28,12 +40,22 @@ pub fn assert_below_liq_threshold_after_withdraw(
     deps: &Deps,
     env: &Env,
     user_addr: &Addr,
+    account_id: &str,
     oracle_addr: &Addr,
+    params_addr: &Addr,
     denom: &str,
     withdraw_amount: Uint128,
+    is_liquidation: bool,
 ) -> Result<bool, ContractError> {
-    let mut positions = get_user_positions_map(deps, env, user_addr, oracle_addr)?;
-
+    let mut positions = get_user_positions_map(
+        deps,
+        env,
+        user_addr,
+        account_id,
+        oracle_addr,
+        params_addr,
+        is_liquidation,
+    )?;
     // Update position to compute health factor after withdraw
     match positions.get_mut(denom) {
         Some(p) => {
@@ -51,11 +73,14 @@ pub fn assert_below_max_ltv_after_borrow(
     deps: &Deps,
     env: &Env,
     user_addr: &Addr,
+    account_id: &str,
     oracle_addr: &Addr,
+    params_addr: &Addr,
     denom: &str,
     borrow_amount: Uint128,
 ) -> Result<bool, ContractError> {
-    let mut positions = get_user_positions_map(deps, env, user_addr, oracle_addr)?;
+    let mut positions =
+        get_user_positions_map(deps, env, user_addr, account_id, oracle_addr, params_addr, false)?;
 
     // Update position to compute health factor after borrow
     positions
@@ -106,13 +131,16 @@ pub fn get_user_positions_map(
     deps: &Deps,
     env: &Env,
     user_addr: &Addr,
+    account_id: &str,
     oracle_addr: &Addr,
-) -> StdResult<HashMap<String, Position>> {
+    params_addr: &Addr,
+    is_liquidation: bool,
+) -> Result<HashMap<String, Position>, ContractError> {
     let block_time = env.block.time.seconds();
 
     // Find all denoms that the user has a collateral or debt position in
     let collateral_denoms = COLLATERALS
-        .prefix(user_addr)
+        .prefix((user_addr, account_id))
         .keys(deps.storage, None, None, Order::Ascending)
         .collect::<StdResult<Vec<_>>>()?;
     let debt_denoms = DEBTS
@@ -131,14 +159,16 @@ pub fn get_user_positions_map(
         .into_iter()
         .map(|denom| {
             let market = MARKETS.load(deps.storage, &denom)?;
+            let params = query_asset_params(&deps.querier, params_addr, &denom)?;
 
-            let collateral_amount = match COLLATERALS.may_load(deps.storage, (user_addr, &denom))? {
-                Some(collateral) if collateral.enabled => {
-                    let amount_scaled = collateral.amount_scaled;
-                    get_underlying_liquidity_amount(amount_scaled, &market, block_time)?
-                }
-                _ => Uint128::zero(),
-            };
+            let collateral_amount =
+                match COLLATERALS.may_load(deps.storage, (user_addr, account_id, &denom))? {
+                    Some(collateral) if collateral.enabled => {
+                        let amount_scaled = collateral.amount_scaled;
+                        get_underlying_liquidity_amount(amount_scaled, &market, block_time)?
+                    }
+                    _ => Uint128::zero(),
+                };
 
             let (debt_amount, uncollateralized_debt) =
                 match DEBTS.may_load(deps.storage, (user_addr, &denom))? {
@@ -150,15 +180,19 @@ pub fn get_user_positions_map(
                     None => (Uint128::zero(), false),
                 };
 
-            let asset_price = oracle::helpers::query_price(&deps.querier, oracle_addr, &denom)?;
+            let asset_price = if is_liquidation {
+                oracle::helpers::query_price_for_liquidate(&deps.querier, oracle_addr, &denom)?
+            } else {
+                oracle::helpers::query_price(&deps.querier, oracle_addr, &denom)?
+            };
 
             let position = Position {
                 denom: denom.clone(),
                 collateral_amount,
                 debt_amount,
                 uncollateralized_debt,
-                max_ltv: market.max_loan_to_value,
-                liquidation_threshold: market.liquidation_threshold,
+                max_ltv: params.max_loan_to_value,
+                liquidation_threshold: params.liquidation_threshold,
                 asset_price,
             };
 

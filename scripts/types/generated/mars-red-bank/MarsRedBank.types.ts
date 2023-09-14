@@ -5,14 +5,12 @@
  * and run the @cosmwasm/ts-codegen generate command to regenerate this file.
  */
 
-export type Decimal = string
 export interface InstantiateMsg {
   config: CreateOrUpdateConfig
   owner: string
 }
 export interface CreateOrUpdateConfig {
   address_provider?: string | null
-  close_factor?: Decimal | null
 }
 export type ExecuteMsg =
   | {
@@ -44,13 +42,16 @@ export type ExecuteMsg =
     }
   | {
       deposit: {
+        account_id?: string | null
         on_behalf_of?: string | null
       }
     }
   | {
       withdraw: {
+        account_id?: string | null
         amount?: Uint128 | null
         denom: string
+        liquidation_related?: boolean | null
         recipient?: string | null
       }
     }
@@ -94,15 +95,10 @@ export type OwnerUpdate =
       }
     }
   | 'clear_emergency_owner'
+export type Decimal = string
 export type Uint128 = string
 export interface InitOrUpdateAssetParams {
-  borrow_enabled?: boolean | null
-  deposit_cap?: Uint128 | null
-  deposit_enabled?: boolean | null
   interest_rate_model?: InterestRateModel | null
-  liquidation_bonus?: Decimal | null
-  liquidation_threshold?: Decimal | null
-  max_loan_to_value?: Decimal | null
   reserve_factor?: Decimal | null
 }
 export interface InterestRateModel {
@@ -154,12 +150,22 @@ export type QueryMsg =
     }
   | {
       user_collateral: {
+        account_id?: string | null
         denom: string
         user: string
       }
     }
   | {
       user_collaterals: {
+        account_id?: string | null
+        limit?: number | null
+        start_after?: string | null
+        user: string
+      }
+    }
+  | {
+      user_collaterals_v2: {
+        account_id?: string | null
         limit?: number | null
         start_after?: string | null
         user: string
@@ -167,6 +173,13 @@ export type QueryMsg =
     }
   | {
       user_position: {
+        account_id?: string | null
+        user: string
+      }
+    }
+  | {
+      user_position_liquidation_pricing: {
+        account_id?: string | null
         user: string
       }
     }
@@ -196,27 +209,19 @@ export type QueryMsg =
     }
 export interface ConfigResponse {
   address_provider: string
-  close_factor: Decimal
-  emergency_owner?: string | null
   owner?: string | null
   proposed_new_owner?: string | null
 }
 export interface Market {
-  borrow_enabled: boolean
   borrow_index: Decimal
   borrow_rate: Decimal
   collateral_total_scaled: Uint128
   debt_total_scaled: Uint128
   denom: string
-  deposit_cap: Uint128
-  deposit_enabled: boolean
   indexes_last_updated: number
   interest_rate_model: InterestRateModel
-  liquidation_bonus: Decimal
-  liquidation_threshold: Decimal
   liquidity_index: Decimal
   liquidity_rate: Decimal
-  max_loan_to_value: Decimal
   reserve_factor: Decimal
 }
 export type ArrayOfMarket = Market[]
@@ -232,6 +237,13 @@ export interface UserCollateralResponse {
   enabled: boolean
 }
 export type ArrayOfUserCollateralResponse = UserCollateralResponse[]
+export interface PaginationResponseForUserCollateralResponse {
+  data: UserCollateralResponse[]
+  metadata: Metadata
+}
+export interface Metadata {
+  has_more: boolean
+}
 export interface UserDebtResponse {
   amount: Uint128
   amount_scaled: Uint128

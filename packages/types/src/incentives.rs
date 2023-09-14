@@ -125,6 +125,8 @@ pub enum ExecuteMsg {
         /// User address. Address is trusted as it must be validated by the Red Bank
         /// contract before calling this method
         user_addr: Addr,
+        /// Credit account id (Rover)
+        account_id: Option<String>,
         /// Denom of the asset of which deposited balance is changed
         denom: String,
         /// The user's scaled collateral amount up to the instant before the change
@@ -136,6 +138,8 @@ pub enum ExecuteMsg {
     /// Claim rewards. MARS rewards accrued by the user will be staked into xMARS before
     /// being sent.
     ClaimRewards {
+        /// Credit account id (Rover)
+        account_id: Option<String>,
         /// Start pagination after this collateral denom
         start_after_collateral_denom: Option<String>,
         /// Start pagination after this incentive denom. If supplied you must also supply
@@ -229,6 +233,8 @@ pub enum QueryMsg {
     UserUnclaimedRewards {
         /// The user address for which to query unclaimed rewards
         user: String,
+        /// Credit account id (Rover)
+        account_id: Option<String>,
         /// Start pagination after this collateral denom
         start_after_collateral_denom: Option<String>,
         /// Start pagination after this incentive denom. If supplied you must also supply
@@ -246,7 +252,19 @@ pub enum QueryMsg {
 }
 
 #[cw_serde]
-pub struct MigrateMsg {}
+pub struct V2Updates {
+    /// The amount of time in seconds for each incentive epoch. This is the minimum amount of time
+    /// that an incentive can last, and each incentive must be a multiple of this duration.
+    pub epoch_duration: u64,
+    /// The maximum number of incentive denoms that can be whitelisted at any given time. This is
+    /// a guard against accidentally whitelisting too many denoms, which could cause max gas errors.
+    pub max_whitelisted_denoms: u8,
+}
+
+#[cw_serde]
+pub enum MigrateMsg {
+    V1_0_0ToV2_0_0(V2Updates),
+}
 
 #[cw_serde]
 pub struct EmissionResponse {
@@ -297,4 +315,6 @@ pub struct ConfigResponse {
     pub max_whitelisted_denoms: u8,
     /// The epoch duration in seconds
     pub epoch_duration: u64,
+    /// The count of the number of whitelisted incentive denoms
+    pub whitelist_count: u8,
 }

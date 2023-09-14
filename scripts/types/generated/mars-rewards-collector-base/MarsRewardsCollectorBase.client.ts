@@ -15,7 +15,10 @@ import {
   Coin,
   ExecuteMsg,
   OwnerUpdate,
+  Action,
+  ActionAmount,
   UpdateConfig,
+  ActionCoin,
   QueryMsg,
   ConfigResponse,
 } from './MarsRewardsCollectorBase.types'
@@ -68,6 +71,18 @@ export interface MarsRewardsCollectorBaseInterface
     }: {
       amount?: Uint128
       denom: string
+    },
+    fee?: number | StdFee | 'auto',
+    memo?: string,
+    _funds?: Coin[],
+  ) => Promise<ExecuteResult>
+  withdrawFromCreditManager: (
+    {
+      accountId,
+      actions,
+    }: {
+      accountId: string
+      actions: Action[]
     },
     fee?: number | StdFee | 'auto',
     memo?: string,
@@ -128,6 +143,7 @@ export class MarsRewardsCollectorBaseClient
     this.updateOwner = this.updateOwner.bind(this)
     this.updateConfig = this.updateConfig.bind(this)
     this.withdrawFromRedBank = this.withdrawFromRedBank.bind(this)
+    this.withdrawFromCreditManager = this.withdrawFromCreditManager.bind(this)
     this.distributeRewards = this.distributeRewards.bind(this)
     this.swapAsset = this.swapAsset.bind(this)
     this.claimIncentiveRewards = this.claimIncentiveRewards.bind(this)
@@ -192,6 +208,32 @@ export class MarsRewardsCollectorBaseClient
         withdraw_from_red_bank: {
           amount,
           denom,
+        },
+      },
+      fee,
+      memo,
+      _funds,
+    )
+  }
+  withdrawFromCreditManager = async (
+    {
+      accountId,
+      actions,
+    }: {
+      accountId: string
+      actions: Action[]
+    },
+    fee: number | StdFee | 'auto' = 'auto',
+    memo?: string,
+    _funds?: Coin[],
+  ): Promise<ExecuteResult> => {
+    return await this.client.execute(
+      this.sender,
+      this.contractAddress,
+      {
+        withdraw_from_credit_manager: {
+          account_id: accountId,
+          actions,
         },
       },
       fee,

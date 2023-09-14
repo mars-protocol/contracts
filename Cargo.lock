@@ -293,7 +293,7 @@ checksum = "cc6dde6e4ed435a4c1ee4e73592f5ba9da2151af10076cc04858746af9352d09"
 dependencies = [
  "proc-macro2",
  "quote",
- "syn 2.0.27",
+ "syn 2.0.28",
 ]
 
 [[package]]
@@ -342,9 +342,9 @@ checksum = "9e1b586273c5702936fe7b7d6896644d8be71e6314cfe09d3167c95f712589e8"
 
 [[package]]
 name = "base64"
-version = "0.20.0"
+version = "0.21.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "0ea22880d78093b0cbe17c89f64a7d457941e65759157ec6cb31a31d652b05e5"
+checksum = "604178f6c5c21f02dc555784810edfb88d34ac2c73b2eae109655649ee73ce3d"
 
 [[package]]
 name = "base64ct"
@@ -527,9 +527,12 @@ dependencies = [
 
 [[package]]
 name = "cc"
-version = "1.0.79"
+version = "1.0.82"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "50d30906286121d95be3d479533b458f87493b30a4b5f79a607db8f5d11aa91f"
+checksum = "305fe645edc1442a0fa8b6726ba61d422798d37a52e12eaecf4b022ebbb88f01"
+dependencies = [
+ "libc",
+]
 
 [[package]]
 name = "cexpr"
@@ -736,7 +739,7 @@ dependencies = [
  "hex",
  "schemars",
  "serde",
- "serde-json-wasm 0.5.1",
+ "serde-json-wasm",
  "sha2 0.10.7",
  "thiserror",
 ]
@@ -812,9 +815,9 @@ dependencies = [
 
 [[package]]
 name = "cw-it"
-version = "0.1.0"
+version = "0.1.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "6e3120d46b30b900c4b9ab0f996ce527c1187095c75ffa61d9ea5aa6d1e93b41"
+checksum = "6c7ad91046afef49ea3b922c36395298254802844cd360911cf2e1b96825c9df"
 dependencies = [
  "anyhow",
  "apollo-cw-multi-test",
@@ -842,7 +845,7 @@ dependencies = [
  "regex",
  "serde",
  "serde_json",
- "strum",
+ "strum 0.24.1",
  "test-tube",
  "thiserror",
 ]
@@ -1164,9 +1167,9 @@ dependencies = [
 
 [[package]]
 name = "errno"
-version = "0.3.1"
+version = "0.3.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "4bcfec3a70f97c962c307b2d2c56e358cf1d00b558d74262b5f929ee8cc7e73a"
+checksum = "6b30f669a7961ef1631673d2766cc92f52d64f7ef354d4fe0ddfd30ed52f0f4f"
 dependencies = [
  "errno-dragonfly",
  "libc",
@@ -1296,7 +1299,7 @@ checksum = "89ca545a94061b6365f2c7355b4b32bd20df3ff95f02da9329b34ccc3bd6ee72"
 dependencies = [
  "proc-macro2",
  "quote",
- "syn 2.0.27",
+ "syn 2.0.28",
 ]
 
 [[package]]
@@ -1711,9 +1714,9 @@ checksum = "0717cef1bc8b636c6e1c1bbdefc09e6322da8a9321966e8928ef80d20f7f770f"
 
 [[package]]
 name = "linux-raw-sys"
-version = "0.4.3"
+version = "0.4.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "09fc20d2ca12cb9f044c93e3bd6d32d523e6e2ec3db4f7b2939cd99026ecd3f0"
+checksum = "57bcfdad1b858c2db7c38303a6d2ad4dfaf5eb53dfeb0910128b2c26d6158503"
 
 [[package]]
 name = "log"
@@ -1723,42 +1726,44 @@ checksum = "b06a4cde4c0f271a446782e3eff8de789548ce57dbc8eca9292c27f4a42004b4"
 
 [[package]]
 name = "mars-address-provider"
-version = "1.2.0"
+version = "2.0.0"
 dependencies = [
  "bech32",
  "cosmwasm-schema",
  "cosmwasm-std",
  "cw-storage-plus 1.1.0",
  "cw2 1.1.0",
- "mars-owner",
- "mars-red-bank-types",
+ "mars-owner 2.0.0",
+ "mars-red-bank-types 2.0.0",
  "serde",
  "thiserror",
 ]
 
 [[package]]
 name = "mars-health"
-version = "1.2.0"
+version = "2.0.0"
 dependencies = [
  "cosmwasm-std",
- "mars-red-bank-types",
+ "mars-params",
+ "mars-red-bank-types 2.0.0",
  "mars-testing",
  "thiserror",
 ]
 
 [[package]]
 name = "mars-incentives"
-version = "1.2.0"
+version = "2.0.0"
 dependencies = [
  "cosmwasm-schema",
  "cosmwasm-std",
  "cw-storage-plus 1.1.0",
  "cw2 1.1.0",
- "mars-owner",
+ "mars-owner 2.0.0",
  "mars-red-bank",
- "mars-red-bank-types",
+ "mars-red-bank-types 1.0.0",
+ "mars-red-bank-types 2.0.0",
  "mars-testing",
- "mars-utils",
+ "mars-utils 2.0.0",
  "osmosis-std",
  "test-case",
  "thiserror",
@@ -1766,35 +1771,67 @@ dependencies = [
 
 [[package]]
 name = "mars-integration-tests"
-version = "1.2.0"
+version = "2.0.0"
 dependencies = [
  "anyhow",
  "cosmwasm-std",
  "cw-it",
  "cw-multi-test",
+ "mars-incentives",
  "mars-oracle-base",
  "mars-oracle-osmosis",
  "mars-osmosis",
+ "mars-params",
  "mars-red-bank",
- "mars-red-bank-types",
+ "mars-red-bank-types 2.0.0",
  "mars-rewards-collector-osmosis",
  "mars-swapper-osmosis",
  "mars-testing",
- "mars-utils",
+ "mars-utils 2.0.0",
  "osmosis-std",
  "osmosis-test-tube",
  "serde",
 ]
 
 [[package]]
+name = "mars-interest-rate"
+version = "2.0.0"
+dependencies = [
+ "cosmwasm-schema",
+ "cosmwasm-std",
+ "mars-red-bank-types 2.0.0",
+ "mars-utils 2.0.0",
+]
+
+[[package]]
+name = "mars-liquidation"
+version = "1.0.0"
+dependencies = [
+ "cosmwasm-std",
+ "mars-health",
+ "mars-params",
+ "thiserror",
+]
+
+[[package]]
+name = "mars-mock-pyth"
+version = "2.0.0"
+dependencies = [
+ "cosmwasm-schema",
+ "cosmwasm-std",
+ "pyth-sdk-cw",
+]
+
+[[package]]
 name = "mars-oracle-base"
-version = "1.2.0"
+version = "2.0.0"
 dependencies = [
  "cosmwasm-std",
  "cw-storage-plus 1.1.0",
  "cw2 1.1.0",
- "mars-owner",
- "mars-red-bank-types",
+ "mars-owner 2.0.0",
+ "mars-red-bank-types 2.0.0",
+ "mars-utils 2.0.0",
  "pyth-sdk-cw",
  "schemars",
  "serde",
@@ -1803,7 +1840,7 @@ dependencies = [
 
 [[package]]
 name = "mars-oracle-osmosis"
-version = "1.2.0"
+version = "2.0.0"
 dependencies = [
  "cosmwasm-schema",
  "cosmwasm-std",
@@ -1811,10 +1848,10 @@ dependencies = [
  "cw2 1.1.0",
  "mars-oracle-base",
  "mars-osmosis",
- "mars-owner",
- "mars-red-bank-types",
+ "mars-owner 2.0.0",
+ "mars-red-bank-types 2.0.0",
  "mars-testing",
- "mars-utils",
+ "mars-utils 2.0.0",
  "osmosis-std",
  "pyth-sdk-cw",
  "schemars",
@@ -1823,7 +1860,7 @@ dependencies = [
 
 [[package]]
 name = "mars-oracle-wasm"
-version = "1.2.0"
+version = "2.0.0"
 dependencies = [
  "astroport",
  "cosmwasm-schema",
@@ -1832,8 +1869,8 @@ dependencies = [
  "cw-storage-plus 1.1.0",
  "cw2 1.1.0",
  "mars-oracle-base",
- "mars-owner",
- "mars-red-bank-types",
+ "mars-owner 2.0.0",
+ "mars-red-bank-types 2.0.0",
  "mars-testing",
  "proptest",
  "pyth-sdk-cw",
@@ -1842,10 +1879,11 @@ dependencies = [
 
 [[package]]
 name = "mars-osmosis"
-version = "1.2.0"
+version = "2.0.0"
 dependencies = [
  "cosmwasm-std",
  "osmosis-std",
+ "prost 0.11.9",
  "serde",
 ]
 
@@ -1863,47 +1901,95 @@ dependencies = [
 ]
 
 [[package]]
-name = "mars-red-bank"
-version = "1.2.0"
+name = "mars-owner"
+version = "2.0.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "ab46e0b2f81a8a98036b46730fbe33a337e98e87cb3d34553b45a5ae87c5828c"
 dependencies = [
  "cosmwasm-schema",
  "cosmwasm-std",
  "cw-storage-plus 1.1.0",
+ "schemars",
+ "thiserror",
+]
+
+[[package]]
+name = "mars-params"
+version = "2.0.0"
+dependencies = [
+ "anyhow",
+ "cosmwasm-schema",
+ "cosmwasm-std",
+ "cw-multi-test",
+ "cw-storage-plus 1.1.0",
+ "cw2 1.1.0",
+ "mars-interest-rate",
+ "mars-owner 2.0.0",
+ "mars-red-bank-types 2.0.0",
+ "mars-testing",
+ "mars-utils 2.0.0",
+ "test-case",
+ "thiserror",
+]
+
+[[package]]
+name = "mars-red-bank"
+version = "2.0.0"
+dependencies = [
+ "anyhow",
+ "cosmwasm-schema",
+ "cosmwasm-std",
+ "cw-multi-test",
+ "cw-storage-plus 1.1.0",
  "cw-utils 1.0.1",
  "cw2 1.1.0",
  "mars-health",
- "mars-owner",
- "mars-red-bank-types",
+ "mars-interest-rate",
+ "mars-liquidation",
+ "mars-owner 2.0.0",
+ "mars-params",
+ "mars-red-bank-types 2.0.0",
  "mars-testing",
- "mars-utils",
+ "mars-utils 2.0.0",
+ "pyth-sdk-cw",
+ "test-case",
  "thiserror",
 ]
 
 [[package]]
 name = "mars-red-bank-types"
-version = "1.2.0"
+version = "1.0.0"
+source = "git+https://github.com/mars-protocol/red-bank?tag=v1.0.0#13fcc446fe687dfb8f08ffacd57b1ab6ad6cfcc9"
 dependencies = [
  "cosmwasm-schema",
  "cosmwasm-std",
- "mars-owner",
- "mars-utils",
- "strum",
+ "mars-owner 1.2.0",
+ "mars-utils 1.0.0",
+ "thiserror",
+]
+
+[[package]]
+name = "mars-red-bank-types"
+version = "2.0.0"
+dependencies = [
+ "cosmwasm-schema",
+ "cosmwasm-std",
+ "mars-owner 2.0.0",
+ "mars-utils 2.0.0",
+ "strum 0.25.0",
  "thiserror",
 ]
 
 [[package]]
 name = "mars-rewards-collector-base"
-version = "1.2.0"
+version = "2.0.0"
 dependencies = [
  "cosmwasm-schema",
  "cosmwasm-std",
  "cw-storage-plus 1.1.0",
- "mars-osmosis",
- "mars-owner",
- "mars-red-bank-types",
- "mars-testing",
- "mars-utils",
- "osmosis-std",
+ "mars-owner 2.0.0",
+ "mars-red-bank-types 2.0.0",
+ "mars-utils 2.0.0",
  "schemars",
  "serde",
  "thiserror",
@@ -1911,48 +1997,34 @@ dependencies = [
 
 [[package]]
 name = "mars-rewards-collector-neutron"
-version = "1.2.0"
+version = "2.0.0"
 dependencies = [
- "cosmwasm-schema",
  "cosmwasm-std",
- "cw-storage-plus 1.1.0",
  "cw2 1.1.0",
- "mars-osmosis",
- "mars-owner",
- "mars-red-bank-types",
+ "mars-red-bank-types 2.0.0",
  "mars-rewards-collector-base",
- "mars-testing",
- "mars-utils",
  "neutron-sdk",
- "osmosis-std",
- "schemars",
- "serde",
- "thiserror",
 ]
 
 [[package]]
 name = "mars-rewards-collector-osmosis"
-version = "1.2.0"
+version = "2.0.0"
 dependencies = [
- "cosmwasm-schema",
  "cosmwasm-std",
- "cw-storage-plus 1.1.0",
  "cw2 1.1.0",
  "mars-osmosis",
- "mars-owner",
- "mars-red-bank-types",
+ "mars-owner 2.0.0",
+ "mars-red-bank-types 2.0.0",
  "mars-rewards-collector-base",
  "mars-testing",
- "mars-utils",
+ "mars-utils 2.0.0",
  "osmosis-std",
- "schemars",
  "serde",
- "thiserror",
 ]
 
 [[package]]
 name = "mars-swapper-astroport"
-version = "1.2.0"
+version = "2.0.0"
 dependencies = [
  "anyhow",
  "astroport",
@@ -1961,7 +2033,7 @@ dependencies = [
  "cw-it",
  "cw2 1.1.0",
  "mars-oracle-wasm",
- "mars-red-bank-types",
+ "mars-red-bank-types 2.0.0",
  "mars-swapper-base",
  "mars-testing",
  "test-case",
@@ -1969,14 +2041,14 @@ dependencies = [
 
 [[package]]
 name = "mars-swapper-base"
-version = "1.2.0"
+version = "2.0.0"
 dependencies = [
  "cosmwasm-schema",
  "cosmwasm-std",
  "cw-paginate",
  "cw-storage-plus 1.1.0",
- "mars-owner",
- "mars-red-bank-types",
+ "mars-owner 2.0.0",
+ "mars-red-bank-types 2.0.0",
  "schemars",
  "serde",
  "thiserror",
@@ -1984,17 +2056,15 @@ dependencies = [
 
 [[package]]
 name = "mars-swapper-mock"
-version = "1.2.0"
+version = "2.0.0"
 dependencies = [
- "anyhow",
  "cosmwasm-std",
- "cw-multi-test",
- "mars-red-bank-types",
+ "mars-red-bank-types 2.0.0",
 ]
 
 [[package]]
 name = "mars-swapper-osmosis"
-version = "1.2.0"
+version = "2.0.0"
 dependencies = [
  "anyhow",
  "cosmwasm-schema",
@@ -2002,29 +2072,32 @@ dependencies = [
  "cw-it",
  "cw2 1.1.0",
  "mars-osmosis",
- "mars-owner",
- "mars-red-bank-types",
+ "mars-owner 2.0.0",
+ "mars-red-bank-types 2.0.0",
  "mars-swapper-base",
  "osmosis-std",
 ]
 
 [[package]]
 name = "mars-testing"
-version = "1.2.0"
+version = "2.0.0"
 dependencies = [
  "anyhow",
  "astroport",
+ "cosmwasm-schema",
  "cosmwasm-std",
  "cw-it",
  "cw-multi-test",
  "mars-address-provider",
  "mars-incentives",
+ "mars-mock-pyth",
  "mars-oracle-osmosis",
  "mars-oracle-wasm",
  "mars-osmosis",
- "mars-owner",
+ "mars-owner 2.0.0",
+ "mars-params",
  "mars-red-bank",
- "mars-red-bank-types",
+ "mars-red-bank-types 2.0.0",
  "mars-rewards-collector-osmosis",
  "mars-swapper-astroport",
  "osmosis-std",
@@ -2034,7 +2107,16 @@ dependencies = [
 
 [[package]]
 name = "mars-utils"
-version = "1.2.0"
+version = "1.0.0"
+source = "git+https://github.com/mars-protocol/red-bank?tag=v1.0.0#13fcc446fe687dfb8f08ffacd57b1ab6ad6cfcc9"
+dependencies = [
+ "cosmwasm-std",
+ "thiserror",
+]
+
+[[package]]
+name = "mars-utils"
+version = "2.0.0"
 dependencies = [
  "cosmwasm-std",
  "thiserror",
@@ -2080,11 +2162,11 @@ dependencies = [
 
 [[package]]
 name = "neutron-sdk"
-version = "0.6.0"
+version = "0.6.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "d7cc760801f3ed881155431c6a0102c1a8df178430af341c9f8008951ceb0721"
+checksum = "adfc6f92cae61b5af9014c09b7bac25ac95b7442be38441a7103377a8edfd37c"
 dependencies = [
- "base64 0.20.0",
+ "base64 0.21.2",
  "bech32",
  "cosmos-sdk-proto 0.16.0",
  "cosmwasm-schema",
@@ -2094,7 +2176,7 @@ dependencies = [
  "protobuf 3.2.0",
  "schemars",
  "serde",
- "serde-json-wasm 0.4.1",
+ "serde-json-wasm",
  "serde_json",
  "thiserror",
 ]
@@ -2194,9 +2276,9 @@ checksum = "4d5d9eb14b174ee9aa2ef96dc2b94637a2d4b6e7cb873c7e171f0c20c6cf3eac"
 
 [[package]]
 name = "osmosis-std"
-version = "0.16.1"
+version = "0.16.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "2fa46d2ad5ae738572887974e000934374ce3546b820505c0ee19ca708e49622"
+checksum = "75895e4db1a81ca29118e366365744f64314938327e4eedba8e6e462fb15e94f"
 dependencies = [
  "chrono",
  "cosmwasm-std",
@@ -2210,9 +2292,9 @@ dependencies = [
 
 [[package]]
 name = "osmosis-std-derive"
-version = "0.16.1"
+version = "0.16.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "11c2ba5535743617d6f44ae8d572d064fabab6d06ffcf403512f89c58954dbe9"
+checksum = "f47f0b2f22adb341bb59e5a3a1b464dde033181954bd055b9ae86d6511ba465b"
 dependencies = [
  "itertools",
  "proc-macro2",
@@ -2223,9 +2305,9 @@ dependencies = [
 
 [[package]]
 name = "osmosis-test-tube"
-version = "16.0.1"
+version = "16.1.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "527375c01396e7e4de4ccc18a0141aeb6b342dc089d30c57282025f3a8753e72"
+checksum = "4929047d1dcec5d7d02fd0a00ecdfca78918d3a33bffc193bf57b3eeb4d407ab"
 dependencies = [
  "base64 0.13.1",
  "bindgen",
@@ -2301,9 +2383,9 @@ checksum = "9b2a4787296e9989611394c33f193f676704af1686e70b8f8033ab5ba9a35a94"
 
 [[package]]
 name = "pest"
-version = "2.7.1"
+version = "2.7.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "0d2d1d55045829d65aad9d389139882ad623b33b904e7c9f1b10c5b8927298e5"
+checksum = "1acb4a4365a13f749a93f1a094a7805e5cfa0955373a9de860d962eaa3a5fe5a"
 dependencies = [
  "thiserror",
  "ucd-trie",
@@ -2311,9 +2393,9 @@ dependencies = [
 
 [[package]]
 name = "pest_derive"
-version = "2.7.1"
+version = "2.7.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "5f94bca7e7a599d89dea5dfa309e217e7906c3c007fb9c3299c40b10d6a315d3"
+checksum = "666d00490d4ac815001da55838c500eafb0320019bbaa44444137c48b443a853"
 dependencies = [
  "pest",
  "pest_generator",
@@ -2321,22 +2403,22 @@ dependencies = [
 
 [[package]]
 name = "pest_generator"
-version = "2.7.1"
+version = "2.7.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "99d490fe7e8556575ff6911e45567ab95e71617f43781e5c05490dc8d75c965c"
+checksum = "68ca01446f50dbda87c1786af8770d535423fa8a53aec03b8f4e3d7eb10e0929"
 dependencies = [
  "pest",
  "pest_meta",
  "proc-macro2",
  "quote",
- "syn 2.0.27",
+ "syn 2.0.28",
 ]
 
 [[package]]
 name = "pest_meta"
-version = "2.7.1"
+version = "2.7.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "2674c66ebb4b4d9036012091b537aae5878970d6999f81a265034d85b136b341"
+checksum = "56af0a30af74d0445c0bf6d9d051c979b516a1a5af790d251daee76005420a48"
 dependencies = [
  "once_cell",
  "pest",
@@ -2345,29 +2427,29 @@ dependencies = [
 
 [[package]]
 name = "pin-project"
-version = "1.1.2"
+version = "1.1.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "030ad2bc4db10a8944cb0d837f158bdfec4d4a4873ab701a95046770d11f8842"
+checksum = "fda4ed1c6c173e3fc7a83629421152e01d7b1f9b7f65fb301e490e8cfc656422"
 dependencies = [
  "pin-project-internal",
 ]
 
 [[package]]
 name = "pin-project-internal"
-version = "1.1.2"
+version = "1.1.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "ec2e072ecce94ec471b13398d5402c188e76ac03cf74dd1a975161b23a3f6d9c"
+checksum = "4359fd9c9171ec6e8c62926d6faaf553a8dc3f64e1507e76da7911b4f6a04405"
 dependencies = [
  "proc-macro2",
  "quote",
- "syn 2.0.27",
+ "syn 2.0.28",
 ]
 
 [[package]]
 name = "pin-project-lite"
-version = "0.2.10"
+version = "0.2.11"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "4c40d25201921e5ff0c862a505c6557ea88568a4e3ace775ab55e93f2f4f9d57"
+checksum = "2c516611246607d0c04186886dbb3a754368ef82c79e9827a802c6d836dd111c"
 
 [[package]]
 name = "pin-utils"
@@ -2634,9 +2716,9 @@ dependencies = [
 
 [[package]]
 name = "regex"
-version = "1.9.1"
+version = "1.9.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "b2eae68fc220f7cf2532e4494aded17545fce192d59cd996e0fe7887f4ceb575"
+checksum = "81bc1d4caf89fac26a70747fe603c130093b53c773888797a6329091246d651a"
 dependencies = [
  "aho-corasick",
  "memchr",
@@ -2646,9 +2728,9 @@ dependencies = [
 
 [[package]]
 name = "regex-automata"
-version = "0.3.3"
+version = "0.3.6"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "39354c10dd07468c2e73926b23bb9c2caca74c5501e38a35da70406f1d923310"
+checksum = "fed1ceff11a1dddaee50c9dc8e4938bd106e9d89ae372f192311e7da498e3b69"
 dependencies = [
  "aho-corasick",
  "memchr",
@@ -2748,9 +2830,9 @@ checksum = "08d43f7aa6b08d49f382cde6a7982047c3426db949b1424bc4b7ec9ae12c6ce2"
 
 [[package]]
 name = "rustix"
-version = "0.38.4"
+version = "0.38.7"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "0a962918ea88d644592894bc6dc55acc6c0956488adcebbfb6e273506b7fd6e5"
+checksum = "172891ebdceb05aa0005f533a6cbfca599ddd7d966f6f5d4d9b2e70478e70399"
 dependencies = [
  "bitflags 2.3.3",
  "errno",
@@ -2905,9 +2987,9 @@ checksum = "b0293b4b29daaf487284529cc2f5675b8e57c61f70167ba415a463651fd6a918"
 
 [[package]]
 name = "serde"
-version = "1.0.176"
+version = "1.0.183"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "76dc28c9523c5d70816e393136b86d48909cfb27cecaa902d338c19ed47164dc"
+checksum = "32ac8da02677876d532745a130fc9d8e6edfa81a269b107c5b00829b91d8eb3c"
 dependencies = [
  "serde_derive",
 ]
@@ -2917,15 +2999,6 @@ name = "serde-cw-value"
 version = "0.7.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "a75d32da6b8ed758b7d850b6c3c08f1d7df51a4df3cb201296e63e34a78e99d4"
-dependencies = [
- "serde",
-]
-
-[[package]]
-name = "serde-json-wasm"
-version = "0.4.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "479b4dbc401ca13ee8ce902851b834893251404c4f3c65370a49e047a6be09a5"
 dependencies = [
  "serde",
 ]
@@ -2950,13 +3023,13 @@ dependencies = [
 
 [[package]]
 name = "serde_derive"
-version = "1.0.176"
+version = "1.0.183"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "a4e7b8c5dc823e3b90651ff1d3808419cd14e5ad76de04feaf37da114e7a306f"
+checksum = "aafe972d60b0b9bee71a91b92fee2d4fb3c9d7e8f6b179aa99f27203d99a4816"
 dependencies = [
  "proc-macro2",
  "quote",
- "syn 2.0.27",
+ "syn 2.0.28",
 ]
 
 [[package]]
@@ -2983,13 +3056,13 @@ dependencies = [
 
 [[package]]
 name = "serde_repr"
-version = "0.1.15"
+version = "0.1.16"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "e168eaaf71e8f9bd6037feb05190485708e019f4fd87d161b3c0a0d37daf85e5"
+checksum = "8725e1dfadb3a50f7e5ce0b1a540466f6ed3fe7a0fca2ac2b8b831d31316bd00"
 dependencies = [
  "proc-macro2",
  "quote",
- "syn 2.0.27",
+ "syn 2.0.28",
 ]
 
 [[package]]
@@ -3127,7 +3200,16 @@ version = "0.24.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "063e6045c0e62079840579a7e47a355ae92f60eb74daaf156fb1e84ba164e63f"
 dependencies = [
- "strum_macros",
+ "strum_macros 0.24.3",
+]
+
+[[package]]
+name = "strum"
+version = "0.25.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "290d54ea6f91c969195bdbcd7442c8c2a2ba87da8bf60a7ee86a235d4bc1e125"
+dependencies = [
+ "strum_macros 0.25.2",
 ]
 
 [[package]]
@@ -3141,6 +3223,19 @@ dependencies = [
  "quote",
  "rustversion",
  "syn 1.0.109",
+]
+
+[[package]]
+name = "strum_macros"
+version = "0.25.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "ad8d03b598d3d0fff69bf533ee3ef19b8eeb342729596df84bcc7e1f96ec4059"
+dependencies = [
+ "heck",
+ "proc-macro2",
+ "quote",
+ "rustversion",
+ "syn 2.0.28",
 ]
 
 [[package]]
@@ -3171,9 +3266,9 @@ dependencies = [
 
 [[package]]
 name = "syn"
-version = "2.0.27"
+version = "2.0.28"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "b60f673f44a8255b9c8c657daf66a596d435f2da81a555b06dc644d080ba45e0"
+checksum = "04361975b3f5e348b2189d8dc55bc942f278b2d482a6a0365de5bdd62d351567"
 dependencies = [
  "proc-macro2",
  "quote",
@@ -3182,9 +3277,9 @@ dependencies = [
 
 [[package]]
 name = "tempfile"
-version = "3.7.0"
+version = "3.7.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "5486094ee78b2e5038a6382ed7645bc084dc2ec433426ca4c3cb61e2007b8998"
+checksum = "dc02fddf48964c42031a0b3fe0428320ecf3a73c401040fc0096f97794310651"
 dependencies = [
  "cfg-if",
  "fastrand",
@@ -3390,7 +3485,7 @@ checksum = "090198534930841fab3a5d1bb637cde49e339654e606195f8d9c76eeb081dc96"
 dependencies = [
  "proc-macro2",
  "quote",
- "syn 2.0.27",
+ "syn 2.0.28",
 ]
 
 [[package]]
@@ -3451,7 +3546,7 @@ checksum = "630bdcf245f78637c13ec01ffae6187cca34625e8c63150d424b59e55af2675e"
 dependencies = [
  "proc-macro2",
  "quote",
- "syn 2.0.27",
+ "syn 2.0.28",
 ]
 
 [[package]]
@@ -3655,7 +3750,7 @@ dependencies = [
  "once_cell",
  "proc-macro2",
  "quote",
- "syn 2.0.27",
+ "syn 2.0.28",
  "wasm-bindgen-shared",
 ]
 
@@ -3677,7 +3772,7 @@ checksum = "54681b18a46765f095758388f2d0cf16eb8d4169b639ab575a8f5693af210c7b"
 dependencies = [
  "proc-macro2",
  "quote",
- "syn 2.0.27",
+ "syn 2.0.28",
  "wasm-bindgen-backend",
  "wasm-bindgen-shared",
 ]
@@ -3851,5 +3946,5 @@ checksum = "ce36e65b0d2999d2aafac989fb249189a141aee1f53c612c1f37d72631959f69"
 dependencies = [
  "proc-macro2",
  "quote",
- "syn 2.0.27",
+ "syn 2.0.28",
 ]

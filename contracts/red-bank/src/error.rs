@@ -1,6 +1,9 @@
-use cosmwasm_std::{OverflowError, StdError};
+use cosmwasm_std::{
+    CheckedFromRatioError, CheckedMultiplyFractionError, DivideByZeroError, OverflowError, StdError,
+};
 use cw_utils::PaymentError;
 use mars_health::error::HealthError;
+use mars_liquidation::error::LiquidationError;
 use mars_owner::OwnerError;
 use mars_red_bank_types::error::MarsError;
 use mars_utils::error::ValidationError;
@@ -27,7 +30,19 @@ pub enum ContractError {
     Overflow(#[from] OverflowError),
 
     #[error("{0}")]
+    CheckedFromRatio(#[from] CheckedFromRatioError),
+
+    #[error("{0}")]
+    CheckedMultiplyFraction(#[from] CheckedMultiplyFractionError),
+
+    #[error("{0}")]
+    DivideByZero(#[from] DivideByZeroError),
+
+    #[error("{0}")]
     Health(#[from] HealthError),
+
+    #[error("{0}")]
+    Liquidation(#[from] LiquidationError),
 
     #[error("Price not found for asset: {denom:?}")]
     PriceNotFound {
@@ -80,6 +95,9 @@ pub enum ContractError {
 
     #[error("Amount to repay is greater than total debt")]
     CannotRepayMoreThanDebt {},
+
+    #[error("User cannot issue liquidation of own account")]
+    CannotLiquidateSelf {},
 
     #[error("User has a positive uncollateralized loan limit and thus cannot be liquidated")]
     CannotLiquidateWhenPositiveUncollateralizedLoanLimit {},

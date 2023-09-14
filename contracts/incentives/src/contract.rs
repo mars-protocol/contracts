@@ -22,6 +22,7 @@ use crate::{
     helpers::{
         self, compute_user_accrued_rewards, compute_user_unclaimed_rewards, update_incentive_index,
     },
+    migrations,
     state::{
         self, CONFIG, DEFAULT_LIMIT, EMISSIONS, EPOCH_DURATION, INCENTIVE_STATES, MAX_LIMIT, OWNER,
         USER_ASSET_INDICES, USER_UNCLAIMED_REWARDS, WHITELIST, WHITELIST_COUNT,
@@ -103,6 +104,7 @@ pub fn execute(
         ),
         ExecuteMsg::BalanceChange {
             user_addr,
+            account_id,
             denom,
             user_amount_scaled_before,
             total_amount_scaled_before,
@@ -111,11 +113,13 @@ pub fn execute(
             env,
             info,
             user_addr,
+            account_id,
             denom,
             user_amount_scaled_before,
             total_amount_scaled_before,
         ),
         ExecuteMsg::ClaimRewards {
+            account_id,
             start_after_collateral_denom,
             start_after_incentive_denom,
             limit,
@@ -123,6 +127,7 @@ pub fn execute(
             deps,
             env,
             info,
+            account_id,
             start_after_collateral_denom,
             start_after_incentive_denom,
             limit,
@@ -338,6 +343,7 @@ pub fn execute_balance_change(
     env: Env,
     info: MessageInfo,
     user_addr: Addr,
+    account_id: Option<String>,
     collateral_denom: String,
     user_amount_scaled_before: Uint128,
     total_amount_scaled_before: Uint128,
@@ -348,10 +354,17 @@ pub fn execute_balance_change(
         return Err(MarsError::Unauthorized {}.into());
     }
 
+    let acc_id = account_id.clone().unwrap_or("".to_string());
+
     let base_event = Event::new("mars/incentives/balance_change")
         .add_attribute("action", "balance_change")
         .add_attribute("denom", collateral_denom.clone())
         .add_attribute("user", user_addr.to_string());
+    let base_event = if account_id.is_some() {
+        base_event.add_attribute("account_id", &acc_id)
+    } else {
+        base_event
+    };
     let mut events = vec![base_event];
 
     let incentive_states = INCENTIVE_STATES
@@ -370,7 +383,7 @@ pub fn execute_balance_change(
 
         // Check if user has accumulated uncomputed rewards (which means index is not up to date)
         let user_asset_index_key =
-            USER_ASSET_INDICES.key((&user_addr, &collateral_denom, &incentive_denom));
+            USER_ASSET_INDICES.key(((&user_addr, &acc_id), &collateral_denom, &incentive_denom));
 
         let user_asset_index =
             user_asset_index_key.may_load(deps.storage)?.unwrap_or_else(Decimal::zero);
@@ -390,6 +403,7 @@ pub fn execute_balance_change(
                 state::increase_unclaimed_rewards(
                     deps.storage,
                     &user_addr,
+                    &acc_id,
                     &collateral_denom,
                     &incentive_denom,
                     accrued_rewards,
@@ -414,18 +428,26 @@ pub fn execute_claim_rewards(
     mut deps: DepsMut,
     env: Env,
     info: MessageInfo,
+    account_id: Option<String>,
     start_after_collateral_denom: Option<String>,
     start_after_incentive_denom: Option<String>,
     limit: Option<u32>,
 ) -> Result<Response, ContractError> {
-    let red_bank_addr = query_red_bank_address(deps.as_ref())?;
     let user_addr = info.sender;
+    let acc_id = account_id.clone().unwrap_or("".to_string());
 
-    let mut response = Response::new().add_event(
-        Event::new("mars/incentives/claim_rewards")
-            .add_attribute("action", "claim_rewards")
-            .add_attribute("user", user_addr.to_string()),
-    );
+    let red_bank_addr = query_red_bank_address(deps.as_ref())?;
+
+    let mut response = Response::new();
+    let base_event = Event::new("mars/incentives/claim_rewards")
+        .add_attribute("action", "claim_rewards")
+        .add_attribute("user", user_addr.to_string());
+    let base_event = if account_id.is_some() {
+        base_event.add_attribute("account_id", &acc_id)
+    } else {
+        base_event
+    };
+    response = response.add_event(base_event);
 
     let asset_incentives = state::paginate_incentive_states(
         deps.storage,
@@ -444,6 +466,7 @@ pub fn execute_claim_rewards(
             &env.block,
             &red_bank_addr,
             &user_addr,
+            &account_id,
             &collateral_denom,
             &incentive_denom,
         )?;
@@ -451,7 +474,7 @@ pub fn execute_claim_rewards(
         // clear unclaimed rewards
         USER_UNCLAIMED_REWARDS.save(
             deps.storage,
-            (&user_addr, &collateral_denom, &incentive_denom),
+            ((&user_addr, &acc_id), &collateral_denom, &incentive_denom),
             &Uint128::zero(),
         )?;
 
@@ -531,6 +554,7 @@ pub fn query(deps: Deps, env: Env, msg: QueryMsg) -> StdResult<Binary> {
         )?),
         QueryMsg::UserUnclaimedRewards {
             user,
+            account_id,
             start_after_collateral_denom,
             start_after_incentive_denom,
             limit,
@@ -538,6 +562,7 @@ pub fn query(deps: Deps, env: Env, msg: QueryMsg) -> StdResult<Binary> {
             deps,
             env,
             user,
+            account_id,
             start_after_collateral_denom,
             start_after_incentive_denom,
             limit,
@@ -596,6 +621,7 @@ pub fn query_config(deps: Deps) -> StdResult<ConfigResponse> {
         address_provider: config.address_provider,
         max_whitelisted_denoms: config.max_whitelisted_denoms,
         epoch_duration: EPOCH_DURATION.load(deps.storage)?,
+        whitelist_count: WHITELIST_COUNT.may_load(deps.storage)?.unwrap_or_default(),
     })
 }
 
@@ -634,12 +660,14 @@ pub fn query_user_unclaimed_rewards(
     deps: Deps,
     env: Env,
     user: String,
+    account_id: Option<String>,
     start_after_collateral_denom: Option<String>,
     start_after_incentive_denom: Option<String>,
     limit: Option<u32>,
-) -> StdResult<Vec<Coin>> {
-    let red_bank_addr = query_red_bank_address(deps)?;
+) -> Result<Vec<Coin>, ContractError> {
     let user_addr = deps.api.addr_validate(&user)?;
+
+    let red_bank_addr = query_red_bank_address(deps)?;
 
     let incentive_states = state::paginate_incentive_states(
         deps.storage,
@@ -657,6 +685,7 @@ pub fn query_user_unclaimed_rewards(
             &env.block,
             &red_bank_addr,
             &user_addr,
+            &account_id,
             &collateral_denom,
             &incentive_denom,
         )?;
@@ -737,6 +766,8 @@ pub fn query_emissions(
 /// MIGRATION
 
 #[cfg_attr(not(feature = "library"), entry_point)]
-pub fn migrate(_deps: DepsMut, _env: Env, _msg: MigrateMsg) -> Result<Response, ContractError> {
-    Ok(Response::default())
+pub fn migrate(deps: DepsMut, env: Env, msg: MigrateMsg) -> Result<Response, ContractError> {
+    match msg {
+        MigrateMsg::V1_0_0ToV2_0_0(updates) => migrations::v2_0_0::migrate(deps, env, updates),
+    }
 }

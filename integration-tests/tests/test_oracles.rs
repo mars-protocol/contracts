@@ -6,6 +6,7 @@ use mars_oracle_osmosis::{
     msg::PriceSourceResponse, Downtime, DowntimeDetector, OsmosisPriceSourceChecked,
     OsmosisPriceSourceUnchecked,
 };
+use mars_params::msg::AssetParamsUpdate;
 use mars_red_bank_types::{
     address_provider::{
         ExecuteMsg::SetAddress, InstantiateMsg as InstantiateAddr, MarsAddressType,
@@ -36,6 +37,7 @@ const OSMOSIS_RED_BANK_CONTRACT_NAME: &str = "mars-red-bank";
 const OSMOSIS_ADDR_PROVIDER_CONTRACT_NAME: &str = "mars-address-provider";
 const OSMOSIS_REWARDS_CONTRACT_NAME: &str = "mars-rewards-collector-osmosis";
 const OSMOSIS_INCENTIVES_CONTRACT_NAME: &str = "mars-incentives";
+const OSMOSIS_PARAMS_CONTRACT_NAME: &str = "mars-params";
 
 #[test]
 fn querying_xyk_lp_price_if_no_price_for_tokens() {
@@ -86,6 +88,7 @@ fn querying_xyk_lp_price_if_no_price_for_tokens() {
         &contract_addr,
         &QueryMsg::Price {
             denom: "umars_uatom_lp".to_string(),
+            kind: None,
         },
     )
     .unwrap_err();
@@ -197,6 +200,7 @@ fn querying_xyk_lp_price_success() {
             &contract_addr,
             &QueryMsg::Price {
                 denom: "umars_uatom_lp".to_string(),
+                kind: None,
             },
         )
         .unwrap();
@@ -261,6 +265,7 @@ fn query_spot_price() {
             &oracle_addr,
             &QueryMsg::Price {
                 denom: "uatom".to_string(),
+                kind: None,
             },
         )
         .unwrap();
@@ -396,6 +401,7 @@ fn update_spot_with_different_pool() {
             &oracle_addr,
             &QueryMsg::Price {
                 denom: "uatom".to_string(),
+                kind: None,
             },
         )
         .unwrap();
@@ -422,6 +428,7 @@ fn update_spot_with_different_pool() {
             &oracle_addr,
             &QueryMsg::Price {
                 denom: "uatom".to_string(),
+                kind: None,
             },
         )
         .unwrap();
@@ -471,6 +478,7 @@ fn query_spot_price_after_lp_change() {
             &oracle_addr,
             &QueryMsg::Price {
                 denom: "uatom".to_string(),
+                kind: None,
             },
         )
         .unwrap();
@@ -483,6 +491,7 @@ fn query_spot_price_after_lp_change() {
             &oracle_addr,
             &QueryMsg::Price {
                 denom: "uatom".to_string(),
+                kind: None,
             },
         )
         .unwrap();
@@ -555,6 +564,7 @@ fn query_geometric_twap_price_with_downtime_detector() {
         &oracle_addr,
         &QueryMsg::Price {
             denom: "uatom".to_string(),
+            kind: None,
         },
     );
     assert_err(res.unwrap_err(), "chain is recovering from downtime");
@@ -568,6 +578,7 @@ fn query_geometric_twap_price_with_downtime_detector() {
             &oracle_addr,
             &QueryMsg::Price {
                 denom: "uatom".to_string(),
+                kind: None,
             },
         )
         .unwrap();
@@ -640,6 +651,7 @@ fn query_arithmetic_twap_price() {
             &oracle_addr,
             &QueryMsg::Price {
                 denom: "uatom".to_string(),
+                kind: None,
             },
         )
         .unwrap();
@@ -654,6 +666,7 @@ fn query_arithmetic_twap_price() {
             &oracle_addr,
             &QueryMsg::Price {
                 denom: "uatom".to_string(),
+                kind: None,
             },
         )
         .unwrap();
@@ -727,6 +740,7 @@ fn query_geometric_twap_price() {
             &oracle_addr,
             &QueryMsg::Price {
                 denom: "uatom".to_string(),
+                kind: None,
             },
         )
         .unwrap();
@@ -741,6 +755,7 @@ fn query_geometric_twap_price() {
             &oracle_addr,
             &QueryMsg::Price {
                 denom: "uatom".to_string(),
+                kind: None,
             },
         )
         .unwrap();
@@ -807,6 +822,7 @@ fn compare_spot_and_twap_price() {
             &oracle_addr,
             &QueryMsg::Price {
                 denom: "uatom".to_string(),
+                kind: None,
             },
         )
         .unwrap();
@@ -847,6 +863,7 @@ fn compare_spot_and_twap_price() {
             &oracle_addr,
             &QueryMsg::Price {
                 denom: "uatom".to_string(),
+                kind: None,
             },
         )
         .unwrap();
@@ -887,6 +904,7 @@ fn compare_spot_and_twap_price() {
             &oracle_addr,
             &QueryMsg::Price {
                 denom: "uatom".to_string(),
+                kind: None,
             },
         )
         .unwrap();
@@ -934,6 +952,7 @@ fn redbank_should_fail_if_no_price() {
     wasm.execute(
         &red_bank_addr,
         &Deposit {
+            account_id: None,
             on_behalf_of: None,
         },
         &[coin(1_000_000, "uatom")],
@@ -996,6 +1015,7 @@ fn redbank_quering_oracle_successfully() {
     wasm.execute(
         &red_bank_addr,
         &Deposit {
+            account_id: None,
             on_behalf_of: None,
         },
         &[coin(1_000_000, "uatom")],
@@ -1047,7 +1067,6 @@ fn setup_redbank(wasm: &Wasm<OsmosisTestApp>, signer: &SigningAccount) -> (Strin
             owner: signer.address(),
             config: CreateOrUpdateConfig {
                 address_provider: Some(addr_provider_addr.clone()),
-                close_factor: Some(Decimal::percent(10)),
             },
         },
     );
@@ -1078,6 +1097,17 @@ fn setup_redbank(wasm: &Wasm<OsmosisTestApp>, signer: &SigningAccount) -> (Strin
             timeout_seconds: 60,
             slippage_tolerance: Decimal::new(Uint128::from(1u128)),
             neutron_ibc_config: None,
+        },
+    );
+
+    let params_addr = instantiate_contract(
+        wasm,
+        signer,
+        OSMOSIS_PARAMS_CONTRACT_NAME,
+        &mars_params::msg::InstantiateMsg {
+            owner: (signer.address()),
+            address_provider: addr_provider_addr.clone(),
+            target_health_factor: Decimal::from_str("1.05").unwrap(),
         },
     );
 
@@ -1126,10 +1156,57 @@ fn setup_redbank(wasm: &Wasm<OsmosisTestApp>, signer: &SigningAccount) -> (Strin
     .unwrap();
 
     wasm.execute(
+        &addr_provider_addr,
+        &SetAddress {
+            address_type: MarsAddressType::Params,
+            address: params_addr.clone(),
+        },
+        &[],
+        signer,
+    )
+    .unwrap();
+
+    // We can simulate credit manager contract balance with own params address (used by params contract for deposit caps logic)
+    wasm.execute(
+        &addr_provider_addr,
+        &SetAddress {
+            address_type: MarsAddressType::CreditManager,
+            address: params_addr.clone(),
+        },
+        &[],
+        signer,
+    )
+    .unwrap();
+
+    let (market_params, asset_params) = default_asset_params("uosmo");
+
+    wasm.execute(
         &red_bank_addr,
         &ExecuteRedBank::InitAsset {
             denom: "uosmo".to_string(),
-            params: default_asset_params(),
+            params: market_params,
+        },
+        &[],
+        signer,
+    )
+    .unwrap();
+    wasm.execute(
+        &params_addr,
+        &mars_params::msg::ExecuteMsg::UpdateAssetParams(AssetParamsUpdate::AddOrUpdate {
+            params: asset_params.into(),
+        }),
+        &[],
+        signer,
+    )
+    .unwrap();
+
+    let (market_params, asset_params) = default_asset_params("uatom");
+
+    wasm.execute(
+        &red_bank_addr,
+        &ExecuteRedBank::InitAsset {
+            denom: "uatom".to_string(),
+            params: market_params,
         },
         &[],
         signer,
@@ -1137,14 +1214,14 @@ fn setup_redbank(wasm: &Wasm<OsmosisTestApp>, signer: &SigningAccount) -> (Strin
     .unwrap();
 
     wasm.execute(
-        &red_bank_addr,
-        &ExecuteRedBank::InitAsset {
-            denom: "uatom".to_string(),
-            params: default_asset_params(),
-        },
+        &params_addr,
+        &mars_params::msg::ExecuteMsg::UpdateAssetParams(AssetParamsUpdate::AddOrUpdate {
+            params: asset_params.into(),
+        }),
         &[],
         signer,
     )
     .unwrap();
+
     (oracle_addr, red_bank_addr)
 }

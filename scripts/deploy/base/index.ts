@@ -19,6 +19,7 @@ export const taskRunner = async (config: DeploymentConfig) => {
       `mars_rewards_collector_${config.rewardsCollectorName}.wasm`,
     )
     await deployer.upload('swapper', `mars_swapper_${config.swapperDexName}.wasm`)
+    await deployer.upload('params', `mars_params.wasm`)
 
     // Instantiate contracts
     deployer.setOwnerAddr()
@@ -28,14 +29,19 @@ export const taskRunner = async (config: DeploymentConfig) => {
     await deployer.instantiateOracle(config.oracleCustomInitParams)
     await deployer.instantiateRewards()
     await deployer.instantiateSwapper()
+    await deployer.instantiateParams()
     await deployer.saveDeploymentAddrsToFile()
 
     // setup
-    await deployer.updateAddressProvider()
-    await deployer.setRoutes()
+    await deployer.updateAddressProvider() // CreditManager address in address-provider should be set once known
     for (const asset of config.assets) {
-      await deployer.initializeAsset(asset)
+      await deployer.updateAssetParams(asset)
+      await deployer.initializeMarket(asset)
     }
+    for (const vault of config.vaults) {
+      await deployer.updateVaultConfig(vault)
+    }
+    await deployer.setRoutes()
     for (const oracleConfig of config.oracleConfigs) {
       await deployer.setOracle(oracleConfig)
     }
@@ -46,7 +52,7 @@ export const taskRunner = async (config: DeploymentConfig) => {
       await deployer.executeBorrow()
       await deployer.executeRepay()
       await deployer.executeWithdraw()
-      await deployer.executeRewardsSwap()
+      // await deployer.executeRewardsSwap()
     }
 
     if (config.multisigAddr) {
@@ -55,6 +61,7 @@ export const taskRunner = async (config: DeploymentConfig) => {
       await deployer.updateOracleContractOwner()
       await deployer.updateRewardsContractOwner()
       await deployer.updateSwapperContractOwner()
+      await deployer.updateParamsContractOwner()
       await deployer.updateAddressProviderContractOwner()
       printGreen('It is confirmed that all contracts have transferred ownership to the Multisig')
     } else {
