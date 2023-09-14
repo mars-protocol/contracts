@@ -1988,6 +1988,7 @@ dependencies = [
  "cosmwasm-schema",
  "cosmwasm-std",
  "cw-storage-plus 1.1.0",
+ "cw2 1.1.0",
  "mars-owner 2.0.0",
  "mars-red-bank-types 2.0.0",
  "mars-utils 2.0.0",
@@ -2011,7 +2012,9 @@ dependencies = [
 name = "mars-rewards-collector-osmosis"
 version = "2.0.0"
 dependencies = [
+ "cosmwasm-schema",
  "cosmwasm-std",
+ "cw-storage-plus 1.1.0",
  "cw2 1.1.0",
  "mars-osmosis",
  "mars-owner 2.0.0",

@@ -42,6 +42,9 @@ pub enum ContractError {
 
     #[error("Invalid actions. Only Withdraw and WithdrawLiquidity is possible to pass for CreditManager")]
     InvalidActionsForCreditManager {},
+
+    #[error("{0}")]
+    Version(#[from] cw2::VersionError),
 }
 
 pub type ContractResult<T> = Result<T, ContractError>;
