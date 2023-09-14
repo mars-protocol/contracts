@@ -1,5 +1,6 @@
 use std::{cmp::min, fmt};
 
+use cosmwasm_schema::cw_serde;
 use cosmwasm_std::{Addr, Decimal, Decimal256, Deps, Empty, Env, Isqrt, Uint128, Uint256};
 use cw_storage_plus::Map;
 use mars_oracle_base::{
@@ -12,51 +13,13 @@ use mars_osmosis::helpers::{
 };
 use mars_red_bank_types::oracle::{ActionKind, Config};
 use mars_utils::helpers::validate_native_denom;
+use osmosis_std::types::osmosis::downtimedetector::v1beta1::Downtime;
 use pyth_sdk_cw::PriceIdentifier;
-use schemars::JsonSchema;
-use serde::{Deserialize, Serialize};
 
 use crate::{helpers, stride::query_redemption_rate};
 
-/// Copied from https://github.com/osmosis-labs/osmosis-rust/blob/main/packages/osmosis-std/src/types/osmosis/downtimedetector/v1beta1.rs#L4
-///
-/// It doesn't impl Serialize, Deserialize, and JsonSchema traits, and therefore
-/// cannot be used in contract APIs (messages and query responses).
-///
-/// TODO: Make a PR to osmosis-rust that implements these traits for enum types.
-/// Once merged, remove this one here.
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema)]
-#[serde(rename_all = "snake_case")]
-pub enum Downtime {
-    Duration30s = 0,
-    Duration1m = 1,
-    Duration2m = 2,
-    Duration3m = 3,
-    Duration4m = 4,
-    Duration5m = 5,
-    Duration10m = 6,
-    Duration20m = 7,
-    Duration30m = 8,
-    Duration40m = 9,
-    Duration50m = 10,
-    Duration1h = 11,
-    Duration15h = 12,
-    Duration2h = 13,
-    Duration25h = 14,
-    Duration3h = 15,
-    Duration4h = 16,
-    Duration5h = 17,
-    Duration6h = 18,
-    Duration9h = 19,
-    Duration12h = 20,
-    Duration18h = 21,
-    Duration24h = 22,
-    Duration36h = 23,
-    Duration48h = 24,
-}
-
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema)]
-#[serde(rename_all = "snake_case")]
+#[cw_serde]
+#[derive(Eq)]
 pub struct DowntimeDetector {
     /// Downtime period options that you can query, to be: 30seconds, 1 min, 2 min, 3 min, 4 min,
     /// 5 min, 10 min, 20 min, 30 min, 40 min, 50 min, 1 hr, 1.5hr, 2 hr, 2.5 hr, 3 hr, 4 hr, 5 hr,
@@ -82,8 +45,7 @@ impl fmt::Display for DowntimeDetector {
     }
 }
 
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema)]
-#[serde(rename_all = "snake_case")]
+#[cw_serde]
 pub enum OsmosisPriceSource<T> {
     /// Returns a fixed value;
     Fixed {
@@ -219,8 +181,7 @@ pub enum OsmosisPriceSource<T> {
     },
 }
 
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema)]
-#[serde(rename_all = "snake_case")]
+#[cw_serde]
 pub struct GeometricTwap {
     /// Pool id for stAsset/Asset pool
     pub pool_id: u64,
@@ -233,8 +194,7 @@ pub struct GeometricTwap {
     pub downtime_detector: Option<DowntimeDetector>,
 }
 
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema)]
-#[serde(rename_all = "snake_case")]
+#[cw_serde]
 pub struct RedemptionRate<T> {
     /// Contract addr
     pub contract_addr: T,
@@ -576,11 +536,8 @@ impl OsmosisPriceSourceChecked {
         downtime_detector: &Option<DowntimeDetector>,
     ) -> ContractResult<()> {
         if let Some(dd) = downtime_detector {
-            let recovered = recovered_since_downtime_of_length(
-                &deps.querier,
-                dd.downtime.clone() as i32,
-                dd.recovery,
-            )?;
+            let recovered =
+                recovered_since_downtime_of_length(&deps.querier, dd.downtime as i32, dd.recovery)?;
             if !recovered {
                 return Err(InvalidPrice {
                     reason: "chain is recovering from downtime".to_string(),

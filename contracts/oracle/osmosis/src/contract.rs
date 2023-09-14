@@ -16,7 +16,10 @@ pub mod entry {
     use cosmwasm_std::{entry_point, Binary, Deps, DepsMut, Env, MessageInfo, Response};
     use cw2::set_contract_version;
     use mars_oracle_base::ContractResult;
-    use mars_red_bank_types::oracle::msg::{ExecuteMsg, InstantiateMsg, QueryMsg};
+    use mars_red_bank_types::oracle::{
+        msg::{ExecuteMsg, InstantiateMsg, QueryMsg},
+        MigrateMsg,
+    };
 
     use super::*;
     use crate::migrations;
@@ -48,7 +51,7 @@ pub mod entry {
     }
 
     #[entry_point]
-    pub fn migrate(deps: DepsMut, _env: Env, _msg: Empty) -> ContractResult<Response> {
-        migrations::v1_0_1::migrate(deps)
+    pub fn migrate(deps: DepsMut, _env: Env, msg: MigrateMsg) -> ContractResult<Response> {
+        migrations::v2_0_0::migrate(deps, msg)
     }
 }

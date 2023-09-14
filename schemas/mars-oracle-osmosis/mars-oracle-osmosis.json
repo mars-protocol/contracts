@@ -146,34 +146,33 @@
         "type": "string"
       },
       "Downtime": {
-        "description": "Copied from https://github.com/osmosis-labs/osmosis-rust/blob/main/packages/osmosis-std/src/types/osmosis/downtimedetector/v1beta1.rs#L4\n\nIt doesn't impl Serialize, Deserialize, and JsonSchema traits, and therefore cannot be used in contract APIs (messages and query responses).\n\nTODO: Make a PR to osmosis-rust that implements these traits for enum types. Once merged, remove this one here.",
         "type": "string",
         "enum": [
-          "duration30s",
-          "duration1m",
-          "duration2m",
-          "duration3m",
-          "duration4m",
-          "duration5m",
-          "duration10m",
-          "duration20m",
-          "duration30m",
-          "duration40m",
-          "duration50m",
-          "duration1h",
-          "duration15h",
-          "duration2h",
-          "duration25h",
-          "duration3h",
-          "duration4h",
-          "duration5h",
-          "duration6h",
-          "duration9h",
-          "duration12h",
-          "duration18h",
-          "duration24h",
-          "duration36h",
-          "duration48h"
+          "Duration30s",
+          "Duration1m",
+          "Duration2m",
+          "Duration3m",
+          "Duration4m",
+          "Duration5m",
+          "Duration10m",
+          "Duration20m",
+          "Duration30m",
+          "Duration40m",
+          "Duration50m",
+          "Duration1h",
+          "Duration15h",
+          "Duration2h",
+          "Duration25h",
+          "Duration3h",
+          "Duration4h",
+          "Duration5h",
+          "Duration6h",
+          "Duration9h",
+          "Duration12h",
+          "Duration18h",
+          "Duration24h",
+          "Duration36h",
+          "Duration48h"
         ]
       },
       "DowntimeDetector": {
@@ -197,7 +196,8 @@
             "format": "uint64",
             "minimum": 0.0
           }
-        }
+        },
+        "additionalProperties": false
       },
       "Empty": {
         "description": "An empty struct that serves as a placeholder in different places, such as contracts that don't set a custom message.\n\nIt is designed to be expressable in correct JSON and JSON Schema but contains no meaningful data. Previously we used enums without cases, but those cannot represented as valid JSON Schema (https://github.com/CosmWasm/cosmwasm/issues/451)",
@@ -233,7 +233,8 @@
             "format": "uint64",
             "minimum": 0.0
           }
-        }
+        },
+        "additionalProperties": false
       },
       "Identifier": {
         "type": "string"
@@ -256,7 +257,8 @@
                   "price": {
                     "$ref": "#/definitions/Decimal"
                   }
-                }
+                },
+                "additionalProperties": false
               }
             },
             "additionalProperties": false
@@ -279,7 +281,8 @@
                     "format": "uint64",
                     "minimum": 0.0
                   }
-                }
+                },
+                "additionalProperties": false
               }
             },
             "additionalProperties": false
@@ -320,7 +323,8 @@
                     "format": "uint64",
                     "minimum": 0.0
                   }
-                }
+                },
+                "additionalProperties": false
               }
             },
             "additionalProperties": false
@@ -361,7 +365,8 @@
                     "format": "uint64",
                     "minimum": 0.0
                   }
-                }
+                },
+                "additionalProperties": false
               }
             },
             "additionalProperties": false
@@ -384,7 +389,8 @@
                     "format": "uint64",
                     "minimum": 0.0
                   }
-                }
+                },
+                "additionalProperties": false
               }
             },
             "additionalProperties": false
@@ -431,7 +437,8 @@
                     "format": "uint64",
                     "minimum": 0.0
                   }
-                }
+                },
+                "additionalProperties": false
               }
             },
             "additionalProperties": false
@@ -493,7 +500,8 @@
                       }
                     ]
                   }
-                }
+                },
+                "additionalProperties": false
               }
             },
             "additionalProperties": false
@@ -533,7 +541,8 @@
                     "description": "Transitive denom for which we query price in USD. It refers to 'Asset' in the equation: stAsset/USD = stAsset/Asset * Asset/USD",
                     "type": "string"
                   }
-                }
+                },
+                "additionalProperties": false
               }
             },
             "additionalProperties": false
@@ -633,7 +642,8 @@
             "format": "uint64",
             "minimum": 0.0
           }
-        }
+        },
+        "additionalProperties": false
       }
     }
   },

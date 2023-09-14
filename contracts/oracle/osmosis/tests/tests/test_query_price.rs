@@ -8,12 +8,13 @@ use cosmwasm_std::{
 use helpers::prepare_query_balancer_pool_response;
 use mars_oracle_base::{pyth::scale_pyth_price, ContractError};
 use mars_oracle_osmosis::{
-    contract::entry, stride::RedemptionRateResponse, Downtime, DowntimeDetector, GeometricTwap,
+    contract::entry, stride::RedemptionRateResponse, DowntimeDetector, GeometricTwap,
     OsmosisPriceSourceUnchecked, RedemptionRate,
 };
 use mars_red_bank_types::oracle::{PriceResponse, QueryMsg};
 use mars_testing::{mock_env_at_block_time, MarsMockQuerier};
 use osmosis_std::types::osmosis::{
+    downtimedetector::v1beta1::Downtime,
     poolmanager::v1beta1::SpotPriceResponse,
     twap::v1beta1::{ArithmeticTwapToNowResponse, GeometricTwapToNowResponse},
 };
