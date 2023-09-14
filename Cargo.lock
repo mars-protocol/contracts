@@ -1735,6 +1735,7 @@ dependencies = [
  "cw2 1.1.0",
  "mars-owner 2.0.0",
  "mars-red-bank-types 2.0.0",
+ "mars-testing",
  "serde",
  "thiserror",
 ]

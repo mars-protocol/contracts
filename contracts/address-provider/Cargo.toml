@@ -21,6 +21,7 @@ library    = []
 
 [dependencies]
 bech32              = { workspace = true }
+cosmwasm-schema     = { workspace = true }
 cosmwasm-std        = { workspace = true }
 cw2                 = { workspace = true }
 cw-storage-plus     = { workspace = true }
@@ -30,4 +31,5 @@ thiserror           = { workspace = true }
 
 [dev-dependencies]
 cosmwasm-schema = { workspace = true }
+mars-testing    = { workspace = true }
 serde           = { workspace = true }
