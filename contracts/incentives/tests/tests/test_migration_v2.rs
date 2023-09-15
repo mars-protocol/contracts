@@ -14,7 +14,8 @@ use mars_incentives::{
     ContractError,
 };
 use mars_red_bank_types::{
-    incentives::{Config, IncentiveState, MigrateMsg, V2Updates},
+    incentives::{Config, IncentiveState, MigrateMsg},
+    keys::{UserId, UserIdKey},
     red_bank::{Market, UserCollateralResponse},
 };
 use mars_testing::{mock_dependencies, MockEnvParams};
@@ -27,10 +28,10 @@ fn wrong_contract_name() {
     let err = migrate(
         deps.as_mut(),
         mock_env(),
-        MigrateMsg::V1_0_0ToV2_0_0(V2Updates {
+        MigrateMsg {
             epoch_duration: 604800,
             max_whitelisted_denoms: 10,
-        }),
+        },
     )
     .unwrap_err();
 
@@ -51,10 +52,10 @@ fn wrong_contract_version() {
     let err = migrate(
         deps.as_mut(),
         mock_env(),
-        MigrateMsg::V1_0_0ToV2_0_0(V2Updates {
+        MigrateMsg {
             epoch_duration: 604800,
             max_whitelisted_denoms: 10,
-        }),
+        },
     )
     .unwrap_err();
 
@@ -213,10 +214,10 @@ fn successful_migration() {
     let res = migrate(
         deps.as_mut(),
         env,
-        MigrateMsg::V1_0_0ToV2_0_0(V2Updates {
+        MigrateMsg {
             epoch_duration,
             max_whitelisted_denoms,
-        }),
+        },
     )
     .unwrap();
 
@@ -308,38 +309,66 @@ fn successful_migration() {
     );
 
     // Check if user asset indices are updated correctly
-    let user_1_atom_idx = USER_ASSET_INDICES
-        .load(deps.as_ref().storage, ((&user_1, ""), atom_denom, mars_denom))
+    let user_asset_indices = USER_ASSET_INDICES
+        .range(deps.as_ref().storage, None, None, Order::Ascending)
+        .collect::<StdResult<HashMap<_, _>>>()
         .unwrap();
-    assert_eq!(user_1_atom_idx, new_atom_incentive.index);
-    let user_1_usdc_idx = USER_ASSET_INDICES
-        .load(deps.as_ref().storage, ((&user_1, ""), usdc_denom, mars_denom))
-        .unwrap();
-    assert_eq!(user_1_usdc_idx, new_usdc_incentive.index);
-    let user_1_osmo_idx = USER_ASSET_INDICES
-        .load(deps.as_ref().storage, ((&user_1, ""), osmo_denom, mars_denom))
-        .unwrap();
-    assert_eq!(user_1_osmo_idx, new_osmo_incentive.index);
+    assert_eq!(user_asset_indices.len(), 5);
 
-    let user_2_osmo_idx = USER_ASSET_INDICES
-        .load(deps.as_ref().storage, ((&user_2, ""), osmo_denom, mars_denom))
-        .unwrap();
-    assert_eq!(user_2_osmo_idx, new_osmo_incentive.index);
+    let user_id = UserId::credit_manager(user_1, "".to_string());
+    let user_1_id_key: UserIdKey = user_id.try_into().unwrap();
+    assert_eq!(
+        user_asset_indices
+            .get(&(user_1_id_key.clone(), atom_denom.to_string(), mars_denom.to_string()))
+            .unwrap(),
+        new_atom_incentive.index
+    );
+    assert_eq!(
+        user_asset_indices
+            .get(&(user_1_id_key.clone(), usdc_denom.to_string(), mars_denom.to_string()))
+            .unwrap(),
+        new_usdc_incentive.index
+    );
+    assert_eq!(
+        user_asset_indices
+            .get(&(user_1_id_key.clone(), osmo_denom.to_string(), mars_denom.to_string()))
+            .unwrap(),
+        new_osmo_incentive.index
+    );
 
-    let user_3_atom_idx = USER_ASSET_INDICES
-        .load(deps.as_ref().storage, ((&user_3, ""), atom_denom, mars_denom))
-        .unwrap();
-    assert_eq!(user_3_atom_idx, new_atom_incentive.index);
+    let user_id = UserId::credit_manager(user_2, "".to_string());
+    let user_2_id_key: UserIdKey = user_id.try_into().unwrap();
+    assert_eq!(
+        user_asset_indices
+            .get(&(user_2_id_key, osmo_denom.to_string(), mars_denom.to_string()))
+            .unwrap(),
+        new_osmo_incentive.index
+    );
+
+    let user_id = UserId::credit_manager(user_3, "".to_string());
+    let user_3_id_key: UserIdKey = user_id.try_into().unwrap();
+    assert_eq!(
+        user_asset_indices
+            .get(&(user_3_id_key.clone(), atom_denom.to_string(), mars_denom.to_string()))
+            .unwrap(),
+        new_atom_incentive.index
+    );
 
     // Check if user unclaimed rewards are migrated correctly
+    let user_unclaimed_rewards = USER_UNCLAIMED_REWARDS
+        .range(deps.as_ref().storage, None, None, Order::Ascending)
+        .collect::<StdResult<HashMap<_, _>>>()
+        .unwrap();
+    assert_eq!(user_unclaimed_rewards.len(), 4);
+
     let user_1_atom_rewards = v1_state::helpers::compute_user_accrued_rewards(
         user_1_atom_amount_scaled,
         user_1_atom_idx_old,
         new_atom_incentive.index,
     )
     .unwrap();
-    let user_1_atom_rewards_migrated = USER_UNCLAIMED_REWARDS
-        .load(deps.as_ref().storage, ((&user_1, ""), atom_denom, mars_denom))
+    let user_1_atom_rewards_migrated = *user_unclaimed_rewards
+        .get(&(user_1_id_key.clone(), atom_denom.to_string(), mars_denom.to_string()))
         .unwrap();
     assert_eq!(user_1_atom_rewards_migrated, user_1_unclaimed_rewards + user_1_atom_rewards);
     let user_1_usdc_rewards = v1_state::helpers::compute_user_accrued_rewards(
@@ -348,8 +377,8 @@ fn successful_migration() {
         new_usdc_incentive.index,
     )
     .unwrap();
-    let user_1_usdc_rewards_migrated = USER_UNCLAIMED_REWARDS
-        .load(deps.as_ref().storage, ((&user_1, ""), usdc_denom, mars_denom))
+    let user_1_usdc_rewards_migrated = *user_unclaimed_rewards
+        .get(&(user_1_id_key.clone(), usdc_denom.to_string(), mars_denom.to_string()))
         .unwrap();
     assert_eq!(user_1_usdc_rewards_migrated, user_1_usdc_rewards);
     let user_1_osmo_rewards = v1_state::helpers::compute_user_accrued_rewards(
@@ -358,8 +387,8 @@ fn successful_migration() {
         new_osmo_incentive.index,
     )
     .unwrap();
-    let user_1_osmo_rewards_migrated = USER_UNCLAIMED_REWARDS
-        .load(deps.as_ref().storage, ((&user_1, ""), osmo_denom, mars_denom))
+    let user_1_osmo_rewards_migrated = *user_unclaimed_rewards
+        .get(&(user_1_id_key, osmo_denom.to_string(), mars_denom.to_string()))
         .unwrap();
     assert_eq!(user_1_osmo_rewards_migrated, user_1_osmo_rewards);
 
@@ -377,8 +406,8 @@ fn successful_migration() {
         new_atom_incentive.index,
     )
     .unwrap();
-    let user_3_atom_rewards_migrated = USER_UNCLAIMED_REWARDS
-        .load(deps.as_ref().storage, ((&user_3, ""), atom_denom, mars_denom))
+    let user_3_atom_rewards_migrated = *user_unclaimed_rewards
+        .get(&(user_3_id_key, atom_denom.to_string(), mars_denom.to_string()))
         .unwrap();
     assert_eq!(user_3_atom_rewards_migrated, user_3_atom_rewards);
 }

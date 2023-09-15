@@ -252,18 +252,13 @@ pub enum QueryMsg {
 }
 
 #[cw_serde]
-pub struct V2Updates {
+pub struct MigrateMsg {
     /// The amount of time in seconds for each incentive epoch. This is the minimum amount of time
     /// that an incentive can last, and each incentive must be a multiple of this duration.
     pub epoch_duration: u64,
     /// The maximum number of incentive denoms that can be whitelisted at any given time. This is
     /// a guard against accidentally whitelisting too many denoms, which could cause max gas errors.
     pub max_whitelisted_denoms: u8,
-}
-
-#[cw_serde]
-pub enum MigrateMsg {
-    V1_0_0ToV2_0_0(V2Updates),
 }
 
 #[cw_serde]

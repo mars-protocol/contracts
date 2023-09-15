@@ -3,7 +3,10 @@ use std::collections::HashMap;
 use cosmwasm_std::{DepsMut, Env, Order, Response, StdResult, Uint128};
 use cw2::{assert_contract_version, set_contract_version};
 use mars_owner::OwnerInit;
-use mars_red_bank_types::incentives::{Config, IncentiveState, V2Updates};
+use mars_red_bank_types::{
+    incentives::{Config, IncentiveState, MigrateMsg},
+    keys::{UserId, UserIdKey},
+};
 
 use crate::{
     contract::{CONTRACT_NAME, CONTRACT_VERSION, MIN_EPOCH_DURATION},
@@ -126,7 +129,7 @@ pub mod v1_state {
     }
 }
 
-pub fn migrate(mut deps: DepsMut, env: Env, updates: V2Updates) -> Result<Response, ContractError> {
+pub fn migrate(mut deps: DepsMut, env: Env, msg: MigrateMsg) -> Result<Response, ContractError> {
     // make sure we're migrating the correct contract and from the correct version
     assert_contract_version(deps.storage, &format!("crates.io:{CONTRACT_NAME}"), FROM_VERSION)?;
 
@@ -149,7 +152,7 @@ pub fn migrate(mut deps: DepsMut, env: Env, updates: V2Updates) -> Result<Respon
         deps.storage,
         &Config {
             address_provider: old_config_state.address_provider,
-            max_whitelisted_denoms: updates.max_whitelisted_denoms,
+            max_whitelisted_denoms: msg.max_whitelisted_denoms,
         },
     )?;
 
@@ -158,12 +161,12 @@ pub fn migrate(mut deps: DepsMut, env: Env, updates: V2Updates) -> Result<Respon
     WHITELIST_COUNT.save(deps.storage, &1)?;
 
     // EPOCH_DURATION not existent in v1, initializing
-    if updates.epoch_duration < MIN_EPOCH_DURATION {
+    if msg.epoch_duration < MIN_EPOCH_DURATION {
         return Err(ContractError::EpochDurationTooShort {
             min_epoch_duration: MIN_EPOCH_DURATION,
         });
     }
-    EPOCH_DURATION.save(deps.storage, &updates.epoch_duration)?;
+    EPOCH_DURATION.save(deps.storage, &msg.epoch_duration)?;
 
     migrate_indices_and_unclaimed_rewards(&mut deps, env, &old_config_state.mars_denom)?;
 
@@ -264,11 +267,14 @@ fn migrate_indices_and_unclaimed_rewards(
                 unclaimed_rewards += asset_accrued_rewards;
             }
 
+            let user_id = UserId::credit_manager(user.clone(), "".to_string());
+            let user_id_key: UserIdKey = user_id.try_into()?;
+
             if !unclaimed_rewards.is_zero() {
                 // Update user unclaimed rewards
                 USER_UNCLAIMED_REWARDS.save(
                     deps.storage,
-                    ((&user, ""), &denom, mars_denom),
+                    (&user_id_key, &denom, mars_denom),
                     &unclaimed_rewards,
                 )?;
             }
@@ -276,7 +282,7 @@ fn migrate_indices_and_unclaimed_rewards(
             // Update user asset index
             USER_ASSET_INDICES.save(
                 deps.storage,
-                ((&user, ""), &denom, mars_denom),
+                (&user_id_key, &denom, mars_denom),
                 &asset_incentive.index,
             )?;
         }

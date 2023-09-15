@@ -8,6 +8,7 @@ use cw_storage_plus::Bound;
 use mars_red_bank_types::{
     address_provider::{self, MarsAddressType},
     incentives::IncentiveState,
+    keys::{UserId, UserIdKey},
     red_bank,
 };
 
@@ -259,9 +260,11 @@ pub fn compute_user_unclaimed_rewards(
     incentive_denom: &str,
 ) -> StdResult<Uint128> {
     let acc_id = account_id.clone().unwrap_or("".to_string());
+    let user_id = UserId::credit_manager(user_addr.clone(), acc_id);
+    let user_id_key: UserIdKey = user_id.try_into()?;
 
     let mut unclaimed_rewards = USER_UNCLAIMED_REWARDS
-        .may_load(storage.to_storage(), ((user_addr, &acc_id), collateral_denom, incentive_denom))?
+        .may_load(storage.to_storage(), (&user_id_key, collateral_denom, incentive_denom))?
         .unwrap_or_else(Uint128::zero);
 
     // Get asset user balances and total supply
@@ -296,7 +299,7 @@ pub fn compute_user_unclaimed_rewards(
     )?;
 
     let user_asset_index = USER_ASSET_INDICES
-        .may_load(storage.to_storage(), ((user_addr, &acc_id), collateral_denom, incentive_denom))?
+        .may_load(storage.to_storage(), (&user_id_key, collateral_denom, incentive_denom))?
         .unwrap_or_else(Decimal::zero);
 
     if user_asset_index != incentive_state.index {
@@ -314,7 +317,7 @@ pub fn compute_user_unclaimed_rewards(
         if user_asset_index != incentive_state.index {
             USER_ASSET_INDICES.save(
                 *storage,
-                ((user_addr, &acc_id), collateral_denom, incentive_denom),
+                (&user_id_key, collateral_denom, incentive_denom),
                 &incentive_state.index,
             )?
         }

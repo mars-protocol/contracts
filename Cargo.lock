@@ -1975,8 +1975,11 @@ version = "2.0.0"
 dependencies = [
  "cosmwasm-schema",
  "cosmwasm-std",
+ "cw-storage-plus 1.1.0",
  "mars-owner 2.0.0",
  "mars-utils 2.0.0",
+ "serde",
+ "serde_json",
  "strum 0.25.0",
  "thiserror",
 ]

@@ -17,6 +17,7 @@ doctest    = false
 [features]
 # for more explicit tests, cargo test --features=backtraces
 backtraces = ["cosmwasm-std/backtraces", "mars-testing/backtraces", "mars-utils/backtraces", "mars-red-bank/backtraces"]
+library    = []
 
 [dependencies]
 cosmwasm-schema         = { workspace = true }
