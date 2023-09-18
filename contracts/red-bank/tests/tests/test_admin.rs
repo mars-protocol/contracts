@@ -9,6 +9,7 @@ use mars_red_bank::{
 use mars_red_bank_types::{
     address_provider::MarsAddressType,
     error::MarsError,
+    keys::{UserId, UserIdKey},
     red_bank::{
         ConfigResponse, CreateOrUpdateConfig, ExecuteMsg, InitOrUpdateAssetParams, InstantiateMsg,
         InterestRateModel, Market, QueryMsg,
@@ -673,13 +674,14 @@ fn update_asset_new_reserve_factor_accrues_interest_rate() {
     )
     .unwrap();
 
+    let user_id = UserId::credit_manager(
+        Addr::unchecked(MarsAddressType::RewardsCollector.to_string()),
+        "".to_string(),
+    );
+    let user_id_key: UserIdKey = user_id.try_into().unwrap();
+
     // the rewards collector previously did not have a collateral possition
     // now it should have one with the expected rewards scaled amount
-    let collateral = COLLATERALS
-        .load(
-            deps.as_ref().storage,
-            (&Addr::unchecked(MarsAddressType::RewardsCollector.to_string()), "", "somecoin"),
-        )
-        .unwrap();
+    let collateral = COLLATERALS.load(deps.as_ref().storage, (&user_id_key, "somecoin")).unwrap();
     assert_eq!(collateral.amount_scaled, expected_rewards_scaled);
 }

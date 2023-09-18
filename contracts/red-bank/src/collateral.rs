@@ -2,6 +2,7 @@ use cosmwasm_std::{DepsMut, Env, MessageInfo, Response};
 use mars_red_bank_types::{
     self,
     address_provider::{self, MarsAddressType},
+    keys::{UserId, UserIdKey},
 };
 
 use crate::{
@@ -21,17 +22,21 @@ pub fn update_asset_collateral_status(
 ) -> Result<Response, ContractError> {
     let user = User(&info.sender);
 
-    let mut collateral = COLLATERALS
-        .may_load(deps.storage, (user.address(), "", &denom))?
-        .ok_or_else(|| ContractError::UserNoCollateralBalance {
-            user: user.into(),
-            denom: denom.clone(),
+    let user_id = UserId::credit_manager(info.sender.clone(), "".to_string());
+    let user_id_key: UserIdKey = user_id.try_into()?;
+
+    let mut collateral =
+        COLLATERALS.may_load(deps.storage, (&user_id_key, &denom))?.ok_or_else(|| {
+            ContractError::UserNoCollateralBalance {
+                user: user.into(),
+                denom: denom.clone(),
+            }
         })?;
 
     let previously_enabled = collateral.enabled;
 
     collateral.enabled = enable;
-    COLLATERALS.save(deps.storage, (user.address(), "", &denom), &collateral)?;
+    COLLATERALS.save(deps.storage, (&user_id_key, &denom), &collateral)?;
 
     // if the collateral was previously enabled, but is not disabled, it is necessary to ensure the
     // user is not liquidatable after disabling

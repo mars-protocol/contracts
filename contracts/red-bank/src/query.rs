@@ -6,6 +6,7 @@ use mars_interest_rate::{
 };
 use mars_red_bank_types::{
     address_provider::{self, MarsAddressType},
+    keys::{UserId, UserIdKey},
     red_bank::{
         Collateral, ConfigResponse, Debt, Market, PaginatedUserCollateralResponse,
         UncollateralizedLoanLimitResponse, UserCollateralResponse, UserDebtResponse,
@@ -156,10 +157,13 @@ pub fn query_user_collateral(
 ) -> Result<UserCollateralResponse, ContractError> {
     let acc_id = account_id.unwrap_or("".to_string());
 
+    let user_id = UserId::credit_manager(user_addr, acc_id);
+    let user_id_key: UserIdKey = user_id.try_into()?;
+
     let Collateral {
         amount_scaled,
         enabled,
-    } = COLLATERALS.may_load(deps.storage, (&user_addr, &acc_id, &denom))?.unwrap_or_default();
+    } = COLLATERALS.may_load(deps.storage, (&user_id_key, &denom))?.unwrap_or_default();
 
     let block_time = block.time.seconds();
     let market = MARKETS.load(deps.storage, &denom)?;
@@ -200,8 +204,11 @@ pub fn query_user_collaterals_v2(
 
     let acc_id = account_id.unwrap_or("".to_string());
 
+    let user_id = UserId::credit_manager(user_addr, acc_id);
+    let user_id_key: UserIdKey = user_id.try_into()?;
+
     let user_collaterals_res: Result<Vec<_>, ContractError> = COLLATERALS
-        .prefix((&user_addr, &acc_id))
+        .prefix(&user_id_key)
         .range(deps.storage, start, None, Order::Ascending)
         .take(limit + 1) // Fetch one extra item to determine if there are more
         .map(|item| {

@@ -4,7 +4,10 @@ use mars_interest_rate::{
     get_underlying_liquidity_amount,
 };
 use mars_liquidation::liquidation::calculate_liquidation_amounts;
-use mars_red_bank_types::address_provider::{self, MarsAddressType};
+use mars_red_bank_types::{
+    address_provider::{self, MarsAddressType},
+    keys::{UserId, UserIdKey},
+};
 use mars_utils::helpers::{build_send_asset_msg, option_string_to_addr};
 
 use crate::{
@@ -48,9 +51,12 @@ pub fn liquidate(
         return Err(ContractError::CannotLiquidateWhenPositiveUncollateralizedLoanLimit {});
     };
 
+    let user_id = UserId::credit_manager(liquidatee_addr.clone(), "".to_string());
+    let user_id_key: UserIdKey = user_id.try_into()?;
+
     // check if the user has enabled the collateral asset as collateral
     let user_collateral = COLLATERALS
-        .may_load(deps.storage, (&liquidatee_addr, "", &collateral_denom))?
+        .may_load(deps.storage, (&user_id_key, &collateral_denom))?
         .ok_or(ContractError::CannotLiquidateWhenNoCollateralBalance {})?;
     if !user_collateral.enabled {
         return Err(ContractError::CannotLiquidateWhenCollateralUnset {
