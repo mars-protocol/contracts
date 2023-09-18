@@ -56,6 +56,9 @@ pub enum ContractError {
         max_slippage: Decimal,
         slippage: Decimal,
     },
+
+    #[error("{0}")]
+    Version(#[from] cw2::VersionError),
 }
 
 pub type ContractResult<T> = Result<T, ContractError>;

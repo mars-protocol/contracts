@@ -2054,6 +2054,7 @@ dependencies = [
  "cosmwasm-std",
  "cw-paginate",
  "cw-storage-plus 1.1.0",
+ "cw2 1.1.0",
  "mars-owner 2.0.0",
  "mars-red-bank-types 2.0.0",
  "schemars",
@@ -2077,11 +2078,13 @@ dependencies = [
  "cosmwasm-schema",
  "cosmwasm-std",
  "cw-it",
+ "cw-storage-plus 1.1.0",
  "cw2 1.1.0",
  "mars-osmosis",
  "mars-owner 2.0.0",
  "mars-red-bank-types 2.0.0",
  "mars-swapper-base",
+ "mars-testing",
  "osmosis-std",
 ]
 
