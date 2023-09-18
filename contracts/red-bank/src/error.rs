@@ -155,4 +155,7 @@ pub enum ContractError {
 
     #[error("Cannot repay uncollateralized loan on behalf of another user")]
     CannotRepayUncollateralizedLoanOnBehalfOf {},
+
+    #[error("{0}")]
+    Version(#[from] cw2::VersionError),
 }

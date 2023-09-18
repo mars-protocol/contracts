@@ -19,6 +19,7 @@ doctest    = false
 backtraces = ["cosmwasm-std/backtraces"]
 
 [dependencies]
+cosmwasm-schema     = { workspace = true }
 cosmwasm-std        = { workspace = true }
 cw2                 = { workspace = true }
 cw-storage-plus     = { workspace = true }
@@ -35,7 +36,6 @@ thiserror           = { workspace = true }
 
 [dev-dependencies]
 anyhow          = { workspace = true }
-cosmwasm-schema = { workspace = true }
 cw-multi-test   = { workspace = true }
 mars-testing    = { workspace = true }
 test-case       = { workspace = true }
