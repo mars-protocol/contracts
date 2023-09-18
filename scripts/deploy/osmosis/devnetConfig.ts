@@ -7,10 +7,10 @@ const axl = 'ibc/903A61A498756EA560B85A85132D3AEE21B5DEDD41213725D22ABF276EA6945
 const stAtom = 'ibc/C140AFD542AE77BD7DCC83F13FDD8C5E5BB8C4929785E6EC2F4C636F98F17901'
 const wbtc = 'ibc/D1542AA8762DB13087D8364F3EA6509FD6F009A34F00426AF9E4F9FA85CBBF1F'
 const axlUSDC = 'ibc/D189335C6E4A68B513C10AB227BF1C1D38C746766278BA3EEB4FB14124F1D858'
-const eth = 'ibc/EA1D43981D5C9A1C4AAEA9C23BB1D4FA126BA9BC7020A25E0AE4AA841EA25DC5'
+const weth = 'ibc/EA1D43981D5C9A1C4AAEA9C23BB1D4FA126BA9BC7020A25E0AE4AA841EA25DC5'
 const atomOsmoPool = 'gamm/pool/1'
 const usdcOsmoPool = 'gamm/pool/678'
-const ethOsmoPool = 'gamm/pool/704'
+const wethOsmoPool = 'gamm/pool/704'
 const wbtcOsmoPool = 'gamm/pool/712'
 const atomStAtomPool = 'gamm/pool/803'
 
@@ -83,12 +83,12 @@ export const usdcOsmoPoolAsset: AssetConfig = {
   },
 }
 
-export const ethOsmoPoolAsset: AssetConfig = {
+export const wethOsmoPoolAsset: AssetConfig = {
   credit_manager: {
     whitelisted: true,
   },
-  symbol: ethOsmoPool,
-  denom: ethOsmoPool,
+  symbol: wethOsmoPool,
+  denom: wethOsmoPool,
   liquidation_bonus: {
     max_lb: '0.2',
     min_lb: '0.05',
@@ -344,12 +344,12 @@ export const axlUSDCAsset: AssetConfig = {
   },
 }
 
-export const ethAsset: AssetConfig = {
+export const wethAsset: AssetConfig = {
   credit_manager: {
     whitelisted: true,
   },
-  symbol: 'ETH',
-  denom: eth,
+  symbol: 'WETH',
+  denom: weth,
   liquidation_bonus: {
     max_lb: '0.2',
     min_lb: '0.05',
@@ -397,9 +397,9 @@ export const usdcOsmoVault: VaultConfig = {
   whitelisted: true,
 }
 
-export const ethOsmoVault: VaultConfig = {
+export const wethOsmoVault: VaultConfig = {
   addr: 'osmo1r235f4tdkwrsnj3mdm9hf647l754y6g6xsmz0nas5r4vr5tda3qsgtftef',
-  symbol: 'ethOsmoVault',
+  symbol: 'wethOsmoVault',
   deposit_cap: {
     denom: axlUSDC,
     amount: '500000000000',
@@ -454,7 +454,7 @@ export const usdcOsmoOracle: OracleConfig = {
 }
 
 export const ethOsmoOracle: OracleConfig = {
-  denom: ethOsmoPool,
+  denom: wethOsmoPool,
   price_source: {
     xyk_liquidity_token: {
       pool_id: 704,
@@ -551,8 +551,8 @@ export const axlUSDCOracle: OracleConfig = {
   },
 }
 
-export const ethOracle: OracleConfig = {
-  denom: eth,
+export const wethOracle: OracleConfig = {
+  denom: weth,
   price_source: {
     pyth: {
       contract_addr: pythContractAddr,
@@ -650,7 +650,7 @@ export const axlUSDCOracleTwap: OracleConfig = {
 }
 
 export const ethOracleTwap: OracleConfig = {
-  denom: eth,
+  denom: weth,
   price_source: {
     geometric_twap: {
       downtime_detector: { downtime: 'duration30m', recovery: 7200 },
@@ -707,7 +707,7 @@ export const osmosisDevnet: DeploymentConfig = {
     },
     { denom_in: osmo, denom_out: wbtc, route: [{ pool_id: 712, token_out_denom: wbtc }] },
     { denom_in: osmo, denom_out: axlUSDC, route: [{ pool_id: 678, token_out_denom: axlUSDC }] },
-    { denom_in: osmo, denom_out: eth, route: [{ pool_id: 704, token_out_denom: eth }] },
+    { denom_in: osmo, denom_out: weth, route: [{ pool_id: 704, token_out_denom: weth }] },
     { denom_in: atom, denom_out: osmo, route: [{ pool_id: 1, token_out_denom: osmo }] },
     {
       denom_in: atom,
@@ -736,10 +736,10 @@ export const osmosisDevnet: DeploymentConfig = {
     },
     {
       denom_in: atom,
-      denom_out: eth,
+      denom_out: weth,
       route: [
         { pool_id: 1, token_out_denom: osmo },
-        { pool_id: 704, token_out_denom: eth },
+        { pool_id: 704, token_out_denom: weth },
       ],
     },
     { denom_in: axl, denom_out: osmo, route: [{ pool_id: 812, token_out_denom: osmo }] },
@@ -778,10 +778,10 @@ export const osmosisDevnet: DeploymentConfig = {
     },
     {
       denom_in: axl,
-      denom_out: eth,
+      denom_out: weth,
       route: [
         { pool_id: 812, token_out_denom: osmo },
-        { pool_id: 704, token_out_denom: eth },
+        { pool_id: 704, token_out_denom: weth },
       ],
     },
     {
@@ -822,11 +822,11 @@ export const osmosisDevnet: DeploymentConfig = {
     },
     {
       denom_in: stAtom,
-      denom_out: eth,
+      denom_out: weth,
       route: [
         { pool_id: 803, token_out_denom: atom },
         { pool_id: 1, token_out_denom: osmo },
-        { pool_id: 704, token_out_denom: eth },
+        { pool_id: 704, token_out_denom: weth },
       ],
     },
     { denom_in: wbtc, denom_out: osmo, route: [{ pool_id: 712, token_out_denom: osmo }] },
@@ -865,10 +865,10 @@ export const osmosisDevnet: DeploymentConfig = {
     },
     {
       denom_in: wbtc,
-      denom_out: eth,
+      denom_out: weth,
       route: [
         { pool_id: 712, token_out_denom: osmo },
-        { pool_id: 704, token_out_denom: eth },
+        { pool_id: 704, token_out_denom: weth },
       ],
     },
     { denom_in: axlUSDC, denom_out: osmo, route: [{ pool_id: 678, token_out_denom: osmo }] },
@@ -907,15 +907,15 @@ export const osmosisDevnet: DeploymentConfig = {
     },
     {
       denom_in: axlUSDC,
-      denom_out: eth,
+      denom_out: weth,
       route: [
         { pool_id: 678, token_out_denom: osmo },
-        { pool_id: 704, token_out_denom: eth },
+        { pool_id: 704, token_out_denom: weth },
       ],
     },
-    { denom_in: eth, denom_out: osmo, route: [{ pool_id: 704, token_out_denom: osmo }] },
+    { denom_in: weth, denom_out: osmo, route: [{ pool_id: 704, token_out_denom: osmo }] },
     {
-      denom_in: eth,
+      denom_in: weth,
       denom_out: atom,
       route: [
         { pool_id: 704, token_out_denom: osmo },
@@ -923,7 +923,7 @@ export const osmosisDevnet: DeploymentConfig = {
       ],
     },
     {
-      denom_in: eth,
+      denom_in: weth,
       denom_out: axl,
       route: [
         { pool_id: 704, token_out_denom: osmo },
@@ -931,7 +931,7 @@ export const osmosisDevnet: DeploymentConfig = {
       ],
     },
     {
-      denom_in: eth,
+      denom_in: weth,
       denom_out: stAtom,
       route: [
         { pool_id: 704, token_out_denom: osmo },
@@ -940,7 +940,7 @@ export const osmosisDevnet: DeploymentConfig = {
       ],
     },
     {
-      denom_in: eth,
+      denom_in: weth,
       denom_out: wbtc,
       route: [
         { pool_id: 704, token_out_denom: osmo },
@@ -948,7 +948,7 @@ export const osmosisDevnet: DeploymentConfig = {
       ],
     },
     {
-      denom_in: eth,
+      denom_in: weth,
       denom_out: axlUSDC,
       route: [
         { pool_id: 704, token_out_denom: osmo },
@@ -988,14 +988,14 @@ export const osmosisDevnet: DeploymentConfig = {
     stAtomAsset,
     wbtcAsset,
     axlUSDCAsset,
-    ethAsset,
+    wethAsset,
     atomOsmoPoolAsset,
     usdcOsmoPoolAsset,
-    ethOsmoPoolAsset,
+    wethOsmoPoolAsset,
     wbtcOsmoPoolAsset,
     atomStAtomPoolAsset,
   ],
-  vaults: [atomOsmoVault, usdcOsmoVault, ethOsmoVault, wbtcOsmoVault, atomStAtomVault],
+  vaults: [atomOsmoVault, usdcOsmoVault, wethOsmoVault, wbtcOsmoVault, atomStAtomVault],
   oracleConfigs: [
     usdOracle,
     osmoOracle,
@@ -1004,7 +1004,7 @@ export const osmosisDevnet: DeploymentConfig = {
     stAtomOracle,
     wbtcOracle,
     axlUSDCOracle,
-    ethOracle,
+    wethOracle,
     atomOsmoOracle,
     usdcOsmoOracle,
     ethOsmoOracle,
