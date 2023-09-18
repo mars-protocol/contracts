@@ -1,5 +1,5 @@
 use cosmwasm_std::{attr, testing::mock_env, Addr, Empty, Event};
-use cw2::VersionError;
+use cw2::{ContractVersion, VersionError};
 use mars_swapper_base::ContractError;
 use mars_swapper_osmosis::{
     contract::{migrate, OsmosisSwap},
@@ -65,6 +65,12 @@ fn successful_migration() {
         res.attributes,
         vec![attr("action", "migrate"), attr("from_version", "1.0.0"), attr("to_version", "2.0.0")]
     );
+
+    let new_contract_version = ContractVersion {
+        contract: "crates.io:mars-swapper-osmosis".to_string(),
+        version: "2.0.0".to_string(),
+    };
+    assert_eq!(cw2::get_contract_version(deps.as_ref().storage).unwrap(), new_contract_version);
 
     let swapper = OsmosisSwap::default();
     let o = swapper.owner.query(deps.as_ref().storage).unwrap();

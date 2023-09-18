@@ -3,7 +3,7 @@ use std::{collections::HashMap, str::FromStr};
 use cosmwasm_std::{
     attr, testing::mock_env, Addr, Decimal, Empty, Event, Order, StdResult, Uint128,
 };
-use cw2::VersionError;
+use cw2::{ContractVersion, VersionError};
 use mars_red_bank::{
     contract::migrate,
     error::ContractError,
@@ -173,6 +173,12 @@ fn successful_migration() {
         res.attributes,
         vec![attr("action", "migrate"), attr("from_version", "1.0.0"), attr("to_version", "2.0.0")]
     );
+
+    let new_contract_version = ContractVersion {
+        contract: "crates.io:mars-red-bank".to_string(),
+        version: "2.0.0".to_string(),
+    };
+    assert_eq!(cw2::get_contract_version(deps.as_ref().storage).unwrap(), new_contract_version);
 
     let o = OWNER.query(deps.as_ref().storage).unwrap();
     assert_eq!(old_owner.to_string(), o.owner.unwrap());

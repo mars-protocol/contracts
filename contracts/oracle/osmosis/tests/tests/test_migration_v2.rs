@@ -1,7 +1,7 @@
 use std::{collections::HashMap, str::FromStr};
 
 use cosmwasm_std::{attr, testing::mock_env, Addr, Decimal, Event, Order, StdResult};
-use cw2::VersionError;
+use cw2::{ContractVersion, VersionError};
 use mars_oracle_base::ContractError;
 use mars_oracle_osmosis::{
     contract::{entry::migrate, OsmosisOracle},
@@ -140,6 +140,12 @@ fn successful_migration() {
         res.attributes,
         vec![attr("action", "migrate"), attr("from_version", "1.1.0"), attr("to_version", "2.0.0")]
     );
+
+    let new_contract_version = ContractVersion {
+        contract: "crates.io:mars-oracle-osmosis".to_string(),
+        version: "2.0.0".to_string(),
+    };
+    assert_eq!(cw2::get_contract_version(deps.as_ref().storage).unwrap(), new_contract_version);
 
     let oracle = OsmosisOracle::default();
     let price_sources = oracle
