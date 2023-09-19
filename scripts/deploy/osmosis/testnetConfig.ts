@@ -138,7 +138,7 @@ export const atomOracle: OracleConfig = {
   denom: atom,
   price_source: {
     geometric_twap: {
-      downtime_detector: { downtime: 'duration30m', recovery: 7200 },
+      downtime_detector: { downtime: 'Duration30m', recovery: 7200 },
       window_size: 1800,
       pool_id: 12,
     },
@@ -151,7 +151,7 @@ export const USDCOracle: OracleConfig = {
       transitive_denom: uosmo,
       pool_id: 5,
       window_size: 1800,
-      downtime_detector: { downtime: 'duration30m', recovery: 7200 },
+      downtime_detector: { downtime: 'Duration30m', recovery: 7200 },
     },
   },
 }

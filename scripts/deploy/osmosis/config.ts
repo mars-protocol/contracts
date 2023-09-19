@@ -208,7 +208,7 @@ export const atomOracle: OracleConfig = {
     geometric_twap: {
       pool_id: 1,
       window_size: 1800,
-      downtime_detector: { downtime: 'duration30m', recovery: 7200 },
+      downtime_detector: { downtime: 'Duration30m', recovery: 7200 },
     },
   },
 }
@@ -217,7 +217,7 @@ export const atomOracle: OracleConfig = {
 //   denom: atomTest,
 //   pool_id: 'TBD',
 //   window_size: 1800,
-//   downtime_detector: { downtime: 'duration30m', recovery: 7200 },
+//   downtime_detector: { downtime: 'Duration30m', recovery: 7200 },
 // }
 
 export const axlUSDCOracle: OracleConfig = {
@@ -226,7 +226,7 @@ export const axlUSDCOracle: OracleConfig = {
     geometric_twap: {
       pool_id: 678,
       window_size: 1800,
-      downtime_detector: { downtime: 'duration30m', recovery: 7200 },
+      downtime_detector: { downtime: 'Duration30m', recovery: 7200 },
     },
   },
 }
@@ -237,7 +237,7 @@ export const axlUSDCOracleTest: OracleConfig = {
     geometric_twap: {
       pool_id: 5,
       window_size: 1800,
-      downtime_detector: { downtime: 'duration30m', recovery: 7200 },
+      downtime_detector: { downtime: 'Duration30m', recovery: 7200 },
     },
   },
 }
@@ -248,7 +248,7 @@ export const marsOracleTest: OracleConfig = {
     geometric_twap: {
       pool_id: 9,
       window_size: 1800,
-      downtime_detector: { downtime: 'duration30m', recovery: 7200 },
+      downtime_detector: { downtime: 'Duration30m', recovery: 7200 },
     },
   },
 }
