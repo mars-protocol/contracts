@@ -208,7 +208,7 @@ export class Deployer {
             max_loan_to_value: assetConfig.max_loan_to_value,
             red_bank: {
               borrow_enabled: assetConfig.red_bank.borrow_enabled,
-              deposit_enabled: assetConfig.red_bank.borrow_enabled,
+              deposit_enabled: assetConfig.red_bank.deposit_enabled,
             },
             deposit_cap: assetConfig.deposit_cap,
           },

@@ -4,6 +4,7 @@
   "license": "GPL-3.0-or-later",
   "scripts": {
     "deploy:osmosis-testnet": "yarn build && node build/deploy/osmosis/testIndex.js",
+    "deploy:osmosis-devnet": "yarn build && node build/deploy/osmosis/devIndex.js",
     "deploy:osmosis-mainnet": "yarn build && node build/deploy/osmosis/mainIndex.js",
     "deploy:osmosis-testnet-multisig": "yarn build && node build/deploy/osmosis/multisig.js",
     "deploy:neutron-testnet": "yarn build && node build/deploy/neutron/testIndex.js",
