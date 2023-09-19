@@ -42,6 +42,7 @@ pub fn execute(
         } => repay(deps, info),
         red_bank::ExecuteMsg::Deposit {
             account_id,
+            on_behalf_of: _,
         } => deposit(deps, info, account_id),
         red_bank::ExecuteMsg::Withdraw {
             denom,

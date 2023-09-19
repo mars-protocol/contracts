@@ -445,8 +445,10 @@ export interface MarsMockRedBankInterface extends MarsMockRedBankReadOnlyInterfa
   deposit: (
     {
       accountId,
+      onBehalfOf,
     }: {
       accountId?: string
+      onBehalfOf?: string
     },
     fee?: number | StdFee | 'auto',
     memo?: string,
@@ -671,8 +673,10 @@ export class MarsMockRedBankClient
   deposit = async (
     {
       accountId,
+      onBehalfOf,
     }: {
       accountId?: string
+      onBehalfOf?: string
     },
     fee: number | StdFee | 'auto' = 'auto',
     memo?: string,
@@ -684,6 +688,7 @@ export class MarsMockRedBankClient
       {
         deposit: {
           account_id: accountId,
+          on_behalf_of: onBehalfOf,
         },
       },
       fee,

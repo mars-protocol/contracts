@@ -66,11 +66,11 @@ wasm-bindgen       = "0.2.87"
 
 # mars packages
 mars-account-nft-types     = { version = "2.0.0", path = "./packages/account-nft-types" }
-mars-health                = { git = "https://github.com/mars-protocol/red-bank", rev = "8c90842" }
-mars-liquidation           = { git = "https://github.com/mars-protocol/red-bank", rev = "8c90842" }
-mars-osmosis               = { git = "https://github.com/mars-protocol/red-bank", rev = "8c90842" }
+mars-health                = { git = "https://github.com/mars-protocol/red-bank", rev = "afaf815" }
+mars-liquidation           = { git = "https://github.com/mars-protocol/red-bank", rev = "afaf815" }
+mars-osmosis               = { git = "https://github.com/mars-protocol/red-bank", rev = "afaf815" }
 mars-owner                 = { version = "2.0.0", features = ["emergency-owner"] }
-mars-red-bank-types        = { git = "https://github.com/mars-protocol/red-bank", rev = "8c90842" }
+mars-red-bank-types        = { git = "https://github.com/mars-protocol/red-bank", rev = "afaf815" }
 mars-rover-health-computer = { version = "2.0.0", path = "./packages/health-computer" }
 mars-rover-health-types    = { version = "2.0.0", path = "./packages/health-types" }
 mars-rover                 = { version = "2.0.0", path = "./packages/rover" }
@@ -78,9 +78,9 @@ mars-rover                 = { version = "2.0.0", path = "./packages/rover" }
 mars-rover-old             = { package = "mars-rover", git = "https://github.com/mars-protocol/v2-fields-of-mars", rev = "183e4c5" }
 
 # contracts
-mars-address-provider = { git = "https://github.com/mars-protocol/red-bank", rev = "8c90842", features = ["library"] }
+mars-address-provider = { git = "https://github.com/mars-protocol/red-bank", rev = "afaf815", features = ["library"] }
 mars-account-nft      = { version = "2.0.0", path = "./contracts/account-nft", features = ["library"] }
-mars-params           = { git = "https://github.com/mars-protocol/red-bank", rev = "8c90842", features = ["library"] }
+mars-params           = { git = "https://github.com/mars-protocol/red-bank", rev = "afaf815", features = ["library"] }
 mars-rover-health     = { version = "2.0.0", path = "./contracts/health", features = ["library"] }
 mars-swapper-base     = { version = "2.0.0", path = "./contracts/swapper/base", features = ["library"] }
 mars-v2-zapper-base   = { version = "2.0.0", path = "./contracts/v2-zapper/base", features = ["library"] }

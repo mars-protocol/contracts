@@ -75,6 +75,7 @@ impl RedBank {
             contract_addr: self.addr.to_string(),
             msg: to_binary(&red_bank::ExecuteMsg::Deposit {
                 account_id: Some(account_id.to_string()),
+                on_behalf_of: None,
             })?,
             funds: vec![coin.clone()],
         }))

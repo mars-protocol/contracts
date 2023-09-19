@@ -80,8 +80,10 @@ export interface MarsMockRedBankMessage {
   deposit: (
     {
       accountId,
+      onBehalfOf,
     }: {
       accountId?: string
+      onBehalfOf?: string
     },
     _funds?: Coin[],
   ) => MsgExecuteContractEncodeObject
@@ -290,8 +292,10 @@ export class MarsMockRedBankMessageComposer implements MarsMockRedBankMessage {
   deposit = (
     {
       accountId,
+      onBehalfOf,
     }: {
       accountId?: string
+      onBehalfOf?: string
     },
     _funds?: Coin[],
   ): MsgExecuteContractEncodeObject => {
@@ -304,6 +308,7 @@ export class MarsMockRedBankMessageComposer implements MarsMockRedBankMessage {
           JSON.stringify({
             deposit: {
               account_id: accountId,
+              on_behalf_of: onBehalfOf,
             },
           }),
         ),

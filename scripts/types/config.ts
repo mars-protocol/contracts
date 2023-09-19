@@ -1,5 +1,4 @@
 import { Duration, VaultInfoResponse } from './generated/mars-mock-vault/MarsMockVault.types'
-import { PriceSource } from './priceSource'
 import { VaultConfigBaseForString } from './generated/mars-params/MarsParams.types'
 
 export enum VaultType {
@@ -21,18 +20,18 @@ export interface DeploymentConfig {
     baseDenom: string
   }
   deployerMnemonic: string
+  addressProvider: { addr: string }
   oracle: { addr: string }
   redBank: { addr: string }
   incentives: { addr: string }
   params: { addr: string }
   swapper: { addr: string }
   vaults: VaultConfigBaseForString[]
-  allowedCoins: string[]
+  creditLineCoins: { denom: string; creditLine: String }[]
   maxValueForBurn: string
   maxUnlockingPositions: string
   maxSlippage: string
   testActions?: TestActions
-  swapperContractName: string
   zapperContractName: string
   multisigAddr?: string
   runTests: boolean
@@ -45,7 +44,6 @@ export interface SwapRoute {
 }
 
 export interface TestActions {
-  allowedCoinsConfig: { denom: string; priceSource: PriceSource; grantCreditLine: boolean }[]
   vault: {
     depositAmount: string
     withdrawAmount: string
@@ -59,7 +57,6 @@ export interface TestActions {
   }
   outpostsDeployerMnemonic: string
   secondaryDenom: string
-  defaultCreditLine: string
   startingAmountForTestUser: string
   depositAmount: string
   lendAmount: string

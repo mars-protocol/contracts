@@ -27,6 +27,7 @@ export interface StorageItems {
     oraclePricesSet?: boolean
     redBankMarketsSet?: boolean
     healthContractConfigUpdate?: boolean
+    creditManagerContractConfigUpdate?: boolean
   }
   owner?: string
 }

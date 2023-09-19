@@ -1466,7 +1466,7 @@ dependencies = [
  "mars-mock-credit-manager",
  "mars-mock-rover-health",
  "mars-owner 2.0.0",
- "mars-red-bank-types 1.2.0",
+ "mars-red-bank-types 2.0.0",
  "mars-rover 1.0.0",
  "mars-rover 2.0.0",
  "mars-rover-health-types",
@@ -1486,15 +1486,15 @@ dependencies = [
 
 [[package]]
 name = "mars-address-provider"
-version = "1.2.0"
-source = "git+https://github.com/mars-protocol/red-bank?rev=8c90842#8c908426a9a472cf96acceed69857be6c6574a33"
+version = "2.0.0"
+source = "git+https://github.com/mars-protocol/red-bank?rev=afaf815#afaf815b3801519d28d0eab99b2bf7cce0e3c85d"
 dependencies = [
  "bech32",
  "cosmwasm-std",
  "cw-storage-plus 1.1.0",
  "cw2 1.1.0",
  "mars-owner 2.0.0",
- "mars-red-bank-types 1.2.0",
+ "mars-red-bank-types 2.0.0",
  "thiserror",
 ]
 
@@ -1524,7 +1524,7 @@ dependencies = [
  "mars-mock-vault",
  "mars-owner 2.0.0",
  "mars-params",
- "mars-red-bank-types 1.2.0",
+ "mars-red-bank-types 2.0.0",
  "mars-rover 2.0.0",
  "mars-rover-health",
  "mars-rover-health-types",
@@ -1544,33 +1544,33 @@ dependencies = [
 
 [[package]]
 name = "mars-health"
-version = "1.2.0"
-source = "git+https://github.com/mars-protocol/red-bank?rev=8c90842#8c908426a9a472cf96acceed69857be6c6574a33"
+version = "2.0.0"
+source = "git+https://github.com/mars-protocol/red-bank?rev=afaf815#afaf815b3801519d28d0eab99b2bf7cce0e3c85d"
 dependencies = [
  "cosmwasm-std",
  "mars-params",
- "mars-red-bank-types 1.2.0",
+ "mars-red-bank-types 2.0.0",
  "thiserror",
 ]
 
 [[package]]
 name = "mars-interest-rate"
-version = "1.2.0"
-source = "git+https://github.com/mars-protocol/red-bank?rev=8c90842#8c908426a9a472cf96acceed69857be6c6574a33"
+version = "2.0.0"
+source = "git+https://github.com/mars-protocol/red-bank?rev=afaf815#afaf815b3801519d28d0eab99b2bf7cce0e3c85d"
 dependencies = [
  "cosmwasm-schema",
  "cosmwasm-std",
- "mars-red-bank-types 1.2.0",
- "mars-utils 1.2.0",
+ "mars-red-bank-types 2.0.0",
+ "mars-utils 2.0.0",
 ]
 
 [[package]]
 name = "mars-liquidation"
 version = "1.0.0"
-source = "git+https://github.com/mars-protocol/red-bank?rev=8c90842#8c908426a9a472cf96acceed69857be6c6574a33"
+source = "git+https://github.com/mars-protocol/red-bank?rev=afaf815#afaf815b3801519d28d0eab99b2bf7cce0e3c85d"
 dependencies = [
  "cosmwasm-std",
- "mars-health 1.2.0",
+ "mars-health 2.0.0",
  "mars-params",
  "thiserror",
 ]
@@ -1595,7 +1595,7 @@ dependencies = [
  "cosmwasm-schema",
  "cosmwasm-std",
  "cw-storage-plus 1.1.0",
- "mars-red-bank-types 1.2.0",
+ "mars-red-bank-types 2.0.0",
 ]
 
 [[package]]
@@ -1605,7 +1605,7 @@ dependencies = [
  "cosmwasm-schema",
  "cosmwasm-std",
  "cw-storage-plus 1.1.0",
- "mars-red-bank-types 1.2.0",
+ "mars-red-bank-types 2.0.0",
 ]
 
 [[package]]
@@ -1616,7 +1616,7 @@ dependencies = [
  "cosmwasm-std",
  "cw-storage-plus 1.1.0",
  "cw-utils 1.0.1",
- "mars-red-bank-types 1.2.0",
+ "mars-red-bank-types 2.0.0",
 ]
 
 [[package]]
@@ -1638,7 +1638,7 @@ dependencies = [
  "cw-storage-plus 1.1.0",
  "cw-utils 1.0.1",
  "cw-vault-standard 0.3.1",
- "mars-red-bank-types 1.2.0",
+ "mars-red-bank-types 2.0.0",
  "mars-rover 2.0.0",
  "thiserror",
 ]
@@ -1671,8 +1671,8 @@ dependencies = [
 
 [[package]]
 name = "mars-params"
-version = "1.2.0"
-source = "git+https://github.com/mars-protocol/red-bank?rev=8c90842#8c908426a9a472cf96acceed69857be6c6574a33"
+version = "2.0.0"
+source = "git+https://github.com/mars-protocol/red-bank?rev=afaf815#afaf815b3801519d28d0eab99b2bf7cce0e3c85d"
 dependencies = [
  "cosmwasm-schema",
  "cosmwasm-std",
@@ -1680,8 +1680,8 @@ dependencies = [
  "cw2 1.1.0",
  "mars-interest-rate",
  "mars-owner 2.0.0",
- "mars-red-bank-types 1.2.0",
- "mars-utils 1.2.0",
+ "mars-red-bank-types 2.0.0",
+ "mars-utils 2.0.0",
  "thiserror",
 ]
 
@@ -1700,13 +1700,13 @@ dependencies = [
 
 [[package]]
 name = "mars-red-bank-types"
-version = "1.2.0"
-source = "git+https://github.com/mars-protocol/red-bank?rev=8c90842#8c908426a9a472cf96acceed69857be6c6574a33"
+version = "2.0.0"
+source = "git+https://github.com/mars-protocol/red-bank?rev=afaf815#afaf815b3801519d28d0eab99b2bf7cce0e3c85d"
 dependencies = [
  "cosmwasm-schema",
  "cosmwasm-std",
  "mars-owner 2.0.0",
- "mars-utils 1.2.0",
+ "mars-utils 2.0.0",
  "strum",
  "thiserror",
 ]
@@ -1747,7 +1747,7 @@ dependencies = [
  "mars-liquidation",
  "mars-owner 2.0.0",
  "mars-params",
- "mars-red-bank-types 1.2.0",
+ "mars-red-bank-types 2.0.0",
  "mars-rover-health-types",
  "mars-v2-zapper-base",
  "schemars",
@@ -1772,7 +1772,7 @@ dependencies = [
  "mars-mock-vault",
  "mars-owner 2.0.0",
  "mars-params",
- "mars-red-bank-types 1.2.0",
+ "mars-red-bank-types 2.0.0",
  "mars-rover 2.0.0",
  "mars-rover-health-computer",
  "mars-rover-health-types",
@@ -1804,9 +1804,9 @@ version = "2.0.0"
 dependencies = [
  "cosmwasm-schema",
  "cosmwasm-std",
- "mars-health 1.2.0",
+ "mars-health 2.0.0",
  "mars-owner 2.0.0",
- "mars-red-bank-types 1.2.0",
+ "mars-red-bank-types 2.0.0",
  "schemars",
  "serde",
  "serde_json",
@@ -1824,7 +1824,7 @@ dependencies = [
  "cw-paginate",
  "cw-storage-plus 1.1.0",
  "mars-owner 2.0.0",
- "mars-red-bank-types 1.2.0",
+ "mars-red-bank-types 2.0.0",
  "schemars",
  "serde",
  "thiserror",
@@ -1837,7 +1837,7 @@ dependencies = [
  "anyhow",
  "cosmwasm-std",
  "cw-multi-test",
- "mars-red-bank-types 1.2.0",
+ "mars-red-bank-types 2.0.0",
 ]
 
 [[package]]
@@ -1852,8 +1852,8 @@ dependencies = [
 
 [[package]]
 name = "mars-utils"
-version = "1.2.0"
-source = "git+https://github.com/mars-protocol/red-bank?rev=8c90842#8c908426a9a472cf96acceed69857be6c6574a33"
+version = "2.0.0"
+source = "git+https://github.com/mars-protocol/red-bank?rev=afaf815#afaf815b3801519d28d0eab99b2bf7cce0e3c85d"
 dependencies = [
  "cosmwasm-std",
  "thiserror",
@@ -1880,7 +1880,7 @@ dependencies = [
  "cosmwasm-std",
  "cw-storage-plus 1.1.0",
  "cw-utils 1.0.1",
- "mars-red-bank-types 1.2.0",
+ "mars-red-bank-types 2.0.0",
  "mars-rover 2.0.0",
  "mars-v2-zapper-base",
  "thiserror",

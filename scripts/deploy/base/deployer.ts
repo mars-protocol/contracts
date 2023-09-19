@@ -93,6 +93,7 @@ export class Deployer {
     }
     this.storage.actions.healthContractConfigUpdate = true
   }
+
   async instantiateNftContract() {
     const msg: NftInstantiateMsg = {
       max_value_for_burn: this.config.maxValueForBurn,
@@ -152,6 +153,27 @@ export class Deployer {
     await this.instantiate('creditManager', this.storage.codeIds.creditManager!, msg)
   }
 
+  async setConfigOnCreditManagerContract() {
+    if (this.storage.actions.creditManagerContractConfigUpdate) {
+      printGray('credit manager contract config already updated')
+    } else {
+      const hExec = new MarsCreditManagerClient(
+        this.cwClient,
+        this.deployerAddr,
+        this.storage.addresses.creditManager!,
+      )
+
+      printBlue('Setting health contract address in nft contract via credit manager contract')
+      await hExec.updateNftConfig({
+        config: {
+          health_contract_addr: this.storage.addresses.healthContract!,
+          credit_manager_contract_addr: this.storage.addresses.creditManager!,
+        },
+      })
+    }
+    this.storage.actions.creditManagerContractConfigUpdate = true
+  }
+
   async transferNftContractOwnership() {
     if (!this.storage.actions.proposedNewOwner) {
       const nftClient = new MarsAccountNftClient(
@@ -208,30 +230,40 @@ export class Deployer {
       return
     }
 
-    const wallet = await getWallet(
-      this.config.testActions!.outpostsDeployerMnemonic,
-      this.config.chain.prefix,
-    )
+    const wallet = await getWallet(this.config.deployerMnemonic, this.config.chain.prefix)
     const client = await setupClient(this.config, wallet)
     const addr = await getAddress(wallet)
 
-    for (const denom of this.config.testActions?.allowedCoinsConfig
-      .filter((c) => c.grantCreditLine)
-      .map((c) => c.denom) ?? []) {
+    for (const creditLineCoin of this.config.creditLineCoins) {
       const msg = {
         update_uncollateralized_loan_limit: {
           user: this.storage.addresses.creditManager,
-          denom,
-          new_limit: this.config.testActions!.defaultCreditLine,
+          denom: creditLineCoin.denom,
+          new_limit: creditLineCoin.creditLine,
         },
       }
       printBlue(
-        `Granting credit line to Rover for: ${this.config.testActions!.defaultCreditLine} ${denom}`,
+        `Granting credit line to Rover for: ${creditLineCoin.creditLine} ${creditLineCoin.denom}`,
       )
       await client.execute(addr, this.config.redBank.addr, msg, 'auto')
     }
 
     this.storage.actions.grantedCreditLines = true
+  }
+
+  async updateAddressProviderWithNewAddrs() {
+    const wallet = await getWallet(this.config.deployerMnemonic, this.config.chain.prefix)
+    const client = await setupClient(this.config, wallet)
+    const addr = await getAddress(wallet)
+
+    const msg = {
+      set_address: {
+        address: this.storage.addresses.creditManager!,
+        address_type: 'credit_manager',
+      },
+    }
+    printBlue('Updating address-provider contract with new CM address')
+    await client.execute(addr, this.config.addressProvider.addr, msg, 'auto')
   }
 
   async updateCreditManagerOwner() {

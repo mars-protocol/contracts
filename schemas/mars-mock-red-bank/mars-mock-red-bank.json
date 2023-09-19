@@ -164,6 +164,13 @@
                   "string",
                   "null"
                 ]
+              },
+              "on_behalf_of": {
+                "description": "Address that will receive the coins",
+                "type": [
+                  "string",
+                  "null"
+                ]
               }
             },
             "additionalProperties": false
