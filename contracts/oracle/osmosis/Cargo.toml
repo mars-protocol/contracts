@@ -23,6 +23,7 @@ cosmwasm-schema     = { workspace = true }
 cosmwasm-std        = { workspace = true }
 cw2                 = { workspace = true }
 cw-storage-plus     = { workspace = true }
+ica-oracle          = { workspace = true }
 mars-oracle-base    = { workspace = true }
 mars-osmosis        = { workspace = true }
 mars-owner          = { workspace = true }

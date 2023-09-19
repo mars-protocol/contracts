@@ -4,11 +4,8 @@ use cosmwasm_std::{
     Addr, Coin, Decimal, Empty, Querier, QuerierResult, QueryRequest, StdResult, SystemError,
     SystemResult, Uint128, WasmQuery,
 };
-use mars_oracle_osmosis::{
-    stride,
-    stride::{Price, RedemptionRateResponse},
-    DowntimeDetector,
-};
+use ica_oracle::msg::RedemptionRateResponse;
+use mars_oracle_osmosis::DowntimeDetector;
 use mars_params::types::asset::AssetParams;
 use mars_red_bank_types::{address_provider, incentives, oracle, red_bank};
 use osmosis_std::types::osmosis::{
@@ -162,17 +159,8 @@ impl MarsMockQuerier {
         self.pyth_querier.prices.insert(id, price);
     }
 
-    pub fn set_redemption_rate(
-        &mut self,
-        denom: &str,
-        base_denom: &str,
-        redemption_rate: RedemptionRateResponse,
-    ) {
-        let price_key = Price {
-            denom: denom.to_string(),
-            base_denom: base_denom.to_string(),
-        };
-        self.redemption_rate_querier.redemption_rates.insert(price_key, redemption_rate);
+    pub fn set_redemption_rate(&mut self, denom: &str, redemption_rate: RedemptionRateResponse) {
+        self.redemption_rate_querier.redemption_rates.insert(denom.to_string(), redemption_rate);
     }
 
     pub fn set_redbank_market(&mut self, market: red_bank::Market) {
@@ -263,8 +251,8 @@ impl MarsMockQuerier {
                 }
 
                 // Redemption Rate Queries
-                if let Ok(redemption_rate_req) = from_binary::<stride::RedemptionRateRequest>(msg) {
-                    return self.redemption_rate_querier.handle_query(redemption_rate_req);
+                if let Ok(redemption_rate_query) = from_binary::<ica_oracle::msg::QueryMsg>(msg) {
+                    return self.redemption_rate_querier.handle_query(redemption_rate_query);
                 }
 
                 // Params Queries

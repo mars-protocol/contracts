@@ -16,7 +16,7 @@ use pyth_sdk_cw::PriceIdentifier;
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
-use crate::{helpers, stride::query_redemption_rate};
+use crate::helpers::{self, query_redemption_rate};
 
 /// Copied from https://github.com/osmosis-labs/osmosis-rust/blob/main/packages/osmosis-std/src/types/osmosis/downtimedetector/v1beta1.rs#L4
 ///
@@ -726,20 +726,19 @@ impl OsmosisPriceSourceChecked {
             &deps.querier,
             redemption_rate.contract_addr.clone(),
             denom.to_string(),
-            transitive_denom.to_string(),
         )?;
         // Check if the redemption rate is not too old
-        if (current_time - rr.last_updated) > redemption_rate.max_staleness {
+        if (current_time - rr.update_time) > redemption_rate.max_staleness {
             return Err(InvalidPrice {
                 reason: format!(
                     "redemption rate update time is too old/stale. last updated: {}, now: {}",
-                    rr.last_updated, current_time
+                    rr.update_time, current_time
                 ),
             });
         }
 
         // min from geometric TWAP and exchange rate
-        let min_price = min(staked_price, rr.exchange_rate);
+        let min_price = min(staked_price, rr.redemption_rate);
 
         // use current price source
         let transitive_price = price_sources.load(deps.storage, transitive_denom)?.query_price(
