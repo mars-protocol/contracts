@@ -9,7 +9,6 @@ use mars_red_bank_types::{
 pub const OWNER: Owner = Owner::new("owner");
 pub const CONFIG: Item<Config<Addr>> = Item::new("config");
 pub const MARKETS: Map<&str, Market> = Map::new("markets");
-/// The key is: user address, account id (if any), collateral denom
-pub const COLLATERALS: Map<(&UserIdKey, &str), Collateral> = Map::new("collaterals");
+pub const COLLATERALS: Map<(&UserIdKey, &str), Collateral> = Map::new("colls");
 pub const DEBTS: Map<(&Addr, &str), Debt> = Map::new("debts");
 pub const UNCOLLATERALIZED_LOAN_LIMITS: Map<(&Addr, &str), Uint128> = Map::new("limits");

@@ -1,5 +1,6 @@
 use cosmwasm_std::{DepsMut, Order, Response, StdResult};
 use cw2::{assert_contract_version, set_contract_version};
+use cw_storage_plus::Bound;
 use mars_owner::OwnerInit;
 use mars_red_bank_types::{
     keys::{UserId, UserIdKey},
@@ -141,5 +142,238 @@ impl From<v1_state::Market> for Market {
             debt_total_scaled: value.debt_total_scaled,
             reserve_factor: value.reserve_factor,
         }
+    }
+}
+
+pub fn migrate_collaterals(deps: DepsMut, limit: usize) -> Result<Response, ContractError> {
+    let v1_colls_last_key = v1_state::COLLATERALS.last(deps.storage)?.map(|kv| kv.0);
+    if v1_colls_last_key.is_none() {
+        return Ok(Response::new()
+            .add_attribute("action", "migrate_collaterals")
+            .add_attribute("result", "empty_collaterals"));
+    }
+
+    // convert last key from v2 to v1
+    let colls_last_key = COLLATERALS.last(deps.storage)?.map(|kv| kv.0);
+    let colls_last_key = if let Some((user_id_key, denom)) = colls_last_key {
+        let user_id: UserId = user_id_key.try_into()?;
+        Some((user_id.addr, denom))
+    } else {
+        None
+    };
+
+    // if last keys are equal, migration is done
+    if colls_last_key == v1_colls_last_key {
+        return Ok(Response::new()
+            .add_attribute("action", "migrate_collaterals")
+            .add_attribute("result", "done"));
+    }
+
+    // last key from new collaterals is first key (excluded) for v1 collaterals during pagination
+    let start_after =
+        colls_last_key.as_ref().map(|(addr, denom)| Bound::exclusive((addr, denom.as_str())));
+    let mut v1_colls = v1_state::COLLATERALS
+        .range(deps.storage, start_after, None, Order::Ascending)
+        .take(limit + 1)
+        .collect::<StdResult<Vec<_>>>()?;
+
+    let has_more = v1_colls.len() > limit;
+    if has_more {
+        v1_colls.pop(); // Remove the extra item used for checking if there are more items
+    }
+
+    // save collaterals
+    for ((user_addr, denom), collateral) in v1_colls.into_iter() {
+        let user_id = UserId::credit_manager(user_addr, "".to_string());
+        let user_id_key: UserIdKey = user_id.try_into()?;
+        COLLATERALS.save(deps.storage, (&user_id_key, &denom), &collateral)?;
+    }
+
+    let colls_last_key_str = colls_last_key
+        .map(|(addr, denom)| format!("{}-{}", addr, denom))
+        .unwrap_or("none".to_string());
+
+    Ok(Response::new()
+        .add_attribute("action", "migrate_collaterals")
+        .add_attribute("result", "in_progress")
+        .add_attribute("start_after", colls_last_key_str)
+        .add_attribute("limit", limit.to_string())
+        .add_attribute("has_more", has_more.to_string()))
+}
+
+#[cfg(test)]
+mod tests {
+    use std::collections::HashMap;
+
+    use cosmwasm_std::{attr, testing::mock_dependencies, Addr, Uint128};
+    use mars_red_bank_types::red_bank::Collateral;
+
+    use super::*;
+
+    #[test]
+    fn empty_v1_collaterals() {
+        let mut deps = mock_dependencies();
+        let res = migrate_collaterals(deps.as_mut(), 10).unwrap();
+        assert_eq!(
+            res.attributes,
+            vec![attr("action", "migrate_collaterals"), attr("result", "empty_collaterals"),]
+        );
+    }
+
+    #[test]
+    fn migrate_v1_collaterals() {
+        let mut deps = mock_dependencies();
+
+        // prepare v1 collaterals
+        let user_1_osmo_collateral = Collateral {
+            amount_scaled: Uint128::new(12345),
+            enabled: true,
+        };
+        v1_state::COLLATERALS
+            .save(
+                deps.as_mut().storage,
+                (&Addr::unchecked("user_1"), "uosmo"),
+                &user_1_osmo_collateral,
+            )
+            .unwrap();
+        let user_2_atom_collateral = Collateral {
+            amount_scaled: Uint128::new(1),
+            enabled: true,
+        };
+        v1_state::COLLATERALS
+            .save(
+                deps.as_mut().storage,
+                (&Addr::unchecked("user_2"), "uatom"),
+                &user_2_atom_collateral,
+            )
+            .unwrap();
+        let user_2_jake_collateral = Collateral {
+            amount_scaled: Uint128::new(1023),
+            enabled: true,
+        };
+        v1_state::COLLATERALS
+            .save(
+                deps.as_mut().storage,
+                (&Addr::unchecked("user_2"), "ujake"),
+                &user_2_jake_collateral,
+            )
+            .unwrap();
+        let user_3_jake_collateral = Collateral {
+            amount_scaled: Uint128::new(1111111),
+            enabled: false,
+        };
+        v1_state::COLLATERALS
+            .save(
+                deps.as_mut().storage,
+                (&Addr::unchecked("user_3"), "ujake"),
+                &user_3_jake_collateral,
+            )
+            .unwrap();
+        let user_1_axl_collateral = Collateral {
+            amount_scaled: Uint128::new(123456789),
+            enabled: true,
+        };
+        v1_state::COLLATERALS
+            .save(
+                deps.as_mut().storage,
+                (&Addr::unchecked("user_1"), "uaxl"),
+                &user_1_axl_collateral,
+            )
+            .unwrap();
+
+        // migrate first 2 collaterals
+        let res = migrate_collaterals(deps.as_mut(), 2).unwrap();
+        assert_eq!(
+            res.attributes,
+            vec![
+                attr("action", "migrate_collaterals"),
+                attr("result", "in_progress"),
+                attr("start_after", "none"),
+                attr("limit", "2"),
+                attr("has_more", "true"),
+            ]
+        );
+
+        // in new collaterals we should have 2 collaterals
+        let collaterals = COLLATERALS
+            .range(deps.as_ref().storage, None, None, Order::Ascending)
+            .collect::<StdResult<HashMap<_, _>>>()
+            .unwrap();
+        assert_eq!(collaterals.len(), 2);
+
+        // migrate next 2 collaterals
+        let res = migrate_collaterals(deps.as_mut(), 2).unwrap();
+        assert_eq!(
+            res.attributes,
+            vec![
+                attr("action", "migrate_collaterals"),
+                attr("result", "in_progress"),
+                attr("start_after", "user_1-uosmo"),
+                attr("limit", "2"),
+                attr("has_more", "true"),
+            ]
+        );
+
+        // in new collaterals we should have more 2 collaterals, 4 in total
+        let collaterals = COLLATERALS
+            .range(deps.as_ref().storage, None, None, Order::Ascending)
+            .collect::<StdResult<HashMap<_, _>>>()
+            .unwrap();
+        assert_eq!(collaterals.len(), 4);
+
+        // migrate next 2 collaterals, we have only 1 left
+        let res = migrate_collaterals(deps.as_mut(), 2).unwrap();
+        assert_eq!(
+            res.attributes,
+            vec![
+                attr("action", "migrate_collaterals"),
+                attr("result", "in_progress"),
+                attr("start_after", "user_2-ujake"),
+                attr("limit", "2"),
+                attr("has_more", "false"),
+            ]
+        );
+
+        // in new collaterals we should have more 1 collaterals, 5 in total
+        let collaterals = COLLATERALS
+            .range(deps.as_ref().storage, None, None, Order::Ascending)
+            .collect::<StdResult<HashMap<_, _>>>()
+            .unwrap();
+        assert_eq!(collaterals.len(), 5);
+
+        // compare values
+        let user_id = UserId::credit_manager(Addr::unchecked("user_1"), "".to_string());
+        let user_1_id_key: UserIdKey = user_id.try_into().unwrap();
+        assert_eq!(
+            collaterals.get(&(user_1_id_key.clone(), "uosmo".to_string())).unwrap(),
+            &user_1_osmo_collateral
+        );
+        assert_eq!(
+            collaterals.get(&(user_1_id_key, "uaxl".to_string())).unwrap(),
+            &user_1_axl_collateral
+        );
+        let user_id = UserId::credit_manager(Addr::unchecked("user_2"), "".to_string());
+        let user_2_id_key: UserIdKey = user_id.try_into().unwrap();
+        assert_eq!(
+            collaterals.get(&(user_2_id_key.clone(), "uatom".to_string())).unwrap(),
+            &user_2_atom_collateral
+        );
+        assert_eq!(
+            collaterals.get(&(user_2_id_key, "ujake".to_string())).unwrap(),
+            &user_2_jake_collateral
+        );
+        let user_id = UserId::credit_manager(Addr::unchecked("user_3"), "".to_string());
+        let user_3_id_key: UserIdKey = user_id.try_into().unwrap();
+        assert_eq!(
+            collaterals.get(&(user_3_id_key, "ujake".to_string())).unwrap(),
+            &user_3_jake_collateral
+        );
+
+        // try to migrate one more time, should have not effect
+        let res = migrate_collaterals(deps.as_mut(), 2).unwrap();
+        assert_eq!(
+            res.attributes,
+            vec![attr("action", "migrate_collaterals"), attr("result", "done"),]
+        );
     }
 }
