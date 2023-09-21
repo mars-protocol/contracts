@@ -139,12 +139,11 @@ pub fn query_redemption_rate(
     contract_addr: Addr,
     denom: String,
 ) -> StdResult<RedemptionRateResponse> {
-    let redemption_rate_response = querier.query(&QueryRequest::Wasm(WasmQuery::Smart {
+    querier.query(&QueryRequest::Wasm(WasmQuery::Smart {
         contract_addr: contract_addr.into_string(),
         msg: to_binary(&QueryMsg::RedemptionRate {
             denom,
             params: None,
         })?,
-    }))?;
-    Ok(redemption_rate_response)
+    }))
 }

@@ -2,6 +2,7 @@ use std::{cmp::min, fmt};
 
 use cosmwasm_std::{Addr, Decimal, Decimal256, Deps, Empty, Env, Isqrt, Uint128, Uint256};
 use cw_storage_plus::Map;
+use ica_oracle::msg::RedemptionRateResponse;
 use mars_oracle_base::{
     ContractError::{self, InvalidPrice},
     ContractResult, PriceSourceChecked, PriceSourceUnchecked,
@@ -727,15 +728,9 @@ impl OsmosisPriceSourceChecked {
             redemption_rate.contract_addr.clone(),
             denom.to_string(),
         )?;
+
         // Check if the redemption rate is not too old
-        if (current_time - rr.update_time) > redemption_rate.max_staleness {
-            return Err(InvalidPrice {
-                reason: format!(
-                    "redemption rate update time is too old/stale. last updated: {}, now: {}",
-                    rr.update_time, current_time
-                ),
-            });
-        }
+        assert_rr_not_too_old(current_time, &rr, &redemption_rate)?;
 
         // min from geometric TWAP and exchange rate
         let min_price = min(staked_price, rr.redemption_rate);
@@ -752,4 +747,25 @@ impl OsmosisPriceSourceChecked {
 
         min_price.checked_mul(transitive_price).map_err(Into::into)
     }
+}
+
+/// Redemption rate comes from different chain (Stride) and it can be greater than the current block time due to differences in block generation times,
+/// network latency, and the asynchronous nature of cross-chain data updates.
+/// To avoid this issue and correctly compare the times while considering the block boundaries we use absolute value of the difference between the times.
+fn assert_rr_not_too_old(
+    current_time: u64,
+    rr_res: &RedemptionRateResponse,
+    rr_config: &RedemptionRate<Addr>,
+) -> Result<(), ContractError> {
+    let current_time = current_time as i64;
+    let update_time = rr_res.update_time as i64;
+    if (current_time - update_time).unsigned_abs() > rr_config.max_staleness {
+        return Err(InvalidPrice {
+            reason: format!(
+                "redemption rate update time is too old/stale. last updated: {}, now: {}",
+                rr_res.update_time, current_time
+            ),
+        });
+    }
+    Ok(())
 }
