@@ -115,6 +115,8 @@ pub enum ExecuteMsg {
         /// Option to enable (true) / disable (false) asset as collateral
         enable: bool,
     },
+    // Manages migration. It is used to handle migration in batches to avoid out of gas errors.
+    Migrate(MigrateV1ToV2),
 }
 
 #[cw_serde]
@@ -129,6 +131,17 @@ pub struct InitOrUpdateAssetParams {
 
     /// Interest rate strategy to calculate borrow_rate and liquidity_rate
     pub interest_rate_model: Option<InterestRateModel>,
+}
+
+/// Migrate from V1 to V2, only owner can call
+#[cw_serde]
+pub enum MigrateV1ToV2 {
+    /// Migrate collaterals in batches
+    Collaterals {
+        limit: u32,
+    },
+    /// Clears old V1 collaterals once all batches are migrated or after a certain time
+    ClearCollaterals {},
 }
 
 #[cw_serde]

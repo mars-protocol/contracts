@@ -9,6 +9,8 @@ use mars_red_bank_types::error::MarsError;
 use mars_utils::error::ValidationError;
 use thiserror::Error;
 
+pub type ContractResult<T> = Result<T, ContractError>;
+
 #[derive(Error, Debug, PartialEq)]
 pub enum ContractError {
     #[error("{0}")]
@@ -158,4 +160,7 @@ pub enum ContractError {
 
     #[error("{0}")]
     Version(#[from] cw2::VersionError),
+
+    #[error("{0}")]
+    Guard(String),
 }

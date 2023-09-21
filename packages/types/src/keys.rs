@@ -31,7 +31,7 @@ impl TryFrom<UserIdKey> for UserId {
     type Error = StdError;
 
     fn try_from(key: UserIdKey) -> Result<Self, Self::Error> {
-        let user_id: Self = serde_json::from_slice(&key.0)
+        let user_id: Self = serde_json_wasm::from_slice(&key.0)
             .map_err(|_| StdError::generic_err("Failed to deserialize UserId from JSON string"))?;
         Ok(user_id)
     }
@@ -41,7 +41,7 @@ impl TryFrom<UserId> for UserIdKey {
     type Error = StdError;
 
     fn try_from(user_id: UserId) -> Result<Self, Self::Error> {
-        let bytes = serde_json::to_vec(&user_id)
+        let bytes = serde_json_wasm::to_vec(&user_id)
             .map_err(|_| StdError::generic_err("Failed to serialize UserId to JSON string"))?;
         Ok(Self(bytes))
     }

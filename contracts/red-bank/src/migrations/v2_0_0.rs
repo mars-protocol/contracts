@@ -1,16 +1,16 @@
-use cosmwasm_std::{DepsMut, Order, Response, StdResult};
+use cosmwasm_std::{DepsMut, MessageInfo, Order, Response, StdResult};
 use cw2::{assert_contract_version, set_contract_version};
 use cw_storage_plus::Bound;
 use mars_owner::OwnerInit;
 use mars_red_bank_types::{
     keys::{UserId, UserIdKey},
-    red_bank::{Config, Market},
+    red_bank::{Config, Market, MigrateV1ToV2},
 };
 
 use crate::{
     contract::{CONTRACT_NAME, CONTRACT_VERSION},
     error::ContractError,
-    state::{COLLATERALS, CONFIG, MARKETS, OWNER},
+    state::{COLLATERALS, CONFIG, GUARD, MARKETS, OWNER},
 };
 
 const FROM_VERSION: &str = "1.0.0";
@@ -70,6 +70,10 @@ pub mod v1_state {
 }
 
 pub fn migrate(deps: DepsMut) -> Result<Response, ContractError> {
+    // Lock red-bank to prevent any operations during migration.
+    // Unlock is executed after full migration in `migrate_collaterals`.
+    GUARD.try_lock(deps.storage)?;
+
     // make sure we're migrating the correct contract and from the correct version
     assert_contract_version(deps.storage, &format!("crates.io:{CONTRACT_NAME}"), FROM_VERSION)?;
 
@@ -108,17 +112,6 @@ pub fn migrate(deps: DepsMut) -> Result<Response, ContractError> {
         MARKETS.save(deps.storage, &denom, &market.into())?;
     }
 
-    // Migrate collaterals, user id has address and account id in v2
-    let collaterals = v1_state::COLLATERALS
-        .range(deps.storage, None, None, Order::Ascending)
-        .collect::<StdResult<Vec<_>>>()?;
-    v1_state::COLLATERALS.clear(deps.storage);
-    for ((user_addr, denom), collateral) in collaterals.into_iter() {
-        let user_id = UserId::credit_manager(user_addr, "".to_string());
-        let user_id_key: UserIdKey = user_id.try_into()?;
-        COLLATERALS.save(deps.storage, (&user_id_key, &denom), &collateral)?;
-    }
-
     set_contract_version(deps.storage, format!("crates.io:{CONTRACT_NAME}"), CONTRACT_VERSION)?;
 
     Ok(Response::new()
@@ -145,9 +138,29 @@ impl From<v1_state::Market> for Market {
     }
 }
 
-pub fn migrate_collaterals(deps: DepsMut, limit: usize) -> Result<Response, ContractError> {
+pub fn execute_migration(
+    deps: DepsMut,
+    info: MessageInfo,
+    msg: MigrateV1ToV2,
+) -> Result<Response, ContractError> {
+    OWNER.assert_owner(deps.storage, &info.sender)?;
+
+    match msg {
+        MigrateV1ToV2::Collaterals {
+            limit,
+        } => migrate_collaterals(deps, limit as usize),
+        MigrateV1ToV2::ClearCollaterals {} => clear_collaterals(deps),
+    }
+}
+
+fn migrate_collaterals(deps: DepsMut, limit: usize) -> Result<Response, ContractError> {
+    // Only allow to migrate collaterals if guard is locked via `migrate` entrypoint
+    GUARD.assert_locked(deps.storage)?;
+
     let v1_colls_last_key = v1_state::COLLATERALS.last(deps.storage)?.map(|kv| kv.0);
     if v1_colls_last_key.is_none() {
+        // red-bank locked via `migrate` entrypoint. Unlock red-bank
+        GUARD.try_unlock(deps.storage)?;
         return Ok(Response::new()
             .add_attribute("action", "migrate_collaterals")
             .add_attribute("result", "empty_collaterals"));
@@ -164,6 +177,8 @@ pub fn migrate_collaterals(deps: DepsMut, limit: usize) -> Result<Response, Cont
 
     // if last keys are equal, migration is done
     if colls_last_key == v1_colls_last_key {
+        // red-bank locked via `migrate` entrypoint. Unlock red-bank
+        GUARD.try_unlock(deps.storage)?;
         return Ok(Response::new()
             .add_attribute("action", "migrate_collaterals")
             .add_attribute("result", "done"));
@@ -193,12 +208,24 @@ pub fn migrate_collaterals(deps: DepsMut, limit: usize) -> Result<Response, Cont
         .map(|(addr, denom)| format!("{}-{}", addr, denom))
         .unwrap_or("none".to_string());
 
+    if !has_more {
+        // red-bank locked via `migrate` entrypoint. Unlock red-bank after full migration
+        GUARD.try_unlock(deps.storage)?;
+    }
+
     Ok(Response::new()
         .add_attribute("action", "migrate_collaterals")
         .add_attribute("result", "in_progress")
         .add_attribute("start_after", colls_last_key_str)
         .add_attribute("limit", limit.to_string())
         .add_attribute("has_more", has_more.to_string()))
+}
+
+fn clear_collaterals(deps: DepsMut) -> Result<Response, ContractError> {
+    // It is safe to clear collaterals only after full migration (guard is unlocked)
+    GUARD.assert_unlocked(deps.storage)?;
+    v1_state::COLLATERALS.clear(deps.storage);
+    Ok(Response::new().add_attribute("action", "clear_collaterals"))
 }
 
 #[cfg(test)]
@@ -211,8 +238,19 @@ mod tests {
     use super::*;
 
     #[test]
+    fn cannot_migrate_v1_collaterals_without_lock() {
+        let mut deps = mock_dependencies();
+
+        let res_error = migrate_collaterals(deps.as_mut(), 10).unwrap_err();
+        assert_eq!(res_error, ContractError::Guard("Guard is inactive".to_string()));
+    }
+
+    #[test]
     fn empty_v1_collaterals() {
         let mut deps = mock_dependencies();
+
+        GUARD.try_lock(deps.as_mut().storage).unwrap();
+
         let res = migrate_collaterals(deps.as_mut(), 10).unwrap();
         assert_eq!(
             res.attributes,
@@ -223,6 +261,8 @@ mod tests {
     #[test]
     fn migrate_v1_collaterals() {
         let mut deps = mock_dependencies();
+
+        GUARD.try_lock(deps.as_mut().storage).unwrap();
 
         // prepare v1 collaterals
         let user_1_osmo_collateral = Collateral {
@@ -369,11 +409,8 @@ mod tests {
             &user_3_jake_collateral
         );
 
-        // try to migrate one more time, should have not effect
-        let res = migrate_collaterals(deps.as_mut(), 2).unwrap();
-        assert_eq!(
-            res.attributes,
-            vec![attr("action", "migrate_collaterals"), attr("result", "done"),]
-        );
+        // try to migrate one more time, guard is unlocked
+        let res_err = migrate_collaterals(deps.as_mut(), 2).unwrap_err();
+        assert_eq!(res_err, ContractError::Guard("Guard is inactive".to_string()));
     }
 }

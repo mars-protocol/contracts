@@ -1,18 +1,20 @@
 use std::{collections::HashMap, str::FromStr};
 
 use cosmwasm_std::{
-    attr, testing::mock_env, Addr, Decimal, Empty, Event, Order, StdResult, Uint128,
+    attr,
+    testing::{mock_env, mock_info},
+    Addr, Decimal, Empty, Event, Order, StdResult, Uint128,
 };
 use cw2::{ContractVersion, VersionError};
 use mars_red_bank::{
-    contract::migrate,
+    contract::{execute, migrate},
     error::ContractError,
     migrations::v2_0_0::v1_state::{self, OwnerSetNoneProposed},
-    state::{COLLATERALS, CONFIG, MARKETS, OWNER},
+    state::{COLLATERALS, CONFIG, GUARD, MARKETS, OWNER},
 };
 use mars_red_bank_types::{
     keys::{UserId, UserIdKey},
-    red_bank::{Collateral, InterestRateModel, Market},
+    red_bank::{Collateral, ExecuteMsg, InterestRateModel, Market, MigrateV1ToV2},
 };
 use mars_testing::mock_dependencies;
 
@@ -49,7 +51,7 @@ fn wrong_contract_version() {
 }
 
 #[test]
-fn successful_migration() {
+fn full_migration() {
     let mut deps = mock_dependencies(&[]);
     cw2::set_contract_version(deps.as_mut().storage, "crates.io:mars-red-bank", "1.0.0").unwrap();
 
@@ -69,77 +71,11 @@ fn successful_migration() {
     };
     v1_state::CONFIG.save(deps.as_mut().storage, &v1_config).unwrap();
 
-    let atom_market = v1_state::Market {
-        denom: "uatom".to_string(),
-        reserve_factor: Decimal::percent(10),
-        interest_rate_model: InterestRateModel {
-            optimal_utilization_rate: Decimal::from_str("0.6").unwrap(),
-            base: Decimal::zero(),
-            slope_1: Decimal::from_str("0.15").unwrap(),
-            slope_2: Decimal::from_str("3").unwrap(),
-        },
-        borrow_index: Decimal::from_str("1.095285439526354046").unwrap(),
-        liquidity_index: Decimal::from_str("1.044176487308390288").unwrap(),
-        borrow_rate: Decimal::from_str("0.196215745883701305").unwrap(),
-        liquidity_rate: Decimal::from_str("0.121276949637996324").unwrap(),
-        indexes_last_updated: 1695042123,
-        collateral_total_scaled: Uint128::new(107605849836144570),
-        debt_total_scaled: Uint128::new(70450559958286857),
-        max_loan_to_value: Decimal::percent(60),
-        liquidation_threshold: Decimal::percent(50),
-        liquidation_bonus: Decimal::percent(5),
-        deposit_enabled: true,
-        borrow_enabled: true,
-        deposit_cap: Uint128::MAX,
-    };
+    let atom_market = atom_market();
     v1_state::MARKETS.save(deps.as_mut().storage, &atom_market.denom, &atom_market).unwrap();
-    let lp_market = v1_state::Market {
-        denom: "gamm/pool/1".to_string(),
-        reserve_factor: Decimal::percent(10),
-        interest_rate_model: InterestRateModel {
-            optimal_utilization_rate: Decimal::from_str("0.6").unwrap(),
-            base: Decimal::zero(),
-            slope_1: Decimal::from_str("0.15").unwrap(),
-            slope_2: Decimal::from_str("3").unwrap(),
-        },
-        borrow_index: Decimal::one(),
-        liquidity_index: Decimal::one(),
-        borrow_rate: Decimal::zero(),
-        liquidity_rate: Decimal::zero(),
-        indexes_last_updated: 1695042123,
-        collateral_total_scaled: Uint128::zero(),
-        debt_total_scaled: Uint128::zero(),
-        max_loan_to_value: Decimal::percent(60),
-        liquidation_threshold: Decimal::percent(50),
-        liquidation_bonus: Decimal::percent(5),
-        deposit_enabled: false,
-        borrow_enabled: false,
-        deposit_cap: Uint128::MAX,
-    };
+    let lp_market = lp_market();
     v1_state::MARKETS.save(deps.as_mut().storage, &lp_market.denom, &lp_market).unwrap();
-    let osmo_market = v1_state::Market {
-        denom: "uosmo".to_string(),
-        reserve_factor: Decimal::percent(10),
-        interest_rate_model: InterestRateModel {
-            optimal_utilization_rate: Decimal::from_str("0.6").unwrap(),
-            base: Decimal::zero(),
-            slope_1: Decimal::from_str("0.15").unwrap(),
-            slope_2: Decimal::from_str("3").unwrap(),
-        },
-        borrow_index: Decimal::from_str("1.048833892520260924").unwrap(),
-        liquidity_index: Decimal::from_str("1.012932497073055883").unwrap(),
-        borrow_rate: Decimal::from_str("0.080575412566632138").unwrap(),
-        liquidity_rate: Decimal::from_str("0.023372629597018728").unwrap(),
-        indexes_last_updated: 1695042123,
-        collateral_total_scaled: Uint128::new(3475219753161696357),
-        debt_total_scaled: Uint128::new(1081729307695065417),
-        max_loan_to_value: Decimal::percent(60),
-        liquidation_threshold: Decimal::percent(50),
-        liquidation_bonus: Decimal::percent(5),
-        deposit_enabled: true,
-        borrow_enabled: true,
-        deposit_cap: Uint128::MAX,
-    };
+    let osmo_market = osmo_market();
     v1_state::MARKETS.save(deps.as_mut().storage, &osmo_market.denom, &osmo_market).unwrap();
 
     let user_1_atom_collateral = Collateral {
@@ -199,6 +135,120 @@ fn successful_migration() {
     assert!(compare_markers(&atom_market, markets.get(&atom_market.denom).unwrap()));
     assert!(compare_markers(&osmo_market, markets.get(&osmo_market.denom).unwrap()));
 
+    // check if guard is active for user actions
+    let err = execute(
+        deps.as_mut(),
+        mock_env(),
+        mock_info("depositor", &[]),
+        ExecuteMsg::Deposit {
+            account_id: None,
+            on_behalf_of: None,
+        },
+    )
+    .unwrap_err();
+    assert_eq!(err, ContractError::Guard("Guard is active".to_string()));
+
+    let err = execute(
+        deps.as_mut(),
+        mock_env(),
+        mock_info("withdrawer", &[]),
+        ExecuteMsg::Withdraw {
+            denom: "uosmo".to_string(),
+            amount: None,
+            recipient: None,
+            account_id: None,
+            liquidation_related: None,
+        },
+    )
+    .unwrap_err();
+    assert_eq!(err, ContractError::Guard("Guard is active".to_string()));
+
+    let err = execute(
+        deps.as_mut(),
+        mock_env(),
+        mock_info("borrower", &[]),
+        ExecuteMsg::Borrow {
+            denom: "uosmo".to_string(),
+            amount: Uint128::one(),
+            recipient: None,
+        },
+    )
+    .unwrap_err();
+    assert_eq!(err, ContractError::Guard("Guard is active".to_string()));
+
+    let err = execute(
+        deps.as_mut(),
+        mock_env(),
+        mock_info("borrower", &[]),
+        ExecuteMsg::Repay {
+            on_behalf_of: None,
+        },
+    )
+    .unwrap_err();
+    assert_eq!(err, ContractError::Guard("Guard is active".to_string()));
+
+    let err = execute(
+        deps.as_mut(),
+        mock_env(),
+        mock_info("liquidator", &[]),
+        ExecuteMsg::Liquidate {
+            user: "liquidatee".to_string(),
+            collateral_denom: "uosmo".to_string(),
+            recipient: None,
+        },
+    )
+    .unwrap_err();
+    assert_eq!(err, ContractError::Guard("Guard is active".to_string()));
+
+    let err = execute(
+        deps.as_mut(),
+        mock_env(),
+        mock_info("liquidator", &[]),
+        ExecuteMsg::UpdateAssetCollateralStatus {
+            denom: "uosmo".to_string(),
+            enable: false,
+        },
+    )
+    .unwrap_err();
+    assert_eq!(err, ContractError::Guard("Guard is active".to_string()));
+
+    // non-owner is unauthorized to use migration
+    let err = execute(
+        deps.as_mut(),
+        mock_env(),
+        mock_info("random_user", &[]),
+        ExecuteMsg::Migrate(MigrateV1ToV2::Collaterals {
+            limit: 100,
+        }),
+    )
+    .unwrap_err();
+    assert_eq!(err, ContractError::Owner(mars_owner::OwnerError::NotOwner {}));
+
+    // can't clear old V1 collaterals state if migration in progress - guard is active
+    let err = execute(
+        deps.as_mut(),
+        mock_env(),
+        mock_info(old_owner, &[]),
+        ExecuteMsg::Migrate(MigrateV1ToV2::ClearCollaterals {}),
+    )
+    .unwrap_err();
+    assert_eq!(err, ContractError::Guard("Guard is active".to_string()));
+
+    // check users collaterals after using `migrate` entrypoint
+    assert!(!v1_state::COLLATERALS.is_empty(&deps.storage));
+    assert!(COLLATERALS.is_empty(&deps.storage));
+
+    // migrate collaterals
+    execute(
+        deps.as_mut(),
+        mock_env(),
+        mock_info(old_owner, &[]),
+        ExecuteMsg::Migrate(MigrateV1ToV2::Collaterals {
+            limit: 100,
+        }),
+    )
+    .unwrap();
+
     // check users collaterals with new user key (addr + account id)
     let collaterals = COLLATERALS
         .range(deps.as_ref().storage, None, None, Order::Ascending)
@@ -221,6 +271,100 @@ fn successful_migration() {
         collaterals.get(&(user_2_id_key, "uatom".to_string())).unwrap(),
         &user_2_atom_collateral
     );
+
+    // Clear old V1 collaterals state
+    execute(
+        deps.as_mut(),
+        mock_env(),
+        mock_info(old_owner, &[]),
+        ExecuteMsg::Migrate(MigrateV1ToV2::ClearCollaterals {}),
+    )
+    .unwrap();
+
+    // check users collaterals after full migration
+    assert!(v1_state::COLLATERALS.is_empty(&deps.storage));
+    assert!(!COLLATERALS.is_empty(&deps.storage));
+
+    // guard should be unlocked after migration
+    assert!(GUARD.assert_unlocked(&deps.storage).is_ok());
+}
+
+fn atom_market() -> v1_state::Market {
+    v1_state::Market {
+        denom: "uatom".to_string(),
+        reserve_factor: Decimal::percent(10),
+        interest_rate_model: InterestRateModel {
+            optimal_utilization_rate: Decimal::from_str("0.6").unwrap(),
+            base: Decimal::zero(),
+            slope_1: Decimal::from_str("0.15").unwrap(),
+            slope_2: Decimal::from_str("3").unwrap(),
+        },
+        borrow_index: Decimal::from_str("1.095285439526354046").unwrap(),
+        liquidity_index: Decimal::from_str("1.044176487308390288").unwrap(),
+        borrow_rate: Decimal::from_str("0.196215745883701305").unwrap(),
+        liquidity_rate: Decimal::from_str("0.121276949637996324").unwrap(),
+        indexes_last_updated: 1695042123,
+        collateral_total_scaled: Uint128::new(107605849836144570),
+        debt_total_scaled: Uint128::new(70450559958286857),
+        max_loan_to_value: Decimal::percent(60),
+        liquidation_threshold: Decimal::percent(50),
+        liquidation_bonus: Decimal::percent(5),
+        deposit_enabled: true,
+        borrow_enabled: true,
+        deposit_cap: Uint128::MAX,
+    }
+}
+
+fn lp_market() -> v1_state::Market {
+    v1_state::Market {
+        denom: "gamm/pool/1".to_string(),
+        reserve_factor: Decimal::percent(10),
+        interest_rate_model: InterestRateModel {
+            optimal_utilization_rate: Decimal::from_str("0.6").unwrap(),
+            base: Decimal::zero(),
+            slope_1: Decimal::from_str("0.15").unwrap(),
+            slope_2: Decimal::from_str("3").unwrap(),
+        },
+        borrow_index: Decimal::one(),
+        liquidity_index: Decimal::one(),
+        borrow_rate: Decimal::zero(),
+        liquidity_rate: Decimal::zero(),
+        indexes_last_updated: 1695042123,
+        collateral_total_scaled: Uint128::zero(),
+        debt_total_scaled: Uint128::zero(),
+        max_loan_to_value: Decimal::percent(60),
+        liquidation_threshold: Decimal::percent(50),
+        liquidation_bonus: Decimal::percent(5),
+        deposit_enabled: false,
+        borrow_enabled: false,
+        deposit_cap: Uint128::MAX,
+    }
+}
+
+fn osmo_market() -> v1_state::Market {
+    v1_state::Market {
+        denom: "uosmo".to_string(),
+        reserve_factor: Decimal::percent(10),
+        interest_rate_model: InterestRateModel {
+            optimal_utilization_rate: Decimal::from_str("0.6").unwrap(),
+            base: Decimal::zero(),
+            slope_1: Decimal::from_str("0.15").unwrap(),
+            slope_2: Decimal::from_str("3").unwrap(),
+        },
+        borrow_index: Decimal::from_str("1.048833892520260924").unwrap(),
+        liquidity_index: Decimal::from_str("1.012932497073055883").unwrap(),
+        borrow_rate: Decimal::from_str("0.080575412566632138").unwrap(),
+        liquidity_rate: Decimal::from_str("0.023372629597018728").unwrap(),
+        indexes_last_updated: 1695042123,
+        collateral_total_scaled: Uint128::new(3475219753161696357),
+        debt_total_scaled: Uint128::new(1081729307695065417),
+        max_loan_to_value: Decimal::percent(60),
+        liquidation_threshold: Decimal::percent(50),
+        liquidation_bonus: Decimal::percent(5),
+        deposit_enabled: true,
+        borrow_enabled: true,
+        deposit_cap: Uint128::MAX,
+    }
 }
 
 fn compare_markers(old_market: &v1_state::Market, market: &Market) -> bool {
