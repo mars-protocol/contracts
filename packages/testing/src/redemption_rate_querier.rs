@@ -1,27 +1,31 @@
 use std::collections::HashMap;
 
 use cosmwasm_std::{to_binary, Binary, ContractResult, QuerierResult};
-use mars_oracle_osmosis::stride::{Price, RedemptionRateRequest, RedemptionRateResponse};
+use ica_oracle::msg::{QueryMsg, RedemptionRateResponse};
 
 #[derive(Default)]
 pub struct RedemptionRateQuerier {
-    pub redemption_rates: HashMap<Price, RedemptionRateResponse>,
+    pub redemption_rates: HashMap<String, RedemptionRateResponse>,
 }
 
 impl RedemptionRateQuerier {
-    pub fn handle_query(&self, req: RedemptionRateRequest) -> QuerierResult {
-        let res: ContractResult<Binary> = {
-            let option_rr = self.redemption_rates.get(&req.price);
+    pub fn handle_query(&self, query: QueryMsg) -> QuerierResult {
+        let res: ContractResult<Binary> = match query {
+            QueryMsg::RedemptionRate {
+                denom,
+                params: _,
+            } => {
+                let option_rr = self.redemption_rates.get(&denom);
 
-            if let Some(rr) = option_rr {
-                to_binary(rr).into()
-            } else {
-                Err(format!(
-                    "[mock]: could not find redemption rate for denom {} and base_denom {}",
-                    req.price.denom, req.price.base_denom
-                ))
-                .into()
+                if let Some(rr) = option_rr {
+                    to_binary(rr).into()
+                } else {
+                    Err(format!("[mock]: could not find redemption rate for denom {}", denom))
+                        .into()
+                }
             }
+
+            _ => Err("[mock]: Unsupported Stride query").into(),
         };
 
         Ok(res).into()
