@@ -8,6 +8,7 @@
 export interface InstantiateMsg {
   address_provider: string
   epoch_duration: number
+  mars_denom: string
   max_whitelisted_denoms: number
   owner: string
 }
@@ -77,7 +78,6 @@ export type MigrateV1ToV2 =
   | {
       users_indexes_and_rewards: {
         limit: number
-        mars_denom: string
       }
     }
   | {

@@ -250,7 +250,8 @@ fn full_migration() {
         new_config,
         Config {
             address_provider: old_config.address_provider,
-            max_whitelisted_denoms
+            max_whitelisted_denoms,
+            mars_denom: old_config.mars_denom
         }
     );
 
@@ -347,15 +348,12 @@ fn full_migration() {
     .unwrap_err();
     assert_eq!(err, ContractError::Guard(GuardError::Active {}));
 
-    // non-owner is unauthorized to use migration
+    // non-owner is unauthorized to clear state
     let err = execute(
         deps.as_mut(),
         mock_env(),
         mock_info("random_user", &[]),
-        ExecuteMsg::Migrate(MigrateV1ToV2::UsersIndexesAndRewards {
-            limit: 100,
-            mars_denom: mars_denom.to_string(),
-        }),
+        ExecuteMsg::Migrate(MigrateV1ToV2::ClearV1State {}),
     )
     .unwrap_err();
     assert_eq!(err, ContractError::Owner(mars_owner::OwnerError::NotOwner {}));
@@ -376,7 +374,6 @@ fn full_migration() {
         mock_info(old_owner, &[]),
         ExecuteMsg::Migrate(MigrateV1ToV2::UsersIndexesAndRewards {
             limit: 2,
-            mars_denom: mars_denom.to_string(),
         }),
     )
     .unwrap();
@@ -394,10 +391,9 @@ fn full_migration() {
     let res = execute(
         deps.as_mut(),
         mock_env(),
-        mock_info(old_owner, &[]),
+        mock_info("random_user_1", &[]),
         ExecuteMsg::Migrate(MigrateV1ToV2::UsersIndexesAndRewards {
             limit: 2,
-            mars_denom: mars_denom.to_string(),
         }),
     )
     .unwrap();
@@ -415,10 +411,9 @@ fn full_migration() {
     let res = execute(
         deps.as_mut(),
         mock_env(),
-        mock_info(old_owner, &[]),
+        mock_info("random_user_2", &[]),
         ExecuteMsg::Migrate(MigrateV1ToV2::UsersIndexesAndRewards {
             limit: 2,
-            mars_denom: mars_denom.to_string(),
         }),
     )
     .unwrap();

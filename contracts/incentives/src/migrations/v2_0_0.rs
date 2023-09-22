@@ -160,6 +160,7 @@ pub fn migrate(mut deps: DepsMut, env: Env, msg: MigrateMsg) -> Result<Response,
         &Config {
             address_provider: old_config_state.address_provider,
             max_whitelisted_denoms: msg.max_whitelisted_denoms,
+            mars_denom: old_config_state.mars_denom.clone(),
         },
     )?;
 
@@ -238,21 +239,20 @@ pub fn execute_migration(
     info: MessageInfo,
     msg: MigrateV1ToV2,
 ) -> Result<Response, ContractError> {
-    OWNER.assert_owner(deps.storage, &info.sender)?;
-
     match msg {
         MigrateV1ToV2::UsersIndexesAndRewards {
             limit,
-            mars_denom,
-        } => migrate_users_indexes_and_rewards(deps, limit as usize, &mars_denom),
-        MigrateV1ToV2::ClearV1State {} => clear_v1_state(deps),
+        } => migrate_users_indexes_and_rewards(deps, limit as usize),
+        MigrateV1ToV2::ClearV1State {} => {
+            OWNER.assert_owner(deps.storage, &info.sender)?;
+            clear_v1_state(deps)
+        }
     }
 }
 
 fn migrate_users_indexes_and_rewards(
     deps: DepsMut,
     limit: usize,
-    mars_denom: &str,
 ) -> Result<Response, ContractError> {
     let v1_uai_last_key = v1_state::USER_ASSET_INDICES.last(deps.storage)?.map(|kv| kv.0);
     if v1_uai_last_key.is_none() {
@@ -353,7 +353,7 @@ fn migrate_users_indexes_and_rewards(
             // Update user unclaimed rewards
             USER_UNCLAIMED_REWARDS.save(
                 deps.storage,
-                (&user_id_key, &denom, mars_denom),
+                (&user_id_key, &denom, &config.mars_denom),
                 &unclaimed_rewards,
             )?;
         }
@@ -361,7 +361,7 @@ fn migrate_users_indexes_and_rewards(
         // Update user asset index
         USER_ASSET_INDICES.save(
             deps.storage,
-            (&user_id_key, &denom, mars_denom),
+            (&user_id_key, &denom, &config.mars_denom),
             &asset_incentive.index,
         )?;
     }

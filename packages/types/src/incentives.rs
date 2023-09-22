@@ -10,6 +10,8 @@ pub struct Config {
     /// The maximum number of incentive denoms that can be whitelisted at any given time. This is
     /// a guard against accidentally whitelisting too many denoms, which could cause max gas errors.
     pub max_whitelisted_denoms: u8,
+    /// Mars Token Denom
+    pub mars_denom: String,
 }
 
 /// Incentive Metadata for a given incentive
@@ -87,6 +89,8 @@ pub struct InstantiateMsg {
     /// The maximum number of incentive denoms that can be whitelisted at any given time. This is
     /// a guard against accidentally whitelisting too many denoms, which could cause max gas errors.
     pub max_whitelisted_denoms: u8,
+    /// Mars Token Denom
+    pub mars_denom: String,
 }
 
 #[cw_serde]
@@ -172,7 +176,6 @@ pub enum MigrateV1ToV2 {
     /// Migrate users indexes and unclaimed rewards in batches
     UsersIndexesAndRewards {
         limit: u32,
-        mars_denom: String,
     },
     /// Clears old V1 state once all batches are migrated or after a certain time
     ClearV1State {},
