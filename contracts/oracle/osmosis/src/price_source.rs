@@ -750,8 +750,7 @@ impl OsmosisPriceSourceChecked {
 }
 
 /// Redemption rate comes from different chain (Stride) and it can be greater than the current block time due to differences in block generation times,
-/// network latency, and the asynchronous nature of cross-chain data updates.
-/// To avoid this issue and correctly compare the times while considering the block boundaries we use absolute value of the difference between the times.
+/// network latency, and the asynchronous nature of cross-chain data updates. We accept such case as valid RR.
 fn assert_rr_not_too_old(
     current_time: u64,
     rr_res: &RedemptionRateResponse,
