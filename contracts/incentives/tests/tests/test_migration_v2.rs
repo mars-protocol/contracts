@@ -486,6 +486,13 @@ fn full_migration() {
         new_atom_incentive.index
     );
 
+    // Check if user unclaimed rewards backup is created correctly
+    let user_unclaimed_rewards_backup = v1_state::USER_UNCLAIMED_REWARDS_BACKUP
+        .range(deps.as_ref().storage, None, None, Order::Ascending)
+        .collect::<StdResult<HashMap<_, _>>>()
+        .unwrap();
+    assert_eq!(user_unclaimed_rewards_backup.len(), 1);
+
     // Check if user unclaimed rewards are migrated correctly
     let user_unclaimed_rewards = USER_UNCLAIMED_REWARDS
         .range(deps.as_ref().storage, None, None, Order::Ascending)
@@ -552,10 +559,11 @@ fn full_migration() {
     )
     .unwrap();
 
-    // check users collaterals after full migration
+    // check state after full migration
     assert!(v1_state::ASSET_INCENTIVES.is_empty(&deps.storage));
     assert!(v1_state::USER_ASSET_INDICES.is_empty(&deps.storage));
     assert!(v1_state::USER_UNCLAIMED_REWARDS.is_empty(&deps.storage));
+    assert!(v1_state::USER_UNCLAIMED_REWARDS_BACKUP.is_empty(&deps.storage));
 
     // guard should be unlocked after migration
     assert!(MIGRATION_GUARD.assert_unlocked(&deps.storage).is_ok());

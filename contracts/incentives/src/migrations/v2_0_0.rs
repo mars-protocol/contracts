@@ -34,6 +34,7 @@ pub mod v1_state {
     pub const ASSET_INCENTIVES: Map<&str, AssetIncentive> = Map::new("incentives");
     pub const USER_ASSET_INDICES: Map<(&Addr, &str), Decimal> = Map::new("indices");
     pub const USER_UNCLAIMED_REWARDS: Map<&Addr, Uint128> = Map::new("unclaimed_rewards");
+    pub const USER_UNCLAIMED_REWARDS_BACKUP: Map<&Addr, Uint128> = Map::new("ur_backup");
 
     #[cw_serde]
     pub enum OwnerState {
@@ -251,7 +252,7 @@ pub fn execute_migration(
 }
 
 fn migrate_users_indexes_and_rewards(
-    deps: DepsMut,
+    mut deps: DepsMut,
     limit: usize,
 ) -> Result<Response, ContractError> {
     // Only allow to migrate users indexes and rewards if guard is locked via `migrate` entrypoint
@@ -315,10 +316,7 @@ fn migrate_users_indexes_and_rewards(
 
         // Since we didn't track unclaimed rewards per collateral denom in v1 we add them
         // to the user unclaimed rewards for the first user collateral denom.
-        // TODO maybe don't remove it, how to keep track that it is already used?
-        let mut unclaimed_rewards =
-            v1_state::USER_UNCLAIMED_REWARDS.may_load(deps.storage, &user)?.unwrap_or_default();
-        v1_state::USER_UNCLAIMED_REWARDS.remove(deps.storage, &user);
+        let mut unclaimed_rewards = read_and_backup_unclaimed_rewards(&mut deps, &user)?;
 
         if user_asset_index != asset_incentive.index {
             // Compute user accrued rewards
@@ -371,6 +369,22 @@ fn migrate_users_indexes_and_rewards(
         .add_attribute("has_more", has_more.to_string()))
 }
 
+fn read_and_backup_unclaimed_rewards(
+    deps: &mut DepsMut<'_>,
+    user: &Addr,
+) -> Result<Uint128, ContractError> {
+    let unclaimed_rewards_opt = v1_state::USER_UNCLAIMED_REWARDS.may_load(deps.storage, user)?;
+    if let Some(unclaimed_rewards) = unclaimed_rewards_opt {
+        // Make a backup of unclaimed rewards.
+        // This way we can restore unclaimed rewards for a user in case of migration failure.
+        v1_state::USER_UNCLAIMED_REWARDS_BACKUP.save(deps.storage, user, &unclaimed_rewards)?;
+
+        // Remove unclaimed rewards from v1 state because we want to add them only once to v2 state.
+        v1_state::USER_UNCLAIMED_REWARDS.remove(deps.storage, user);
+    }
+    Ok(unclaimed_rewards_opt.unwrap_or_default())
+}
+
 fn key_to_str(key: Option<(Addr, String)>) -> String {
     key.map(|(addr, denom)| format!("{}-{}", addr, denom)).unwrap_or("none".to_string())
 }
@@ -381,5 +395,6 @@ fn clear_v1_state(deps: DepsMut) -> Result<Response, ContractError> {
     v1_state::ASSET_INCENTIVES.clear(deps.storage);
     v1_state::USER_ASSET_INDICES.clear(deps.storage);
     v1_state::USER_UNCLAIMED_REWARDS.clear(deps.storage);
+    v1_state::USER_UNCLAIMED_REWARDS_BACKUP.clear(deps.storage);
     Ok(Response::new().add_attribute("action", "clear_v1_state"))
 }
