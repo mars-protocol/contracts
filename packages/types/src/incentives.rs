@@ -161,6 +161,21 @@ pub enum ExecuteMsg {
 
     /// Manages admin role state
     UpdateOwner(OwnerUpdate),
+
+    // Manages migration. It is used to handle migration in batches to avoid out of gas errors.
+    Migrate(MigrateV1ToV2),
+}
+
+/// Migrate from V1 to V2, only owner can call
+#[cw_serde]
+pub enum MigrateV1ToV2 {
+    /// Migrate users indexes and unclaimed rewards in batches
+    UsersIndexesAndRewards {
+        limit: u32,
+        mars_denom: String,
+    },
+    /// Clears old V1 state once all batches are migrated or after a certain time
+    ClearV1State {},
 }
 
 #[cw_serde]

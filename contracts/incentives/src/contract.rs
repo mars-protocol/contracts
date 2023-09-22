@@ -138,6 +138,7 @@ pub fn execute(
             max_whitelisted_denoms,
         } => Ok(execute_update_config(deps, env, info, address_provider, max_whitelisted_denoms)?),
         ExecuteMsg::UpdateOwner(update) => update_owner(deps, info, update),
+        ExecuteMsg::Migrate(msg) => migrations::v2_0_0::execute_migration(deps, info, msg),
     }
 }
 

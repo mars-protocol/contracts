@@ -5,6 +5,7 @@ use mars_red_bank_types::{
     incentives::{Config, IncentiveState},
     keys::{UserId, UserIdKey},
 };
+use mars_utils::guard::Guard;
 
 use crate::ContractError;
 
@@ -36,12 +37,14 @@ pub const EMISSIONS: Map<(&str, &str, u64), Uint128> = Map::new("emissions");
 
 /// A map containing the incentive index for a given user, collateral denom and incentive denom.
 /// The key is (user address with optional account id, collateral denom, incentive denom).
-pub const USER_ASSET_INDICES: Map<(&UserIdKey, &str, &str), Decimal> = Map::new("indices");
+pub const USER_ASSET_INDICES: Map<(&UserIdKey, &str, &str), Decimal> = Map::new("indices_v2");
 
 /// A map containing the amount of unclaimed incentives for a given user and incentive denom.
 /// The key is (user address with optional account id, collateral denom, incentive denom).
 pub const USER_UNCLAIMED_REWARDS: Map<(&UserIdKey, &str, &str), Uint128> =
-    Map::new("unclaimed_rewards");
+    Map::new("unclaimed_rewards_v2");
+
+pub const GUARD: Guard = Guard::new("guard");
 
 /// The default limit for pagination
 pub const DEFAULT_LIMIT: u32 = 5;

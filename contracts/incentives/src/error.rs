@@ -3,7 +3,7 @@ use std::string::FromUtf8Error;
 use cosmwasm_std::{Coin, StdError};
 use mars_owner::OwnerError;
 use mars_red_bank_types::error::MarsError;
-use mars_utils::error::ValidationError;
+use mars_utils::error::{GuardError, ValidationError};
 use thiserror::Error;
 
 #[derive(Error, Debug, PartialEq)]
@@ -69,6 +69,9 @@ pub enum ContractError {
 
     #[error("{0}")]
     Version(#[from] cw2::VersionError),
+
+    #[error("{0}")]
+    Guard(#[from] GuardError),
 }
 
 impl From<ContractError> for StdError {

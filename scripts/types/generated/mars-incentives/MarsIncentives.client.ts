@@ -13,6 +13,7 @@ import {
   Uint128,
   Addr,
   OwnerUpdate,
+  MigrateV1ToV2,
   WhitelistEntry,
   QueryMsg,
   ArrayOfActiveEmission,
@@ -301,6 +302,12 @@ export interface MarsIncentivesInterface extends MarsIncentivesReadOnlyInterface
     memo?: string,
     _funds?: Coin[],
   ) => Promise<ExecuteResult>
+  migrate: (
+    migrateV1ToV2: MigrateV1ToV2,
+    fee?: number | StdFee | 'auto',
+    memo?: string,
+    _funds?: Coin[],
+  ) => Promise<ExecuteResult>
 }
 export class MarsIncentivesClient
   extends MarsIncentivesQueryClient
@@ -321,6 +328,7 @@ export class MarsIncentivesClient
     this.claimRewards = this.claimRewards.bind(this)
     this.updateConfig = this.updateConfig.bind(this)
     this.updateOwner = this.updateOwner.bind(this)
+    this.migrate = this.migrate.bind(this)
   }
 
   updateWhitelist = async (
@@ -488,6 +496,23 @@ export class MarsIncentivesClient
       this.contractAddress,
       {
         update_owner: ownerUpdate,
+      },
+      fee,
+      memo,
+      _funds,
+    )
+  }
+  migrate = async (
+    migrateV1ToV2: MigrateV1ToV2,
+    fee: number | StdFee | 'auto' = 'auto',
+    memo?: string,
+    _funds?: Coin[],
+  ): Promise<ExecuteResult> => {
+    return await this.client.execute(
+      this.sender,
+      this.contractAddress,
+      {
+        migrate: migrateV1ToV2,
       },
       fee,
       memo,
