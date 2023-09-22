@@ -17,6 +17,7 @@ use mars_red_bank_types::{
     red_bank::{Collateral, ExecuteMsg, InterestRateModel, Market, MigrateV1ToV2},
 };
 use mars_testing::mock_dependencies;
+use mars_utils::error::GuardError;
 
 #[test]
 fn wrong_contract_name() {
@@ -146,7 +147,7 @@ fn full_migration() {
         },
     )
     .unwrap_err();
-    assert_eq!(err, ContractError::Guard("Guard is active".to_string()));
+    assert_eq!(err, ContractError::Guard(GuardError::Active {}));
 
     let err = execute(
         deps.as_mut(),
@@ -161,7 +162,7 @@ fn full_migration() {
         },
     )
     .unwrap_err();
-    assert_eq!(err, ContractError::Guard("Guard is active".to_string()));
+    assert_eq!(err, ContractError::Guard(GuardError::Active {}));
 
     let err = execute(
         deps.as_mut(),
@@ -174,7 +175,7 @@ fn full_migration() {
         },
     )
     .unwrap_err();
-    assert_eq!(err, ContractError::Guard("Guard is active".to_string()));
+    assert_eq!(err, ContractError::Guard(GuardError::Active {}));
 
     let err = execute(
         deps.as_mut(),
@@ -185,7 +186,7 @@ fn full_migration() {
         },
     )
     .unwrap_err();
-    assert_eq!(err, ContractError::Guard("Guard is active".to_string()));
+    assert_eq!(err, ContractError::Guard(GuardError::Active {}));
 
     let err = execute(
         deps.as_mut(),
@@ -198,7 +199,7 @@ fn full_migration() {
         },
     )
     .unwrap_err();
-    assert_eq!(err, ContractError::Guard("Guard is active".to_string()));
+    assert_eq!(err, ContractError::Guard(GuardError::Active {}));
 
     let err = execute(
         deps.as_mut(),
@@ -210,7 +211,7 @@ fn full_migration() {
         },
     )
     .unwrap_err();
-    assert_eq!(err, ContractError::Guard("Guard is active".to_string()));
+    assert_eq!(err, ContractError::Guard(GuardError::Active {}));
 
     // non-owner is unauthorized to use migration
     let err = execute(
@@ -232,7 +233,7 @@ fn full_migration() {
         ExecuteMsg::Migrate(MigrateV1ToV2::ClearCollaterals {}),
     )
     .unwrap_err();
-    assert_eq!(err, ContractError::Guard("Guard is active".to_string()));
+    assert_eq!(err, ContractError::Guard(GuardError::Active {}));
 
     // check users collaterals after using `migrate` entrypoint
     assert!(!v1_state::COLLATERALS.is_empty(&deps.storage));

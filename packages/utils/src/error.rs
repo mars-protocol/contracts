@@ -1,3 +1,4 @@
+use cosmwasm_std::StdError;
 use thiserror::Error;
 
 #[derive(Error, Debug, PartialEq)]
@@ -13,4 +14,19 @@ pub enum ValidationError {
     InvalidDenom {
         reason: String,
     },
+}
+
+#[derive(Error, Debug, PartialEq)]
+pub enum GuardError {
+    #[error("{0}")]
+    Std(#[from] StdError),
+
+    #[error("Guard is active")]
+    Active {},
+
+    #[error("Guard is inactive")]
+    Inactive {},
+
+    #[error("Invalid guard state transition")]
+    InvalidState {},
 }

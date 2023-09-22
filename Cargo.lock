@@ -2128,7 +2128,9 @@ dependencies = [
 name = "mars-utils"
 version = "2.0.0"
 dependencies = [
+ "cosmwasm-schema",
  "cosmwasm-std",
+ "cw-storage-plus 1.1.0",
  "thiserror",
 ]
 

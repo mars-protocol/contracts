@@ -234,6 +234,7 @@ mod tests {
 
     use cosmwasm_std::{attr, testing::mock_dependencies, Addr, Uint128};
     use mars_red_bank_types::red_bank::Collateral;
+    use mars_utils::error::GuardError;
 
     use super::*;
 
@@ -242,7 +243,7 @@ mod tests {
         let mut deps = mock_dependencies();
 
         let res_error = migrate_collaterals(deps.as_mut(), 10).unwrap_err();
-        assert_eq!(res_error, ContractError::Guard("Guard is inactive".to_string()));
+        assert_eq!(res_error, ContractError::Guard(GuardError::Inactive {}));
     }
 
     #[test]
@@ -411,6 +412,6 @@ mod tests {
 
         // try to migrate one more time, guard is unlocked
         let res_err = migrate_collaterals(deps.as_mut(), 2).unwrap_err();
-        assert_eq!(res_err, ContractError::Guard("Guard is inactive".to_string()));
+        assert_eq!(res_err, ContractError::Guard(GuardError::Inactive {}));
     }
 }

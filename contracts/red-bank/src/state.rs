@@ -5,8 +5,7 @@ use mars_red_bank_types::{
     keys::UserIdKey,
     red_bank::{Collateral, Config, Debt, Market},
 };
-
-use crate::migrations::guard::Guard;
+use mars_utils::guard::Guard;
 
 pub const OWNER: Owner = Owner::new("owner");
 pub const CONFIG: Item<Config<Addr>> = Item::new("config");
