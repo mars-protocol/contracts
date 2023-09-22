@@ -757,9 +757,7 @@ fn assert_rr_not_too_old(
     rr_res: &RedemptionRateResponse,
     rr_config: &RedemptionRate<Addr>,
 ) -> Result<(), ContractError> {
-    let current_time = current_time as i64;
-    let update_time = rr_res.update_time as i64;
-    if (current_time - update_time).unsigned_abs() > rr_config.max_staleness {
+    if rr_res.update_time + rr_config.max_staleness < current_time {
         return Err(InvalidPrice {
             reason: format!(
                 "redemption rate update time is too old/stale. last updated: {}, now: {}",
