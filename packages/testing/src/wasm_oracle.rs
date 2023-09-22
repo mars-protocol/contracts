@@ -376,7 +376,8 @@ pub fn validate_and_query_astroport_spot_price_source(
     register_second_price: bool,
     decimals: &[u8; 2],
 ) {
-    let runner = get_test_runner();
+    let owned_runner = get_test_runner();
+    let runner = owned_runner.as_ref();
     let admin = &runner.init_default_account().unwrap();
     let robot = WasmOracleTestRobot::new(&runner, get_contracts(&runner), admin, Some(base_denom));
 
@@ -432,7 +433,8 @@ pub fn validate_and_query_astroport_twap_price_source(
     initial_liq: &[u128; 2],
     decimals: &[u8; 2],
 ) {
-    let runner = get_test_runner();
+    let owned_runner = get_test_runner();
+    let runner = owned_runner.as_ref();
     let admin = &runner.init_default_account().unwrap();
     let robot = WasmOracleTestRobot::new(&runner, get_contracts(&runner), admin, Some(base_denom));
 

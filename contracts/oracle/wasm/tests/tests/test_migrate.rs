@@ -13,7 +13,8 @@ use mars_testing::{
 
 #[test]
 fn test_migrate_wasm_oracle() {
-    let runner = get_test_runner();
+    let owned_runner = get_test_runner();
+    let runner = owned_runner.as_ref();
     let admin = &runner.init_default_account().unwrap();
     let robot = WasmOracleTestRobot::new(&runner, get_contracts(&runner), admin, None);
 
