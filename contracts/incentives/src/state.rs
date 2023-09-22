@@ -44,7 +44,8 @@ pub const USER_ASSET_INDICES: Map<(&UserIdKey, &str, &str), Decimal> = Map::new(
 pub const USER_UNCLAIMED_REWARDS: Map<(&UserIdKey, &str, &str), Uint128> =
     Map::new("unclaimed_rewards_v2");
 
-pub const GUARD: Guard = Guard::new("guard");
+/// Used to mark the contract as locked during migrations
+pub const MIGRATION_GUARD: Guard = Guard::new("guard");
 
 /// The default limit for pagination
 pub const DEFAULT_LIMIT: u32 = 5;

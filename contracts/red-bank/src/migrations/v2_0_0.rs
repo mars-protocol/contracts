@@ -10,7 +10,7 @@ use mars_red_bank_types::{
 use crate::{
     contract::{CONTRACT_NAME, CONTRACT_VERSION},
     error::ContractError,
-    state::{COLLATERALS, CONFIG, GUARD, MARKETS, OWNER},
+    state::{COLLATERALS, CONFIG, MARKETS, MIGRATION_GUARD, OWNER},
 };
 
 const FROM_VERSION: &str = "1.0.0";
@@ -72,7 +72,7 @@ pub mod v1_state {
 pub fn migrate(deps: DepsMut) -> Result<Response, ContractError> {
     // Lock red-bank to prevent any operations during migration.
     // Unlock is executed after full migration in `migrate_collaterals`.
-    GUARD.try_lock(deps.storage)?;
+    MIGRATION_GUARD.try_lock(deps.storage)?;
 
     // make sure we're migrating the correct contract and from the correct version
     assert_contract_version(deps.storage, &format!("crates.io:{CONTRACT_NAME}"), FROM_VERSION)?;
@@ -156,12 +156,12 @@ pub fn execute_migration(
 
 fn migrate_collaterals(deps: DepsMut, limit: usize) -> Result<Response, ContractError> {
     // Only allow to migrate collaterals if guard is locked via `migrate` entrypoint
-    GUARD.assert_locked(deps.storage)?;
+    MIGRATION_GUARD.assert_locked(deps.storage)?;
 
     let v1_colls_last_key = v1_state::COLLATERALS.last(deps.storage)?.map(|kv| kv.0);
     if v1_colls_last_key.is_none() {
         // red-bank locked via `migrate` entrypoint. Unlock red-bank
-        GUARD.try_unlock(deps.storage)?;
+        MIGRATION_GUARD.try_unlock(deps.storage)?;
         return Ok(Response::new()
             .add_attribute("action", "migrate_collaterals")
             .add_attribute("result", "empty_collaterals"));
@@ -179,7 +179,7 @@ fn migrate_collaterals(deps: DepsMut, limit: usize) -> Result<Response, Contract
     // if last keys are equal, migration is done
     if colls_last_key == v1_colls_last_key {
         // red-bank locked via `migrate` entrypoint. Unlock red-bank
-        GUARD.try_unlock(deps.storage)?;
+        MIGRATION_GUARD.try_unlock(deps.storage)?;
         return Ok(Response::new()
             .add_attribute("action", "migrate_collaterals")
             .add_attribute("result", "done"));
@@ -211,7 +211,7 @@ fn migrate_collaterals(deps: DepsMut, limit: usize) -> Result<Response, Contract
 
     if !has_more {
         // red-bank locked via `migrate` entrypoint. Unlock red-bank after full migration
-        GUARD.try_unlock(deps.storage)?;
+        MIGRATION_GUARD.try_unlock(deps.storage)?;
     }
 
     Ok(Response::new()
@@ -224,7 +224,7 @@ fn migrate_collaterals(deps: DepsMut, limit: usize) -> Result<Response, Contract
 
 fn clear_collaterals(deps: DepsMut) -> Result<Response, ContractError> {
     // It is safe to clear collaterals only after full migration (guard is unlocked)
-    GUARD.assert_unlocked(deps.storage)?;
+    MIGRATION_GUARD.assert_unlocked(deps.storage)?;
     v1_state::COLLATERALS.clear(deps.storage);
     Ok(Response::new().add_attribute("action", "clear_collaterals"))
 }
@@ -251,7 +251,7 @@ mod tests {
     fn empty_v1_collaterals() {
         let mut deps = mock_dependencies();
 
-        GUARD.try_lock(deps.as_mut().storage).unwrap();
+        MIGRATION_GUARD.try_lock(deps.as_mut().storage).unwrap();
 
         let res = migrate_collaterals(deps.as_mut(), 10).unwrap();
         assert_eq!(
@@ -264,7 +264,7 @@ mod tests {
     fn migrate_v1_collaterals() {
         let mut deps = mock_dependencies();
 
-        GUARD.try_lock(deps.as_mut().storage).unwrap();
+        MIGRATION_GUARD.try_lock(deps.as_mut().storage).unwrap();
 
         // prepare v1 collaterals
         let user_1_osmo_collateral = Collateral {

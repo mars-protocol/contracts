@@ -10,7 +10,7 @@ use mars_red_bank::{
     contract::{execute, migrate},
     error::ContractError,
     migrations::v2_0_0::v1_state::{self, OwnerSetNoneProposed},
-    state::{COLLATERALS, CONFIG, GUARD, MARKETS, OWNER},
+    state::{COLLATERALS, CONFIG, MARKETS, MIGRATION_GUARD, OWNER},
 };
 use mars_red_bank_types::{
     keys::{UserId, UserIdKey},
@@ -285,7 +285,7 @@ fn full_migration() {
     assert!(!COLLATERALS.is_empty(&deps.storage));
 
     // guard should be unlocked after migration
-    assert!(GUARD.assert_unlocked(&deps.storage).is_ok());
+    assert!(MIGRATION_GUARD.assert_unlocked(&deps.storage).is_ok());
 }
 
 fn atom_market() -> v1_state::Market {

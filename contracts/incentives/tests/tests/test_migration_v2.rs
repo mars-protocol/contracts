@@ -10,8 +10,8 @@ use mars_incentives::{
     contract::{execute, migrate},
     migrations::v2_0_0::v1_state::{self, OwnerSetNoneProposed},
     state::{
-        CONFIG, GUARD, INCENTIVE_STATES, OWNER, USER_ASSET_INDICES, USER_UNCLAIMED_REWARDS,
-        WHITELIST, WHITELIST_COUNT,
+        CONFIG, INCENTIVE_STATES, MIGRATION_GUARD, OWNER, USER_ASSET_INDICES,
+        USER_UNCLAIMED_REWARDS, WHITELIST, WHITELIST_COUNT,
     },
     ContractError,
 };
@@ -558,7 +558,7 @@ fn full_migration() {
     assert!(v1_state::USER_UNCLAIMED_REWARDS.is_empty(&deps.storage));
 
     // guard should be unlocked after migration
-    assert!(GUARD.assert_unlocked(&deps.storage).is_ok());
+    assert!(MIGRATION_GUARD.assert_unlocked(&deps.storage).is_ok());
 }
 
 fn create_market(denom: &str, scaled_amt: Uint128) -> Market {

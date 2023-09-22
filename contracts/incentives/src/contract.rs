@@ -25,8 +25,9 @@ use crate::{
     },
     migrations,
     state::{
-        self, CONFIG, DEFAULT_LIMIT, EMISSIONS, EPOCH_DURATION, GUARD, INCENTIVE_STATES, MAX_LIMIT,
-        OWNER, USER_ASSET_INDICES, USER_UNCLAIMED_REWARDS, WHITELIST, WHITELIST_COUNT,
+        self, CONFIG, DEFAULT_LIMIT, EMISSIONS, EPOCH_DURATION, INCENTIVE_STATES, MAX_LIMIT,
+        MIGRATION_GUARD, OWNER, USER_ASSET_INDICES, USER_UNCLAIMED_REWARDS, WHITELIST,
+        WHITELIST_COUNT,
     },
 };
 
@@ -111,7 +112,7 @@ pub fn execute(
             user_amount_scaled_before,
             total_amount_scaled_before,
         } => {
-            GUARD.assert_unlocked(deps.storage)?;
+            MIGRATION_GUARD.assert_unlocked(deps.storage)?;
             execute_balance_change(
                 deps,
                 env,
@@ -129,7 +130,7 @@ pub fn execute(
             start_after_incentive_denom,
             limit,
         } => {
-            GUARD.assert_unlocked(deps.storage)?;
+            MIGRATION_GUARD.assert_unlocked(deps.storage)?;
             execute_claim_rewards(
                 deps,
                 env,

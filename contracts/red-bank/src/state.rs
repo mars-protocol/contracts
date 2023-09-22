@@ -14,4 +14,5 @@ pub const COLLATERALS: Map<(&UserIdKey, &str), Collateral> = Map::new("colls");
 pub const DEBTS: Map<(&Addr, &str), Debt> = Map::new("debts");
 pub const UNCOLLATERALIZED_LOAN_LIMITS: Map<(&Addr, &str), Uint128> = Map::new("limits");
 
-pub const GUARD: Guard = Guard::new("guard");
+/// Used to mark the contract as locked during migrations
+pub const MIGRATION_GUARD: Guard = Guard::new("guard");

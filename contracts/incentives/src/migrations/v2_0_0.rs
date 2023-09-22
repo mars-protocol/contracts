@@ -15,7 +15,7 @@ use crate::{
     contract::{CONTRACT_NAME, CONTRACT_VERSION, MIN_EPOCH_DURATION},
     error::ContractError,
     state::{
-        CONFIG, EPOCH_DURATION, GUARD, INCENTIVE_STATES, OWNER, USER_ASSET_INDICES,
+        CONFIG, EPOCH_DURATION, INCENTIVE_STATES, MIGRATION_GUARD, OWNER, USER_ASSET_INDICES,
         USER_UNCLAIMED_REWARDS, WHITELIST, WHITELIST_COUNT,
     },
 };
@@ -135,7 +135,7 @@ pub mod v1_state {
 pub fn migrate(mut deps: DepsMut, env: Env, msg: MigrateMsg) -> Result<Response, ContractError> {
     // Lock incentives to prevent any operations during migration.
     // Unlock is executed after full migration in `migrate_users_indexes_and_rewards`.
-    GUARD.try_lock(deps.storage)?;
+    MIGRATION_GUARD.try_lock(deps.storage)?;
 
     // make sure we're migrating the correct contract and from the correct version
     assert_contract_version(deps.storage, &format!("crates.io:{CONTRACT_NAME}"), FROM_VERSION)?;
@@ -255,12 +255,12 @@ fn migrate_users_indexes_and_rewards(
     limit: usize,
 ) -> Result<Response, ContractError> {
     // Only allow to migrate users indexes and rewards if guard is locked via `migrate` entrypoint
-    GUARD.assert_locked(deps.storage)?;
+    MIGRATION_GUARD.assert_locked(deps.storage)?;
 
     let v1_uai_last_key = v1_state::USER_ASSET_INDICES.last(deps.storage)?.map(|kv| kv.0);
     if v1_uai_last_key.is_none() {
         // incentives locked via `migrate` entrypoint. Unlock incentives
-        GUARD.try_unlock(deps.storage)?;
+        MIGRATION_GUARD.try_unlock(deps.storage)?;
         return Ok(Response::new()
             .add_attribute("action", "migrate_users_indexes_and_rewards")
             .add_attribute("result", "empty_user_asset_indices"));
@@ -278,7 +278,7 @@ fn migrate_users_indexes_and_rewards(
     // if last keys are equal, migration is done
     if uai_last_key == v1_uai_last_key {
         // incentives locked via `migrate` entrypoint. Unlock incentives
-        GUARD.try_unlock(deps.storage)?;
+        MIGRATION_GUARD.try_unlock(deps.storage)?;
         return Ok(Response::new()
             .add_attribute("action", "migrate_users_indexes_and_rewards")
             .add_attribute("result", "done"));
@@ -375,7 +375,7 @@ fn migrate_users_indexes_and_rewards(
 
     if !has_more {
         // incentives locked via `migrate` entrypoint. Unlock incentives after full migration
-        GUARD.try_unlock(deps.storage)?;
+        MIGRATION_GUARD.try_unlock(deps.storage)?;
     }
 
     Ok(Response::new()
@@ -388,7 +388,7 @@ fn migrate_users_indexes_and_rewards(
 
 fn clear_v1_state(deps: DepsMut) -> Result<Response, ContractError> {
     // It is safe to clear v1 state only after full migration (guard is unlocked)
-    GUARD.assert_unlocked(deps.storage)?;
+    MIGRATION_GUARD.assert_unlocked(deps.storage)?;
     v1_state::ASSET_INCENTIVES.clear(deps.storage);
     v1_state::USER_ASSET_INDICES.clear(deps.storage);
     v1_state::USER_UNCLAIMED_REWARDS.clear(deps.storage);
