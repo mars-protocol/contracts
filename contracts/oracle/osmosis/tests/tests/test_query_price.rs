@@ -6,10 +6,10 @@ use cosmwasm_std::{
     Decimal, OwnedDeps, StdError,
 };
 use helpers::prepare_query_balancer_pool_response;
+use ica_oracle::msg::RedemptionRateResponse;
 use mars_oracle_base::{pyth::scale_pyth_price, ContractError};
 use mars_oracle_osmosis::{
-    contract::entry, stride::RedemptionRateResponse, DowntimeDetector, GeometricTwap,
-    OsmosisPriceSourceUnchecked, RedemptionRate,
+    contract::entry, DowntimeDetector, GeometricTwap, OsmosisPriceSourceUnchecked, RedemptionRate,
 };
 use mars_red_bank_types::oracle::{PriceResponse, QueryMsg};
 use mars_testing::{mock_env_at_block_time, MarsMockQuerier};
@@ -454,10 +454,9 @@ fn querying_lsd_price() {
     // setup redemption rate: stAtom/Atom
     deps.querier.set_redemption_rate(
         "ustatom",
-        "uatom",
         RedemptionRateResponse {
-            exchange_rate: ustatom_uatom_price + Decimal::one(), // geometric TWAP < redemption rate
-            last_updated: publish_time,
+            redemption_rate: ustatom_uatom_price + Decimal::one(), // geometric TWAP < redemption rate
+            update_time: publish_time,
         },
     );
 
@@ -495,10 +494,9 @@ fn querying_lsd_price() {
     let ustatom_uatom_redemption_rate = ustatom_uatom_price - Decimal::one(); // geometric TWAP > redemption rate
     deps.querier.set_redemption_rate(
         "ustatom",
-        "uatom",
         RedemptionRateResponse {
-            exchange_rate: ustatom_uatom_redemption_rate,
-            last_updated: publish_time,
+            redemption_rate: ustatom_uatom_redemption_rate,
+            update_time: publish_time,
         },
     );
 
@@ -609,10 +607,9 @@ fn querying_lsd_price_if_no_transitive_denom_price_source() {
     let publish_time = 1677157333u64;
     deps.querier.set_redemption_rate(
         "ustatom",
-        "uatom",
         RedemptionRateResponse {
-            exchange_rate: ustatom_uatom_price + Decimal::one(), // geometric TWAP < redemption rate
-            last_updated: publish_time,
+            redemption_rate: ustatom_uatom_price + Decimal::one(), // geometric TWAP < redemption rate
+            update_time: publish_time,
         },
     );
 
@@ -673,10 +670,9 @@ fn querying_lsd_price_if_redemption_rate_too_old() {
     // setup redemption rate: stAtom/Atom
     deps.querier.set_redemption_rate(
         "ustatom",
-        "uatom",
         RedemptionRateResponse {
-            exchange_rate: ustatom_uatom_price + Decimal::one(), // geometric TWAP < redemption rate
-            last_updated: publish_time - max_staleness - 1,
+            redemption_rate: ustatom_uatom_price + Decimal::one(), // geometric TWAP < redemption rate
+            update_time: publish_time - max_staleness - 1,
         },
     );
 
@@ -735,10 +731,9 @@ fn querying_lsd_price_with_downtime_detector() {
     // setup redemption rate: stAtom/Atom
     deps.querier.set_redemption_rate(
         "ustatom",
-        "uatom",
         RedemptionRateResponse {
-            exchange_rate: ustatom_uatom_price + Decimal::one(), // geometric TWAP < redemption rate
-            last_updated: publish_time,
+            redemption_rate: ustatom_uatom_price + Decimal::one(), // geometric TWAP < redemption rate
+            update_time: publish_time,
         },
     );
 
