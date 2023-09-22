@@ -248,6 +248,9 @@ fn full_migration() {
     )
     .unwrap();
 
+    // check v1 users collaterals after full migration
+    assert!(!v1_state::COLLATERALS.is_empty(&deps.storage));
+
     // check users collaterals with new user key (addr + account id)
     let collaterals = COLLATERALS
         .range(deps.as_ref().storage, None, None, Order::Ascending)
@@ -280,7 +283,7 @@ fn full_migration() {
     )
     .unwrap();
 
-    // check users collaterals after full migration
+    // check users collaterals after clearing
     assert!(v1_state::COLLATERALS.is_empty(&deps.storage));
     assert!(!COLLATERALS.is_empty(&deps.storage));
 
