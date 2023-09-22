@@ -254,6 +254,9 @@ fn migrate_users_indexes_and_rewards(
     deps: DepsMut,
     limit: usize,
 ) -> Result<Response, ContractError> {
+    // Only allow to migrate users indexes and rewards if guard is locked via `migrate` entrypoint
+    GUARD.assert_locked(deps.storage)?;
+
     let v1_uai_last_key = v1_state::USER_ASSET_INDICES.last(deps.storage)?.map(|kv| kv.0);
     if v1_uai_last_key.is_none() {
         // incentives locked via `migrate` entrypoint. Unlock incentives

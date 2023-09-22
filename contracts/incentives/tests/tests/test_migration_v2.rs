@@ -212,6 +212,18 @@ fn full_migration() {
         ..Default::default()
     });
 
+    // can't migrate users indexes and rewards if guard is inactive
+    let err = execute(
+        deps.as_mut(),
+        mock_env(),
+        mock_info(old_owner, &[]),
+        ExecuteMsg::Migrate(MigrateV1ToV2::UsersIndexesAndRewards {
+            limit: 2,
+        }),
+    )
+    .unwrap_err();
+    assert_eq!(err, ContractError::Guard(GuardError::Inactive {}));
+
     let epoch_duration = 604800;
     let max_whitelisted_denoms = 12;
     let res = migrate(
