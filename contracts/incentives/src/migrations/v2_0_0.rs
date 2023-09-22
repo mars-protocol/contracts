@@ -1,6 +1,6 @@
 use std::collections::HashMap;
 
-use cosmwasm_std::{DepsMut, Env, MessageInfo, Order, Response, StdResult, Uint128};
+use cosmwasm_std::{Addr, DepsMut, Env, MessageInfo, Order, Response, StdResult, Uint128};
 use cw2::{assert_contract_version, set_contract_version};
 use cw_storage_plus::Bound;
 use mars_owner::OwnerInit;
@@ -257,15 +257,6 @@ fn migrate_users_indexes_and_rewards(
     // Only allow to migrate users indexes and rewards if guard is locked via `migrate` entrypoint
     MIGRATION_GUARD.assert_locked(deps.storage)?;
 
-    let v1_uai_last_key = v1_state::USER_ASSET_INDICES.last(deps.storage)?.map(|kv| kv.0);
-    if v1_uai_last_key.is_none() {
-        // incentives locked via `migrate` entrypoint. Unlock incentives
-        MIGRATION_GUARD.try_unlock(deps.storage)?;
-        return Ok(Response::new()
-            .add_attribute("action", "migrate_users_indexes_and_rewards")
-            .add_attribute("result", "empty_user_asset_indices"));
-    }
-
     // convert last key from v2 to v1
     let uai_last_key = USER_ASSET_INDICES.last(deps.storage)?.map(|kv| kv.0);
     let uai_last_key = if let Some((user_id_key, col_denom, _incentive_denom)) = uai_last_key {
@@ -274,15 +265,6 @@ fn migrate_users_indexes_and_rewards(
     } else {
         None
     };
-
-    // if last keys are equal, migration is done
-    if uai_last_key == v1_uai_last_key {
-        // incentives locked via `migrate` entrypoint. Unlock incentives
-        MIGRATION_GUARD.try_unlock(deps.storage)?;
-        return Ok(Response::new()
-            .add_attribute("action", "migrate_users_indexes_and_rewards")
-            .add_attribute("result", "done"));
-    }
 
     // last key from new user asset indeces is first key (excluded) for v1 during pagination
     let start_after =
@@ -369,10 +351,6 @@ fn migrate_users_indexes_and_rewards(
         )?;
     }
 
-    let uai_last_key_str = uai_last_key
-        .map(|(addr, denom)| format!("{}-{}", addr, denom))
-        .unwrap_or("none".to_string());
-
     if !has_more {
         // incentives locked via `migrate` entrypoint. Unlock incentives after full migration
         MIGRATION_GUARD.try_unlock(deps.storage)?;
@@ -380,10 +358,21 @@ fn migrate_users_indexes_and_rewards(
 
     Ok(Response::new()
         .add_attribute("action", "migrate_users_indexes_and_rewards")
-        .add_attribute("result", "in_progress")
-        .add_attribute("start_after", uai_last_key_str)
+        .add_attribute(
+            "result",
+            if has_more {
+                "in_progress"
+            } else {
+                "done"
+            },
+        )
+        .add_attribute("start_after", key_to_str(uai_last_key))
         .add_attribute("limit", limit.to_string())
         .add_attribute("has_more", has_more.to_string()))
+}
+
+fn key_to_str(key: Option<(Addr, String)>) -> String {
+    key.map(|(addr, denom)| format!("{}-{}", addr, denom)).unwrap_or("none".to_string())
 }
 
 fn clear_v1_state(deps: DepsMut) -> Result<Response, ContractError> {

@@ -1,4 +1,4 @@
-use cosmwasm_std::{DepsMut, MessageInfo, Order, Response, StdResult};
+use cosmwasm_std::{Addr, DepsMut, MessageInfo, Order, Response, StdResult};
 use cw2::{assert_contract_version, set_contract_version};
 use cw_storage_plus::Bound;
 use mars_owner::OwnerInit;
@@ -158,15 +158,6 @@ fn migrate_collaterals(deps: DepsMut, limit: usize) -> Result<Response, Contract
     // Only allow to migrate collaterals if guard is locked via `migrate` entrypoint
     MIGRATION_GUARD.assert_locked(deps.storage)?;
 
-    let v1_colls_last_key = v1_state::COLLATERALS.last(deps.storage)?.map(|kv| kv.0);
-    if v1_colls_last_key.is_none() {
-        // red-bank locked via `migrate` entrypoint. Unlock red-bank
-        MIGRATION_GUARD.try_unlock(deps.storage)?;
-        return Ok(Response::new()
-            .add_attribute("action", "migrate_collaterals")
-            .add_attribute("result", "empty_collaterals"));
-    }
-
     // convert last key from v2 to v1
     let colls_last_key = COLLATERALS.last(deps.storage)?.map(|kv| kv.0);
     let colls_last_key = if let Some((user_id_key, denom)) = colls_last_key {
@@ -175,15 +166,6 @@ fn migrate_collaterals(deps: DepsMut, limit: usize) -> Result<Response, Contract
     } else {
         None
     };
-
-    // if last keys are equal, migration is done
-    if colls_last_key == v1_colls_last_key {
-        // red-bank locked via `migrate` entrypoint. Unlock red-bank
-        MIGRATION_GUARD.try_unlock(deps.storage)?;
-        return Ok(Response::new()
-            .add_attribute("action", "migrate_collaterals")
-            .add_attribute("result", "done"));
-    }
 
     // last key from new collaterals is first key (excluded) for v1 collaterals during pagination
     let start_after =
@@ -205,10 +187,6 @@ fn migrate_collaterals(deps: DepsMut, limit: usize) -> Result<Response, Contract
         COLLATERALS.save(deps.storage, (&user_id_key, &denom), &collateral)?;
     }
 
-    let colls_last_key_str = colls_last_key
-        .map(|(addr, denom)| format!("{}-{}", addr, denom))
-        .unwrap_or("none".to_string());
-
     if !has_more {
         // red-bank locked via `migrate` entrypoint. Unlock red-bank after full migration
         MIGRATION_GUARD.try_unlock(deps.storage)?;
@@ -216,10 +194,21 @@ fn migrate_collaterals(deps: DepsMut, limit: usize) -> Result<Response, Contract
 
     Ok(Response::new()
         .add_attribute("action", "migrate_collaterals")
-        .add_attribute("result", "in_progress")
-        .add_attribute("start_after", colls_last_key_str)
+        .add_attribute(
+            "result",
+            if has_more {
+                "in_progress"
+            } else {
+                "done"
+            },
+        )
+        .add_attribute("start_after", key_to_str(colls_last_key))
         .add_attribute("limit", limit.to_string())
         .add_attribute("has_more", has_more.to_string()))
+}
+
+fn key_to_str(key: Option<(Addr, String)>) -> String {
+    key.map(|(addr, denom)| format!("{}-{}", addr, denom)).unwrap_or("none".to_string())
 }
 
 fn clear_collaterals(deps: DepsMut) -> Result<Response, ContractError> {
@@ -256,7 +245,13 @@ mod tests {
         let res = migrate_collaterals(deps.as_mut(), 10).unwrap();
         assert_eq!(
             res.attributes,
-            vec![attr("action", "migrate_collaterals"), attr("result", "empty_collaterals"),]
+            vec![
+                attr("action", "migrate_collaterals"),
+                attr("result", "done"),
+                attr("start_after", "none"),
+                attr("limit", "10"),
+                attr("has_more", "false"),
+            ]
         );
     }
 
@@ -369,7 +364,7 @@ mod tests {
             res.attributes,
             vec![
                 attr("action", "migrate_collaterals"),
-                attr("result", "in_progress"),
+                attr("result", "done"),
                 attr("start_after", "user_2-ujake"),
                 attr("limit", "2"),
                 attr("has_more", "false"),

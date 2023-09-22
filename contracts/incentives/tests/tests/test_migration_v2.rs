@@ -433,7 +433,7 @@ fn full_migration() {
         res.attributes,
         vec![
             attr("action", "migrate_users_indexes_and_rewards"),
-            attr("result", "in_progress"),
+            attr("result", "done"),
             attr("start_after", "user_2-uosmo"),
             attr("limit", "2"),
             attr("has_more", "false"),
