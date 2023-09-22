@@ -218,7 +218,7 @@ fn full_migration() {
         deps.as_mut(),
         mock_env(),
         mock_info("random_user", &[]),
-        ExecuteMsg::Migrate(MigrateV1ToV2::ClearCollaterals {}),
+        ExecuteMsg::Migrate(MigrateV1ToV2::ClearV1State {}),
     )
     .unwrap_err();
     assert_eq!(err, ContractError::Owner(mars_owner::OwnerError::NotOwner {}));
@@ -228,7 +228,7 @@ fn full_migration() {
         deps.as_mut(),
         mock_env(),
         mock_info(old_owner, &[]),
-        ExecuteMsg::Migrate(MigrateV1ToV2::ClearCollaterals {}),
+        ExecuteMsg::Migrate(MigrateV1ToV2::ClearV1State {}),
     )
     .unwrap_err();
     assert_eq!(err, ContractError::Guard(GuardError::Active {}));
@@ -276,7 +276,7 @@ fn full_migration() {
         deps.as_mut(),
         mock_env(),
         mock_info(old_owner, &[]),
-        ExecuteMsg::Migrate(MigrateV1ToV2::ClearCollaterals {}),
+        ExecuteMsg::Migrate(MigrateV1ToV2::ClearV1State {}),
     )
     .unwrap();
 

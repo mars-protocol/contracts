@@ -140,8 +140,8 @@ pub enum MigrateV1ToV2 {
     Collaterals {
         limit: u32,
     },
-    /// Clears old V1 collaterals once all batches are migrated or after a certain time
-    ClearCollaterals {},
+    /// Clears old V1 state once all batches are migrated or after a certain time
+    ClearV1State {},
 }
 
 #[cw_serde]

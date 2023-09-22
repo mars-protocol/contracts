@@ -107,7 +107,7 @@ export type MigrateV1ToV2 =
       }
     }
   | {
-      clear_collaterals: {}
+      clear_v1_state: {}
     }
 export interface InitOrUpdateAssetParams {
   interest_rate_model?: InterestRateModel | null

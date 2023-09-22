@@ -147,9 +147,9 @@ pub fn execute_migration(
         MigrateV1ToV2::Collaterals {
             limit,
         } => migrate_collaterals(deps, limit as usize),
-        MigrateV1ToV2::ClearCollaterals {} => {
+        MigrateV1ToV2::ClearV1State {} => {
             OWNER.assert_owner(deps.storage, &info.sender)?;
-            clear_collaterals(deps)
+            clear_v1_state(deps)
         }
     }
 }
@@ -211,11 +211,11 @@ fn key_to_str(key: Option<(Addr, String)>) -> String {
     key.map(|(addr, denom)| format!("{}-{}", addr, denom)).unwrap_or("none".to_string())
 }
 
-fn clear_collaterals(deps: DepsMut) -> Result<Response, ContractError> {
-    // It is safe to clear collaterals only after full migration (guard is unlocked)
+fn clear_v1_state(deps: DepsMut) -> Result<Response, ContractError> {
+    // It is safe to clear v1 state only after full migration (guard is unlocked)
     MIGRATION_GUARD.assert_unlocked(deps.storage)?;
     v1_state::COLLATERALS.clear(deps.storage);
-    Ok(Response::new().add_attribute("action", "clear_collaterals"))
+    Ok(Response::new().add_attribute("action", "clear_v1_state"))
 }
 
 #[cfg(test)]

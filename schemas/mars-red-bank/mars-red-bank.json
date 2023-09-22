@@ -519,13 +519,13 @@
             "additionalProperties": false
           },
           {
-            "description": "Clears old V1 collaterals once all batches are migrated or after a certain time",
+            "description": "Clears old V1 state once all batches are migrated or after a certain time",
             "type": "object",
             "required": [
-              "clear_collaterals"
+              "clear_v1_state"
             ],
             "properties": {
-              "clear_collaterals": {
+              "clear_v1_state": {
                 "type": "object",
                 "additionalProperties": false
               }
