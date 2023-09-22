@@ -5,8 +5,10 @@ use cw2::{assert_contract_version, set_contract_version};
 use cw_storage_plus::Bound;
 use mars_owner::OwnerInit;
 use mars_red_bank_types::{
+    address_provider::{helpers, MarsAddressType},
     incentives::{Config, IncentiveState, MigrateMsg, MigrateV1ToV2},
     keys::{UserId, UserIdKey},
+    red_bank::{Market, QueryMsg, UserCollateralResponse},
 };
 
 use crate::{
@@ -173,7 +175,7 @@ pub fn migrate(mut deps: DepsMut, env: Env, msg: MigrateMsg) -> Result<Response,
     }
     EPOCH_DURATION.save(deps.storage, &msg.epoch_duration)?;
 
-    migrate_indices_and_unclaimed_rewards(&mut deps, env, &old_config_state.mars_denom)?;
+    migrate_assets_indexes(&mut deps, env, &old_config_state.mars_denom)?;
 
     set_contract_version(deps.storage, format!("crates.io:{CONTRACT_NAME}"), CONTRACT_VERSION)?;
 
@@ -183,12 +185,8 @@ pub fn migrate(mut deps: DepsMut, env: Env, msg: MigrateMsg) -> Result<Response,
         .add_attribute("to_version", CONTRACT_VERSION))
 }
 
-// Migrate indices and unclaimed rewards from v1 to v2 with helpers from v1.0.0 tag:
-// https://github.com/mars-protocol/red-bank/blob/v1.0.0/contracts/incentives/src/helpers.rs
-//
-// This is done by querying the Red Bank contract for the collateral total supply and
-// user collateral amount for each collateral denom.
-fn migrate_indices_and_unclaimed_rewards(
+/// Migrate asset incentives indexes from V1 ASSET_INCENTIVES to V2 INCENTIVE_STATES
+fn migrate_assets_indexes(
     deps: &mut DepsMut,
     env: Env,
     mars_denom: &str,
@@ -197,21 +195,20 @@ fn migrate_indices_and_unclaimed_rewards(
 
     let config = CONFIG.load(deps.storage)?;
 
-    let red_bank_addr = mars_red_bank_types::address_provider::helpers::query_contract_addr(
+    let red_bank_addr = helpers::query_contract_addr(
         deps.as_ref(),
         &config.address_provider,
-        mars_red_bank_types::address_provider::MarsAddressType::RedBank,
+        MarsAddressType::RedBank,
     )?;
 
     let mut asset_incentives = v1_state::ASSET_INCENTIVES
         .range(deps.storage, None, None, Order::Ascending)
         .collect::<StdResult<HashMap<_, _>>>()?;
-    v1_state::ASSET_INCENTIVES.clear(deps.storage);
 
     for (denom, asset_incentive) in asset_incentives.iter_mut() {
-        let market: mars_red_bank_types::red_bank::Market = deps.querier.query_wasm_smart(
+        let market: Market = deps.querier.query_wasm_smart(
             red_bank_addr.clone(),
-            &mars_red_bank_types::red_bank::QueryMsg::Market {
+            &QueryMsg::Market {
                 denom: denom.clone(),
             },
         )?;
@@ -231,66 +228,6 @@ fn migrate_indices_and_unclaimed_rewards(
                 last_updated: current_block_time,
             },
         )?;
-    }
-
-    let user_asset_indices = v1_state::USER_ASSET_INDICES
-        .range(deps.storage, None, None, Order::Ascending)
-        .collect::<StdResult<Vec<_>>>()?;
-    v1_state::USER_ASSET_INDICES.clear(deps.storage);
-
-    let mut user_unclaimed_rewards = v1_state::USER_UNCLAIMED_REWARDS
-        .range(deps.storage, None, None, Order::Ascending)
-        .collect::<StdResult<HashMap<_, _>>>()?;
-    v1_state::USER_UNCLAIMED_REWARDS.clear(deps.storage);
-
-    for ((user, denom), user_asset_index) in user_asset_indices {
-        let collateral: mars_red_bank_types::red_bank::UserCollateralResponse =
-            deps.querier.query_wasm_smart(
-                red_bank_addr.clone(),
-                &mars_red_bank_types::red_bank::QueryMsg::UserCollateral {
-                    user: user.to_string(),
-                    account_id: None,
-                    denom: denom.clone(),
-                },
-            )?;
-
-        // Get asset incentive for a denom. It should be available but just in case we don't unwrap
-        let denom_idx = asset_incentives.get(&denom);
-        if let Some(asset_incentive) = denom_idx {
-            // Since we didn't track unclaimed rewards per collateral denom in v1 we add them
-            // to the user unclaimed rewards for the first user collateral denom.
-            let mut unclaimed_rewards = user_unclaimed_rewards.remove(&user).unwrap_or_default();
-
-            if user_asset_index != asset_incentive.index {
-                // Compute user accrued rewards
-                let asset_accrued_rewards = v1_state::helpers::compute_user_accrued_rewards(
-                    collateral.amount_scaled,
-                    user_asset_index,
-                    asset_incentive.index,
-                )?;
-
-                unclaimed_rewards += asset_accrued_rewards;
-            }
-
-            let user_id = UserId::credit_manager(user.clone(), "".to_string());
-            let user_id_key: UserIdKey = user_id.try_into()?;
-
-            if !unclaimed_rewards.is_zero() {
-                // Update user unclaimed rewards
-                USER_UNCLAIMED_REWARDS.save(
-                    deps.storage,
-                    (&user_id_key, &denom, mars_denom),
-                    &unclaimed_rewards,
-                )?;
-            }
-
-            // Update user asset index
-            USER_ASSET_INDICES.save(
-                deps.storage,
-                (&user_id_key, &denom, mars_denom),
-                &asset_incentive.index,
-            )?;
-        }
     }
 
     Ok(())
@@ -358,68 +295,75 @@ fn migrate_users_indexes_and_rewards(
     }
 
     let config = CONFIG.load(deps.storage)?;
-    let red_bank_addr = mars_red_bank_types::address_provider::helpers::query_contract_addr(
+    let red_bank_addr = helpers::query_contract_addr(
         deps.as_ref(),
         &config.address_provider,
-        mars_red_bank_types::address_provider::MarsAddressType::RedBank,
+        MarsAddressType::RedBank,
     )?;
 
-    let asset_incentives = v1_state::ASSET_INCENTIVES
+    let asset_incentives = INCENTIVE_STATES
         .range(deps.storage, None, None, Order::Ascending)
+        .map(|kv| {
+            let kv = kv?;
+            let (denom, _mars_denom) = kv.0;
+            let incentive_state = kv.1;
+            Ok((denom, incentive_state))
+        })
         .collect::<StdResult<HashMap<_, _>>>()?;
 
     // save user asset indexes and unclaimed rewards
     for ((user, denom), user_asset_index) in v1_uai.into_iter() {
-        let collateral: mars_red_bank_types::red_bank::UserCollateralResponse =
-            deps.querier.query_wasm_smart(
-                red_bank_addr.clone(),
-                &mars_red_bank_types::red_bank::QueryMsg::UserCollateral {
-                    user: user.to_string(),
-                    account_id: None,
-                    denom: denom.clone(),
-                },
-            )?;
+        let collateral: UserCollateralResponse = deps.querier.query_wasm_smart(
+            red_bank_addr.clone(),
+            &QueryMsg::UserCollateral {
+                user: user.to_string(),
+                account_id: None,
+                denom: denom.clone(),
+            },
+        )?;
 
         // Get asset incentive for a denom. It should be available but just in case we don't unwrap
         let denom_idx = asset_incentives.get(&denom);
-        if let Some(asset_incentive) = denom_idx {
-            // Since we didn't track unclaimed rewards per collateral denom in v1 we add them
-            // to the user unclaimed rewards for the first user collateral denom.
-            // TODO maybe don't remove it, how to keep track that it is already used?
-            let mut unclaimed_rewards =
-                v1_state::USER_UNCLAIMED_REWARDS.may_load(deps.storage, &user)?.unwrap_or_default();
-            v1_state::USER_UNCLAIMED_REWARDS.remove(deps.storage, &user);
+        let Some(asset_incentive) = denom_idx else {
+            continue;
+        };
 
-            if user_asset_index != asset_incentive.index {
-                // Compute user accrued rewards
-                let asset_accrued_rewards = v1_state::helpers::compute_user_accrued_rewards(
-                    collateral.amount_scaled,
-                    user_asset_index,
-                    asset_incentive.index,
-                )?;
+        // Since we didn't track unclaimed rewards per collateral denom in v1 we add them
+        // to the user unclaimed rewards for the first user collateral denom.
+        // TODO maybe don't remove it, how to keep track that it is already used?
+        let mut unclaimed_rewards =
+            v1_state::USER_UNCLAIMED_REWARDS.may_load(deps.storage, &user)?.unwrap_or_default();
+        v1_state::USER_UNCLAIMED_REWARDS.remove(deps.storage, &user);
 
-                unclaimed_rewards += asset_accrued_rewards;
-            }
+        if user_asset_index != asset_incentive.index {
+            // Compute user accrued rewards
+            let asset_accrued_rewards = v1_state::helpers::compute_user_accrued_rewards(
+                collateral.amount_scaled,
+                user_asset_index,
+                asset_incentive.index,
+            )?;
 
-            let user_id = UserId::credit_manager(user.clone(), "".to_string());
-            let user_id_key: UserIdKey = user_id.try_into()?;
+            unclaimed_rewards += asset_accrued_rewards;
+        }
 
-            if !unclaimed_rewards.is_zero() {
-                // Update user unclaimed rewards
-                USER_UNCLAIMED_REWARDS.save(
-                    deps.storage,
-                    (&user_id_key, &denom, mars_denom),
-                    &unclaimed_rewards,
-                )?;
-            }
+        let user_id = UserId::credit_manager(user.clone(), "".to_string());
+        let user_id_key: UserIdKey = user_id.try_into()?;
 
-            // Update user asset index
-            USER_ASSET_INDICES.save(
+        if !unclaimed_rewards.is_zero() {
+            // Update user unclaimed rewards
+            USER_UNCLAIMED_REWARDS.save(
                 deps.storage,
                 (&user_id_key, &denom, mars_denom),
-                &asset_incentive.index,
+                &unclaimed_rewards,
             )?;
         }
+
+        // Update user asset index
+        USER_ASSET_INDICES.save(
+            deps.storage,
+            (&user_id_key, &denom, mars_denom),
+            &asset_incentive.index,
+        )?;
     }
 
     let uai_last_key_str = uai_last_key

@@ -1,24 +1,27 @@
 use std::collections::HashMap;
 
 use cosmwasm_std::{
-    attr, testing::mock_env, Addr, Decimal, Event, Order, StdResult, Timestamp, Uint128,
+    attr,
+    testing::{mock_env, mock_info},
+    Addr, Decimal, Event, Order, StdResult, Timestamp, Uint128,
 };
 use cw2::{ContractVersion, VersionError};
 use mars_incentives::{
-    contract::migrate,
+    contract::{execute, migrate},
     migrations::v2_0_0::v1_state::{self, OwnerSetNoneProposed},
     state::{
-        CONFIG, INCENTIVE_STATES, OWNER, USER_ASSET_INDICES, USER_UNCLAIMED_REWARDS, WHITELIST,
-        WHITELIST_COUNT,
+        CONFIG, GUARD, INCENTIVE_STATES, OWNER, USER_ASSET_INDICES, USER_UNCLAIMED_REWARDS,
+        WHITELIST, WHITELIST_COUNT,
     },
     ContractError,
 };
 use mars_red_bank_types::{
-    incentives::{Config, IncentiveState, MigrateMsg},
+    incentives::{Config, ExecuteMsg, IncentiveState, MigrateMsg, MigrateV1ToV2},
     keys::{UserId, UserIdKey},
     red_bank::{Market, UserCollateralResponse},
 };
 use mars_testing::{mock_dependencies, MockEnvParams};
+use mars_utils::error::GuardError;
 
 #[test]
 fn wrong_contract_name() {
@@ -69,7 +72,7 @@ fn wrong_contract_version() {
 }
 
 #[test]
-fn successful_migration() {
+fn full_migration() {
     let mut deps = mock_dependencies(&[]);
     cw2::set_contract_version(deps.as_mut().storage, "crates.io:mars-incentives", "1.0.0").unwrap();
 
@@ -314,6 +317,122 @@ fn successful_migration() {
         }
     );
 
+    // check if guard is active for user actions
+    let err = execute(
+        deps.as_mut(),
+        mock_env(),
+        mock_info("red-bank", &[]),
+        ExecuteMsg::BalanceChange {
+            user_addr: Addr::unchecked("depositor"),
+            account_id: None,
+            denom: "uosmo".to_string(),
+            user_amount_scaled_before: Uint128::one(),
+            total_amount_scaled_before: Uint128::one(),
+        },
+    )
+    .unwrap_err();
+    assert_eq!(err, ContractError::Guard(GuardError::Active {}));
+
+    let err = execute(
+        deps.as_mut(),
+        mock_env(),
+        mock_info("depositor", &[]),
+        ExecuteMsg::ClaimRewards {
+            account_id: None,
+            start_after_collateral_denom: None,
+            start_after_incentive_denom: None,
+            limit: None,
+        },
+    )
+    .unwrap_err();
+    assert_eq!(err, ContractError::Guard(GuardError::Active {}));
+
+    // non-owner is unauthorized to use migration
+    let err = execute(
+        deps.as_mut(),
+        mock_env(),
+        mock_info("random_user", &[]),
+        ExecuteMsg::Migrate(MigrateV1ToV2::UsersIndexesAndRewards {
+            limit: 100,
+            mars_denom: mars_denom.to_string(),
+        }),
+    )
+    .unwrap_err();
+    assert_eq!(err, ContractError::Owner(mars_owner::OwnerError::NotOwner {}));
+
+    // can't clear old V1 state if migration in progress - guard is active
+    let err = execute(
+        deps.as_mut(),
+        mock_env(),
+        mock_info(old_owner, &[]),
+        ExecuteMsg::Migrate(MigrateV1ToV2::ClearV1State {}),
+    )
+    .unwrap_err();
+    assert_eq!(err, ContractError::Guard(GuardError::Active {}));
+
+    let res = execute(
+        deps.as_mut(),
+        mock_env(),
+        mock_info(old_owner, &[]),
+        ExecuteMsg::Migrate(MigrateV1ToV2::UsersIndexesAndRewards {
+            limit: 2,
+            mars_denom: mars_denom.to_string(),
+        }),
+    )
+    .unwrap();
+    assert_eq!(
+        res.attributes,
+        vec![
+            attr("action", "migrate_users_indexes_and_rewards"),
+            attr("result", "in_progress"),
+            attr("start_after", "none"),
+            attr("limit", "2"),
+            attr("has_more", "true"),
+        ]
+    );
+
+    let res = execute(
+        deps.as_mut(),
+        mock_env(),
+        mock_info(old_owner, &[]),
+        ExecuteMsg::Migrate(MigrateV1ToV2::UsersIndexesAndRewards {
+            limit: 2,
+            mars_denom: mars_denom.to_string(),
+        }),
+    )
+    .unwrap();
+    assert_eq!(
+        res.attributes,
+        vec![
+            attr("action", "migrate_users_indexes_and_rewards"),
+            attr("result", "in_progress"),
+            attr("start_after", "user_1-uosmo"),
+            attr("limit", "2"),
+            attr("has_more", "true"),
+        ]
+    );
+
+    let res = execute(
+        deps.as_mut(),
+        mock_env(),
+        mock_info(old_owner, &[]),
+        ExecuteMsg::Migrate(MigrateV1ToV2::UsersIndexesAndRewards {
+            limit: 2,
+            mars_denom: mars_denom.to_string(),
+        }),
+    )
+    .unwrap();
+    assert_eq!(
+        res.attributes,
+        vec![
+            attr("action", "migrate_users_indexes_and_rewards"),
+            attr("result", "in_progress"),
+            attr("start_after", "user_2-uosmo"),
+            attr("limit", "2"),
+            attr("has_more", "false"),
+        ]
+    );
+
     // Check if user asset indices are updated correctly
     let user_asset_indices = USER_ASSET_INDICES
         .range(deps.as_ref().storage, None, None, Order::Ascending)
@@ -416,6 +535,23 @@ fn successful_migration() {
         .get(&(user_3_id_key, atom_denom.to_string(), mars_denom.to_string()))
         .unwrap();
     assert_eq!(user_3_atom_rewards_migrated, user_3_atom_rewards);
+
+    // Clear old V1 state
+    execute(
+        deps.as_mut(),
+        mock_env(),
+        mock_info(old_owner, &[]),
+        ExecuteMsg::Migrate(MigrateV1ToV2::ClearV1State {}),
+    )
+    .unwrap();
+
+    // check users collaterals after full migration
+    assert!(v1_state::ASSET_INCENTIVES.is_empty(&deps.storage));
+    assert!(v1_state::USER_ASSET_INDICES.is_empty(&deps.storage));
+    assert!(v1_state::USER_UNCLAIMED_REWARDS.is_empty(&deps.storage));
+
+    // guard should be unlocked after migration
+    assert!(GUARD.assert_unlocked(&deps.storage).is_ok());
 }
 
 fn create_market(denom: &str, scaled_amt: Uint128) -> Market {
