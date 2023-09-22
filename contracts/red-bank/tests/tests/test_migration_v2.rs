@@ -213,14 +213,12 @@ fn full_migration() {
     .unwrap_err();
     assert_eq!(err, ContractError::Guard(GuardError::Active {}));
 
-    // non-owner is unauthorized to use migration
+    // non-owner is unauthorized to clear state
     let err = execute(
         deps.as_mut(),
         mock_env(),
         mock_info("random_user", &[]),
-        ExecuteMsg::Migrate(MigrateV1ToV2::Collaterals {
-            limit: 100,
-        }),
+        ExecuteMsg::Migrate(MigrateV1ToV2::ClearCollaterals {}),
     )
     .unwrap_err();
     assert_eq!(err, ContractError::Owner(mars_owner::OwnerError::NotOwner {}));
@@ -243,7 +241,7 @@ fn full_migration() {
     execute(
         deps.as_mut(),
         mock_env(),
-        mock_info(old_owner, &[]),
+        mock_info("ranom_user", &[]),
         ExecuteMsg::Migrate(MigrateV1ToV2::Collaterals {
             limit: 100,
         }),

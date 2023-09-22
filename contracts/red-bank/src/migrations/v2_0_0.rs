@@ -143,13 +143,14 @@ pub fn execute_migration(
     info: MessageInfo,
     msg: MigrateV1ToV2,
 ) -> Result<Response, ContractError> {
-    OWNER.assert_owner(deps.storage, &info.sender)?;
-
     match msg {
         MigrateV1ToV2::Collaterals {
             limit,
         } => migrate_collaterals(deps, limit as usize),
-        MigrateV1ToV2::ClearCollaterals {} => clear_collaterals(deps),
+        MigrateV1ToV2::ClearCollaterals {} => {
+            OWNER.assert_owner(deps.storage, &info.sender)?;
+            clear_collaterals(deps)
+        }
     }
 }
 
