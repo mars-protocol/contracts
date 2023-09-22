@@ -6,7 +6,8 @@ use cw_multi_test::{App, AppResponse, BasicApp, Executor};
 use mars_owner::{OwnerResponse, OwnerUpdate};
 use mars_params::{
     msg::{
-        AssetParamsUpdate, EmergencyUpdate, ExecuteMsg, InstantiateMsg, QueryMsg, VaultConfigUpdate,
+        AssetParamsUpdate, ConfigResponse, EmergencyUpdate, ExecuteMsg, InstantiateMsg, QueryMsg,
+        VaultConfigUpdate,
     },
     types::{asset::AssetParams, vault::VaultConfig},
 };
@@ -82,6 +83,21 @@ impl MockEnv {
             sender.clone(),
             self.params_contract.clone(),
             &ExecuteMsg::UpdateTargetHealthFactor(thf),
+            &[],
+        )
+    }
+
+    pub fn update_config(
+        &mut self,
+        sender: &Addr,
+        address_provider: Option<String>,
+    ) -> AnyResult<AppResponse> {
+        self.app.execute_contract(
+            sender.clone(),
+            self.params_contract.clone(),
+            &ExecuteMsg::UpdateConfig {
+                address_provider,
+            },
             &[],
         )
     }
@@ -174,6 +190,13 @@ impl MockEnv {
         self.app
             .wrap()
             .query_wasm_smart(self.params_contract.clone(), &QueryMsg::TargetHealthFactor {})
+            .unwrap()
+    }
+
+    pub fn query_config(&self) -> ConfigResponse {
+        self.app
+            .wrap()
+            .query_wasm_smart(self.params_contract.clone(), &QueryMsg::Config {})
             .unwrap()
     }
 }

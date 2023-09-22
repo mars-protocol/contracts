@@ -17,6 +17,9 @@ pub struct InstantiateMsg {
 #[cw_serde]
 pub enum ExecuteMsg {
     UpdateOwner(OwnerUpdate),
+    UpdateConfig {
+        address_provider: Option<String>,
+    },
     UpdateTargetHealthFactor(Decimal),
     UpdateAssetParams(AssetParamsUpdate),
     UpdateVaultConfig(VaultConfigUpdate),
@@ -28,6 +31,9 @@ pub enum ExecuteMsg {
 pub enum QueryMsg {
     #[returns(mars_owner::OwnerResponse)]
     Owner {},
+
+    #[returns(crate::msg::ConfigResponse)]
+    Config {},
 
     #[returns(crate::types::asset::AssetParams)]
     AssetParams {
@@ -61,6 +67,12 @@ pub enum QueryMsg {
     TotalDeposit {
         denom: String,
     },
+}
+
+#[cw_serde]
+pub struct ConfigResponse {
+    /// Address provider returns addresses for all protocol contracts
+    pub address_provider: String,
 }
 
 #[cw_serde]

@@ -56,6 +56,27 @@
       {
         "type": "object",
         "required": [
+          "update_config"
+        ],
+        "properties": {
+          "update_config": {
+            "type": "object",
+            "properties": {
+              "address_provider": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              }
+            },
+            "additionalProperties": false
+          }
+        },
+        "additionalProperties": false
+      },
+      {
+        "type": "object",
+        "required": [
           "update_target_health_factor"
         ],
         "properties": {
@@ -580,6 +601,19 @@
         ],
         "properties": {
           "owner": {
+            "type": "object",
+            "additionalProperties": false
+          }
+        },
+        "additionalProperties": false
+      },
+      {
+        "type": "object",
+        "required": [
+          "config"
+        ],
+        "properties": {
+          "config": {
             "type": "object",
             "additionalProperties": false
           }
@@ -1295,6 +1329,21 @@
           "type": "string"
         }
       }
+    },
+    "config": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "ConfigResponse",
+      "type": "object",
+      "required": [
+        "address_provider"
+      ],
+      "properties": {
+        "address_provider": {
+          "description": "Address provider returns addresses for all protocol contracts",
+          "type": "string"
+        }
+      },
+      "additionalProperties": false
     },
     "owner": {
       "$schema": "http://json-schema.org/draft-07/schema#",

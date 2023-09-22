@@ -7,13 +7,17 @@ use mars_owner::OwnerInit::SetInitialOwner;
 use crate::{
     emergency_powers::{disable_borrowing, disallow_coin, set_zero_deposit_cap, set_zero_max_ltv},
     error::ContractResult,
-    execute::{assert_thf, update_asset_params, update_target_health_factor, update_vault_config},
+    execute::{
+        assert_thf, update_asset_params, update_config, update_target_health_factor,
+        update_vault_config,
+    },
     msg::{
         CmEmergencyUpdate, EmergencyUpdate, ExecuteMsg, InstantiateMsg, QueryMsg,
         RedBankEmergencyUpdate,
     },
     query::{
-        query_all_asset_params, query_all_vault_configs, query_total_deposit, query_vault_config,
+        query_all_asset_params, query_all_vault_configs, query_config, query_total_deposit,
+        query_vault_config,
     },
     state::{ADDRESS_PROVIDER, ASSET_PARAMS, OWNER, TARGET_HEALTH_FACTOR},
 };
@@ -56,6 +60,9 @@ pub fn execute(
 ) -> ContractResult<Response> {
     match msg {
         ExecuteMsg::UpdateOwner(update) => Ok(OWNER.update(deps, info, update)?),
+        ExecuteMsg::UpdateConfig {
+            address_provider,
+        } => update_config(deps, info, address_provider),
         ExecuteMsg::UpdateAssetParams(update) => update_asset_params(deps, info, update),
         ExecuteMsg::UpdateTargetHealthFactor(mcf) => update_target_health_factor(deps, info, mcf),
         ExecuteMsg::UpdateVaultConfig(update) => update_vault_config(deps, info, update),
@@ -80,6 +87,7 @@ pub fn execute(
 pub fn query(deps: Deps, env: Env, msg: QueryMsg) -> ContractResult<Binary> {
     let res = match msg {
         QueryMsg::Owner {} => to_binary(&OWNER.query(deps.storage)?),
+        QueryMsg::Config {} => to_binary(&query_config(deps)?),
         QueryMsg::AssetParams {
             denom,
         } => to_binary(&ASSET_PARAMS.load(deps.storage, &denom)?),
