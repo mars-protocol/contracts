@@ -3,7 +3,7 @@ use std::str::FromStr;
 use cosmwasm_std::{coin, Coin, Decimal, Empty, Isqrt, Uint128};
 use mars_oracle_base::ContractError;
 use mars_oracle_osmosis::{
-    msg::PriceSourceResponse, Downtime, DowntimeDetector, OsmosisPriceSourceChecked,
+    msg::PriceSourceResponse, DowntimeDetector, OsmosisPriceSourceChecked,
     OsmosisPriceSourceUnchecked,
 };
 use mars_params::msg::AssetParamsUpdate;
@@ -20,6 +20,7 @@ use mars_red_bank_types::{
     },
     rewards_collector::InstantiateMsg as InstantiateRewards,
 };
+use osmosis_std::types::osmosis::downtimedetector::v1beta1::Downtime;
 use osmosis_test_tube::{
     Account, Gamm, Module, OsmosisTestApp, RunnerResult, SigningAccount, Wasm,
 };
@@ -1080,6 +1081,7 @@ fn setup_redbank(wasm: &Wasm<OsmosisTestApp>, signer: &SigningAccount) -> (Strin
             address_provider: addr_provider_addr.clone(),
             epoch_duration: 604800, // 1 week in seconds
             max_whitelisted_denoms: 10,
+            mars_denom: "umars".to_string(),
         },
     );
 

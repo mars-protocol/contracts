@@ -112,6 +112,18 @@ pub struct PriceResponse {
     pub price: Decimal,
 }
 
+#[cw_serde]
+pub struct MigrateMsg {
+    /// The maximum confidence deviation allowed for an oracle price.
+    /// The confidence is measured as the percent of the confidence interval
+    /// value provided by the oracle as compared to the weighted average value
+    /// of the price.
+    pub max_confidence: Decimal,
+
+    /// The maximum deviation (percentage) between current and EMA price
+    pub max_deviation: Decimal,
+}
+
 pub mod helpers {
     use cosmwasm_std::{Decimal, QuerierWrapper, StdError, StdResult};
 

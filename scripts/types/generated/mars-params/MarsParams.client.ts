@@ -35,12 +35,14 @@ import {
   HlsParamsBaseForAddr,
   ArrayOfVaultConfigBaseForAddr,
   VaultConfigBaseForAddr,
+  ConfigResponse,
   OwnerResponse,
   TotalDepositResponse,
 } from './MarsParams.types'
 export interface MarsParamsReadOnlyInterface {
   contractAddress: string
   owner: () => Promise<OwnerResponse>
+  config: () => Promise<ConfigResponse>
   assetParams: ({ denom }: { denom: string }) => Promise<AssetParamsBaseForAddr>
   allAssetParams: ({
     limit,
@@ -68,6 +70,7 @@ export class MarsParamsQueryClient implements MarsParamsReadOnlyInterface {
     this.client = client
     this.contractAddress = contractAddress
     this.owner = this.owner.bind(this)
+    this.config = this.config.bind(this)
     this.assetParams = this.assetParams.bind(this)
     this.allAssetParams = this.allAssetParams.bind(this)
     this.vaultConfig = this.vaultConfig.bind(this)
@@ -79,6 +82,11 @@ export class MarsParamsQueryClient implements MarsParamsReadOnlyInterface {
   owner = async (): Promise<OwnerResponse> => {
     return this.client.queryContractSmart(this.contractAddress, {
       owner: {},
+    })
+  }
+  config = async (): Promise<ConfigResponse> => {
+    return this.client.queryContractSmart(this.contractAddress, {
+      config: {},
     })
   }
   assetParams = async ({ denom }: { denom: string }): Promise<AssetParamsBaseForAddr> => {
@@ -145,6 +153,16 @@ export interface MarsParamsInterface extends MarsParamsReadOnlyInterface {
     memo?: string,
     _funds?: Coin[],
   ) => Promise<ExecuteResult>
+  updateConfig: (
+    {
+      addressProvider,
+    }: {
+      addressProvider?: string
+    },
+    fee?: number | StdFee | 'auto',
+    memo?: string,
+    _funds?: Coin[],
+  ) => Promise<ExecuteResult>
   updateTargetHealthFactor: (
     fee?: number | StdFee | 'auto',
     memo?: string,
@@ -180,6 +198,7 @@ export class MarsParamsClient extends MarsParamsQueryClient implements MarsParam
     this.sender = sender
     this.contractAddress = contractAddress
     this.updateOwner = this.updateOwner.bind(this)
+    this.updateConfig = this.updateConfig.bind(this)
     this.updateTargetHealthFactor = this.updateTargetHealthFactor.bind(this)
     this.updateAssetParams = this.updateAssetParams.bind(this)
     this.updateVaultConfig = this.updateVaultConfig.bind(this)
@@ -197,6 +216,29 @@ export class MarsParamsClient extends MarsParamsQueryClient implements MarsParam
       this.contractAddress,
       {
         update_owner: ownerUpdate,
+      },
+      fee,
+      memo,
+      _funds,
+    )
+  }
+  updateConfig = async (
+    {
+      addressProvider,
+    }: {
+      addressProvider?: string
+    },
+    fee: number | StdFee | 'auto' = 'auto',
+    memo?: string,
+    _funds?: Coin[],
+  ): Promise<ExecuteResult> => {
+    return await this.client.execute(
+      this.sender,
+      this.contractAddress,
+      {
+        update_config: {
+          address_provider: addressProvider,
+        },
       },
       fee,
       memo,

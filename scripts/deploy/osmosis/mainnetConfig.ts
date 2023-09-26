@@ -119,7 +119,7 @@ export const axlUSDCOracle: OracleConfig = {
     geometric_twap: {
       pool_id: 678,
       window_size: 1800,
-      downtime_detector: { downtime: 'duration30m', recovery: 7200 },
+      downtime_detector: { downtime: 'Duration30m', recovery: 7200 },
     },
   },
 }

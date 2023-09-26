@@ -1,23 +1,27 @@
 use std::collections::HashMap;
 
 use cosmwasm_std::{
-    attr, testing::mock_env, Addr, Decimal, Event, Order, StdResult, Timestamp, Uint128,
+    attr,
+    testing::{mock_env, mock_info},
+    Addr, Decimal, Event, Order, StdResult, Timestamp, Uint128,
 };
-use cw2::VersionError;
+use cw2::{ContractVersion, VersionError};
 use mars_incentives::{
-    contract::migrate,
+    contract::{execute, migrate},
     migrations::v2_0_0::v1_state::{self, OwnerSetNoneProposed},
     state::{
-        CONFIG, INCENTIVE_STATES, OWNER, USER_ASSET_INDICES, USER_UNCLAIMED_REWARDS, WHITELIST,
-        WHITELIST_COUNT,
+        CONFIG, INCENTIVE_STATES, MIGRATION_GUARD, OWNER, USER_ASSET_INDICES,
+        USER_UNCLAIMED_REWARDS, WHITELIST, WHITELIST_COUNT,
     },
     ContractError,
 };
 use mars_red_bank_types::{
-    incentives::{Config, IncentiveState, MigrateMsg, V2Updates},
+    incentives::{Config, ExecuteMsg, IncentiveState, MigrateMsg, MigrateV1ToV2},
+    keys::{UserId, UserIdKey},
     red_bank::{Market, UserCollateralResponse},
 };
 use mars_testing::{mock_dependencies, MockEnvParams};
+use mars_utils::error::GuardError;
 
 #[test]
 fn wrong_contract_name() {
@@ -27,10 +31,10 @@ fn wrong_contract_name() {
     let err = migrate(
         deps.as_mut(),
         mock_env(),
-        MigrateMsg::V1_0_0ToV2_0_0(V2Updates {
+        MigrateMsg {
             epoch_duration: 604800,
             max_whitelisted_denoms: 10,
-        }),
+        },
     )
     .unwrap_err();
 
@@ -51,10 +55,10 @@ fn wrong_contract_version() {
     let err = migrate(
         deps.as_mut(),
         mock_env(),
-        MigrateMsg::V1_0_0ToV2_0_0(V2Updates {
+        MigrateMsg {
             epoch_duration: 604800,
             max_whitelisted_denoms: 10,
-        }),
+        },
     )
     .unwrap_err();
 
@@ -68,7 +72,7 @@ fn wrong_contract_version() {
 }
 
 #[test]
-fn successful_migration() {
+fn full_migration() {
     let mut deps = mock_dependencies(&[]);
     cw2::set_contract_version(deps.as_mut().storage, "crates.io:mars-incentives", "1.0.0").unwrap();
 
@@ -208,15 +212,27 @@ fn successful_migration() {
         ..Default::default()
     });
 
+    // can't migrate users indexes and rewards if guard is inactive
+    let err = execute(
+        deps.as_mut(),
+        mock_env(),
+        mock_info(old_owner, &[]),
+        ExecuteMsg::Migrate(MigrateV1ToV2::UsersIndexesAndRewards {
+            limit: 2,
+        }),
+    )
+    .unwrap_err();
+    assert_eq!(err, ContractError::Guard(GuardError::Inactive {}));
+
     let epoch_duration = 604800;
     let max_whitelisted_denoms = 12;
     let res = migrate(
         deps.as_mut(),
         env,
-        MigrateMsg::V1_0_0ToV2_0_0(V2Updates {
+        MigrateMsg {
             epoch_duration,
             max_whitelisted_denoms,
-        }),
+        },
     )
     .unwrap();
 
@@ -227,6 +243,12 @@ fn successful_migration() {
         res.attributes,
         vec![attr("action", "migrate"), attr("from_version", "1.0.0"), attr("to_version", "2.0.0")]
     );
+
+    let new_contract_version = ContractVersion {
+        contract: "crates.io:mars-incentives".to_string(),
+        version: "2.0.0".to_string(),
+    };
+    assert_eq!(cw2::get_contract_version(deps.as_ref().storage).unwrap(), new_contract_version);
 
     let o = OWNER.query(deps.as_ref().storage).unwrap();
     assert_eq!(old_owner.to_string(), o.owner.unwrap());
@@ -240,7 +262,8 @@ fn successful_migration() {
         new_config,
         Config {
             address_provider: old_config.address_provider,
-            max_whitelisted_denoms
+            max_whitelisted_denoms,
+            mars_denom: old_config.mars_denom
         }
     );
 
@@ -307,39 +330,190 @@ fn successful_migration() {
         }
     );
 
+    // check if guard is active for user actions
+    let err = execute(
+        deps.as_mut(),
+        mock_env(),
+        mock_info("red-bank", &[]),
+        ExecuteMsg::BalanceChange {
+            user_addr: Addr::unchecked("depositor"),
+            account_id: None,
+            denom: "uosmo".to_string(),
+            user_amount_scaled_before: Uint128::one(),
+            total_amount_scaled_before: Uint128::one(),
+        },
+    )
+    .unwrap_err();
+    assert_eq!(err, ContractError::Guard(GuardError::Active {}));
+
+    let err = execute(
+        deps.as_mut(),
+        mock_env(),
+        mock_info("depositor", &[]),
+        ExecuteMsg::ClaimRewards {
+            account_id: None,
+            start_after_collateral_denom: None,
+            start_after_incentive_denom: None,
+            limit: None,
+        },
+    )
+    .unwrap_err();
+    assert_eq!(err, ContractError::Guard(GuardError::Active {}));
+
+    // non-owner is unauthorized to clear state
+    let err = execute(
+        deps.as_mut(),
+        mock_env(),
+        mock_info("random_user", &[]),
+        ExecuteMsg::Migrate(MigrateV1ToV2::ClearV1State {}),
+    )
+    .unwrap_err();
+    assert_eq!(err, ContractError::Owner(mars_owner::OwnerError::NotOwner {}));
+
+    // can't clear old V1 state if migration in progress - guard is active
+    let err = execute(
+        deps.as_mut(),
+        mock_env(),
+        mock_info(old_owner, &[]),
+        ExecuteMsg::Migrate(MigrateV1ToV2::ClearV1State {}),
+    )
+    .unwrap_err();
+    assert_eq!(err, ContractError::Guard(GuardError::Active {}));
+
+    let res = execute(
+        deps.as_mut(),
+        mock_env(),
+        mock_info(old_owner, &[]),
+        ExecuteMsg::Migrate(MigrateV1ToV2::UsersIndexesAndRewards {
+            limit: 2,
+        }),
+    )
+    .unwrap();
+    assert_eq!(
+        res.attributes,
+        vec![
+            attr("action", "migrate_users_indexes_and_rewards"),
+            attr("result", "in_progress"),
+            attr("start_after", "none"),
+            attr("limit", "2"),
+            attr("has_more", "true"),
+        ]
+    );
+
+    let res = execute(
+        deps.as_mut(),
+        mock_env(),
+        mock_info("random_user_1", &[]),
+        ExecuteMsg::Migrate(MigrateV1ToV2::UsersIndexesAndRewards {
+            limit: 2,
+        }),
+    )
+    .unwrap();
+    assert_eq!(
+        res.attributes,
+        vec![
+            attr("action", "migrate_users_indexes_and_rewards"),
+            attr("result", "in_progress"),
+            attr("start_after", "user_1-uosmo"),
+            attr("limit", "2"),
+            attr("has_more", "true"),
+        ]
+    );
+
+    let res = execute(
+        deps.as_mut(),
+        mock_env(),
+        mock_info("random_user_2", &[]),
+        ExecuteMsg::Migrate(MigrateV1ToV2::UsersIndexesAndRewards {
+            limit: 2,
+        }),
+    )
+    .unwrap();
+    assert_eq!(
+        res.attributes,
+        vec![
+            attr("action", "migrate_users_indexes_and_rewards"),
+            attr("result", "done"),
+            attr("start_after", "user_2-uosmo"),
+            attr("limit", "2"),
+            attr("has_more", "false"),
+        ]
+    );
+
+    // check v1 state after full migration
+    assert!(!v1_state::ASSET_INCENTIVES.is_empty(&deps.storage));
+    assert!(!v1_state::USER_ASSET_INDICES.is_empty(&deps.storage));
+    assert!(v1_state::USER_UNCLAIMED_REWARDS.is_empty(&deps.storage));
+    assert!(!v1_state::USER_UNCLAIMED_REWARDS_BACKUP.is_empty(&deps.storage));
+
     // Check if user asset indices are updated correctly
-    let user_1_atom_idx = USER_ASSET_INDICES
-        .load(deps.as_ref().storage, ((&user_1, ""), atom_denom, mars_denom))
+    let user_asset_indices = USER_ASSET_INDICES
+        .range(deps.as_ref().storage, None, None, Order::Ascending)
+        .collect::<StdResult<HashMap<_, _>>>()
         .unwrap();
-    assert_eq!(user_1_atom_idx, new_atom_incentive.index);
-    let user_1_usdc_idx = USER_ASSET_INDICES
-        .load(deps.as_ref().storage, ((&user_1, ""), usdc_denom, mars_denom))
-        .unwrap();
-    assert_eq!(user_1_usdc_idx, new_usdc_incentive.index);
-    let user_1_osmo_idx = USER_ASSET_INDICES
-        .load(deps.as_ref().storage, ((&user_1, ""), osmo_denom, mars_denom))
-        .unwrap();
-    assert_eq!(user_1_osmo_idx, new_osmo_incentive.index);
+    assert_eq!(user_asset_indices.len(), 5);
 
-    let user_2_osmo_idx = USER_ASSET_INDICES
-        .load(deps.as_ref().storage, ((&user_2, ""), osmo_denom, mars_denom))
-        .unwrap();
-    assert_eq!(user_2_osmo_idx, new_osmo_incentive.index);
+    let user_id = UserId::credit_manager(user_1, "".to_string());
+    let user_1_id_key: UserIdKey = user_id.try_into().unwrap();
+    assert_eq!(
+        user_asset_indices
+            .get(&(user_1_id_key.clone(), atom_denom.to_string(), mars_denom.to_string()))
+            .unwrap(),
+        new_atom_incentive.index
+    );
+    assert_eq!(
+        user_asset_indices
+            .get(&(user_1_id_key.clone(), usdc_denom.to_string(), mars_denom.to_string()))
+            .unwrap(),
+        new_usdc_incentive.index
+    );
+    assert_eq!(
+        user_asset_indices
+            .get(&(user_1_id_key.clone(), osmo_denom.to_string(), mars_denom.to_string()))
+            .unwrap(),
+        new_osmo_incentive.index
+    );
 
-    let user_3_atom_idx = USER_ASSET_INDICES
-        .load(deps.as_ref().storage, ((&user_3, ""), atom_denom, mars_denom))
+    let user_id = UserId::credit_manager(user_2, "".to_string());
+    let user_2_id_key: UserIdKey = user_id.try_into().unwrap();
+    assert_eq!(
+        user_asset_indices
+            .get(&(user_2_id_key, osmo_denom.to_string(), mars_denom.to_string()))
+            .unwrap(),
+        new_osmo_incentive.index
+    );
+
+    let user_id = UserId::credit_manager(user_3, "".to_string());
+    let user_3_id_key: UserIdKey = user_id.try_into().unwrap();
+    assert_eq!(
+        user_asset_indices
+            .get(&(user_3_id_key.clone(), atom_denom.to_string(), mars_denom.to_string()))
+            .unwrap(),
+        new_atom_incentive.index
+    );
+
+    // Check if user unclaimed rewards backup is created correctly
+    let user_unclaimed_rewards_backup = v1_state::USER_UNCLAIMED_REWARDS_BACKUP
+        .range(deps.as_ref().storage, None, None, Order::Ascending)
+        .collect::<StdResult<HashMap<_, _>>>()
         .unwrap();
-    assert_eq!(user_3_atom_idx, new_atom_incentive.index);
+    assert_eq!(user_unclaimed_rewards_backup.len(), 1);
 
     // Check if user unclaimed rewards are migrated correctly
+    let user_unclaimed_rewards = USER_UNCLAIMED_REWARDS
+        .range(deps.as_ref().storage, None, None, Order::Ascending)
+        .collect::<StdResult<HashMap<_, _>>>()
+        .unwrap();
+    assert_eq!(user_unclaimed_rewards.len(), 4);
+
     let user_1_atom_rewards = v1_state::helpers::compute_user_accrued_rewards(
         user_1_atom_amount_scaled,
         user_1_atom_idx_old,
         new_atom_incentive.index,
     )
     .unwrap();
-    let user_1_atom_rewards_migrated = USER_UNCLAIMED_REWARDS
-        .load(deps.as_ref().storage, ((&user_1, ""), atom_denom, mars_denom))
+    let user_1_atom_rewards_migrated = *user_unclaimed_rewards
+        .get(&(user_1_id_key.clone(), atom_denom.to_string(), mars_denom.to_string()))
         .unwrap();
     assert_eq!(user_1_atom_rewards_migrated, user_1_unclaimed_rewards + user_1_atom_rewards);
     let user_1_usdc_rewards = v1_state::helpers::compute_user_accrued_rewards(
@@ -348,8 +522,8 @@ fn successful_migration() {
         new_usdc_incentive.index,
     )
     .unwrap();
-    let user_1_usdc_rewards_migrated = USER_UNCLAIMED_REWARDS
-        .load(deps.as_ref().storage, ((&user_1, ""), usdc_denom, mars_denom))
+    let user_1_usdc_rewards_migrated = *user_unclaimed_rewards
+        .get(&(user_1_id_key.clone(), usdc_denom.to_string(), mars_denom.to_string()))
         .unwrap();
     assert_eq!(user_1_usdc_rewards_migrated, user_1_usdc_rewards);
     let user_1_osmo_rewards = v1_state::helpers::compute_user_accrued_rewards(
@@ -358,8 +532,8 @@ fn successful_migration() {
         new_osmo_incentive.index,
     )
     .unwrap();
-    let user_1_osmo_rewards_migrated = USER_UNCLAIMED_REWARDS
-        .load(deps.as_ref().storage, ((&user_1, ""), osmo_denom, mars_denom))
+    let user_1_osmo_rewards_migrated = *user_unclaimed_rewards
+        .get(&(user_1_id_key, osmo_denom.to_string(), mars_denom.to_string()))
         .unwrap();
     assert_eq!(user_1_osmo_rewards_migrated, user_1_osmo_rewards);
 
@@ -377,10 +551,28 @@ fn successful_migration() {
         new_atom_incentive.index,
     )
     .unwrap();
-    let user_3_atom_rewards_migrated = USER_UNCLAIMED_REWARDS
-        .load(deps.as_ref().storage, ((&user_3, ""), atom_denom, mars_denom))
+    let user_3_atom_rewards_migrated = *user_unclaimed_rewards
+        .get(&(user_3_id_key, atom_denom.to_string(), mars_denom.to_string()))
         .unwrap();
     assert_eq!(user_3_atom_rewards_migrated, user_3_atom_rewards);
+
+    // Clear old V1 state
+    execute(
+        deps.as_mut(),
+        mock_env(),
+        mock_info(old_owner, &[]),
+        ExecuteMsg::Migrate(MigrateV1ToV2::ClearV1State {}),
+    )
+    .unwrap();
+
+    // check v1 state after clearing
+    assert!(v1_state::ASSET_INCENTIVES.is_empty(&deps.storage));
+    assert!(v1_state::USER_ASSET_INDICES.is_empty(&deps.storage));
+    assert!(v1_state::USER_UNCLAIMED_REWARDS.is_empty(&deps.storage));
+    assert!(v1_state::USER_UNCLAIMED_REWARDS_BACKUP.is_empty(&deps.storage));
+
+    // guard should be unlocked after migration
+    assert!(MIGRATION_GUARD.assert_unlocked(&deps.storage).is_ok());
 }
 
 fn create_market(denom: &str, scaled_amt: Uint128) -> Market {

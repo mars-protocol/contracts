@@ -14,6 +14,7 @@ import {
   OwnerUpdate,
   Decimal,
   Uint128,
+  MigrateV1ToV2,
   InitOrUpdateAssetParams,
   InterestRateModel,
   QueryMsg,
@@ -522,6 +523,12 @@ export interface MarsRedBankInterface extends MarsRedBankReadOnlyInterface {
     memo?: string,
     _funds?: Coin[],
   ) => Promise<ExecuteResult>
+  migrate: (
+    migrateV1ToV2: MigrateV1ToV2,
+    fee?: number | StdFee | 'auto',
+    memo?: string,
+    _funds?: Coin[],
+  ) => Promise<ExecuteResult>
 }
 export class MarsRedBankClient extends MarsRedBankQueryClient implements MarsRedBankInterface {
   client: SigningCosmWasmClient
@@ -544,6 +551,7 @@ export class MarsRedBankClient extends MarsRedBankQueryClient implements MarsRed
     this.repay = this.repay.bind(this)
     this.liquidate = this.liquidate.bind(this)
     this.updateAssetCollateralStatus = this.updateAssetCollateralStatus.bind(this)
+    this.migrate = this.migrate.bind(this)
   }
 
   updateOwner = async (
@@ -829,6 +837,23 @@ export class MarsRedBankClient extends MarsRedBankQueryClient implements MarsRed
           denom,
           enable,
         },
+      },
+      fee,
+      memo,
+      _funds,
+    )
+  }
+  migrate = async (
+    migrateV1ToV2: MigrateV1ToV2,
+    fee: number | StdFee | 'auto' = 'auto',
+    memo?: string,
+    _funds?: Coin[],
+  ): Promise<ExecuteResult> => {
+    return await this.client.execute(
+      this.sender,
+      this.contractAddress,
+      {
+        migrate: migrateV1ToV2,
       },
       fee,
       memo,

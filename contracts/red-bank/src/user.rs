@@ -3,6 +3,7 @@ use cosmwasm_std::{
 };
 use mars_red_bank_types::{
     incentives,
+    keys::{UserId, UserIdKey},
     red_bank::{Collateral, Debt, Market},
 };
 
@@ -54,7 +55,9 @@ impl<'a> User<'a> {
         denom: &str,
         account_id: &str,
     ) -> StdResult<Collateral> {
-        COLLATERALS.load(store, (self.0, account_id, denom))
+        let user_id = UserId::credit_manager(self.0.clone(), account_id.to_string());
+        let user_id_key: UserIdKey = user_id.try_into()?;
+        COLLATERALS.load(store, (&user_id_key, denom))
     }
 
     /// Load the user's debt
@@ -111,9 +114,12 @@ impl<'a> User<'a> {
     ) -> StdResult<Response> {
         let acc_id = account_id.clone().unwrap_or("".to_string());
 
+        let user_id = UserId::credit_manager(self.0.clone(), acc_id);
+        let user_id_key: UserIdKey = user_id.try_into()?;
+
         let mut amount_scaled_before = Uint128::zero();
 
-        COLLATERALS.update(store, (self.0, &acc_id, &market.denom), |opt| -> StdResult<_> {
+        COLLATERALS.update(store, (&user_id_key, &market.denom), |opt| -> StdResult<_> {
             match opt {
                 Some(mut col) => {
                     amount_scaled_before = col.amount_scaled;
@@ -154,15 +160,18 @@ impl<'a> User<'a> {
     ) -> StdResult<Response> {
         let acc_id = account_id.clone().unwrap_or("".to_string());
 
-        let mut collateral = COLLATERALS.load(store, (self.0, &acc_id, &market.denom))?;
+        let user_id = UserId::credit_manager(self.0.clone(), acc_id);
+        let user_id_key: UserIdKey = user_id.try_into()?;
+
+        let mut collateral = COLLATERALS.load(store, (&user_id_key, &market.denom))?;
 
         let amount_scaled_before = collateral.amount_scaled;
         collateral.amount_scaled = collateral.amount_scaled.checked_sub(amount_scaled)?;
 
         if collateral.amount_scaled.is_zero() {
-            COLLATERALS.remove(store, (self.0, &acc_id, &market.denom));
+            COLLATERALS.remove(store, (&user_id_key, &market.denom));
         } else {
-            COLLATERALS.save(store, (self.0, &acc_id, &market.denom), &collateral)?;
+            COLLATERALS.save(store, (&user_id_key, &market.denom), &collateral)?;
         }
 
         let msg = self.build_incentives_balance_changed_msg(

@@ -1,7 +1,11 @@
 use cosmwasm_std::{Addr, Decimal, Order, StdResult, Storage, Uint128};
 use cw_storage_plus::{Bound, Item, Map, PrefixBound};
 use mars_owner::Owner;
-use mars_red_bank_types::incentives::{Config, IncentiveState};
+use mars_red_bank_types::{
+    incentives::{Config, IncentiveState},
+    keys::{UserId, UserIdKey},
+};
+use mars_utils::guard::Guard;
 
 use crate::ContractError;
 
@@ -33,12 +37,15 @@ pub const EMISSIONS: Map<(&str, &str, u64), Uint128> = Map::new("emissions");
 
 /// A map containing the incentive index for a given user, collateral denom and incentive denom.
 /// The key is (user address with optional account id, collateral denom, incentive denom).
-pub const USER_ASSET_INDICES: Map<((&Addr, &str), &str, &str), Decimal> = Map::new("indices");
+pub const USER_ASSET_INDICES: Map<(&UserIdKey, &str, &str), Decimal> = Map::new("indices_v2");
 
 /// A map containing the amount of unclaimed incentives for a given user and incentive denom.
 /// The key is (user address with optional account id, collateral denom, incentive denom).
-pub const USER_UNCLAIMED_REWARDS: Map<((&Addr, &str), &str, &str), Uint128> =
-    Map::new("unclaimed_rewards");
+pub const USER_UNCLAIMED_REWARDS: Map<(&UserIdKey, &str, &str), Uint128> =
+    Map::new("unclaimed_rewards_v2");
+
+/// Used to mark the contract as locked during migrations
+pub const MIGRATION_GUARD: Guard = Guard::new("guard");
 
 /// The default limit for pagination
 pub const DEFAULT_LIMIT: u32 = 5;
@@ -56,9 +63,12 @@ pub fn increase_unclaimed_rewards(
     incentive_denom: &str,
     accrued_rewards: Uint128,
 ) -> StdResult<()> {
+    let user_id = UserId::credit_manager(user_addr.clone(), acc_id.to_string());
+    let user_id_key: UserIdKey = user_id.try_into()?;
+
     USER_UNCLAIMED_REWARDS.update(
         storage,
-        ((user_addr, acc_id), collateral_denom, incentive_denom),
+        (&user_id_key, collateral_denom, incentive_denom),
         |ur: Option<Uint128>| -> StdResult<Uint128> {
             Ok(ur.map_or_else(|| accrued_rewards, |r| r + accrued_rewards))
         },

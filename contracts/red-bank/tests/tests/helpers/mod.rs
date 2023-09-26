@@ -20,10 +20,13 @@ use mars_red_bank::{
     error::ContractError,
     state::{COLLATERALS, DEBTS, MARKETS},
 };
-use mars_red_bank_types::red_bank::{
-    Collateral, CreateOrUpdateConfig, Debt, InitOrUpdateAssetParams, InstantiateMsg,
-    InterestRateModel, Market, QueryMsg, UserCollateralResponse, UserDebtResponse,
-    UserHealthStatus, UserPositionResponse,
+use mars_red_bank_types::{
+    keys::{UserId, UserIdKey},
+    red_bank::{
+        Collateral, CreateOrUpdateConfig, Debt, InitOrUpdateAssetParams, InstantiateMsg,
+        InterestRateModel, Market, QueryMsg, UserCollateralResponse, UserDebtResponse,
+        UserHealthStatus, UserPositionResponse,
+    },
 };
 use mars_testing::{mock_dependencies, mock_env, mock_info, MarsMockQuerier, MockEnvParams};
 
@@ -34,15 +37,19 @@ pub fn set_collateral(
     amount_scaled: Uint128,
     enabled: bool,
 ) {
+    let user_id = UserId::credit_manager(user_addr.clone(), "".to_string());
+    let user_id_key: UserIdKey = user_id.try_into().unwrap();
     let collateral = Collateral {
         amount_scaled,
         enabled,
     };
-    COLLATERALS.save(deps.storage, (user_addr, "", denom), &collateral).unwrap();
+    COLLATERALS.save(deps.storage, (&user_id_key, denom), &collateral).unwrap();
 }
 
 pub fn unset_collateral(deps: DepsMut, user_addr: &Addr, denom: &str) {
-    COLLATERALS.remove(deps.storage, (user_addr, "", denom));
+    let user_id = UserId::credit_manager(user_addr.clone(), "".to_string());
+    let user_id_key: UserIdKey = user_id.try_into().unwrap();
+    COLLATERALS.remove(deps.storage, (&user_id_key, denom));
 }
 
 pub fn set_debt(
@@ -66,13 +73,17 @@ pub fn has_debt_position(deps: Deps, user_addr: &Addr, denom: &str) -> bool {
 
 /// Find if a user has a collateral position in the specified asset, regardless of whether enabled
 pub fn has_collateral_position(deps: Deps, user_addr: &Addr, denom: &str) -> bool {
-    COLLATERALS.may_load(deps.storage, (user_addr, "", denom)).unwrap().is_some()
+    let user_id = UserId::credit_manager(user_addr.clone(), "".to_string());
+    let user_id_key: UserIdKey = user_id.try_into().unwrap();
+    COLLATERALS.may_load(deps.storage, (&user_id_key, denom)).unwrap().is_some()
 }
 
 /// Find whether a user has a collateral position AND has it enabled in the specified asset
 pub fn has_collateral_enabled(deps: Deps, user_addr: &Addr, denom: &str) -> bool {
+    let user_id = UserId::credit_manager(user_addr.clone(), "".to_string());
+    let user_id_key: UserIdKey = user_id.try_into().unwrap();
     COLLATERALS
-        .may_load(deps.storage, (user_addr, "", denom))
+        .may_load(deps.storage, (&user_id_key, denom))
         .unwrap()
         .map(|collateral| collateral.enabled)
         .unwrap_or(false)

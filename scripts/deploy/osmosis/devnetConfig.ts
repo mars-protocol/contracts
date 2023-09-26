@@ -513,7 +513,7 @@ export const stAtomOracle: OracleConfig = {
   price_source: {
     staked_geometric_twap: {
       downtime_detector: {
-        downtime: 'duration30m',
+        downtime: 'Duration30m',
         recovery: 7200,
       },
       pool_id: 803,
@@ -594,7 +594,7 @@ export const atomOracleTwap: OracleConfig = {
   denom: atom,
   price_source: {
     geometric_twap: {
-      downtime_detector: { downtime: 'duration30m', recovery: 7200 },
+      downtime_detector: { downtime: 'Duration30m', recovery: 7200 },
       window_size: 1800,
       pool_id: 1,
     },
@@ -605,7 +605,7 @@ export const axlOracleTwap: OracleConfig = {
   denom: axl,
   price_source: {
     geometric_twap: {
-      downtime_detector: { downtime: 'duration30m', recovery: 7200 },
+      downtime_detector: { downtime: 'Duration30m', recovery: 7200 },
       window_size: 1800,
       pool_id: 812,
     },
@@ -617,7 +617,7 @@ export const stAtomOracleTwap: OracleConfig = {
   price_source: {
     staked_geometric_twap: {
       downtime_detector: {
-        downtime: 'duration30m',
+        downtime: 'Duration30m',
         recovery: 7200,
       },
       pool_id: 803,
@@ -631,7 +631,7 @@ export const wbtcOracleTwap: OracleConfig = {
   denom: wbtc,
   price_source: {
     geometric_twap: {
-      downtime_detector: { downtime: 'duration30m', recovery: 7200 },
+      downtime_detector: { downtime: 'Duration30m', recovery: 7200 },
       window_size: 1800,
       pool_id: 712,
     },
@@ -642,7 +642,7 @@ export const axlUSDCOracleTwap: OracleConfig = {
   denom: axlUSDC,
   price_source: {
     geometric_twap: {
-      downtime_detector: { downtime: 'duration30m', recovery: 7200 },
+      downtime_detector: { downtime: 'Duration30m', recovery: 7200 },
       window_size: 1800,
       pool_id: 678,
     },
@@ -653,7 +653,7 @@ export const ethOracleTwap: OracleConfig = {
   denom: weth,
   price_source: {
     geometric_twap: {
-      downtime_detector: { downtime: 'duration30m', recovery: 7200 },
+      downtime_detector: { downtime: 'Duration30m', recovery: 7200 },
       window_size: 1800,
       pool_id: 704,
     },

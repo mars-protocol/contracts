@@ -745,7 +745,7 @@ dependencies = [
  "hex",
  "schemars",
  "serde",
- "serde-json-wasm",
+ "serde-json-wasm 0.5.1",
  "sha2 0.10.7",
  "thiserror",
 ]
@@ -1847,6 +1847,7 @@ dependencies = [
  "cw2 1.1.0",
  "mars-owner 2.0.0",
  "mars-red-bank-types 2.0.0",
+ "mars-testing",
  "serde",
  "thiserror",
 ]
@@ -2087,8 +2088,11 @@ version = "2.0.0"
 dependencies = [
  "cosmwasm-schema",
  "cosmwasm-std",
+ "cw-storage-plus 1.1.0",
  "mars-owner 2.0.0",
  "mars-utils 2.0.0",
+ "serde",
+ "serde-json-wasm 1.0.0",
  "strum 0.25.0",
  "thiserror",
 ]
@@ -2100,6 +2104,7 @@ dependencies = [
  "cosmwasm-schema",
  "cosmwasm-std",
  "cw-storage-plus 1.1.0",
+ "cw2 1.1.0",
  "mars-owner 2.0.0",
  "mars-red-bank-types 2.0.0",
  "mars-utils 2.0.0",
@@ -2123,7 +2128,9 @@ dependencies = [
 name = "mars-rewards-collector-osmosis"
 version = "2.0.0"
 dependencies = [
+ "cosmwasm-schema",
  "cosmwasm-std",
+ "cw-storage-plus 1.1.0",
  "cw2 1.1.0",
  "mars-osmosis",
  "mars-owner 2.0.0",
@@ -2160,6 +2167,7 @@ dependencies = [
  "cosmwasm-std",
  "cw-paginate",
  "cw-storage-plus 1.1.0",
+ "cw2 1.1.0",
  "mars-owner 2.0.0",
  "mars-red-bank-types 2.0.0",
  "schemars",
@@ -2183,11 +2191,13 @@ dependencies = [
  "cosmwasm-schema",
  "cosmwasm-std",
  "cw-it",
+ "cw-storage-plus 1.1.0",
  "cw2 1.1.0",
  "mars-osmosis",
  "mars-owner 2.0.0",
  "mars-red-bank-types 2.0.0",
  "mars-swapper-base",
+ "mars-testing",
  "osmosis-std",
 ]
 
@@ -2232,7 +2242,9 @@ dependencies = [
 name = "mars-utils"
 version = "2.0.0"
 dependencies = [
+ "cosmwasm-schema",
  "cosmwasm-std",
+ "cw-storage-plus 1.1.0",
  "thiserror",
 ]
 
@@ -2290,7 +2302,7 @@ dependencies = [
  "protobuf 3.2.0",
  "schemars",
  "serde",
- "serde-json-wasm",
+ "serde-json-wasm 0.5.1",
  "serde_json",
  "thiserror",
 ]
@@ -3156,6 +3168,15 @@ name = "serde-json-wasm"
 version = "0.5.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "16a62a1fad1e1828b24acac8f2b468971dade7b8c3c2e672bcadefefb1f8c137"
+dependencies = [
+ "serde",
+]
+
+[[package]]
+name = "serde-json-wasm"
+version = "1.0.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "83c37d03f3b0f6b5f77c11af1e7c772de1c9af83e50bef7bb6069601900ba67b"
 dependencies = [
  "serde",
 ]

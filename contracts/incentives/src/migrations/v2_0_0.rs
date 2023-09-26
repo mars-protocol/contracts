@@ -1,15 +1,21 @@
 use std::collections::HashMap;
 
-use cosmwasm_std::{DepsMut, Env, Order, Response, StdResult, Uint128};
+use cosmwasm_std::{Addr, DepsMut, Env, MessageInfo, Order, Response, StdResult, Uint128};
 use cw2::{assert_contract_version, set_contract_version};
+use cw_storage_plus::Bound;
 use mars_owner::OwnerInit;
-use mars_red_bank_types::incentives::{Config, IncentiveState, V2Updates};
+use mars_red_bank_types::{
+    address_provider::{helpers, MarsAddressType},
+    incentives::{Config, IncentiveState, MigrateMsg, MigrateV1ToV2},
+    keys::{UserId, UserIdKey},
+    red_bank::{Market, QueryMsg, UserCollateralResponse},
+};
 
 use crate::{
     contract::{CONTRACT_NAME, CONTRACT_VERSION, MIN_EPOCH_DURATION},
     error::ContractError,
     state::{
-        CONFIG, EPOCH_DURATION, INCENTIVE_STATES, OWNER, USER_ASSET_INDICES,
+        CONFIG, EPOCH_DURATION, INCENTIVE_STATES, MIGRATION_GUARD, OWNER, USER_ASSET_INDICES,
         USER_UNCLAIMED_REWARDS, WHITELIST, WHITELIST_COUNT,
     },
 };
@@ -28,6 +34,7 @@ pub mod v1_state {
     pub const ASSET_INCENTIVES: Map<&str, AssetIncentive> = Map::new("incentives");
     pub const USER_ASSET_INDICES: Map<(&Addr, &str), Decimal> = Map::new("indices");
     pub const USER_UNCLAIMED_REWARDS: Map<&Addr, Uint128> = Map::new("unclaimed_rewards");
+    pub const USER_UNCLAIMED_REWARDS_BACKUP: Map<&Addr, Uint128> = Map::new("ur_backup");
 
     #[cw_serde]
     pub enum OwnerState {
@@ -126,7 +133,11 @@ pub mod v1_state {
     }
 }
 
-pub fn migrate(mut deps: DepsMut, env: Env, updates: V2Updates) -> Result<Response, ContractError> {
+pub fn migrate(mut deps: DepsMut, env: Env, msg: MigrateMsg) -> Result<Response, ContractError> {
+    // Lock incentives to prevent any operations during migration.
+    // Unlock is executed after full migration in `migrate_users_indexes_and_rewards`.
+    MIGRATION_GUARD.try_lock(deps.storage)?;
+
     // make sure we're migrating the correct contract and from the correct version
     assert_contract_version(deps.storage, &format!("crates.io:{CONTRACT_NAME}"), FROM_VERSION)?;
 
@@ -149,7 +160,8 @@ pub fn migrate(mut deps: DepsMut, env: Env, updates: V2Updates) -> Result<Respon
         deps.storage,
         &Config {
             address_provider: old_config_state.address_provider,
-            max_whitelisted_denoms: updates.max_whitelisted_denoms,
+            max_whitelisted_denoms: msg.max_whitelisted_denoms,
+            mars_denom: old_config_state.mars_denom.clone(),
         },
     )?;
 
@@ -158,14 +170,14 @@ pub fn migrate(mut deps: DepsMut, env: Env, updates: V2Updates) -> Result<Respon
     WHITELIST_COUNT.save(deps.storage, &1)?;
 
     // EPOCH_DURATION not existent in v1, initializing
-    if updates.epoch_duration < MIN_EPOCH_DURATION {
+    if msg.epoch_duration < MIN_EPOCH_DURATION {
         return Err(ContractError::EpochDurationTooShort {
             min_epoch_duration: MIN_EPOCH_DURATION,
         });
     }
-    EPOCH_DURATION.save(deps.storage, &updates.epoch_duration)?;
+    EPOCH_DURATION.save(deps.storage, &msg.epoch_duration)?;
 
-    migrate_indices_and_unclaimed_rewards(&mut deps, env, &old_config_state.mars_denom)?;
+    migrate_assets_indexes(&mut deps, env, &old_config_state.mars_denom)?;
 
     set_contract_version(deps.storage, format!("crates.io:{CONTRACT_NAME}"), CONTRACT_VERSION)?;
 
@@ -175,12 +187,8 @@ pub fn migrate(mut deps: DepsMut, env: Env, updates: V2Updates) -> Result<Respon
         .add_attribute("to_version", CONTRACT_VERSION))
 }
 
-// Migrate indices and unclaimed rewards from v1 to v2 with helpers from v1.0.0 tag:
-// https://github.com/mars-protocol/red-bank/blob/v1.0.0/contracts/incentives/src/helpers.rs
-//
-// This is done by querying the Red Bank contract for the collateral total supply and
-// user collateral amount for each collateral denom.
-fn migrate_indices_and_unclaimed_rewards(
+/// Migrate asset incentives indexes from V1 ASSET_INCENTIVES to V2 INCENTIVE_STATES
+fn migrate_assets_indexes(
     deps: &mut DepsMut,
     env: Env,
     mars_denom: &str,
@@ -189,21 +197,20 @@ fn migrate_indices_and_unclaimed_rewards(
 
     let config = CONFIG.load(deps.storage)?;
 
-    let red_bank_addr = mars_red_bank_types::address_provider::helpers::query_contract_addr(
+    let red_bank_addr = helpers::query_contract_addr(
         deps.as_ref(),
         &config.address_provider,
-        mars_red_bank_types::address_provider::MarsAddressType::RedBank,
+        MarsAddressType::RedBank,
     )?;
 
     let mut asset_incentives = v1_state::ASSET_INCENTIVES
         .range(deps.storage, None, None, Order::Ascending)
         .collect::<StdResult<HashMap<_, _>>>()?;
-    v1_state::ASSET_INCENTIVES.clear(deps.storage);
 
     for (denom, asset_incentive) in asset_incentives.iter_mut() {
-        let market: mars_red_bank_types::red_bank::Market = deps.querier.query_wasm_smart(
+        let market: Market = deps.querier.query_wasm_smart(
             red_bank_addr.clone(),
-            &mars_red_bank_types::red_bank::QueryMsg::Market {
+            &QueryMsg::Market {
                 denom: denom.clone(),
             },
         )?;
@@ -225,62 +232,169 @@ fn migrate_indices_and_unclaimed_rewards(
         )?;
     }
 
-    let user_asset_indices = v1_state::USER_ASSET_INDICES
-        .range(deps.storage, None, None, Order::Ascending)
+    Ok(())
+}
+
+pub fn execute_migration(
+    deps: DepsMut,
+    info: MessageInfo,
+    msg: MigrateV1ToV2,
+) -> Result<Response, ContractError> {
+    match msg {
+        MigrateV1ToV2::UsersIndexesAndRewards {
+            limit,
+        } => migrate_users_indexes_and_rewards(deps, limit as usize),
+        MigrateV1ToV2::ClearV1State {} => {
+            OWNER.assert_owner(deps.storage, &info.sender)?;
+            clear_v1_state(deps)
+        }
+    }
+}
+
+fn migrate_users_indexes_and_rewards(
+    mut deps: DepsMut,
+    limit: usize,
+) -> Result<Response, ContractError> {
+    // Only allow to migrate users indexes and rewards if guard is locked via `migrate` entrypoint
+    MIGRATION_GUARD.assert_locked(deps.storage)?;
+
+    // convert last key from v2 to v1
+    let uai_last_key = USER_ASSET_INDICES.last(deps.storage)?.map(|kv| kv.0);
+    let uai_last_key = if let Some((user_id_key, col_denom, _incentive_denom)) = uai_last_key {
+        let user_id: UserId = user_id_key.try_into()?;
+        Some((user_id.addr, col_denom))
+    } else {
+        None
+    };
+
+    // last key from new user asset indeces is first key (excluded) for v1 during pagination
+    let start_after =
+        uai_last_key.as_ref().map(|(addr, denom)| Bound::exclusive((addr, denom.as_str())));
+    let mut v1_uai = v1_state::USER_ASSET_INDICES
+        .range(deps.storage, start_after, None, Order::Ascending)
+        .take(limit + 1)
         .collect::<StdResult<Vec<_>>>()?;
-    v1_state::USER_ASSET_INDICES.clear(deps.storage);
 
-    let mut user_unclaimed_rewards = v1_state::USER_UNCLAIMED_REWARDS
+    let has_more = v1_uai.len() > limit;
+    if has_more {
+        v1_uai.pop(); // Remove the extra item used for checking if there are more items
+    }
+
+    let config = CONFIG.load(deps.storage)?;
+    let red_bank_addr = helpers::query_contract_addr(
+        deps.as_ref(),
+        &config.address_provider,
+        MarsAddressType::RedBank,
+    )?;
+
+    let asset_incentives = INCENTIVE_STATES
         .range(deps.storage, None, None, Order::Ascending)
+        .map(|kv| {
+            let kv = kv?;
+            let (denom, _mars_denom) = kv.0;
+            let incentive_state = kv.1;
+            Ok((denom, incentive_state))
+        })
         .collect::<StdResult<HashMap<_, _>>>()?;
-    v1_state::USER_UNCLAIMED_REWARDS.clear(deps.storage);
 
-    for ((user, denom), user_asset_index) in user_asset_indices {
-        let collateral: mars_red_bank_types::red_bank::UserCollateralResponse =
-            deps.querier.query_wasm_smart(
-                red_bank_addr.clone(),
-                &mars_red_bank_types::red_bank::QueryMsg::UserCollateral {
-                    user: user.to_string(),
-                    account_id: None,
-                    denom: denom.clone(),
-                },
-            )?;
+    // save user asset indexes and unclaimed rewards
+    for ((user, denom), user_asset_index) in v1_uai.into_iter() {
+        let collateral: UserCollateralResponse = deps.querier.query_wasm_smart(
+            red_bank_addr.clone(),
+            &QueryMsg::UserCollateral {
+                user: user.to_string(),
+                account_id: None,
+                denom: denom.clone(),
+            },
+        )?;
 
         // Get asset incentive for a denom. It should be available but just in case we don't unwrap
         let denom_idx = asset_incentives.get(&denom);
-        if let Some(asset_incentive) = denom_idx {
-            // Since we didn't track unclaimed rewards per collateral denom in v1 we add them
-            // to the user unclaimed rewards for the first user collateral denom.
-            let mut unclaimed_rewards = user_unclaimed_rewards.remove(&user).unwrap_or_default();
+        let Some(asset_incentive) = denom_idx else {
+            continue;
+        };
 
-            if user_asset_index != asset_incentive.index {
-                // Compute user accrued rewards
-                let asset_accrued_rewards = v1_state::helpers::compute_user_accrued_rewards(
-                    collateral.amount_scaled,
-                    user_asset_index,
-                    asset_incentive.index,
-                )?;
+        // Since we didn't track unclaimed rewards per collateral denom in v1 we add them
+        // to the user unclaimed rewards for the first user collateral denom.
+        let mut unclaimed_rewards = read_and_backup_unclaimed_rewards(&mut deps, &user)?;
 
-                unclaimed_rewards += asset_accrued_rewards;
-            }
+        if user_asset_index != asset_incentive.index {
+            // Compute user accrued rewards
+            let asset_accrued_rewards = v1_state::helpers::compute_user_accrued_rewards(
+                collateral.amount_scaled,
+                user_asset_index,
+                asset_incentive.index,
+            )?;
 
-            if !unclaimed_rewards.is_zero() {
-                // Update user unclaimed rewards
-                USER_UNCLAIMED_REWARDS.save(
-                    deps.storage,
-                    ((&user, ""), &denom, mars_denom),
-                    &unclaimed_rewards,
-                )?;
-            }
+            unclaimed_rewards += asset_accrued_rewards;
+        }
 
-            // Update user asset index
-            USER_ASSET_INDICES.save(
+        let user_id = UserId::credit_manager(user.clone(), "".to_string());
+        let user_id_key: UserIdKey = user_id.try_into()?;
+
+        if !unclaimed_rewards.is_zero() {
+            // Update user unclaimed rewards
+            USER_UNCLAIMED_REWARDS.save(
                 deps.storage,
-                ((&user, ""), &denom, mars_denom),
-                &asset_incentive.index,
+                (&user_id_key, &denom, &config.mars_denom),
+                &unclaimed_rewards,
             )?;
         }
+
+        // Update user asset index
+        USER_ASSET_INDICES.save(
+            deps.storage,
+            (&user_id_key, &denom, &config.mars_denom),
+            &asset_incentive.index,
+        )?;
     }
 
-    Ok(())
+    if !has_more {
+        // incentives locked via `migrate` entrypoint. Unlock incentives after full migration
+        MIGRATION_GUARD.try_unlock(deps.storage)?;
+    }
+
+    Ok(Response::new()
+        .add_attribute("action", "migrate_users_indexes_and_rewards")
+        .add_attribute(
+            "result",
+            if has_more {
+                "in_progress"
+            } else {
+                "done"
+            },
+        )
+        .add_attribute("start_after", key_to_str(uai_last_key))
+        .add_attribute("limit", limit.to_string())
+        .add_attribute("has_more", has_more.to_string()))
+}
+
+fn read_and_backup_unclaimed_rewards(
+    deps: &mut DepsMut<'_>,
+    user: &Addr,
+) -> Result<Uint128, ContractError> {
+    let unclaimed_rewards_opt = v1_state::USER_UNCLAIMED_REWARDS.may_load(deps.storage, user)?;
+    if let Some(unclaimed_rewards) = unclaimed_rewards_opt {
+        // Make a backup of unclaimed rewards.
+        // This way we can restore unclaimed rewards for a user in case of migration failure.
+        v1_state::USER_UNCLAIMED_REWARDS_BACKUP.save(deps.storage, user, &unclaimed_rewards)?;
+
+        // Remove unclaimed rewards from v1 state because we want to add them only once to v2 state.
+        v1_state::USER_UNCLAIMED_REWARDS.remove(deps.storage, user);
+    }
+    Ok(unclaimed_rewards_opt.unwrap_or_default())
+}
+
+fn key_to_str(key: Option<(Addr, String)>) -> String {
+    key.map(|(addr, denom)| format!("{}-{}", addr, denom)).unwrap_or("none".to_string())
+}
+
+fn clear_v1_state(deps: DepsMut) -> Result<Response, ContractError> {
+    // It is safe to clear v1 state only after full migration (guard is unlocked)
+    MIGRATION_GUARD.assert_unlocked(deps.storage)?;
+    v1_state::ASSET_INCENTIVES.clear(deps.storage);
+    v1_state::USER_ASSET_INDICES.clear(deps.storage);
+    v1_state::USER_UNCLAIMED_REWARDS.clear(deps.storage);
+    v1_state::USER_UNCLAIMED_REWARDS_BACKUP.clear(deps.storage);
+    Ok(Response::new().add_attribute("action", "clear_v1_state"))
 }

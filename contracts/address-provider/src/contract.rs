@@ -3,7 +3,7 @@ use std::convert::TryInto;
 #[cfg(not(feature = "library"))]
 use cosmwasm_std::entry_point;
 use cosmwasm_std::{
-    to_binary, Addr, Binary, Deps, DepsMut, Env, MessageInfo, Order, Response, StdResult,
+    to_binary, Addr, Binary, Deps, DepsMut, Empty, Env, MessageInfo, Order, Response, StdResult,
 };
 use cw2::set_contract_version;
 use cw_storage_plus::Bound;
@@ -17,6 +17,7 @@ use crate::{
     error::ContractError,
     helpers::{assert_valid_addr, assert_valid_prefix},
     key::MarsAddressTypeKey,
+    migrations,
     state::{ADDRESSES, CONFIG, OWNER},
 };
 
@@ -163,4 +164,9 @@ fn query_all_addresses(
             })
         })
         .collect()
+}
+
+#[entry_point]
+pub fn migrate(deps: DepsMut, _env: Env, _msg: Empty) -> Result<Response, ContractError> {
+    migrations::v2_0_0::migrate(deps)
 }

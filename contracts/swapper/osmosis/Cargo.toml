@@ -23,6 +23,7 @@ library    = []
 cosmwasm-schema     = { workspace = true }
 cosmwasm-std        = { workspace = true }
 cw2                 = { workspace = true }
+cw-storage-plus     = { workspace = true }
 mars-osmosis        = { workspace = true }
 mars-owner          = { workspace = true }
 mars-swapper-base   = { workspace = true }
@@ -30,5 +31,6 @@ osmosis-std         = { workspace = true }
 mars-red-bank-types = { workspace = true }
 
 [dev-dependencies]
-anyhow = { workspace = true }
-cw-it  = { workspace = true, features = ["osmosis-test-tube"] }
+anyhow       = { workspace = true }
+cw-it        = { workspace = true, features = ["osmosis-test-tube"] }
+mars-testing = { workspace = true }

@@ -6,8 +6,10 @@ use mars_health::error::HealthError;
 use mars_liquidation::error::LiquidationError;
 use mars_owner::OwnerError;
 use mars_red_bank_types::error::MarsError;
-use mars_utils::error::ValidationError;
+use mars_utils::error::{GuardError, ValidationError};
 use thiserror::Error;
+
+pub type ContractResult<T> = Result<T, ContractError>;
 
 #[derive(Error, Debug, PartialEq)]
 pub enum ContractError {
@@ -155,4 +157,10 @@ pub enum ContractError {
 
     #[error("Cannot repay uncollateralized loan on behalf of another user")]
     CannotRepayUncollateralizedLoanOnBehalfOf {},
+
+    #[error("{0}")]
+    Version(#[from] cw2::VersionError),
+
+    #[error("{0}")]
+    Guard(#[from] GuardError),
 }

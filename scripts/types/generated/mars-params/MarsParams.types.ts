@@ -16,6 +16,11 @@ export type ExecuteMsg =
       update_owner: OwnerUpdate
     }
   | {
+      update_config: {
+        address_provider?: string | null
+      }
+    }
+  | {
       update_target_health_factor: Decimal
     }
   | {
@@ -131,6 +136,9 @@ export type QueryMsg =
       owner: {}
     }
   | {
+      config: {}
+    }
+  | {
       asset_params: {
         denom: string
       }
@@ -200,6 +208,9 @@ export interface VaultConfigBaseForAddr {
   liquidation_threshold: Decimal
   max_loan_to_value: Decimal
   whitelisted: boolean
+}
+export interface ConfigResponse {
+  address_provider: string
 }
 export interface OwnerResponse {
   abolished: boolean

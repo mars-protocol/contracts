@@ -8,6 +8,7 @@
 export interface InstantiateMsg {
   address_provider: string
   epoch_duration: number
+  mars_denom: string
   max_whitelisted_denoms: number
   owner: string
 }
@@ -53,6 +54,9 @@ export type ExecuteMsg =
   | {
       update_owner: OwnerUpdate
     }
+  | {
+      migrate: MigrateV1ToV2
+    }
 export type Uint128 = string
 export type Addr = string
 export type OwnerUpdate =
@@ -70,6 +74,15 @@ export type OwnerUpdate =
       }
     }
   | 'clear_emergency_owner'
+export type MigrateV1ToV2 =
+  | {
+      users_indexes_and_rewards: {
+        limit: number
+      }
+    }
+  | {
+      clear_v1_state: {}
+    }
 export interface WhitelistEntry {
   denom: string
   min_emission_rate: Uint128

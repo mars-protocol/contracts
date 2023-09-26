@@ -19,6 +19,7 @@ use mars_red_bank_types::{
     address_provider::MarsAddressType,
     error::MarsError,
     incentives,
+    keys::{UserId, UserIdKey},
     red_bank::{Collateral, ExecuteMsg, Market},
 };
 use mars_testing::{mock_env_at_block_time, MarsMockQuerier};
@@ -351,7 +352,9 @@ fn depositing_without_existing_position() {
 
     // the depositor previously did not have a collateral position
     // a position should have been created with the correct scaled amount, and enabled by default
-    let collateral = COLLATERALS.load(deps.as_ref().storage, (&depositor_addr, "", denom)).unwrap();
+    let user_id = UserId::credit_manager(depositor_addr, "".to_string());
+    let user_id_key: UserIdKey = user_id.try_into().unwrap();
+    let collateral = COLLATERALS.load(deps.as_ref().storage, (&user_id_key, denom)).unwrap();
     assert_eq!(
         collateral,
         Collateral {
@@ -420,7 +423,9 @@ fn depositing_with_existing_position() {
 
     // the depositor's scaled collateral amount should have been increased
     // however, the `enabled` status should not been affected
-    let collateral = COLLATERALS.load(deps.as_ref().storage, (&depositor_addr, "", denom)).unwrap();
+    let user_id = UserId::credit_manager(depositor_addr, "".to_string());
+    let user_id_key: UserIdKey = user_id.try_into().unwrap();
+    let collateral = COLLATERALS.load(deps.as_ref().storage, (&user_id_key, denom)).unwrap();
     let expected = collateral_amount_scaled + expected_mint_amount;
     assert_eq!(
         collateral,
@@ -506,13 +511,18 @@ fn depositing_on_behalf_of() {
         ]
     );
 
+    let user_id = UserId::credit_manager(depositor_addr, "".to_string());
+    let user_id_key: UserIdKey = user_id.try_into().unwrap();
+
     // depositor should not have created a new collateral position
-    let opt = COLLATERALS.may_load(deps.as_ref().storage, (&depositor_addr, "", denom)).unwrap();
+    let opt = COLLATERALS.may_load(deps.as_ref().storage, (&user_id_key, denom)).unwrap();
     assert!(opt.is_none());
 
+    let user_id = UserId::credit_manager(on_behalf_of_addr, "".to_string());
+    let user_id_key: UserIdKey = user_id.try_into().unwrap();
+
     // the recipient should have created a new collateral position
-    let collateral =
-        COLLATERALS.load(deps.as_ref().storage, (&on_behalf_of_addr, "", denom)).unwrap();
+    let collateral = COLLATERALS.load(deps.as_ref().storage, (&user_id_key, denom)).unwrap();
     assert_eq!(
         collateral,
         Collateral {
@@ -549,9 +559,11 @@ fn depositing_on_behalf_of_cannot_enable_collateral() {
     )
     .unwrap();
 
+    let user_id = UserId::credit_manager(on_behalf_of_addr.clone(), "".to_string());
+    let user_id_key: UserIdKey = user_id.try_into().unwrap();
+
     // 'on_behalf_of_addr' should have collateral enabled
-    let collateral =
-        COLLATERALS.load(deps.as_ref().storage, (&on_behalf_of_addr, "", denom)).unwrap();
+    let collateral = COLLATERALS.load(deps.as_ref().storage, (&user_id_key, denom)).unwrap();
     assert!(collateral.enabled);
 
     // 'on_behalf_of_addr' disables asset as collateral
@@ -567,8 +579,7 @@ fn depositing_on_behalf_of_cannot_enable_collateral() {
     .unwrap();
 
     // verify asset is disabled as collateral for 'on_behalf_of_addr'
-    let collateral =
-        COLLATERALS.load(deps.as_ref().storage, (&on_behalf_of_addr, "", denom)).unwrap();
+    let collateral = COLLATERALS.load(deps.as_ref().storage, (&user_id_key, denom)).unwrap();
     assert!(!collateral.enabled);
 
     // 'depositor_addr' deposits a small amount of funds to 'on_behalf_of_addr' to enable his asset as collateral
@@ -584,8 +595,7 @@ fn depositing_on_behalf_of_cannot_enable_collateral() {
     .unwrap();
 
     // 'on_behalf_of_addr' doesn't have the asset enabled as collateral
-    let collateral =
-        COLLATERALS.load(deps.as_ref().storage, (&on_behalf_of_addr, "", denom)).unwrap();
+    let collateral = COLLATERALS.load(deps.as_ref().storage, (&user_id_key, denom)).unwrap();
     assert!(!collateral.enabled);
 }
 

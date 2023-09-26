@@ -15,6 +15,7 @@ import {
   OwnerUpdate,
   Decimal,
   Uint128,
+  MigrateV1ToV2,
   InitOrUpdateAssetParams,
   InterestRateModel,
   QueryMsg,
@@ -516,6 +517,26 @@ export function useMarsRedBankConfigQuery<TData = ConfigResponse>({
     marsRedBankQueryKeys.config(client?.contractAddress),
     () => (client ? client.config() : Promise.reject(new Error('Invalid client'))),
     { ...options, enabled: !!client && (options?.enabled != undefined ? options.enabled : true) },
+  )
+}
+export interface MarsRedBankMigrateMutation {
+  client: MarsRedBankClient
+  msg: MigrateV1ToV2
+  args?: {
+    fee?: number | StdFee | 'auto'
+    memo?: string
+    funds?: Coin[]
+  }
+}
+export function useMarsRedBankMigrateMutation(
+  options?: Omit<
+    UseMutationOptions<ExecuteResult, Error, MarsRedBankMigrateMutation>,
+    'mutationFn'
+  >,
+) {
+  return useMutation<ExecuteResult, Error, MarsRedBankMigrateMutation>(
+    ({ client, msg, args: { fee, memo, funds } = {} }) => client.migrate(msg, fee, memo, funds),
+    options,
   )
 }
 export interface MarsRedBankUpdateAssetCollateralStatusMutation {

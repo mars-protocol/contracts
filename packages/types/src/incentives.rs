@@ -10,6 +10,8 @@ pub struct Config {
     /// The maximum number of incentive denoms that can be whitelisted at any given time. This is
     /// a guard against accidentally whitelisting too many denoms, which could cause max gas errors.
     pub max_whitelisted_denoms: u8,
+    /// Mars Token Denom
+    pub mars_denom: String,
 }
 
 /// Incentive Metadata for a given incentive
@@ -87,6 +89,8 @@ pub struct InstantiateMsg {
     /// The maximum number of incentive denoms that can be whitelisted at any given time. This is
     /// a guard against accidentally whitelisting too many denoms, which could cause max gas errors.
     pub max_whitelisted_denoms: u8,
+    /// Mars Token Denom
+    pub mars_denom: String,
 }
 
 #[cw_serde]
@@ -161,6 +165,20 @@ pub enum ExecuteMsg {
 
     /// Manages admin role state
     UpdateOwner(OwnerUpdate),
+
+    // Manages migration. It is used to handle migration in batches to avoid out of gas errors.
+    Migrate(MigrateV1ToV2),
+}
+
+/// Migrate from V1 to V2, only owner can call
+#[cw_serde]
+pub enum MigrateV1ToV2 {
+    /// Migrate users indexes and unclaimed rewards in batches
+    UsersIndexesAndRewards {
+        limit: u32,
+    },
+    /// Clears old V1 state once all batches are migrated or after a certain time
+    ClearV1State {},
 }
 
 #[cw_serde]
@@ -252,18 +270,13 @@ pub enum QueryMsg {
 }
 
 #[cw_serde]
-pub struct V2Updates {
+pub struct MigrateMsg {
     /// The amount of time in seconds for each incentive epoch. This is the minimum amount of time
     /// that an incentive can last, and each incentive must be a multiple of this duration.
     pub epoch_duration: u64,
     /// The maximum number of incentive denoms that can be whitelisted at any given time. This is
     /// a guard against accidentally whitelisting too many denoms, which could cause max gas errors.
     pub max_whitelisted_denoms: u8,
-}
-
-#[cw_serde]
-pub enum MigrateMsg {
-    V1_0_0ToV2_0_0(V2Updates),
 }
 
 #[cw_serde]

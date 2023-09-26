@@ -10,6 +10,7 @@ pub mod health;
 pub mod instantiate;
 pub mod interest_rates;
 pub mod liquidate;
+pub mod migrations;
 pub mod query;
 pub mod repay;
 pub mod state;

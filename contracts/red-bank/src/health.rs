@@ -3,7 +3,11 @@ use std::collections::{HashMap, HashSet};
 use cosmwasm_std::{Addr, Deps, Env, Order, StdError, StdResult, Uint128};
 use mars_health::health::{Health, Position as HealthPosition};
 use mars_interest_rate::{get_underlying_debt_amount, get_underlying_liquidity_amount};
-use mars_red_bank_types::{oracle, red_bank::Position};
+use mars_red_bank_types::{
+    keys::{UserId, UserIdKey},
+    oracle,
+    red_bank::Position,
+};
 
 use crate::{
     error::ContractError,
@@ -138,9 +142,12 @@ pub fn get_user_positions_map(
 ) -> Result<HashMap<String, Position>, ContractError> {
     let block_time = env.block.time.seconds();
 
+    let user_id = UserId::credit_manager(user_addr.clone(), account_id.to_string());
+    let user_id_key: UserIdKey = user_id.try_into()?;
+
     // Find all denoms that the user has a collateral or debt position in
     let collateral_denoms = COLLATERALS
-        .prefix((user_addr, account_id))
+        .prefix(&user_id_key)
         .keys(deps.storage, None, None, Order::Ascending)
         .collect::<StdResult<Vec<_>>>()?;
     let debt_denoms = DEBTS
@@ -162,7 +169,7 @@ pub fn get_user_positions_map(
             let params = query_asset_params(&deps.querier, params_addr, &denom)?;
 
             let collateral_amount =
-                match COLLATERALS.may_load(deps.storage, (user_addr, account_id, &denom))? {
+                match COLLATERALS.may_load(deps.storage, (&user_id_key, &denom))? {
                     Some(collateral) if collateral.enabled => {
                         let amount_scaled = collateral.amount_scaled;
                         get_underlying_liquidity_amount(amount_scaled, &market, block_time)?

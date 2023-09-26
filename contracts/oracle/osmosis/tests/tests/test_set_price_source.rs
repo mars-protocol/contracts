@@ -5,13 +5,14 @@ use mars_oracle_base::ContractError;
 use mars_oracle_osmosis::{
     contract::entry::execute,
     msg::{ExecuteMsg, PriceSourceResponse},
-    Downtime, DowntimeDetector, GeometricTwap, OsmosisPriceSourceChecked,
-    OsmosisPriceSourceUnchecked, RedemptionRate,
+    DowntimeDetector, GeometricTwap, OsmosisPriceSourceChecked, OsmosisPriceSourceUnchecked,
+    RedemptionRate,
 };
 use mars_owner::OwnerError::NotOwner;
 use mars_red_bank_types::oracle::msg::QueryMsg;
 use mars_testing::mock_info;
 use mars_utils::error::ValidationError;
+use osmosis_std::types::osmosis::downtimedetector::v1beta1::Downtime;
 use pyth_sdk_cw::PriceIdentifier;
 
 use super::helpers;

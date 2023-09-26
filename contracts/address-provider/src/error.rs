@@ -15,4 +15,7 @@ pub enum ContractError {
 
     #[error("Invalid chain prefix: {0}")]
     InvalidChainPrefix(String),
+
+    #[error("{0}")]
+    Version(#[from] cw2::VersionError),
 }

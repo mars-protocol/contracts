@@ -1,3 +1,5 @@
+pub mod migrations;
+
 #[cfg(not(feature = "library"))]
 pub mod entry {
     use cosmwasm_std::{
@@ -5,7 +7,9 @@ pub mod entry {
     };
     use cw2::set_contract_version;
     use mars_red_bank_types::rewards_collector::{ExecuteMsg, InstantiateMsg, QueryMsg};
-    use mars_rewards_collector_base::{contract::Collector, ContractResult};
+    use mars_rewards_collector_base::{contract::Collector, ContractError, ContractResult};
+
+    use crate::migrations;
 
     pub const CONTRACT_NAME: &str = env!("CARGO_PKG_NAME");
     pub const CONTRACT_VERSION: &str = env!("CARGO_PKG_VERSION");
@@ -39,5 +43,10 @@ pub mod entry {
     pub fn query(deps: Deps, env: Env, msg: QueryMsg) -> StdResult<Binary> {
         let collector = OsmosisCollector::default();
         collector.query(deps, env, msg)
+    }
+
+    #[entry_point]
+    pub fn migrate(deps: DepsMut, _env: Env, _msg: Empty) -> Result<Response, ContractError> {
+        migrations::v2_0_0::migrate(deps)
     }
 }

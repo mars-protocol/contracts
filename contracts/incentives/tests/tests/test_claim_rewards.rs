@@ -10,6 +10,7 @@ use mars_incentives::{
 };
 use mars_red_bank_types::{
     incentives::{ExecuteMsg, IncentiveState},
+    keys::{UserId, UserIdKey},
     red_bank::{Market, UserCollateralResponse},
 };
 use mars_testing::MockEnvParams;
@@ -129,15 +130,18 @@ fn execute_claim_rewards() {
         .save(deps.as_mut().storage, (no_user_denom, "umars", time_start), &Uint128::new(200))
         .unwrap();
 
+    let user_id = UserId::credit_manager(user_addr.clone(), "".to_string());
+    let user_id_key: UserIdKey = user_id.try_into().unwrap();
+
     // user indices
     USER_ASSET_INDICES
-        .save(deps.as_mut().storage, ((&user_addr, ""), asset_denom, "umars"), &Decimal::one())
+        .save(deps.as_mut().storage, (&user_id_key, asset_denom, "umars"), &Decimal::one())
         .unwrap();
 
     USER_ASSET_INDICES
         .save(
             deps.as_mut().storage,
-            ((&user_addr, ""), zero_denom, "umars"),
+            (&user_id_key, zero_denom, "umars"),
             &Decimal::from_ratio(1_u128, 2_u128),
         )
         .unwrap();
@@ -146,7 +150,7 @@ fn execute_claim_rewards() {
     USER_UNCLAIMED_REWARDS
         .save(
             deps.as_mut().storage,
-            ((&user_addr, ""), asset_denom, "umars"),
+            (&user_id_key, asset_denom, "umars"),
             &previous_unclaimed_rewards,
         )
         .unwrap();
@@ -274,26 +278,29 @@ fn execute_claim_rewards() {
     assert_eq!(no_user_incentive.index, Decimal::one());
     assert_eq!(no_user_incentive.last_updated, time_start);
 
+    let user_id = UserId::credit_manager(user_addr, "".to_string());
+    let user_id_key: UserIdKey = user_id.try_into().unwrap();
+
     // user's asset and zero indices are updated
     let user_asset_index = USER_ASSET_INDICES
-        .load(deps.as_ref().storage, ((&user_addr, ""), asset_denom, "umars"))
+        .load(deps.as_ref().storage, (&user_id_key, asset_denom, "umars"))
         .unwrap();
     assert_eq!(user_asset_index, expected_asset_incentive_index);
 
     let user_zero_index = USER_ASSET_INDICES
-        .load(deps.as_ref().storage, ((&user_addr, ""), zero_denom, "umars"))
+        .load(deps.as_ref().storage, (&user_id_key, zero_denom, "umars"))
         .unwrap();
     assert_eq!(user_zero_index, Decimal::one());
 
     // user's no_user does not get updated
     let user_no_user_index = USER_ASSET_INDICES
-        .may_load(deps.as_ref().storage, ((&user_addr, ""), no_user_denom, "umars"))
+        .may_load(deps.as_ref().storage, (&user_id_key, no_user_denom, "umars"))
         .unwrap();
     assert_eq!(user_no_user_index, None);
 
     // user rewards are cleared
     let user_unclaimed_rewards = USER_UNCLAIMED_REWARDS
-        .load(deps.as_ref().storage, ((&user_addr, ""), asset_denom, "umars"))
+        .load(deps.as_ref().storage, (&user_id_key, asset_denom, "umars"))
         .unwrap();
     assert_eq!(user_unclaimed_rewards, Uint128::zero())
 }

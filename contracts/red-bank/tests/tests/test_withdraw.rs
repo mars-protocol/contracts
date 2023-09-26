@@ -19,6 +19,7 @@ use mars_red_bank_types::{
     address_provider::MarsAddressType,
     error::MarsError,
     incentives,
+    keys::{UserId, UserIdKey},
     red_bank::{Collateral, Debt, ExecuteMsg, Market},
 };
 use mars_testing::{
@@ -237,13 +238,16 @@ fn withdrawing_partially() {
     assert_eq!(market.collateral_total_scaled, expected_total_collateral_amount_scaled);
 
     // the user's collateral scaled amount should have been decreased
-    let collateral =
-        COLLATERALS.load(deps.as_ref().storage, (&withdrawer_addr, "", denom)).unwrap();
+    let user_id = UserId::credit_manager(withdrawer_addr, "".to_string());
+    let user_id_key: UserIdKey = user_id.try_into().unwrap();
+    let collateral = COLLATERALS.load(deps.as_ref().storage, (&user_id_key, denom)).unwrap();
     assert_eq!(collateral.amount_scaled, expected_withdraw_amount_scaled_remaining);
 
     // the reward collector's collateral scaled amount should have been increased
     let rewards_addr = Addr::unchecked(MarsAddressType::RewardsCollector.to_string());
-    let collateral = COLLATERALS.load(deps.as_ref().storage, (&rewards_addr, "", denom)).unwrap();
+    let user_id = UserId::credit_manager(rewards_addr, "".to_string());
+    let user_id_key: UserIdKey = user_id.try_into().unwrap();
+    let collateral = COLLATERALS.load(deps.as_ref().storage, (&user_id_key, denom)).unwrap();
     assert_eq!(collateral.amount_scaled, expected_rewards_amount_scaled);
 }
 
@@ -576,11 +580,12 @@ fn setup_health_check_test() -> HealthCheckTestSuite {
         .zip(prices.iter())
         .for_each(|(denom, price)| deps.querier.set_oracle_price(denom, *price));
 
+    let user_id = UserId::credit_manager(withdrawer_addr.clone(), "".to_string());
+    let user_id_key: UserIdKey = user_id.try_into().unwrap();
+
     denoms.iter().zip(collaterals.iter()).for_each(|(denom, collateral)| {
         if !collateral.amount_scaled.is_zero() {
-            COLLATERALS
-                .save(deps.as_mut().storage, (&withdrawer_addr, "", denom), collateral)
-                .unwrap();
+            COLLATERALS.save(deps.as_mut().storage, (&user_id_key, denom), collateral).unwrap();
         }
     });
 
@@ -756,7 +761,10 @@ fn withdrawing_if_health_factor_met() {
     let expected_collateral_total_amount_scaled_after =
         markets[2].collateral_total_scaled - expected_withdraw_amount_scaled;
 
-    let col = COLLATERALS.load(deps.as_ref().storage, (&withdrawer_addr, "", denoms[2])).unwrap();
+    let user_id = UserId::credit_manager(withdrawer_addr, "".to_string());
+    let user_id_key: UserIdKey = user_id.try_into().unwrap();
+
+    let col = COLLATERALS.load(deps.as_ref().storage, (&user_id_key, denoms[2])).unwrap();
     assert_eq!(col.amount_scaled, expected_withdrawer_balance_after);
 
     let market = MARKETS.load(deps.as_ref().storage, denoms[2]).unwrap();

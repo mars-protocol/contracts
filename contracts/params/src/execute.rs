@@ -1,14 +1,30 @@
 use cosmwasm_std::{Decimal, DepsMut, MessageInfo, Response};
-use mars_utils::error::ValidationError;
+use mars_utils::{error::ValidationError, helpers::option_string_to_addr};
 
 use crate::{
     error::{ContractError, ContractResult},
     msg::{AssetParamsUpdate, VaultConfigUpdate},
-    state::{ASSET_PARAMS, OWNER, TARGET_HEALTH_FACTOR, VAULT_CONFIGS},
+    state::{ADDRESS_PROVIDER, ASSET_PARAMS, OWNER, TARGET_HEALTH_FACTOR, VAULT_CONFIGS},
 };
 
 pub const CONTRACT_NAME: &str = env!("CARGO_PKG_NAME");
 pub const CONTRACT_VERSION: &str = env!("CARGO_PKG_VERSION");
+
+pub fn update_config(
+    deps: DepsMut,
+    info: MessageInfo,
+    address_provider: Option<String>,
+) -> Result<Response, ContractError> {
+    OWNER.assert_owner(deps.storage, &info.sender)?;
+
+    let current_addr = ADDRESS_PROVIDER.load(deps.storage)?;
+    let updated_addr = option_string_to_addr(deps.api, address_provider, current_addr)?;
+    ADDRESS_PROVIDER.save(deps.storage, &updated_addr)?;
+
+    Ok(Response::new()
+        .add_attribute("action", "update_config")
+        .add_attribute("address_provider", updated_addr.to_string()))
+}
 
 pub fn update_target_health_factor(
     deps: DepsMut,

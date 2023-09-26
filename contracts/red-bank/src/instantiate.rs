@@ -8,12 +8,10 @@ use mars_red_bank_types::{
 use mars_utils::helpers::{option_string_to_addr, zero_address};
 
 use crate::{
+    contract::{CONTRACT_NAME, CONTRACT_VERSION},
     error::ContractError,
     state::{CONFIG, OWNER},
 };
-
-pub const CONTRACT_NAME: &str = env!("CARGO_PKG_NAME");
-pub const CONTRACT_VERSION: &str = env!("CARGO_PKG_VERSION");
 
 pub fn instantiate(deps: DepsMut, msg: InstantiateMsg) -> Result<Response, ContractError> {
     set_contract_version(deps.storage, format!("crates.io:{CONTRACT_NAME}"), CONTRACT_VERSION)?;

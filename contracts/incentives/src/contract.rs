@@ -14,6 +14,7 @@ use mars_red_bank_types::{
         ActiveEmission, Config, ConfigResponse, EmissionResponse, ExecuteMsg, IncentiveState,
         IncentiveStateResponse, InstantiateMsg, MigrateMsg, QueryMsg, WhitelistEntry,
     },
+    keys::{UserId, UserIdKey},
 };
 use mars_utils::helpers::{option_string_to_addr, validate_native_denom};
 
@@ -24,8 +25,9 @@ use crate::{
     },
     migrations,
     state::{
-        self, CONFIG, DEFAULT_LIMIT, EMISSIONS, EPOCH_DURATION, INCENTIVE_STATES, MAX_LIMIT, OWNER,
-        USER_ASSET_INDICES, USER_UNCLAIMED_REWARDS, WHITELIST, WHITELIST_COUNT,
+        self, CONFIG, DEFAULT_LIMIT, EMISSIONS, EPOCH_DURATION, INCENTIVE_STATES, MAX_LIMIT,
+        MIGRATION_GUARD, OWNER, USER_ASSET_INDICES, USER_UNCLAIMED_REWARDS, WHITELIST,
+        WHITELIST_COUNT,
     },
 };
 
@@ -58,6 +60,7 @@ pub fn instantiate(
     let config = Config {
         address_provider: deps.api.addr_validate(&msg.address_provider)?,
         max_whitelisted_denoms: msg.max_whitelisted_denoms,
+        mars_denom: msg.mars_denom,
     };
     CONFIG.save(deps.storage, &config)?;
 
@@ -108,35 +111,42 @@ pub fn execute(
             denom,
             user_amount_scaled_before,
             total_amount_scaled_before,
-        } => execute_balance_change(
-            deps,
-            env,
-            info,
-            user_addr,
-            account_id,
-            denom,
-            user_amount_scaled_before,
-            total_amount_scaled_before,
-        ),
+        } => {
+            MIGRATION_GUARD.assert_unlocked(deps.storage)?;
+            execute_balance_change(
+                deps,
+                env,
+                info,
+                user_addr,
+                account_id,
+                denom,
+                user_amount_scaled_before,
+                total_amount_scaled_before,
+            )
+        }
         ExecuteMsg::ClaimRewards {
             account_id,
             start_after_collateral_denom,
             start_after_incentive_denom,
             limit,
-        } => execute_claim_rewards(
-            deps,
-            env,
-            info,
-            account_id,
-            start_after_collateral_denom,
-            start_after_incentive_denom,
-            limit,
-        ),
+        } => {
+            MIGRATION_GUARD.assert_unlocked(deps.storage)?;
+            execute_claim_rewards(
+                deps,
+                env,
+                info,
+                account_id,
+                start_after_collateral_denom,
+                start_after_incentive_denom,
+                limit,
+            )
+        }
         ExecuteMsg::UpdateConfig {
             address_provider,
             max_whitelisted_denoms,
         } => Ok(execute_update_config(deps, env, info, address_provider, max_whitelisted_denoms)?),
         ExecuteMsg::UpdateOwner(update) => update_owner(deps, info, update),
+        ExecuteMsg::Migrate(msg) => migrations::v2_0_0::execute_migration(deps, info, msg),
     }
 }
 
@@ -356,6 +366,9 @@ pub fn execute_balance_change(
 
     let acc_id = account_id.clone().unwrap_or("".to_string());
 
+    let user_id = UserId::credit_manager(user_addr.clone(), acc_id.clone());
+    let user_id_key: UserIdKey = user_id.try_into()?;
+
     let base_event = Event::new("mars/incentives/balance_change")
         .add_attribute("action", "balance_change")
         .add_attribute("denom", collateral_denom.clone())
@@ -383,7 +396,7 @@ pub fn execute_balance_change(
 
         // Check if user has accumulated uncomputed rewards (which means index is not up to date)
         let user_asset_index_key =
-            USER_ASSET_INDICES.key(((&user_addr, &acc_id), &collateral_denom, &incentive_denom));
+            USER_ASSET_INDICES.key((&user_id_key.clone(), &collateral_denom, &incentive_denom));
 
         let user_asset_index =
             user_asset_index_key.may_load(deps.storage)?.unwrap_or_else(Decimal::zero);
@@ -435,6 +448,8 @@ pub fn execute_claim_rewards(
 ) -> Result<Response, ContractError> {
     let user_addr = info.sender;
     let acc_id = account_id.clone().unwrap_or("".to_string());
+    let user_id = UserId::credit_manager(user_addr.clone(), acc_id.clone());
+    let user_id_key: UserIdKey = user_id.try_into()?;
 
     let red_bank_addr = query_red_bank_address(deps.as_ref())?;
 
@@ -474,7 +489,7 @@ pub fn execute_claim_rewards(
         // clear unclaimed rewards
         USER_UNCLAIMED_REWARDS.save(
             deps.storage,
-            ((&user_addr, &acc_id), &collateral_denom, &incentive_denom),
+            (&user_id_key, &collateral_denom, &incentive_denom),
             &Uint128::zero(),
         )?;
 
@@ -767,7 +782,5 @@ pub fn query_emissions(
 
 #[cfg_attr(not(feature = "library"), entry_point)]
 pub fn migrate(deps: DepsMut, env: Env, msg: MigrateMsg) -> Result<Response, ContractError> {
-    match msg {
-        MigrateMsg::V1_0_0ToV2_0_0(updates) => migrations::v2_0_0::migrate(deps, env, updates),
-    }
+    migrations::v2_0_0::migrate(deps, env, msg)
 }

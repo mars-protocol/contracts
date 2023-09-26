@@ -36,6 +36,7 @@ import {
   HlsParamsBaseForAddr,
   ArrayOfVaultConfigBaseForAddr,
   VaultConfigBaseForAddr,
+  ConfigResponse,
   OwnerResponse,
   TotalDepositResponse,
 } from './MarsParams.types'
@@ -50,6 +51,8 @@ export const marsParamsQueryKeys = {
     [{ ...marsParamsQueryKeys.contract[0], address: contractAddress }] as const,
   owner: (contractAddress: string | undefined, args?: Record<string, unknown>) =>
     [{ ...marsParamsQueryKeys.address(contractAddress)[0], method: 'owner', args }] as const,
+  config: (contractAddress: string | undefined, args?: Record<string, unknown>) =>
+    [{ ...marsParamsQueryKeys.address(contractAddress)[0], method: 'config', args }] as const,
   assetParams: (contractAddress: string | undefined, args?: Record<string, unknown>) =>
     [{ ...marsParamsQueryKeys.address(contractAddress)[0], method: 'asset_params', args }] as const,
   allAssetParams: (contractAddress: string | undefined, args?: Record<string, unknown>) =>
@@ -206,6 +209,17 @@ export function useMarsParamsAssetParamsQuery<TData = AssetParamsBaseForAddr>({
     { ...options, enabled: !!client && (options?.enabled != undefined ? options.enabled : true) },
   )
 }
+export interface MarsParamsConfigQuery<TData> extends MarsParamsReactQuery<ConfigResponse, TData> {}
+export function useMarsParamsConfigQuery<TData = ConfigResponse>({
+  client,
+  options,
+}: MarsParamsConfigQuery<TData>) {
+  return useQuery<ConfigResponse, Error, TData>(
+    marsParamsQueryKeys.config(client?.contractAddress),
+    () => (client ? client.config() : Promise.reject(new Error('Invalid client'))),
+    { ...options, enabled: !!client && (options?.enabled != undefined ? options.enabled : true) },
+  )
+}
 export interface MarsParamsOwnerQuery<TData> extends MarsParamsReactQuery<OwnerResponse, TData> {}
 export function useMarsParamsOwnerQuery<TData = OwnerResponse>({
   client,
@@ -297,6 +311,29 @@ export function useMarsParamsUpdateTargetHealthFactorMutation(
   return useMutation<ExecuteResult, Error, MarsParamsUpdateTargetHealthFactorMutation>(
     ({ client, msg, args: { fee, memo, funds } = {} }) =>
       client.updateTargetHealthFactor(msg, fee, memo, funds),
+    options,
+  )
+}
+export interface MarsParamsUpdateConfigMutation {
+  client: MarsParamsClient
+  msg: {
+    addressProvider?: string
+  }
+  args?: {
+    fee?: number | StdFee | 'auto'
+    memo?: string
+    funds?: Coin[]
+  }
+}
+export function useMarsParamsUpdateConfigMutation(
+  options?: Omit<
+    UseMutationOptions<ExecuteResult, Error, MarsParamsUpdateConfigMutation>,
+    'mutationFn'
+  >,
+) {
+  return useMutation<ExecuteResult, Error, MarsParamsUpdateConfigMutation>(
+    ({ client, msg, args: { fee, memo, funds } = {} }) =>
+      client.updateConfig(msg, fee, memo, funds),
     options,
   )
 }
