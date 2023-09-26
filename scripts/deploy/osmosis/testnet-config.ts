@@ -56,7 +56,7 @@ export const osmosisTestnetConfig: DeploymentConfig = {
   params: { addr: 'osmo1h334tvddn82m4apm08rm9k6kt32ws7vy0c4n30ngrvu6h6yxh8eq9l9jfh' },
   // Latest from: https://api.apollo.farm/api/graph?query=query+MyQuery+%7B%0A++vaults%28network%3A+osmo_test_5%29+%7B%0A++++label%0A++++contract_address%0A++%7D%0A%7D
   vaults: [aUSDC_OSMO_Config(ausdcOsmoVault), ATOM_OSMO_Config(atomOsmoVault)],
-  zapperContractName: 'mars_v2_zapper_osmosis',
+  zapperContractName: 'mars_zapper_osmosis',
   runTests: true,
   testActions: {
     vault: {

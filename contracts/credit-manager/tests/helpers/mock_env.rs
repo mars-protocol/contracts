@@ -74,7 +74,7 @@ use mars_rover_health_types::{
     AccountKind, ExecuteMsg::UpdateConfig, HealthValuesResponse,
     InstantiateMsg as HealthInstantiateMsg, QueryMsg::HealthValues,
 };
-use mars_v2_zapper_mock::msg::{InstantiateMsg as ZapperInstantiateMsg, LpConfig};
+use mars_zapper_mock::msg::{InstantiateMsg as ZapperInstantiateMsg, LpConfig};
 
 use crate::helpers::{
     lp_token_info, mock_account_nft_contract, mock_address_provider_contract, mock_health_contract,

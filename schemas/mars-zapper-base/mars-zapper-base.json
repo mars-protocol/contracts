@@ -1,5 +1,5 @@
 {
-  "contract_name": "mars-v2-zapper-base",
+  "contract_name": "mars-zapper-base",
   "contract_version": "2.0.0",
   "idl_version": "1.0.0",
   "instantiate": {

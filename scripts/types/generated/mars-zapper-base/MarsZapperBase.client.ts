@@ -16,8 +16,8 @@ import {
   Coin,
   QueryMsg,
   ArrayOfCoin,
-} from './MarsV2ZapperBase.types'
-export interface MarsV2ZapperBaseReadOnlyInterface {
+} from './MarsZapperBase.types'
+export interface MarsZapperBaseReadOnlyInterface {
   contractAddress: string
   estimateProvideLiquidity: ({
     coinsIn,
@@ -28,7 +28,7 @@ export interface MarsV2ZapperBaseReadOnlyInterface {
   }) => Promise<Uint128>
   estimateWithdrawLiquidity: ({ coinIn }: { coinIn: Coin }) => Promise<ArrayOfCoin>
 }
-export class MarsV2ZapperBaseQueryClient implements MarsV2ZapperBaseReadOnlyInterface {
+export class MarsZapperBaseQueryClient implements MarsZapperBaseReadOnlyInterface {
   client: CosmWasmClient
   contractAddress: string
 
@@ -61,7 +61,7 @@ export class MarsV2ZapperBaseQueryClient implements MarsV2ZapperBaseReadOnlyInte
     })
   }
 }
-export interface MarsV2ZapperBaseInterface extends MarsV2ZapperBaseReadOnlyInterface {
+export interface MarsZapperBaseInterface extends MarsZapperBaseReadOnlyInterface {
   contractAddress: string
   sender: string
   provideLiquidity: (
@@ -97,9 +97,9 @@ export interface MarsV2ZapperBaseInterface extends MarsV2ZapperBaseReadOnlyInter
     _funds?: Coin[],
   ) => Promise<ExecuteResult>
 }
-export class MarsV2ZapperBaseClient
-  extends MarsV2ZapperBaseQueryClient
-  implements MarsV2ZapperBaseInterface
+export class MarsZapperBaseClient
+  extends MarsZapperBaseQueryClient
+  implements MarsZapperBaseInterface
 {
   client: SigningCosmWasmClient
   sender: string

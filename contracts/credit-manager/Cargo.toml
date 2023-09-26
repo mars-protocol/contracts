@@ -48,5 +48,5 @@ mars-mock-red-bank    = { workspace = true }
 mars-mock-vault       = { workspace = true }
 mars-rover-health     = { workspace = true }
 mars-swapper-mock     = { workspace = true }
-mars-v2-zapper-mock   = { workspace = true }
+mars-zapper-mock      = { workspace = true }
 test-case             = { workspace = true }

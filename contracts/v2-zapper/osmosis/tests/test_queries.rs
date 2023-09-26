@@ -2,7 +2,7 @@ use std::{ops::Div, str::FromStr};
 
 use cosmwasm_std::{coin, Coin, Uint128};
 use cw_dex::CwDexError;
-use mars_v2_zapper_base::QueryMsg;
+use mars_zapper_base::QueryMsg;
 use osmosis_test_tube::{Gamm, Module, OsmosisTestApp, Wasm};
 
 use crate::helpers::{assert_err, instantiate_contract};

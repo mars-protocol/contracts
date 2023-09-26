@@ -1,5 +1,5 @@
 [package]
-name          = "mars-v2-zapper-mock"
+name          = "mars-zapper-mock"
 version       = { workspace = true }
 authors       = { workspace = true }
 license       = { workspace = true }
@@ -25,5 +25,5 @@ cw-storage-plus     = { workspace = true }
 cw-utils            = { workspace = true }
 mars-red-bank-types = { workspace = true }
 mars-rover          = { workspace = true }
-mars-v2-zapper-base = { workspace = true }
+mars-zapper-base    = { workspace = true }
 thiserror           = { workspace = true }

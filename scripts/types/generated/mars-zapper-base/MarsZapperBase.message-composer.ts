@@ -17,8 +17,8 @@ import {
   Coin,
   QueryMsg,
   ArrayOfCoin,
-} from './MarsV2ZapperBase.types'
-export interface MarsV2ZapperBaseMessage {
+} from './MarsZapperBase.types'
+export interface MarsZapperBaseMessage {
   contractAddress: string
   sender: string
   provideLiquidity: (
@@ -45,7 +45,7 @@ export interface MarsV2ZapperBaseMessage {
   ) => MsgExecuteContractEncodeObject
   callback: (callbackMsg: CallbackMsg, _funds?: Coin[]) => MsgExecuteContractEncodeObject
 }
-export class MarsV2ZapperBaseMessageComposer implements MarsV2ZapperBaseMessage {
+export class MarsZapperBaseMessageComposer implements MarsZapperBaseMessage {
   sender: string
   contractAddress: string
 

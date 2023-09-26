@@ -1529,7 +1529,7 @@ dependencies = [
  "mars-rover-health",
  "mars-rover-health-types",
  "mars-swapper-mock",
- "mars-v2-zapper-mock",
+ "mars-zapper-mock",
  "test-case",
 ]
 
@@ -1749,7 +1749,7 @@ dependencies = [
  "mars-params",
  "mars-red-bank-types 2.0.0",
  "mars-rover-health-types",
- "mars-v2-zapper-base",
+ "mars-zapper-base",
  "schemars",
  "serde",
  "thiserror",
@@ -1860,20 +1860,21 @@ dependencies = [
 ]
 
 [[package]]
-name = "mars-v2-zapper-base"
+name = "mars-zapper-base"
 version = "2.0.0"
 dependencies = [
  "cosmwasm-schema",
  "cosmwasm-std",
  "cw-dex",
  "cw-utils 1.0.1",
+ "cw2 1.1.0",
  "schemars",
  "serde",
  "thiserror",
 ]
 
 [[package]]
-name = "mars-v2-zapper-mock"
+name = "mars-zapper-mock"
 version = "2.0.0"
 dependencies = [
  "cosmwasm-schema",
@@ -1882,19 +1883,19 @@ dependencies = [
  "cw-utils 1.0.1",
  "mars-red-bank-types 2.0.0",
  "mars-rover 2.0.0",
- "mars-v2-zapper-base",
+ "mars-zapper-base",
  "thiserror",
 ]
 
 [[package]]
-name = "mars-v2-zapper-osmosis"
+name = "mars-zapper-osmosis"
 version = "2.0.0"
 dependencies = [
  "cosmwasm-std",
  "cw-dex",
  "cw-utils 1.0.1",
  "cw2 1.1.0",
- "mars-v2-zapper-base",
+ "mars-zapper-base",
  "osmosis-std",
  "osmosis-test-tube",
 ]

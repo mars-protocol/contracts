@@ -1,7 +1,7 @@
 #[cfg(not(feature = "library"))]
 use cosmwasm_std::entry_point;
 use cosmwasm_std::{to_binary, Binary, Deps, DepsMut, Env, MessageInfo, Response, Uint128};
-use mars_v2_zapper_base::{ExecuteMsg, QueryMsg};
+use mars_zapper_base::{ExecuteMsg, QueryMsg};
 
 use crate::{
     error::ContractResult,

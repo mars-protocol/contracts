@@ -41,7 +41,7 @@ export const osmosisDevnetConfig: DeploymentConfig = {
   swapper: { addr: 'osmo1xmhhdxgk9e83n4kmtlluzx38mya8q9r4hku5nys8cr7jg7sgpx5s8zkkg2' },
   runTests: false,
   vaults: [],
-  zapperContractName: 'mars_v2_zapper_osmosis',
+  zapperContractName: 'mars_zapper_osmosis',
 }
 
 void (async function () {

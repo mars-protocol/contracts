@@ -7,8 +7,8 @@ use mars_credit_manager::{
     contract::migrate,
     migrations::v2_0_0::{v1_state, v1_state::OwnerSetNoneProposed},
     state::{
-        ACCOUNT_NFT, HEALTH_CONTRACT, INCENTIVES, MAX_SLIPPAGE, OWNER, PARAMS, REWARDS_COLLECTOR,
-        SWAPPER,
+        ACCOUNT_NFT, HEALTH_CONTRACT, INCENTIVES, MAX_SLIPPAGE, OWNER, PARAMS, RED_BANK,
+        REWARDS_COLLECTOR, SWAPPER,
     },
 };
 use mars_rover::{
@@ -96,6 +96,9 @@ fn successful_migration() {
     let old_account_nft = "account_nft_addr_123";
     v1_state::ACCOUNT_NFT.save(deps.as_mut().storage, &Addr::unchecked(old_account_nft)).unwrap();
 
+    let old_red_bank = "red-bank-addr-456";
+    v1_state::RED_BANK.save(deps.as_mut().storage, &Addr::unchecked(old_red_bank)).unwrap();
+
     let health_contract = "health_addr_123".to_string();
     let params = "params_addr_456".to_string();
     let incentives = "incentives_addr_789".to_string();
@@ -143,4 +146,7 @@ fn successful_migration() {
 
     let set_acc_nft = ACCOUNT_NFT.load(deps.as_ref().storage).unwrap();
     assert_eq!(old_account_nft, set_acc_nft.address().to_string());
+
+    let set_red_bank = RED_BANK.load(deps.as_ref().storage).unwrap();
+    assert_eq!(old_red_bank, set_red_bank.addr.as_str());
 }

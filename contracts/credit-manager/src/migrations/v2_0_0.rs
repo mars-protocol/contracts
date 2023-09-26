@@ -1,11 +1,11 @@
 use cosmwasm_std::{DepsMut, Env, Response};
 use cw2::{assert_contract_version, set_contract_version};
 use mars_owner::OwnerInit;
-use mars_rover::{error::ContractResult, msg::migrate::V2Updates};
+use mars_rover::{adapters::red_bank::RedBank, error::ContractResult, msg::migrate::V2Updates};
 
 use crate::{
     contract::{CONTRACT_NAME, CONTRACT_VERSION},
-    state::{HEALTH_CONTRACT, INCENTIVES, MAX_SLIPPAGE, OWNER, PARAMS, SWAPPER},
+    state::{HEALTH_CONTRACT, INCENTIVES, MAX_SLIPPAGE, OWNER, PARAMS, RED_BANK, SWAPPER},
     utils::assert_max_slippage,
 };
 
@@ -19,6 +19,7 @@ pub mod v1_state {
 
     pub const ACCOUNT_NFT: Item<Addr> = Item::new("account_nft");
     pub const OWNER: Item<OwnerState> = Item::new("owner");
+    pub const RED_BANK: Item<Addr> = Item::new("red_bank");
 
     #[cw_serde]
     pub enum OwnerState {
@@ -42,7 +43,8 @@ pub fn migrate(deps: DepsMut, env: Env, updates: V2Updates) -> ContractResult<Re
 
     HEALTH_CONTRACT.save(deps.storage, &updates.health_contract.check(deps.api)?)?;
     PARAMS.save(deps.storage, &updates.params.check(deps.api)?)?;
-    INCENTIVES.save(deps.storage, &updates.incentives.check(deps.api, env.contract.address)?)?;
+    INCENTIVES
+        .save(deps.storage, &updates.incentives.check(deps.api, env.contract.address.clone())?)?;
     SWAPPER.save(deps.storage, &updates.swapper.check(deps.api)?)?;
 
     assert_max_slippage(updates.max_slippage)?;
@@ -59,6 +61,11 @@ pub fn migrate(deps: DepsMut, env: Env, updates: V2Updates) -> ContractResult<Re
             owner: old_owner.to_string(),
         },
     )?;
+
+    // red-bank state updated, re-initializing
+    let old_red_bank = v1_state::RED_BANK.load(deps.storage)?;
+    v1_state::RED_BANK.remove(deps.storage);
+    RED_BANK.save(deps.storage, &RedBank::new(old_red_bank, env.contract.address))?;
 
     set_contract_version(deps.storage, format!("crates.io:{CONTRACT_NAME}"), CONTRACT_VERSION)?;
     Ok(Response::new()

@@ -1,5 +1,5 @@
 [package]
-name          = "mars-v2-zapper-base"
+name          = "mars-zapper-base"
 version       = { workspace = true }
 authors       = { workspace = true }
 license       = { workspace = true }
@@ -21,6 +21,7 @@ library    = []
 [dependencies]
 cosmwasm-schema = { workspace = true }
 cosmwasm-std    = { workspace = true }
+cw2             = { workspace = true }
 cw-dex          = { workspace = true }
 cw-utils        = { workspace = true }
 schemars        = { workspace = true }

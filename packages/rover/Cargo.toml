@@ -30,7 +30,7 @@ mars-account-nft-types  = { workspace = true }
 mars-liquidation        = { workspace = true }
 mars-rover-health-types = { workspace = true }
 mars-red-bank-types     = { workspace = true }
-mars-v2-zapper-base     = { workspace = true }
+mars-zapper-base        = { workspace = true }
 mars-owner              = { workspace = true }
 mars-params             = { workspace = true }
 schemars                = { workspace = true }

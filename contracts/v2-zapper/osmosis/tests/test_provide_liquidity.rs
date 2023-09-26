@@ -1,6 +1,6 @@
 use cosmwasm_std::{coin, Coin, Uint128};
 use cw_dex::CwDexError;
-use mars_v2_zapper_base::{ExecuteMsg, QueryMsg};
+use mars_zapper_base::{ExecuteMsg, QueryMsg};
 use osmosis_test_tube::{Account, Bank, FeeSetting, Gamm, Module, OsmosisTestApp, Wasm};
 
 use crate::helpers::{assert_err, instantiate_contract, query_balance};

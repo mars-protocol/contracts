@@ -1,5 +1,5 @@
 [package]
-name          = "mars-v2-zapper-osmosis"
+name          = "mars-zapper-osmosis"
 version       = { workspace = true }
 authors       = { workspace = true }
 license       = { workspace = true }
@@ -19,10 +19,10 @@ backtraces = ["cosmwasm-std/backtraces"]
 library    = []
 
 [dependencies]
-cosmwasm-std        = { workspace = true }
-cw2                 = { workspace = true }
-cw-dex              = { workspace = true }
-mars-v2-zapper-base = { workspace = true }
+cosmwasm-std     = { workspace = true }
+cw2              = { workspace = true }
+cw-dex           = { workspace = true }
+mars-zapper-base = { workspace = true }
 
 [dev-dependencies]
 cw-utils          = { workspace = true }

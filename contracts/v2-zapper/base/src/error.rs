@@ -3,7 +3,7 @@ use cw_dex::CwDexError;
 use cw_utils::PaymentError;
 use thiserror::Error;
 
-#[derive(Error, Debug)]
+#[derive(Error, Debug, PartialEq)]
 pub enum ContractError {
     #[error("{0}")]
     Std(#[from] StdError),
@@ -19,4 +19,7 @@ pub enum ContractError {
 
     #[error("Unauthorized")]
     Unauthorized {},
+
+    #[error("{0}")]
+    Version(#[from] cw2::VersionError),
 }

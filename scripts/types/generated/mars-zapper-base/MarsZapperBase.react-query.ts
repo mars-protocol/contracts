@@ -17,20 +17,20 @@ import {
   Coin,
   QueryMsg,
   ArrayOfCoin,
-} from './MarsV2ZapperBase.types'
-import { MarsV2ZapperBaseQueryClient, MarsV2ZapperBaseClient } from './MarsV2ZapperBase.client'
-export const marsV2ZapperBaseQueryKeys = {
+} from './MarsZapperBase.types'
+import { MarsZapperBaseQueryClient, MarsZapperBaseClient } from './MarsZapperBase.client'
+export const marsZapperBaseQueryKeys = {
   contract: [
     {
-      contract: 'marsV2ZapperBase',
+      contract: 'marsZapperBase',
     },
   ] as const,
   address: (contractAddress: string | undefined) =>
-    [{ ...marsV2ZapperBaseQueryKeys.contract[0], address: contractAddress }] as const,
+    [{ ...marsZapperBaseQueryKeys.contract[0], address: contractAddress }] as const,
   estimateProvideLiquidity: (contractAddress: string | undefined, args?: Record<string, unknown>) =>
     [
       {
-        ...marsV2ZapperBaseQueryKeys.address(contractAddress)[0],
+        ...marsZapperBaseQueryKeys.address(contractAddress)[0],
         method: 'estimate_provide_liquidity',
         args,
       },
@@ -41,14 +41,14 @@ export const marsV2ZapperBaseQueryKeys = {
   ) =>
     [
       {
-        ...marsV2ZapperBaseQueryKeys.address(contractAddress)[0],
+        ...marsZapperBaseQueryKeys.address(contractAddress)[0],
         method: 'estimate_withdraw_liquidity',
         args,
       },
     ] as const,
 }
-export interface MarsV2ZapperBaseReactQuery<TResponse, TData = TResponse> {
-  client: MarsV2ZapperBaseQueryClient | undefined
+export interface MarsZapperBaseReactQuery<TResponse, TData = TResponse> {
+  client: MarsZapperBaseQueryClient | undefined
   options?: Omit<
     UseQueryOptions<TResponse, Error, TData>,
     "'queryKey' | 'queryFn' | 'initialData'"
@@ -56,19 +56,19 @@ export interface MarsV2ZapperBaseReactQuery<TResponse, TData = TResponse> {
     initialData?: undefined
   }
 }
-export interface MarsV2ZapperBaseEstimateWithdrawLiquidityQuery<TData>
-  extends MarsV2ZapperBaseReactQuery<ArrayOfCoin, TData> {
+export interface MarsZapperBaseEstimateWithdrawLiquidityQuery<TData>
+  extends MarsZapperBaseReactQuery<ArrayOfCoin, TData> {
   args: {
     coinIn: Coin
   }
 }
-export function useMarsV2ZapperBaseEstimateWithdrawLiquidityQuery<TData = ArrayOfCoin>({
+export function useMarsZapperBaseEstimateWithdrawLiquidityQuery<TData = ArrayOfCoin>({
   client,
   args,
   options,
-}: MarsV2ZapperBaseEstimateWithdrawLiquidityQuery<TData>) {
+}: MarsZapperBaseEstimateWithdrawLiquidityQuery<TData>) {
   return useQuery<ArrayOfCoin, Error, TData>(
-    marsV2ZapperBaseQueryKeys.estimateWithdrawLiquidity(client?.contractAddress, args),
+    marsZapperBaseQueryKeys.estimateWithdrawLiquidity(client?.contractAddress, args),
     () =>
       client
         ? client.estimateWithdrawLiquidity({
@@ -78,20 +78,20 @@ export function useMarsV2ZapperBaseEstimateWithdrawLiquidityQuery<TData = ArrayO
     { ...options, enabled: !!client && (options?.enabled != undefined ? options.enabled : true) },
   )
 }
-export interface MarsV2ZapperBaseEstimateProvideLiquidityQuery<TData>
-  extends MarsV2ZapperBaseReactQuery<Uint128, TData> {
+export interface MarsZapperBaseEstimateProvideLiquidityQuery<TData>
+  extends MarsZapperBaseReactQuery<Uint128, TData> {
   args: {
     coinsIn: Coin[]
     lpTokenOut: string
   }
 }
-export function useMarsV2ZapperBaseEstimateProvideLiquidityQuery<TData = Uint128>({
+export function useMarsZapperBaseEstimateProvideLiquidityQuery<TData = Uint128>({
   client,
   args,
   options,
-}: MarsV2ZapperBaseEstimateProvideLiquidityQuery<TData>) {
+}: MarsZapperBaseEstimateProvideLiquidityQuery<TData>) {
   return useQuery<Uint128, Error, TData>(
-    marsV2ZapperBaseQueryKeys.estimateProvideLiquidity(client?.contractAddress, args),
+    marsZapperBaseQueryKeys.estimateProvideLiquidity(client?.contractAddress, args),
     () =>
       client
         ? client.estimateProvideLiquidity({
@@ -102,8 +102,8 @@ export function useMarsV2ZapperBaseEstimateProvideLiquidityQuery<TData = Uint128
     { ...options, enabled: !!client && (options?.enabled != undefined ? options.enabled : true) },
   )
 }
-export interface MarsV2ZapperBaseCallbackMutation {
-  client: MarsV2ZapperBaseClient
+export interface MarsZapperBaseCallbackMutation {
+  client: MarsZapperBaseClient
   msg: CallbackMsg
   args?: {
     fee?: number | StdFee | 'auto'
@@ -111,19 +111,19 @@ export interface MarsV2ZapperBaseCallbackMutation {
     funds?: Coin[]
   }
 }
-export function useMarsV2ZapperBaseCallbackMutation(
+export function useMarsZapperBaseCallbackMutation(
   options?: Omit<
-    UseMutationOptions<ExecuteResult, Error, MarsV2ZapperBaseCallbackMutation>,
+    UseMutationOptions<ExecuteResult, Error, MarsZapperBaseCallbackMutation>,
     'mutationFn'
   >,
 ) {
-  return useMutation<ExecuteResult, Error, MarsV2ZapperBaseCallbackMutation>(
+  return useMutation<ExecuteResult, Error, MarsZapperBaseCallbackMutation>(
     ({ client, msg, args: { fee, memo, funds } = {} }) => client.callback(msg, fee, memo, funds),
     options,
   )
 }
-export interface MarsV2ZapperBaseWithdrawLiquidityMutation {
-  client: MarsV2ZapperBaseClient
+export interface MarsZapperBaseWithdrawLiquidityMutation {
+  client: MarsZapperBaseClient
   msg: {
     minimumReceive: Coin[]
     recipient?: string
@@ -134,20 +134,20 @@ export interface MarsV2ZapperBaseWithdrawLiquidityMutation {
     funds?: Coin[]
   }
 }
-export function useMarsV2ZapperBaseWithdrawLiquidityMutation(
+export function useMarsZapperBaseWithdrawLiquidityMutation(
   options?: Omit<
-    UseMutationOptions<ExecuteResult, Error, MarsV2ZapperBaseWithdrawLiquidityMutation>,
+    UseMutationOptions<ExecuteResult, Error, MarsZapperBaseWithdrawLiquidityMutation>,
     'mutationFn'
   >,
 ) {
-  return useMutation<ExecuteResult, Error, MarsV2ZapperBaseWithdrawLiquidityMutation>(
+  return useMutation<ExecuteResult, Error, MarsZapperBaseWithdrawLiquidityMutation>(
     ({ client, msg, args: { fee, memo, funds } = {} }) =>
       client.withdrawLiquidity(msg, fee, memo, funds),
     options,
   )
 }
-export interface MarsV2ZapperBaseProvideLiquidityMutation {
-  client: MarsV2ZapperBaseClient
+export interface MarsZapperBaseProvideLiquidityMutation {
+  client: MarsZapperBaseClient
   msg: {
     lpTokenOut: string
     minimumReceive: Uint128
@@ -159,13 +159,13 @@ export interface MarsV2ZapperBaseProvideLiquidityMutation {
     funds?: Coin[]
   }
 }
-export function useMarsV2ZapperBaseProvideLiquidityMutation(
+export function useMarsZapperBaseProvideLiquidityMutation(
   options?: Omit<
-    UseMutationOptions<ExecuteResult, Error, MarsV2ZapperBaseProvideLiquidityMutation>,
+    UseMutationOptions<ExecuteResult, Error, MarsZapperBaseProvideLiquidityMutation>,
     'mutationFn'
   >,
 ) {
-  return useMutation<ExecuteResult, Error, MarsV2ZapperBaseProvideLiquidityMutation>(
+  return useMutation<ExecuteResult, Error, MarsZapperBaseProvideLiquidityMutation>(
     ({ client, msg, args: { fee, memo, funds } = {} }) =>
       client.provideLiquidity(msg, fee, memo, funds),
     options,

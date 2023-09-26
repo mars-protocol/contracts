@@ -83,7 +83,7 @@ mars-account-nft      = { version = "2.0.0", path = "./contracts/account-nft", f
 mars-params           = { git = "https://github.com/mars-protocol/red-bank", rev = "afaf815", features = ["library"] }
 mars-rover-health     = { version = "2.0.0", path = "./contracts/health", features = ["library"] }
 mars-swapper-base     = { version = "2.0.0", path = "./contracts/swapper/base", features = ["library"] }
-mars-v2-zapper-base   = { version = "2.0.0", path = "./contracts/v2-zapper/base", features = ["library"] }
+mars-zapper-base      = { version = "2.0.0", path = "./contracts/v2-zapper/base", features = ["library"] }
 
 # mocks
 mars-mock-credit-manager = { version = "2.0.0", path = "./contracts/mock-credit-manager", features = ["library"] }
@@ -93,7 +93,7 @@ mars-mock-red-bank       = { version = "2.0.0", path = "./contracts/mock-red-ban
 mars-mock-vault          = { version = "2.0.0", path = "./contracts/mock-vault", features = ["library"] }
 mars-mock-rover-health   = { version = "2.0.0", path = "./contracts/mock-health", features = ["library"] }
 mars-swapper-mock        = { version = "2.0.0", path = "./contracts/swapper/mock", features = ["library"] }
-mars-v2-zapper-mock      = { version = "2.0.0", path = "./contracts/v2-zapper/mock", features = ["library"] }
+mars-zapper-mock         = { version = "2.0.0", path = "./contracts/v2-zapper/mock", features = ["library"] }
 
 [profile.release]
 codegen-units    = 1

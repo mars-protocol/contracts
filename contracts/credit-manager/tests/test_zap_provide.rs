@@ -8,7 +8,7 @@ use mars_rover::{
         ActionAmount, ActionCoin,
     },
 };
-use mars_v2_zapper_mock::{contract::STARTING_LP_POOL_TOKENS, error::ContractError};
+use mars_zapper_mock::{contract::STARTING_LP_POOL_TOKENS, error::ContractError};
 
 use crate::helpers::{
     assert_err, get_coin, lp_token_info, uatom_info, ujake_info, uosmo_info, AccountToFund, MockEnv,
