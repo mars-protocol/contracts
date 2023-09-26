@@ -12,6 +12,7 @@ import {
   Uint128,
   InstantiateMsg,
   ExecuteMsg,
+  MigrateV1ToV2,
   Binary,
   Expiration,
   Timestamp,
@@ -523,6 +524,26 @@ export function useMarsAccountNftTransferNftMutation(
 ) {
   return useMutation<ExecuteResult, Error, MarsAccountNftTransferNftMutation>(
     ({ client, msg, args: { fee, memo, funds } = {} }) => client.transferNft(msg, fee, memo, funds),
+    options,
+  )
+}
+export interface MarsAccountNftMigrateMutation {
+  client: MarsAccountNftClient
+  msg: MigrateV1ToV2
+  args?: {
+    fee?: number | StdFee | 'auto'
+    memo?: string
+    funds?: Coin[]
+  }
+}
+export function useMarsAccountNftMigrateMutation(
+  options?: Omit<
+    UseMutationOptions<ExecuteResult, Error, MarsAccountNftMigrateMutation>,
+    'mutationFn'
+  >,
+) {
+  return useMutation<ExecuteResult, Error, MarsAccountNftMigrateMutation>(
+    ({ client, msg, args: { fee, memo, funds } = {} }) => client.migrate(msg, fee, memo, funds),
     options,
   )
 }

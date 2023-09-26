@@ -26,6 +26,7 @@ export interface DeploymentConfig {
   incentives: { addr: string }
   params: { addr: string }
   swapper: { addr: string }
+  rewardsCollector: { addr: string }
   vaults: VaultConfigBaseForString[]
   creditLineCoins: { denom: string; creditLine: String }[]
   maxValueForBurn: string

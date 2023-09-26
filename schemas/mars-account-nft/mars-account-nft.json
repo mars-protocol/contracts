@@ -127,6 +127,18 @@
         "additionalProperties": false
       },
       {
+        "type": "object",
+        "required": [
+          "migrate"
+        ],
+        "properties": {
+          "migrate": {
+            "$ref": "#/definitions/MigrateV1ToV2"
+          }
+        },
+        "additionalProperties": false
+      },
+      {
         "description": "Transfer is a base message to move a token to another account without triggering actions",
         "type": "object",
         "required": [
@@ -408,6 +420,35 @@
             "properties": {
               "never": {
                 "type": "object",
+                "additionalProperties": false
+              }
+            },
+            "additionalProperties": false
+          }
+        ]
+      },
+      "MigrateV1ToV2": {
+        "description": "Migrate from V1 to V2",
+        "oneOf": [
+          {
+            "description": "Burns empty accounts in batches",
+            "type": "object",
+            "required": [
+              "burn_empty_accounts"
+            ],
+            "properties": {
+              "burn_empty_accounts": {
+                "type": "object",
+                "properties": {
+                  "limit": {
+                    "type": [
+                      "integer",
+                      "null"
+                    ],
+                    "format": "uint32",
+                    "minimum": 0.0
+                  }
+                },
                 "additionalProperties": false
               }
             },

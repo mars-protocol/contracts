@@ -11,6 +11,7 @@ import {
   Uint128,
   InstantiateMsg,
   ExecuteMsg,
+  MigrateV1ToV2,
   Binary,
   Expiration,
   Timestamp,
@@ -306,6 +307,12 @@ export interface MarsAccountNftInterface extends MarsAccountNftReadOnlyInterface
     memo?: string,
     _funds?: Coin[],
   ) => Promise<ExecuteResult>
+  migrate: (
+    migrateV1ToV2: MigrateV1ToV2,
+    fee?: number | StdFee | 'auto',
+    memo?: string,
+    _funds?: Coin[],
+  ) => Promise<ExecuteResult>
   transferNft: (
     {
       recipient,
@@ -403,6 +410,7 @@ export class MarsAccountNftClient
     this.updateConfig = this.updateConfig.bind(this)
     this.mint = this.mint.bind(this)
     this.burn = this.burn.bind(this)
+    this.migrate = this.migrate.bind(this)
     this.transferNft = this.transferNft.bind(this)
     this.sendNft = this.sendNft.bind(this)
     this.approve = this.approve.bind(this)
@@ -475,6 +483,23 @@ export class MarsAccountNftClient
         burn: {
           token_id: tokenId,
         },
+      },
+      fee,
+      memo,
+      _funds,
+    )
+  }
+  migrate = async (
+    migrateV1ToV2: MigrateV1ToV2,
+    fee: number | StdFee | 'auto' = 'auto',
+    memo?: string,
+    _funds?: Coin[],
+  ): Promise<ExecuteResult> => {
+    return await this.client.execute(
+      this.sender,
+      this.contractAddress,
+      {
+        migrate: migrateV1ToV2,
       },
       fee,
       memo,

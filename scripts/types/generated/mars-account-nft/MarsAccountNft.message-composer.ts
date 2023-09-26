@@ -13,6 +13,7 @@ import {
   Uint128,
   InstantiateMsg,
   ExecuteMsg,
+  MigrateV1ToV2,
   Binary,
   Expiration,
   Timestamp,
@@ -64,6 +65,7 @@ export interface MarsAccountNftMessage {
     },
     _funds?: Coin[],
   ) => MsgExecuteContractEncodeObject
+  migrate: (migrateV1ToV2: MigrateV1ToV2, _funds?: Coin[]) => MsgExecuteContractEncodeObject
   transferNft: (
     {
       recipient,
@@ -138,6 +140,7 @@ export class MarsAccountNftMessageComposer implements MarsAccountNftMessage {
     this.updateConfig = this.updateConfig.bind(this)
     this.mint = this.mint.bind(this)
     this.burn = this.burn.bind(this)
+    this.migrate = this.migrate.bind(this)
     this.transferNft = this.transferNft.bind(this)
     this.sendNft = this.sendNft.bind(this)
     this.approve = this.approve.bind(this)
@@ -213,6 +216,21 @@ export class MarsAccountNftMessageComposer implements MarsAccountNftMessage {
             burn: {
               token_id: tokenId,
             },
+          }),
+        ),
+        funds: _funds,
+      }),
+    }
+  }
+  migrate = (migrateV1ToV2: MigrateV1ToV2, _funds?: Coin[]): MsgExecuteContractEncodeObject => {
+    return {
+      typeUrl: '/cosmwasm.wasm.v1.MsgExecuteContract',
+      value: MsgExecuteContract.fromPartial({
+        sender: this.sender,
+        contract: this.contractAddress,
+        msg: toUtf8(
+          JSON.stringify({
+            migrate: migrateV1ToV2,
           }),
         ),
         funds: _funds,

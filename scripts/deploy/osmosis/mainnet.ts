@@ -28,6 +28,7 @@ export const osmosisMainnetConfig: DeploymentConfig = {
   incentives: { addr: 'osmo1nkahswfr8shg8rlxqwup0vgahp0dk4x8w6tkv3rra8rratnut36sk22vrm' },
   params: { addr: 'TBD' },
   swapper: { addr: 'TBD' },
+  rewardsCollector: { addr: 'osmo1urvqe5mw00ws25yqdd4c4hlh8kdyf567mpcml7cdve9w08z0ydcqvsrgdy' },
   runTests: false,
   vaults: [
     {

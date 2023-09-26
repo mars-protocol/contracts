@@ -6,14 +6,14 @@ use cosmwasm_std::{
 use cw2::set_contract_version;
 use cw721_base::Cw721Contract;
 use mars_account_nft_types::{
-    msg::{ExecuteMsg, InstantiateMsg, QueryMsg},
+    msg::{ExecuteMsg, InstantiateMsg, MigrateV1ToV2, QueryMsg},
     nft_config::NftConfig,
 };
 
 use crate::{
     error::ContractError,
     execute::{burn, mint, update_config},
-    migrations,
+    migrations::{self},
     query::{query_config, query_next_id},
     state::{CONFIG, NEXT_ID},
 };
@@ -71,6 +71,11 @@ pub fn execute(
         ExecuteMsg::Burn {
             token_id,
         } => burn(deps, env, info, token_id),
+        ExecuteMsg::Migrate(msg) => match msg {
+            MigrateV1ToV2::BurnEmptyAccounts {
+                limit,
+            } => migrations::v2_0_0::burn_empty_accounts(deps, limit),
+        },
         _ => Parent::default().execute(deps, env, info, msg.try_into()?).map_err(Into::into),
     }
 }

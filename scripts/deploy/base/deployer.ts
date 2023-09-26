@@ -163,11 +163,20 @@ export class Deployer {
         this.storage.addresses.creditManager!,
       )
 
-      printBlue('Setting health contract address in nft contract via credit manager contract')
+      printBlue(
+        'Setting health and credit-manager addresses in nft contract via credit manager contract',
+      )
       await hExec.updateNftConfig({
         config: {
           health_contract_addr: this.storage.addresses.healthContract!,
           credit_manager_contract_addr: this.storage.addresses.creditManager!,
+        },
+      })
+
+      printBlue('Setting rewards-collector address in credit manager contract')
+      await hExec.updateConfig({
+        updates: {
+          rewards_collector: this.config.rewardsCollector.addr,
         },
       })
     }
