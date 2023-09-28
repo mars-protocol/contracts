@@ -4,8 +4,8 @@ use cosmwasm_std::{coin, to_binary, Coin, Decimal, Empty, Isqrt, Uint128};
 use helpers::osmosis::instantiate_stride_contract;
 use mars_oracle_base::ContractError;
 use mars_oracle_osmosis::{
-    msg::PriceSourceResponse, DowntimeDetector, OsmosisPriceSourceChecked,
-    OsmosisPriceSourceUnchecked, RedemptionRate, GeometricTwap,
+    msg::PriceSourceResponse, DowntimeDetector, GeometricTwap, OsmosisPriceSourceChecked,
+    OsmosisPriceSourceUnchecked, RedemptionRate,
 };
 use mars_params::msg::AssetParamsUpdate;
 use mars_red_bank_types::{
@@ -21,7 +21,10 @@ use mars_red_bank_types::{
     },
     rewards_collector::InstantiateMsg as InstantiateRewards,
 };
-use osmosis_std::types::osmosis::{downtimedetector::v1beta1::Downtime, gamm::poolmodels::stableswap::v1beta1::MsgCreateStableswapPool};
+use osmosis_std::types::osmosis::{
+    downtimedetector::v1beta1::Downtime,
+    gamm::poolmodels::stableswap::v1beta1::MsgCreateStableswapPool,
+};
 use osmosis_test_tube::{
     osmosis_std::types::osmosis::gamm::poolmodels::stableswap::v1beta1::PoolParams, Account, Gamm,
     Module, OsmosisTestApp, RunnerResult, SigningAccount, Wasm,
