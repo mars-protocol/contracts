@@ -166,7 +166,7 @@ fn query_all_addresses(
         .collect()
 }
 
-#[entry_point]
+#[cfg_attr(not(feature = "library"), entry_point)]
 pub fn migrate(deps: DepsMut, _env: Env, _msg: Empty) -> Result<Response, ContractError> {
     migrations::v2_0_0::migrate(deps)
 }
