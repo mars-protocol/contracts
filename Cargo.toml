@@ -60,9 +60,9 @@ strum             = "0.25.0"
 thiserror         = "1.0.48"
 
 # dev-dependencies
-cw-multi-test     = "0.16.5"
+cw-multi-test     = "0.17.0"
 cw-it             = "0.2.1"
-osmosis-test-tube = "19.0.0"
+osmosis-test-tube = "19.2.0"
 proptest          = "1.2.0"
 test-case         = "3.2.1"
 
