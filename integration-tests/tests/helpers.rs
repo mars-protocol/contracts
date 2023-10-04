@@ -151,6 +151,24 @@ pub mod osmosis {
         wasm.instantiate(code_id, msg, None, Some(contract_name), &[], owner).unwrap().data.address
     }
 
+    pub fn instantiate_stride_contract<M>(
+        wasm: &Wasm<OsmosisTestApp>,
+        owner: &SigningAccount,
+        msg: &M,
+    ) -> String
+    where
+        M: ?Sized + Serialize,
+    {
+        let path =
+            "../integration-tests/tests/files/stride-artifacts/151_stride_redemption_rate.wasm"
+                .to_string();
+        println!("Trying to read wasm file: {}", path);
+        let wasm_byte_code = std::fs::read(path).unwrap();
+        let code_id = wasm.store_code(&wasm_byte_code, None, owner).unwrap().data.code_id;
+
+        wasm.instantiate(code_id, msg, None, Some("stride-rr"), &[], owner).unwrap().data.address
+    }
+
     pub fn assert_err(actual: RunnerError, expected: impl Display) {
         match actual {
             RunnerError::ExecuteError {

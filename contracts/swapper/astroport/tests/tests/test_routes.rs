@@ -61,7 +61,8 @@ fn test_to_native_swap_operation() {
 #[test_case("uosmo", "uusd", to_native_swap_operations(vec![("uosmo", "uatom"), ("uusd", "ustrd")]) => panics ; "route is not connected")]
 #[test_case("uosmo", "uusd", vec![SwapOperation::NativeSwap { offer_denom: "uosmo".to_string(), ask_denom: "uusd".to_string() }] => panics ; "contains NativeSwap operation")]
 fn set_route(denom_in: &str, denom_out: &str, operations: Vec<SwapOperation>) {
-    let runner = get_test_runner();
+    let owned_runner = get_test_runner();
+    let runner = owned_runner.as_ref();
     let admin = runner.init_account(&[coin(1000000000000, "uosmo")]).unwrap();
     let robot = AstroportSwapperRobot::new_with_local(&runner, &admin);
 
@@ -73,7 +74,8 @@ fn set_route(denom_in: &str, denom_out: &str, operations: Vec<SwapOperation>) {
 #[test]
 #[should_panic]
 fn set_route_not_admin() {
-    let runner = get_test_runner();
+    let owned_runner = get_test_runner();
+    let runner = owned_runner.as_ref();
     let admin = runner.init_account(&[coin(1000000000000, "uosmo")]).unwrap();
     let caller = runner.init_account(&[coin(1000000000000, "uosmo")]).unwrap();
     let robot = AstroportSwapperRobot::new_with_local(&runner, &admin);
@@ -87,7 +89,8 @@ fn set_route_not_admin() {
 
 #[test]
 fn query_non_existing_route() {
-    let runner = get_test_runner();
+    let owned_runner = get_test_runner();
+    let runner = owned_runner.as_ref();
     let admin = runner.init_account(&[coin(1000000000000, "uosmo")]).unwrap();
     let robot = AstroportSwapperRobot::new_with_local(&runner, &admin);
 
@@ -111,7 +114,8 @@ fn query_non_existing_route() {
 
 #[test]
 fn query_routes() {
-    let runner = get_test_runner();
+    let owned_runner = get_test_runner();
+    let runner = owned_runner.as_ref();
     let admin = runner.init_account(&[coin(1000000000000, "uosmo")]).unwrap();
     let robot = AstroportSwapperRobot::new_with_local(&runner, &admin);
 

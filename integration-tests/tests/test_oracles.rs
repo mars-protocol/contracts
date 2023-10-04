@@ -1,10 +1,11 @@
-use std::str::FromStr;
+use std::{str::FromStr, time::SystemTime};
 
-use cosmwasm_std::{coin, Coin, Decimal, Empty, Isqrt, Uint128};
+use cosmwasm_std::{coin, to_binary, Coin, Decimal, Empty, Isqrt, Uint128};
+use helpers::osmosis::instantiate_stride_contract;
 use mars_oracle_base::ContractError;
 use mars_oracle_osmosis::{
-    msg::PriceSourceResponse, DowntimeDetector, OsmosisPriceSourceChecked,
-    OsmosisPriceSourceUnchecked,
+    msg::PriceSourceResponse, DowntimeDetector, GeometricTwap, OsmosisPriceSourceChecked,
+    OsmosisPriceSourceUnchecked, RedemptionRate,
 };
 use mars_params::msg::AssetParamsUpdate;
 use mars_red_bank_types::{
@@ -20,9 +21,13 @@ use mars_red_bank_types::{
     },
     rewards_collector::InstantiateMsg as InstantiateRewards,
 };
-use osmosis_std::types::osmosis::downtimedetector::v1beta1::Downtime;
+use osmosis_std::types::osmosis::{
+    downtimedetector::v1beta1::Downtime,
+    gamm::poolmodels::stableswap::v1beta1::MsgCreateStableswapPool,
+};
 use osmosis_test_tube::{
-    Account, Gamm, Module, OsmosisTestApp, RunnerResult, SigningAccount, Wasm,
+    osmosis_std::types::osmosis::gamm::poolmodels::stableswap::v1beta1::PoolParams, Account, Gamm,
+    Module, OsmosisTestApp, RunnerResult, SigningAccount, Wasm,
 };
 
 use crate::helpers::{
@@ -913,6 +918,187 @@ fn compare_spot_and_twap_price() {
     let tolerance = Decimal::percent(1);
     assert!(spot_price.price.abs_diff(arithmetic_twap_price.price) < tolerance);
     assert!(spot_price.price.abs_diff(geometric_twap_price.price) < tolerance);
+}
+
+// assert oracle was correctly set to LSD and assert prices are queried correctly
+#[test]
+fn query_lsd_price() {
+    let app = OsmosisTestApp::new();
+    let wasm = Wasm::new(&app);
+
+    let ibc_stuosmo = format!(
+        "ibc/{}",
+        "d176154b0c63d1f9c6dcfb4f70349ebf2e2b5a87a05902f57a6ae92b863e9aec" // hash for: transfer/channel-326/stuosmo
+            .to_ascii_uppercase()
+    );
+
+    let signer = app
+        .init_account(&[
+            coin(100_000_000_000_000, "uosmo"),
+            coin(100_000_000_000_000, &ibc_stuosmo),
+        ])
+        .unwrap();
+
+    let oracle_addr = instantiate_contract(
+        &wasm,
+        &signer,
+        OSMOSIS_ORACLE_CONTRACT_NAME,
+        &InstantiateMsg::<Empty> {
+            owner: signer.address(),
+            base_denom: "uosmo".to_string(),
+            custom_init: None,
+        },
+    );
+
+    let stride_addr = instantiate_stride_contract(
+        &wasm,
+        &signer,
+        &ica_oracle::msg::InstantiateMsg {
+            admin_address: signer.address(),
+            transfer_channel_id: Some("channel-326".to_string()),
+        },
+    );
+
+    let gamm = Gamm::new(&app);
+    let pool_id = gamm
+        .create_stable_swap_pool(
+            MsgCreateStableswapPool {
+                sender: signer.address(),
+                pool_params: Some(PoolParams {
+                    swap_fee: "10000000000000000".to_string(),
+                    exit_fee: "0".to_string(),
+                }),
+                initial_pool_liquidity: vec![
+                    osmosis_std::types::cosmos::base::v1beta1::Coin {
+                        denom: ibc_stuosmo.to_string(),
+                        amount: "3800671945286".to_string(),
+                    },
+                    osmosis_std::types::cosmos::base::v1beta1::Coin {
+                        denom: "uosmo".to_string(),
+                        amount: "3261943288901".to_string(),
+                    },
+                ],
+                scaling_factors: vec![100000, 115680],
+                future_pool_governor: "".to_string(),
+                scaling_factor_controller: signer.address(),
+            },
+            &signer,
+        )
+        .unwrap()
+        .data
+        .pool_id;
+
+    // setup uosmo price
+    wasm.execute(
+        &oracle_addr,
+        &ExecuteMsg::<_, Empty>::SetPriceSource {
+            denom: "uosmo".to_string(),
+            price_source: OsmosisPriceSourceUnchecked::Fixed {
+                price: Decimal::one(),
+            },
+        },
+        &[],
+        &signer,
+    )
+    .unwrap();
+
+    // setup Geomertic TWAP price source in order to test TWAP price for StableSwap pool
+    wasm.execute(
+        &oracle_addr,
+        &ExecuteMsg::<_, Empty>::SetPriceSource {
+            denom: ibc_stuosmo.to_string(),
+            price_source: OsmosisPriceSourceUnchecked::GeometricTwap {
+                pool_id,
+                window_size: 10, // 10 seconds = 2 swaps when each swap increases block time by 5 seconds
+                downtime_detector: None,
+            },
+        },
+        &[],
+        &signer,
+    )
+    .unwrap();
+
+    swap_to_create_twap_records(&app, &signer, pool_id, coin(10u128, "uosmo"), &ibc_stuosmo, 10);
+
+    let price: PriceResponse = wasm
+        .query(
+            &oracle_addr,
+            &QueryMsg::Price {
+                denom: ibc_stuosmo.to_string(),
+                kind: None,
+            },
+        )
+        .unwrap();
+    let ibc_stuosmo_twap_price = price.price;
+
+    // setup LSD price source with StableSwap pool and redemption rate contract
+    let max_staleness = 3600u64;
+    wasm.execute(
+        &oracle_addr,
+        &ExecuteMsg::<_, Empty>::SetPriceSource {
+            denom: ibc_stuosmo.to_string(),
+            price_source: OsmosisPriceSourceUnchecked::Lsd {
+                transitive_denom: "uosmo".to_string(),
+                geometric_twap: GeometricTwap {
+                    pool_id,
+                    window_size: 10,
+                    downtime_detector: None,
+                },
+                redemption_rate: RedemptionRate {
+                    contract_addr: stride_addr.clone(),
+                    max_staleness,
+                },
+            },
+        },
+        &[],
+        &signer,
+    )
+    .unwrap();
+
+    let rr_attr = ica_oracle::state::RedemptionRateAttributes {
+        sttoken_denom: "stuosmo".to_string(),
+    };
+    let rr_attr_bin = to_binary(&rr_attr).unwrap();
+    let rr_value = Decimal::from_str("1.123").unwrap();
+    let now_sec = SystemTime::now().duration_since(SystemTime::UNIX_EPOCH).unwrap().as_secs();
+    wasm.execute(
+        &stride_addr,
+        &ica_oracle::msg::ExecuteMsg::PostMetric {
+            key: "ustosmo_redemption_rate".to_string(),
+            value: rr_value.to_string(),
+            metric_type: ica_oracle::state::MetricType::RedemptionRate,
+            update_time: now_sec - 10,
+            block_height: 0,
+            attributes: Some(rr_attr_bin),
+        },
+        &[],
+        &signer,
+    )
+    .unwrap();
+
+    let res: ica_oracle::msg::RedemptionRateResponse = wasm
+        .query(
+            &stride_addr,
+            &ica_oracle::msg::QueryMsg::RedemptionRate {
+                denom: ibc_stuosmo.clone(),
+                params: None,
+            },
+        )
+        .unwrap();
+    assert_eq!(res.redemption_rate, rr_value);
+
+    let price: PriceResponse = wasm
+        .query(
+            &oracle_addr,
+            &QueryMsg::Price {
+                denom: ibc_stuosmo,
+                kind: None,
+            },
+        )
+        .unwrap();
+    assert!(ibc_stuosmo_twap_price > rr_value);
+    // twap price > rr then we take min(twap, rr)
+    assert_eq!(price.price, rr_value);
 }
 
 // execute borrow action in red bank with an asset not in the oracle - should fail when attempting to query oracle

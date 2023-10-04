@@ -21,6 +21,7 @@ anyhow                         = { workspace = true }
 cosmwasm-std                   = { workspace = true }
 cw-it                          = { workspace = true, features = ["osmosis-test-tube"] }
 cw-multi-test                  = { workspace = true }
+ica-oracle                     = { workspace = true }
 mars-incentives                = { workspace = true }
 mars-oracle-base               = { workspace = true }
 mars-oracle-osmosis            = { workspace = true }

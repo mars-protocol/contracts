@@ -8,7 +8,8 @@ use mars_testing::{astroport_swapper::AstroportSwapperRobot, test_runner::get_te
 
 #[test]
 fn transfer_result_unauthorized() {
-    let runner = get_test_runner();
+    let owned_runner = get_test_runner();
+    let runner = owned_runner.as_ref();
     let admin = runner.init_account(&[coin(1000000000000, "uosmo")]).unwrap();
     let robot = AstroportSwapperRobot::new_with_local(&runner, &admin);
     let denom_in = "uosmo".to_string();
