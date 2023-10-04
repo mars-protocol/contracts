@@ -54,7 +54,7 @@ dependencies = [
  "cw-storage-plus 1.1.0",
  "cw-utils 1.0.1",
  "derivative",
- "itertools",
+ "itertools 0.10.5",
  "k256 0.11.6",
  "osmosis-std",
  "prost 0.9.0",
@@ -86,7 +86,7 @@ dependencies = [
  "cw-storage-plus 0.15.1",
  "cw-utils 0.15.1",
  "cw20",
- "itertools",
+ "itertools 0.10.5",
  "uint",
 ]
 
@@ -101,7 +101,7 @@ dependencies = [
  "cosmwasm-std",
  "cw-storage-plus 0.15.1",
  "cw2 0.15.1",
- "itertools",
+ "itertools 0.10.5",
  "protobuf 2.28.0",
  "thiserror",
 ]
@@ -198,7 +198,7 @@ dependencies = [
  "cw-utils 1.0.1",
  "cw2 0.15.1",
  "cw20",
- "itertools",
+ "itertools 0.10.5",
  "thiserror",
 ]
 
@@ -863,20 +863,20 @@ dependencies = [
 
 [[package]]
 name = "cw-multi-test"
-version = "0.16.5"
+version = "0.17.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "127c7bb95853b8e828bdab97065c81cb5ddc20f7339180b61b2300565aaa99d1"
+checksum = "6d818f5323c80ed4890db7f89d65eda3f0261fe21878e628c27ea2d8de4b7ba4"
 dependencies = [
  "anyhow",
  "cosmwasm-std",
  "cw-storage-plus 1.1.0",
  "cw-utils 1.0.1",
  "derivative",
- "itertools",
- "k256 0.11.6",
- "prost 0.9.0",
+ "itertools 0.11.0",
+ "prost 0.12.1",
  "schemars",
  "serde",
+ "sha2 0.10.8",
  "thiserror",
 ]
 
@@ -1724,6 +1724,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "itertools"
+version = "0.11.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "b1c173a5686ce8bfa551b3563d0c2170bf24ca44da99c7ca4bfdab5418c3fe57"
+dependencies = [
+ "either",
+]
+
+[[package]]
 name = "itoa"
 version = "1.0.9"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2424,7 +2433,7 @@ version = "0.16.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "f47f0b2f22adb341bb59e5a3a1b464dde033181954bd055b9ae86d6511ba465b"
 dependencies = [
- "itertools",
+ "itertools 0.10.5",
  "proc-macro2",
  "prost-types",
  "quote",
@@ -2433,9 +2442,9 @@ dependencies = [
 
 [[package]]
 name = "osmosis-test-tube"
-version = "19.0.0"
+version = "19.2.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "d176b76c0142f7a047d4c4f12a553b10de557aa60304077ca88532249924da0f"
+checksum = "b0dde0a21f1323e7c78f46da4bd0b24149d26483785fb5b39f74016f3f524aad"
 dependencies = [
  "base64 0.13.1",
  "bindgen",
@@ -2695,13 +2704,23 @@ dependencies = [
 ]
 
 [[package]]
+name = "prost"
+version = "0.12.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "f4fdd22f3b9c31b53c060df4a0613a1c7f062d4115a2b984dd15b1858f7e340d"
+dependencies = [
+ "bytes",
+ "prost-derive 0.12.1",
+]
+
+[[package]]
 name = "prost-derive"
 version = "0.9.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "f9cc1a3263e07e0bf68e96268f37665207b49560d98739662cdfaae215c720fe"
 dependencies = [
  "anyhow",
- "itertools",
+ "itertools 0.10.5",
  "proc-macro2",
  "quote",
  "syn 1.0.109",
@@ -2714,10 +2733,23 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "e5d2d8d10f3c6ded6da8b05b5fb3b8a5082514344d56c9f871412d29b4e075b4"
 dependencies = [
  "anyhow",
- "itertools",
+ "itertools 0.10.5",
  "proc-macro2",
  "quote",
  "syn 1.0.109",
+]
+
+[[package]]
+name = "prost-derive"
+version = "0.12.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "265baba7fabd416cf5078179f7d2cbeca4ce7a9041111900675ea7c4cb8a4c32"
+dependencies = [
+ "anyhow",
+ "itertools 0.11.0",
+ "proc-macro2",
+ "quote",
+ "syn 2.0.37",
 ]
 
 [[package]]
