@@ -4,19 +4,11 @@ use cosmwasm_std::{
 };
 use mars_rover::{
     error::{ContractError, ContractResult},
-    msg::{
-        execute::{CallbackMsg, ChangeExpected},
-        ExecuteMsg,
-    },
+    msg::{execute::CallbackMsg, ExecuteMsg},
     traits::Denoms,
 };
-use mars_rover_health_types::AccountKind;
 
-use crate::{
-    state::INCENTIVES,
-    update_coin_balances::query_balance,
-    utils::{get_account_kind, update_balances_msgs},
-};
+use crate::{state::INCENTIVES, update_coin_balances::query_balance};
 
 pub fn claim_rewards(
     deps: DepsMut,
@@ -31,34 +23,22 @@ pub fn claim_rewards(
         return Err(ContractError::NoAmount);
     }
 
-    // For HLS accounts there are special requirements enforced for this account type.
-    // assert_hls_rules only allows assets with HLS params set in the params contract
-    // and where the collateral is whitelisted.
-    // We withdraw all claimed rewards for HLS accounts to the recipient address.
-    let kind = get_account_kind(deps.storage, account_id)?;
-    let msgs = match kind {
-        AccountKind::Default => update_balances_msgs(
-            &deps.querier,
-            &env.contract.address,
-            account_id,
-            unclaimed_rewards.to_denoms(),
-            ChangeExpected::Increase,
-        )?,
-        AccountKind::HighLeveredStrategy => {
-            let msg = send_rewards_msg(
-                &deps.querier,
-                &env.contract.address,
-                account_id,
-                recipient.clone(),
-                unclaimed_rewards.to_denoms(),
-            )?;
-            vec![msg]
-        }
-    };
+    // Incentive denom may not be listed in params contract.
+    // When rewards are claimed to the account, they are considered deposits (collateral).
+    // If the account requires HF check, health contract won't be able to find
+    // incentive denom params (such as MaxLTV) for HF calculation and the TX will be rejected.
+    // To address this issue we withdraw all claimed rewards to the recipient address.
+    let msg = send_rewards_msg(
+        &deps.querier,
+        &env.contract.address,
+        account_id,
+        recipient.clone(),
+        unclaimed_rewards.to_denoms(),
+    )?;
 
     Ok(Response::new()
         .add_message(incentives.claim_rewards_msg(account_id)?)
-        .add_messages(msgs)
+        .add_message(msg)
         .add_attribute("action", "claim_rewards")
         .add_attribute("account_id", account_id)
         .add_attribute("recipient", recipient.to_string()))

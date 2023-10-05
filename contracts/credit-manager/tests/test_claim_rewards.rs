@@ -45,13 +45,14 @@ fn claiming_a_single_reward() {
 
     // Check account id deposit balance
     let positions = mock.query_positions(&account_id);
-    assert_eq!(positions.deposits.len(), 1);
-    assert_eq!(positions.deposits.first().unwrap().amount, Uint128::new(123));
-    assert_eq!(positions.deposits.first().unwrap().denom, coin_info.denom);
+    assert_eq!(positions.deposits.len(), 0);
 
-    // Ensure money is in bank module for credit manager
-    let cm_balance = mock.query_balance(&mock.rover, &coin_info.denom);
-    assert_eq!(cm_balance.amount, Uint128::new(123));
+    // Ensure money is in user's wallet
+    let balance = mock.query_balance(&mock.rover, &coin_info.denom);
+    assert_eq!(balance.amount, Uint128::zero());
+
+    let balance = mock.query_balance(&user, &coin_info.denom);
+    assert_eq!(balance.amount, Uint128::new(123));
 }
 
 #[test]
@@ -79,25 +80,25 @@ fn claiming_multiple_rewards() {
 
     // Check account id deposit balance
     let positions = mock.query_positions(&account_id);
-    assert_eq!(positions.deposits.len(), 3);
+    assert_eq!(positions.deposits.len(), 0);
 
-    let osmo_claimed = get_coin(&osmo_info.denom, &positions.deposits);
-    assert_eq!(osmo_claimed.amount, Uint128::new(123));
-
-    let atom_claimed = get_coin(&atom_info.denom, &positions.deposits);
-    assert_eq!(atom_claimed.amount, Uint128::new(555));
-
-    let jake_claimed = get_coin(&jake_info.denom, &positions.deposits);
-    assert_eq!(jake_claimed.amount, Uint128::new(12));
-
-    // Ensure money is in bank module for credit manager
+    // Ensure money is in user's wallet
     let osmo_balance = mock.query_balance(&mock.rover, &osmo_info.denom);
-    assert_eq!(osmo_balance.amount, Uint128::new(123));
+    assert_eq!(osmo_balance.amount, Uint128::zero());
 
     let atom_balance = mock.query_balance(&mock.rover, &atom_info.denom);
-    assert_eq!(atom_balance.amount, Uint128::new(555));
+    assert_eq!(atom_balance.amount, Uint128::zero());
 
     let jake_balance = mock.query_balance(&mock.rover, &jake_info.denom);
+    assert_eq!(jake_balance.amount, Uint128::zero());
+
+    let osmo_balance = mock.query_balance(&user, &osmo_info.denom);
+    assert_eq!(osmo_balance.amount, Uint128::new(123));
+
+    let atom_balance = mock.query_balance(&user, &atom_info.denom);
+    assert_eq!(atom_balance.amount, Uint128::new(555));
+
+    let jake_balance = mock.query_balance(&user, &jake_info.denom);
     assert_eq!(jake_balance.amount, Uint128::new(12));
 }
 
