@@ -1,0 +1,39 @@
+[package]
+name          = "mars-rover-health-computer"
+version       = { workspace = true }
+authors       = { workspace = true }
+edition       = { workspace = true }
+documentation = { workspace = true }
+keywords      = { workspace = true }
+
+[lib]
+crate-type = ["cdylib", "rlib"]
+doctest    = false
+
+[features]
+backtraces = ["cosmwasm-std/backtraces"]
+default    = ["console_error_panic_hook"]
+javascript = ["tsify", "wasm-bindgen", "mars-rover-health-types/javascript"]
+
+[dependencies]
+cosmwasm-schema         = { workspace = true }
+cosmwasm-std            = { workspace = true }
+cw-vault-standard       = { workspace = true }
+mars-params             = { workspace = true }
+mars-rover              = { workspace = true }
+mars-rover-health-types = { workspace = true }
+schemars                = { workspace = true }
+serde                   = { workspace = true }
+serde_json              = { workspace = true }
+tsify                   = { workspace = true, optional = true }
+wasm-bindgen            = { workspace = true, optional = true }
+
+# The `console_error_panic_hook` crate provides better debugging of panics by
+# logging them with `console.error`. This is great for development, but requires
+# all the `std::fmt` and `std::panicking` infrastructure, so isn't great for
+# code size when deploying.
+console_error_panic_hook = { version = "0.1.7", optional = true }
+
+[dev-dependencies]
+proptest = { workspace = true }
+

@@ -1,0 +1,31 @@
+[package]
+name          = "mars-rover-health-types"
+version       = { workspace = true }
+authors       = { workspace = true }
+license       = { workspace = true }
+edition       = { workspace = true }
+repository    = { workspace = true }
+homepage      = { workspace = true }
+documentation = { workspace = true }
+keywords      = { workspace = true }
+
+[lib]
+crate-type = ["cdylib", "rlib"]
+doctest    = false
+
+[features]
+backtraces = ["cosmwasm-std/backtraces"]
+javascript = ["tsify", "wasm-bindgen"]
+
+[dependencies]
+cosmwasm-schema     = { workspace = true }
+cosmwasm-std        = { workspace = true }
+mars-health         = { workspace = true }
+mars-red-bank-types = { workspace = true }
+mars-owner          = { workspace = true }
+schemars            = { workspace = true }
+serde               = { workspace = true }
+serde_json          = { workspace = true }
+thiserror           = { workspace = true }
+tsify               = { workspace = true, optional = true }
+wasm-bindgen        = { workspace = true, optional = true }

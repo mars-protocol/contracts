@@ -16,7 +16,5 @@ module.exports = {
   rules: {
     '@typescript-eslint/restrict-template-expressions': 'off',
     '@typescript-eslint/no-non-null-assertion': 'off',
-    '@typescript-eslint/consistent-type-definitions': 'off',
   },
-  ignorePatterns: ['.eslintrc.cjs', 'build', 'node_modules', 'generated', 'mars-oracle-osmosis'],
 }

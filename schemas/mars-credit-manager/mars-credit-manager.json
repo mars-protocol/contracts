@@ -1,0 +1,3245 @@
+{
+  "contract_name": "mars-credit-manager",
+  "contract_version": "2.0.0",
+  "idl_version": "1.0.0",
+  "instantiate": {
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "title": "InstantiateMsg",
+    "type": "object",
+    "required": [
+      "health_contract",
+      "incentives",
+      "max_slippage",
+      "max_unlocking_positions",
+      "oracle",
+      "owner",
+      "params",
+      "red_bank",
+      "swapper",
+      "zapper"
+    ],
+    "properties": {
+      "health_contract": {
+        "description": "Helper contract for calculating health factor",
+        "allOf": [
+          {
+            "$ref": "#/definitions/HealthContractBase_for_String"
+          }
+        ]
+      },
+      "incentives": {
+        "description": "Contract that handles lending incentive rewards",
+        "allOf": [
+          {
+            "$ref": "#/definitions/IncentivesUnchecked"
+          }
+        ]
+      },
+      "max_slippage": {
+        "description": "The maximum slippage allowed for swaps, provide liquidity and withdraw liquidity",
+        "allOf": [
+          {
+            "$ref": "#/definitions/Decimal"
+          }
+        ]
+      },
+      "max_unlocking_positions": {
+        "description": "The maximum number of unlocking positions an account can have simultaneously Note: As health checking requires looping through each, this number must not be too large. If so, having too many could prevent the account from being liquidated due to gas constraints.",
+        "allOf": [
+          {
+            "$ref": "#/definitions/Uint128"
+          }
+        ]
+      },
+      "oracle": {
+        "description": "The Mars Protocol oracle contract. We read prices of assets here.",
+        "allOf": [
+          {
+            "$ref": "#/definitions/OracleBase_for_String"
+          }
+        ]
+      },
+      "owner": {
+        "description": "The address with privileged access to update config",
+        "type": "string"
+      },
+      "params": {
+        "description": "Contract that stores asset and vault params",
+        "allOf": [
+          {
+            "$ref": "#/definitions/ParamsBase_for_String"
+          }
+        ]
+      },
+      "red_bank": {
+        "description": "The Mars Protocol money market contract where we borrow assets from",
+        "allOf": [
+          {
+            "$ref": "#/definitions/RedBankUnchecked"
+          }
+        ]
+      },
+      "swapper": {
+        "description": "Helper contract for making swaps",
+        "allOf": [
+          {
+            "$ref": "#/definitions/SwapperBase_for_String"
+          }
+        ]
+      },
+      "zapper": {
+        "description": "Helper contract for adding/removing liquidity",
+        "allOf": [
+          {
+            "$ref": "#/definitions/ZapperBase_for_String"
+          }
+        ]
+      }
+    },
+    "additionalProperties": false,
+    "definitions": {
+      "Decimal": {
+        "description": "A fixed-point decimal value with 18 fractional digits, i.e. Decimal(1_000_000_000_000_000_000) == 1.0\n\nThe greatest possible value that can be represented is 340282366920938463463.374607431768211455 (which is (2^128 - 1) / 10^18)",
+        "type": "string"
+      },
+      "HealthContractBase_for_String": {
+        "type": "string"
+      },
+      "IncentivesUnchecked": {
+        "type": "string"
+      },
+      "OracleBase_for_String": {
+        "type": "string"
+      },
+      "ParamsBase_for_String": {
+        "type": "string"
+      },
+      "RedBankUnchecked": {
+        "type": "string"
+      },
+      "SwapperBase_for_String": {
+        "type": "string"
+      },
+      "Uint128": {
+        "description": "A thin wrapper around u128 that is using strings for JSON encoding/decoding, such that the full u128 range can be used for clients that convert JSON numbers to floats, like JavaScript and jq.\n\n# Examples\n\nUse `from` to create instances of this and `u128` to get the value out:\n\n``` # use cosmwasm_std::Uint128; let a = Uint128::from(123u128); assert_eq!(a.u128(), 123);\n\nlet b = Uint128::from(42u64); assert_eq!(b.u128(), 42);\n\nlet c = Uint128::from(70u32); assert_eq!(c.u128(), 70); ```",
+        "type": "string"
+      },
+      "ZapperBase_for_String": {
+        "type": "string"
+      }
+    }
+  },
+  "execute": {
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "title": "ExecuteMsg",
+    "oneOf": [
+      {
+        "description": "Mints NFT representing a credit account for user. User can have many.",
+        "type": "object",
+        "required": [
+          "create_credit_account"
+        ],
+        "properties": {
+          "create_credit_account": {
+            "$ref": "#/definitions/AccountKind"
+          }
+        },
+        "additionalProperties": false
+      },
+      {
+        "description": "Update user's position on their credit account",
+        "type": "object",
+        "required": [
+          "update_credit_account"
+        ],
+        "properties": {
+          "update_credit_account": {
+            "type": "object",
+            "required": [
+              "account_id",
+              "actions"
+            ],
+            "properties": {
+              "account_id": {
+                "type": "string"
+              },
+              "actions": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/definitions/Action"
+                }
+              }
+            },
+            "additionalProperties": false
+          }
+        },
+        "additionalProperties": false
+      },
+      {
+        "description": "Repay debt on behalf of an account, funded from wallet. Must send exactly one coin in message funds. Allows repaying debts of assets that have been de-listed from credit manager.",
+        "type": "object",
+        "required": [
+          "repay_from_wallet"
+        ],
+        "properties": {
+          "repay_from_wallet": {
+            "type": "object",
+            "required": [
+              "account_id"
+            ],
+            "properties": {
+              "account_id": {
+                "type": "string"
+              }
+            },
+            "additionalProperties": false
+          }
+        },
+        "additionalProperties": false
+      },
+      {
+        "description": "Update contract config constants",
+        "type": "object",
+        "required": [
+          "update_config"
+        ],
+        "properties": {
+          "update_config": {
+            "type": "object",
+            "required": [
+              "updates"
+            ],
+            "properties": {
+              "updates": {
+                "$ref": "#/definitions/ConfigUpdates"
+              }
+            },
+            "additionalProperties": false
+          }
+        },
+        "additionalProperties": false
+      },
+      {
+        "description": "Manages owner role state",
+        "type": "object",
+        "required": [
+          "update_owner"
+        ],
+        "properties": {
+          "update_owner": {
+            "$ref": "#/definitions/OwnerUpdate"
+          }
+        },
+        "additionalProperties": false
+      },
+      {
+        "description": "Update nft contract config",
+        "type": "object",
+        "required": [
+          "update_nft_config"
+        ],
+        "properties": {
+          "update_nft_config": {
+            "type": "object",
+            "properties": {
+              "config": {
+                "anyOf": [
+                  {
+                    "$ref": "#/definitions/NftConfigUpdates"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "ownership": {
+                "anyOf": [
+                  {
+                    "$ref": "#/definitions/Action2"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              }
+            },
+            "additionalProperties": false
+          }
+        },
+        "additionalProperties": false
+      },
+      {
+        "description": "Internal actions only callable by the contract itself",
+        "type": "object",
+        "required": [
+          "callback"
+        ],
+        "properties": {
+          "callback": {
+            "$ref": "#/definitions/CallbackMsg"
+          }
+        },
+        "additionalProperties": false
+      }
+    ],
+    "definitions": {
+      "AccountKind": {
+        "type": "string",
+        "enum": [
+          "default",
+          "high_levered_strategy"
+        ]
+      },
+      "AccountNftBase_for_String": {
+        "type": "string"
+      },
+      "Action": {
+        "description": "The list of actions that users can perform on their positions",
+        "oneOf": [
+          {
+            "description": "Deposit coin of specified denom and amount. Verifies if the correct amount is sent with transaction.",
+            "type": "object",
+            "required": [
+              "deposit"
+            ],
+            "properties": {
+              "deposit": {
+                "$ref": "#/definitions/Coin"
+              }
+            },
+            "additionalProperties": false
+          },
+          {
+            "description": "Withdraw coin of specified denom and amount",
+            "type": "object",
+            "required": [
+              "withdraw"
+            ],
+            "properties": {
+              "withdraw": {
+                "$ref": "#/definitions/ActionCoin"
+              }
+            },
+            "additionalProperties": false
+          },
+          {
+            "description": "Borrow coin of specified amount from Red Bank",
+            "type": "object",
+            "required": [
+              "borrow"
+            ],
+            "properties": {
+              "borrow": {
+                "$ref": "#/definitions/Coin"
+              }
+            },
+            "additionalProperties": false
+          },
+          {
+            "description": "Lend coin to the Red Bank",
+            "type": "object",
+            "required": [
+              "lend"
+            ],
+            "properties": {
+              "lend": {
+                "$ref": "#/definitions/ActionCoin"
+              }
+            },
+            "additionalProperties": false
+          },
+          {
+            "description": "Reclaim the coins that were lent to the Red Bank.",
+            "type": "object",
+            "required": [
+              "reclaim"
+            ],
+            "properties": {
+              "reclaim": {
+                "$ref": "#/definitions/ActionCoin"
+              }
+            },
+            "additionalProperties": false
+          },
+          {
+            "description": "For assets lent to the Red Bank, some can accumulate incentive rewards. This message claims all of them adds them to account balance.",
+            "type": "object",
+            "required": [
+              "claim_rewards"
+            ],
+            "properties": {
+              "claim_rewards": {
+                "type": "object",
+                "additionalProperties": false
+              }
+            },
+            "additionalProperties": false
+          },
+          {
+            "description": "Repay coin of specified amount back to Red Bank. If `amount: AccountBalance` is passed, the repaid amount will be the minimum between account balance for denom and total owed. The sender will repay on behalf of the recipient account. If 'recipient_account_id: None', the sender repays to its own account.",
+            "type": "object",
+            "required": [
+              "repay"
+            ],
+            "properties": {
+              "repay": {
+                "type": "object",
+                "required": [
+                  "coin"
+                ],
+                "properties": {
+                  "coin": {
+                    "$ref": "#/definitions/ActionCoin"
+                  },
+                  "recipient_account_id": {
+                    "type": [
+                      "string",
+                      "null"
+                    ]
+                  }
+                },
+                "additionalProperties": false
+              }
+            },
+            "additionalProperties": false
+          },
+          {
+            "description": "Deposit coins into vault strategy If `coin.amount: AccountBalance`, Rover attempts to deposit the account's entire balance into the vault",
+            "type": "object",
+            "required": [
+              "enter_vault"
+            ],
+            "properties": {
+              "enter_vault": {
+                "type": "object",
+                "required": [
+                  "coin",
+                  "vault"
+                ],
+                "properties": {
+                  "coin": {
+                    "$ref": "#/definitions/ActionCoin"
+                  },
+                  "vault": {
+                    "$ref": "#/definitions/VaultBase_for_String"
+                  }
+                },
+                "additionalProperties": false
+              }
+            },
+            "additionalProperties": false
+          },
+          {
+            "description": "Withdraw underlying coins from vault",
+            "type": "object",
+            "required": [
+              "exit_vault"
+            ],
+            "properties": {
+              "exit_vault": {
+                "type": "object",
+                "required": [
+                  "amount",
+                  "vault"
+                ],
+                "properties": {
+                  "amount": {
+                    "$ref": "#/definitions/Uint128"
+                  },
+                  "vault": {
+                    "$ref": "#/definitions/VaultBase_for_String"
+                  }
+                },
+                "additionalProperties": false
+              }
+            },
+            "additionalProperties": false
+          },
+          {
+            "description": "Requests unlocking of shares for a vault with a required lock period",
+            "type": "object",
+            "required": [
+              "request_vault_unlock"
+            ],
+            "properties": {
+              "request_vault_unlock": {
+                "type": "object",
+                "required": [
+                  "amount",
+                  "vault"
+                ],
+                "properties": {
+                  "amount": {
+                    "$ref": "#/definitions/Uint128"
+                  },
+                  "vault": {
+                    "$ref": "#/definitions/VaultBase_for_String"
+                  }
+                },
+                "additionalProperties": false
+              }
+            },
+            "additionalProperties": false
+          },
+          {
+            "description": "Withdraws the assets for unlocking position id from vault. Required time must have elapsed.",
+            "type": "object",
+            "required": [
+              "exit_vault_unlocked"
+            ],
+            "properties": {
+              "exit_vault_unlocked": {
+                "type": "object",
+                "required": [
+                  "id",
+                  "vault"
+                ],
+                "properties": {
+                  "id": {
+                    "type": "integer",
+                    "format": "uint64",
+                    "minimum": 0.0
+                  },
+                  "vault": {
+                    "$ref": "#/definitions/VaultBase_for_String"
+                  }
+                },
+                "additionalProperties": false
+              }
+            },
+            "additionalProperties": false
+          },
+          {
+            "description": "Pay back debt of a liquidatable rover account for a via liquidating a specific type of the position.",
+            "type": "object",
+            "required": [
+              "liquidate"
+            ],
+            "properties": {
+              "liquidate": {
+                "type": "object",
+                "required": [
+                  "debt_coin",
+                  "liquidatee_account_id",
+                  "request"
+                ],
+                "properties": {
+                  "debt_coin": {
+                    "description": "The coin they wish to acquire from the liquidatee (amount returned will include the bonus)",
+                    "allOf": [
+                      {
+                        "$ref": "#/definitions/Coin"
+                      }
+                    ]
+                  },
+                  "liquidatee_account_id": {
+                    "description": "The credit account id of the one with a liquidation threshold health factor 1 or below",
+                    "type": "string"
+                  },
+                  "request": {
+                    "description": "Position details to be liquidated",
+                    "allOf": [
+                      {
+                        "$ref": "#/definitions/LiquidateRequest_for_VaultBase_for_String"
+                      }
+                    ]
+                  }
+                },
+                "additionalProperties": false
+              }
+            },
+            "additionalProperties": false
+          },
+          {
+            "description": "Perform a swapper with an exact-in amount. Requires slippage allowance %. If `coin_in.amount: AccountBalance`, the accounts entire balance of `coin_in.denom` will be used.",
+            "type": "object",
+            "required": [
+              "swap_exact_in"
+            ],
+            "properties": {
+              "swap_exact_in": {
+                "type": "object",
+                "required": [
+                  "coin_in",
+                  "denom_out",
+                  "slippage"
+                ],
+                "properties": {
+                  "coin_in": {
+                    "$ref": "#/definitions/ActionCoin"
+                  },
+                  "denom_out": {
+                    "type": "string"
+                  },
+                  "slippage": {
+                    "$ref": "#/definitions/Decimal"
+                  }
+                },
+                "additionalProperties": false
+              }
+            },
+            "additionalProperties": false
+          },
+          {
+            "description": "Add Vec<Coin> to liquidity pool in exchange for LP tokens. Slippage allowance (%) is used to calculate the minimum amount of LP tokens to receive.",
+            "type": "object",
+            "required": [
+              "provide_liquidity"
+            ],
+            "properties": {
+              "provide_liquidity": {
+                "type": "object",
+                "required": [
+                  "coins_in",
+                  "lp_token_out",
+                  "slippage"
+                ],
+                "properties": {
+                  "coins_in": {
+                    "type": "array",
+                    "items": {
+                      "$ref": "#/definitions/ActionCoin"
+                    }
+                  },
+                  "lp_token_out": {
+                    "type": "string"
+                  },
+                  "slippage": {
+                    "$ref": "#/definitions/Decimal"
+                  }
+                },
+                "additionalProperties": false
+              }
+            },
+            "additionalProperties": false
+          },
+          {
+            "description": "Send LP token and withdraw corresponding reserve assets from pool. If `lp_token.amount: AccountBalance`, the account balance of `lp_token.denom` will be used. /// Slippage allowance (%) is used to calculate the minimum amount of reserve assets to receive.",
+            "type": "object",
+            "required": [
+              "withdraw_liquidity"
+            ],
+            "properties": {
+              "withdraw_liquidity": {
+                "type": "object",
+                "required": [
+                  "lp_token",
+                  "slippage"
+                ],
+                "properties": {
+                  "lp_token": {
+                    "$ref": "#/definitions/ActionCoin"
+                  },
+                  "slippage": {
+                    "$ref": "#/definitions/Decimal"
+                  }
+                },
+                "additionalProperties": false
+              }
+            },
+            "additionalProperties": false
+          },
+          {
+            "description": "Refunds all coin balances back to user wallet",
+            "type": "object",
+            "required": [
+              "refund_all_coin_balances"
+            ],
+            "properties": {
+              "refund_all_coin_balances": {
+                "type": "object",
+                "additionalProperties": false
+              }
+            },
+            "additionalProperties": false
+          }
+        ]
+      },
+      "Action2": {
+        "description": "Actions that can be taken to alter the contract's ownership",
+        "oneOf": [
+          {
+            "description": "Propose to transfer the contract's ownership to another account, optionally with an expiry time.\n\nCan only be called by the contract's current owner.\n\nAny existing pending ownership transfer is overwritten.",
+            "type": "object",
+            "required": [
+              "transfer_ownership"
+            ],
+            "properties": {
+              "transfer_ownership": {
+                "type": "object",
+                "required": [
+                  "new_owner"
+                ],
+                "properties": {
+                  "expiry": {
+                    "anyOf": [
+                      {
+                        "$ref": "#/definitions/Expiration"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  },
+                  "new_owner": {
+                    "type": "string"
+                  }
+                },
+                "additionalProperties": false
+              }
+            },
+            "additionalProperties": false
+          },
+          {
+            "description": "Accept the pending ownership transfer.\n\nCan only be called by the pending owner.",
+            "type": "string",
+            "enum": [
+              "accept_ownership"
+            ]
+          },
+          {
+            "description": "Give up the contract's ownership and the possibility of appointing a new owner.\n\nCan only be invoked by the contract's current owner.\n\nAny existing pending ownership transfer is canceled.",
+            "type": "string",
+            "enum": [
+              "renounce_ownership"
+            ]
+          }
+        ]
+      },
+      "ActionAmount": {
+        "oneOf": [
+          {
+            "type": "string",
+            "enum": [
+              "account_balance"
+            ]
+          },
+          {
+            "type": "object",
+            "required": [
+              "exact"
+            ],
+            "properties": {
+              "exact": {
+                "$ref": "#/definitions/Uint128"
+              }
+            },
+            "additionalProperties": false
+          }
+        ]
+      },
+      "ActionCoin": {
+        "type": "object",
+        "required": [
+          "amount",
+          "denom"
+        ],
+        "properties": {
+          "amount": {
+            "$ref": "#/definitions/ActionAmount"
+          },
+          "denom": {
+            "type": "string"
+          }
+        },
+        "additionalProperties": false
+      },
+      "Addr": {
+        "description": "A human readable address.\n\nIn Cosmos, this is typically bech32 encoded. But for multi-chain smart contracts no assumptions should be made other than being UTF-8 encoded and of reasonable length.\n\nThis type represents a validated address. It can be created in the following ways 1. Use `Addr::unchecked(input)` 2. Use `let checked: Addr = deps.api.addr_validate(input)?` 3. Use `let checked: Addr = deps.api.addr_humanize(canonical_addr)?` 4. Deserialize from JSON. This must only be done from JSON that was validated before such as a contract's state. `Addr` must not be used in messages sent by the user because this would result in unvalidated instances.\n\nThis type is immutable. If you really need to mutate it (Really? Are you sure?), create a mutable copy using `let mut mutable = Addr::to_string()` and operate on that `String` instance.",
+        "type": "string"
+      },
+      "CallbackMsg": {
+        "description": "Internal actions made by the contract with pre-validated inputs",
+        "oneOf": [
+          {
+            "description": "Withdraw specified amount of coin from credit account; Decrement the token's asset amount;",
+            "type": "object",
+            "required": [
+              "withdraw"
+            ],
+            "properties": {
+              "withdraw": {
+                "type": "object",
+                "required": [
+                  "account_id",
+                  "coin",
+                  "recipient"
+                ],
+                "properties": {
+                  "account_id": {
+                    "type": "string"
+                  },
+                  "coin": {
+                    "$ref": "#/definitions/ActionCoin"
+                  },
+                  "recipient": {
+                    "$ref": "#/definitions/Addr"
+                  }
+                },
+                "additionalProperties": false
+              }
+            },
+            "additionalProperties": false
+          },
+          {
+            "description": "Borrow specified amount of coin from Red Bank; Increase the token's coin amount and debt shares;",
+            "type": "object",
+            "required": [
+              "borrow"
+            ],
+            "properties": {
+              "borrow": {
+                "type": "object",
+                "required": [
+                  "account_id",
+                  "coin"
+                ],
+                "properties": {
+                  "account_id": {
+                    "type": "string"
+                  },
+                  "coin": {
+                    "$ref": "#/definitions/Coin"
+                  }
+                },
+                "additionalProperties": false
+              }
+            },
+            "additionalProperties": false
+          },
+          {
+            "description": "Repay coin of specified amount back to Red Bank; Decrement the token's coin amount and debt shares; If `coin.amount: AccountBalance` is passed, the repaid amount will be the minimum between account balance for denom and total owed;",
+            "type": "object",
+            "required": [
+              "repay"
+            ],
+            "properties": {
+              "repay": {
+                "type": "object",
+                "required": [
+                  "account_id",
+                  "coin"
+                ],
+                "properties": {
+                  "account_id": {
+                    "type": "string"
+                  },
+                  "coin": {
+                    "$ref": "#/definitions/ActionCoin"
+                  }
+                },
+                "additionalProperties": false
+              }
+            },
+            "additionalProperties": false
+          },
+          {
+            "description": "Benefactor account repays debt on behalf of recipient",
+            "type": "object",
+            "required": [
+              "repay_for_recipient"
+            ],
+            "properties": {
+              "repay_for_recipient": {
+                "type": "object",
+                "required": [
+                  "benefactor_account_id",
+                  "coin",
+                  "recipient_account_id"
+                ],
+                "properties": {
+                  "benefactor_account_id": {
+                    "type": "string"
+                  },
+                  "coin": {
+                    "$ref": "#/definitions/ActionCoin"
+                  },
+                  "recipient_account_id": {
+                    "type": "string"
+                  }
+                },
+                "additionalProperties": false
+              }
+            },
+            "additionalProperties": false
+          },
+          {
+            "description": "Lend coin to the Red Bank",
+            "type": "object",
+            "required": [
+              "lend"
+            ],
+            "properties": {
+              "lend": {
+                "type": "object",
+                "required": [
+                  "account_id",
+                  "coin"
+                ],
+                "properties": {
+                  "account_id": {
+                    "type": "string"
+                  },
+                  "coin": {
+                    "$ref": "#/definitions/ActionCoin"
+                  }
+                },
+                "additionalProperties": false
+              }
+            },
+            "additionalProperties": false
+          },
+          {
+            "description": "Reclaim lent coin from the Red Bank; Decrement the token's lent shares and increment the coin amount;",
+            "type": "object",
+            "required": [
+              "reclaim"
+            ],
+            "properties": {
+              "reclaim": {
+                "type": "object",
+                "required": [
+                  "account_id",
+                  "coin"
+                ],
+                "properties": {
+                  "account_id": {
+                    "type": "string"
+                  },
+                  "coin": {
+                    "$ref": "#/definitions/ActionCoin"
+                  }
+                },
+                "additionalProperties": false
+              }
+            },
+            "additionalProperties": false
+          },
+          {
+            "description": "Calls incentive contract to claim all rewards and: - for Default account increments account balance - for HLS account withdraws claimed rewards. HLS accounts have special rules - some assets can't be in the account. For simplicity we withdraw all claimed rewards.",
+            "type": "object",
+            "required": [
+              "claim_rewards"
+            ],
+            "properties": {
+              "claim_rewards": {
+                "type": "object",
+                "required": [
+                  "account_id",
+                  "recipient"
+                ],
+                "properties": {
+                  "account_id": {
+                    "type": "string"
+                  },
+                  "recipient": {
+                    "$ref": "#/definitions/Addr"
+                  }
+                },
+                "additionalProperties": false
+              }
+            },
+            "additionalProperties": false
+          },
+          {
+            "description": "Assert MaxLTV is either: - Healthy, if prior to actions MaxLTV health factor >= 1 or None - Not further weakened, if prior to actions MaxLTV health factor < 1 Emits a `position_changed` event.",
+            "type": "object",
+            "required": [
+              "assert_max_ltv"
+            ],
+            "properties": {
+              "assert_max_ltv": {
+                "type": "object",
+                "required": [
+                  "account_id",
+                  "prev_health_state"
+                ],
+                "properties": {
+                  "account_id": {
+                    "type": "string"
+                  },
+                  "prev_health_state": {
+                    "$ref": "#/definitions/HealthState"
+                  }
+                },
+                "additionalProperties": false
+              }
+            },
+            "additionalProperties": false
+          },
+          {
+            "description": "Assert that the total deposit amounts of the given denoms across Red Bank and Rover do not exceed their respective deposit caps.",
+            "type": "object",
+            "required": [
+              "assert_deposit_caps"
+            ],
+            "properties": {
+              "assert_deposit_caps": {
+                "type": "object",
+                "required": [
+                  "denoms"
+                ],
+                "properties": {
+                  "denoms": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    },
+                    "uniqueItems": true
+                  }
+                },
+                "additionalProperties": false
+              }
+            },
+            "additionalProperties": false
+          },
+          {
+            "description": "Adds coin to a vault strategy",
+            "type": "object",
+            "required": [
+              "enter_vault"
+            ],
+            "properties": {
+              "enter_vault": {
+                "type": "object",
+                "required": [
+                  "account_id",
+                  "coin",
+                  "vault"
+                ],
+                "properties": {
+                  "account_id": {
+                    "type": "string"
+                  },
+                  "coin": {
+                    "$ref": "#/definitions/ActionCoin"
+                  },
+                  "vault": {
+                    "$ref": "#/definitions/VaultBase_for_Addr"
+                  }
+                },
+                "additionalProperties": false
+              }
+            },
+            "additionalProperties": false
+          },
+          {
+            "description": "Exchanges vault LP shares for assets",
+            "type": "object",
+            "required": [
+              "exit_vault"
+            ],
+            "properties": {
+              "exit_vault": {
+                "type": "object",
+                "required": [
+                  "account_id",
+                  "amount",
+                  "vault"
+                ],
+                "properties": {
+                  "account_id": {
+                    "type": "string"
+                  },
+                  "amount": {
+                    "$ref": "#/definitions/Uint128"
+                  },
+                  "vault": {
+                    "$ref": "#/definitions/VaultBase_for_Addr"
+                  }
+                },
+                "additionalProperties": false
+              }
+            },
+            "additionalProperties": false
+          },
+          {
+            "description": "Used to update the account balance of vault coins after a vault action has taken place",
+            "type": "object",
+            "required": [
+              "update_vault_coin_balance"
+            ],
+            "properties": {
+              "update_vault_coin_balance": {
+                "type": "object",
+                "required": [
+                  "account_id",
+                  "previous_total_balance",
+                  "vault"
+                ],
+                "properties": {
+                  "account_id": {
+                    "description": "Account that needs vault coin balance adjustment",
+                    "type": "string"
+                  },
+                  "previous_total_balance": {
+                    "description": "Total vault coin balance in Rover",
+                    "allOf": [
+                      {
+                        "$ref": "#/definitions/Uint128"
+                      }
+                    ]
+                  },
+                  "vault": {
+                    "$ref": "#/definitions/VaultBase_for_Addr"
+                  }
+                },
+                "additionalProperties": false
+              }
+            },
+            "additionalProperties": false
+          },
+          {
+            "description": "Requests unlocking of shares for a vault with a lock period",
+            "type": "object",
+            "required": [
+              "request_vault_unlock"
+            ],
+            "properties": {
+              "request_vault_unlock": {
+                "type": "object",
+                "required": [
+                  "account_id",
+                  "amount",
+                  "vault"
+                ],
+                "properties": {
+                  "account_id": {
+                    "type": "string"
+                  },
+                  "amount": {
+                    "$ref": "#/definitions/Uint128"
+                  },
+                  "vault": {
+                    "$ref": "#/definitions/VaultBase_for_Addr"
+                  }
+                },
+                "additionalProperties": false
+              }
+            },
+            "additionalProperties": false
+          },
+          {
+            "description": "Withdraws assets from vault for a locked position having a lockup period that has been fulfilled",
+            "type": "object",
+            "required": [
+              "exit_vault_unlocked"
+            ],
+            "properties": {
+              "exit_vault_unlocked": {
+                "type": "object",
+                "required": [
+                  "account_id",
+                  "position_id",
+                  "vault"
+                ],
+                "properties": {
+                  "account_id": {
+                    "type": "string"
+                  },
+                  "position_id": {
+                    "type": "integer",
+                    "format": "uint64",
+                    "minimum": 0.0
+                  },
+                  "vault": {
+                    "$ref": "#/definitions/VaultBase_for_Addr"
+                  }
+                },
+                "additionalProperties": false
+              }
+            },
+            "additionalProperties": false
+          },
+          {
+            "description": "Pay back debts of a liquidatable rover account for a bonus",
+            "type": "object",
+            "required": [
+              "liquidate"
+            ],
+            "properties": {
+              "liquidate": {
+                "type": "object",
+                "required": [
+                  "debt_coin",
+                  "liquidatee_account_id",
+                  "liquidator_account_id",
+                  "request"
+                ],
+                "properties": {
+                  "debt_coin": {
+                    "$ref": "#/definitions/Coin"
+                  },
+                  "liquidatee_account_id": {
+                    "type": "string"
+                  },
+                  "liquidator_account_id": {
+                    "type": "string"
+                  },
+                  "request": {
+                    "$ref": "#/definitions/LiquidateRequest_for_VaultBase_for_Addr"
+                  }
+                },
+                "additionalProperties": false
+              }
+            },
+            "additionalProperties": false
+          },
+          {
+            "description": "Perform a swapper with an exact-in amount. Requires slippage allowance %. If `coin_in.amount: AccountBalance`, the accounts entire balance of `coin_in.denom` will be used.",
+            "type": "object",
+            "required": [
+              "swap_exact_in"
+            ],
+            "properties": {
+              "swap_exact_in": {
+                "type": "object",
+                "required": [
+                  "account_id",
+                  "coin_in",
+                  "denom_out",
+                  "slippage"
+                ],
+                "properties": {
+                  "account_id": {
+                    "type": "string"
+                  },
+                  "coin_in": {
+                    "$ref": "#/definitions/ActionCoin"
+                  },
+                  "denom_out": {
+                    "type": "string"
+                  },
+                  "slippage": {
+                    "$ref": "#/definitions/Decimal"
+                  }
+                },
+                "additionalProperties": false
+              }
+            },
+            "additionalProperties": false
+          },
+          {
+            "description": "Used to update the coin balance of account after an async action",
+            "type": "object",
+            "required": [
+              "update_coin_balance"
+            ],
+            "properties": {
+              "update_coin_balance": {
+                "type": "object",
+                "required": [
+                  "account_id",
+                  "change",
+                  "previous_balance"
+                ],
+                "properties": {
+                  "account_id": {
+                    "description": "Account that needs coin balance adjustment",
+                    "type": "string"
+                  },
+                  "change": {
+                    "description": "The kind of change that is anticipated to balance of coin. If does not match expectation, an error is raised.",
+                    "allOf": [
+                      {
+                        "$ref": "#/definitions/ChangeExpected"
+                      }
+                    ]
+                  },
+                  "previous_balance": {
+                    "description": "Total balance for coin in Rover prior to withdraw",
+                    "allOf": [
+                      {
+                        "$ref": "#/definitions/Coin"
+                      }
+                    ]
+                  }
+                },
+                "additionalProperties": false
+              }
+            },
+            "additionalProperties": false
+          },
+          {
+            "description": "Used to update the coin balance of account after an async action",
+            "type": "object",
+            "required": [
+              "update_coin_balance_after_vault_liquidation"
+            ],
+            "properties": {
+              "update_coin_balance_after_vault_liquidation": {
+                "type": "object",
+                "required": [
+                  "account_id",
+                  "previous_balance",
+                  "protocol_fee"
+                ],
+                "properties": {
+                  "account_id": {
+                    "description": "Account that needs coin balance adjustment",
+                    "type": "string"
+                  },
+                  "previous_balance": {
+                    "description": "Total balance for coin in Rover prior to withdraw",
+                    "allOf": [
+                      {
+                        "$ref": "#/definitions/Coin"
+                      }
+                    ]
+                  },
+                  "protocol_fee": {
+                    "description": "Protocol fee percentage transfered to rewards-collector account",
+                    "allOf": [
+                      {
+                        "$ref": "#/definitions/Decimal"
+                      }
+                    ]
+                  }
+                },
+                "additionalProperties": false
+              }
+            },
+            "additionalProperties": false
+          },
+          {
+            "description": "Add Vec<Coin> to liquidity pool in exchange for LP tokens.",
+            "type": "object",
+            "required": [
+              "provide_liquidity"
+            ],
+            "properties": {
+              "provide_liquidity": {
+                "type": "object",
+                "required": [
+                  "account_id",
+                  "coins_in",
+                  "lp_token_out",
+                  "slippage"
+                ],
+                "properties": {
+                  "account_id": {
+                    "type": "string"
+                  },
+                  "coins_in": {
+                    "type": "array",
+                    "items": {
+                      "$ref": "#/definitions/ActionCoin"
+                    }
+                  },
+                  "lp_token_out": {
+                    "type": "string"
+                  },
+                  "slippage": {
+                    "$ref": "#/definitions/Decimal"
+                  }
+                },
+                "additionalProperties": false
+              }
+            },
+            "additionalProperties": false
+          },
+          {
+            "description": "Send LP token and withdraw corresponding reserve assets from pool. If `lp_token.amount: AccountBalance`, the account balance of `lp_token.denom` will be used.",
+            "type": "object",
+            "required": [
+              "withdraw_liquidity"
+            ],
+            "properties": {
+              "withdraw_liquidity": {
+                "type": "object",
+                "required": [
+                  "account_id",
+                  "lp_token",
+                  "slippage"
+                ],
+                "properties": {
+                  "account_id": {
+                    "type": "string"
+                  },
+                  "lp_token": {
+                    "$ref": "#/definitions/ActionCoin"
+                  },
+                  "slippage": {
+                    "$ref": "#/definitions/Decimal"
+                  }
+                },
+                "additionalProperties": false
+              }
+            },
+            "additionalProperties": false
+          },
+          {
+            "description": "Refunds all coin balances back to user wallet",
+            "type": "object",
+            "required": [
+              "refund_all_coin_balances"
+            ],
+            "properties": {
+              "refund_all_coin_balances": {
+                "type": "object",
+                "required": [
+                  "account_id"
+                ],
+                "properties": {
+                  "account_id": {
+                    "type": "string"
+                  }
+                },
+                "additionalProperties": false
+              }
+            },
+            "additionalProperties": false
+          },
+          {
+            "description": "Ensures that HLS accounts abide by specific rules",
+            "type": "object",
+            "required": [
+              "assert_hls_rules"
+            ],
+            "properties": {
+              "assert_hls_rules": {
+                "type": "object",
+                "required": [
+                  "account_id"
+                ],
+                "properties": {
+                  "account_id": {
+                    "type": "string"
+                  }
+                },
+                "additionalProperties": false
+              }
+            },
+            "additionalProperties": false
+          },
+          {
+            "description": "At the end of the execution of dispatched actions, this callback removes the guard and allows subsequent dispatches.",
+            "type": "object",
+            "required": [
+              "remove_reentrancy_guard"
+            ],
+            "properties": {
+              "remove_reentrancy_guard": {
+                "type": "object",
+                "additionalProperties": false
+              }
+            },
+            "additionalProperties": false
+          },
+          {
+            "description": "Send reward amounts of coin from credit manager to recipient by querying balance, claiming rewards, and comparing previous balance to new balance after reward claim - send the diff to the recipient.",
+            "type": "object",
+            "required": [
+              "send_rewards_to_addr"
+            ],
+            "properties": {
+              "send_rewards_to_addr": {
+                "type": "object",
+                "required": [
+                  "account_id",
+                  "previous_balances",
+                  "recipient"
+                ],
+                "properties": {
+                  "account_id": {
+                    "type": "string"
+                  },
+                  "previous_balances": {
+                    "type": "array",
+                    "items": {
+                      "$ref": "#/definitions/Coin"
+                    }
+                  },
+                  "recipient": {
+                    "$ref": "#/definitions/Addr"
+                  }
+                },
+                "additionalProperties": false
+              }
+            },
+            "additionalProperties": false
+          }
+        ]
+      },
+      "ChangeExpected": {
+        "type": "string",
+        "enum": [
+          "increase",
+          "decrease"
+        ]
+      },
+      "Coin": {
+        "type": "object",
+        "required": [
+          "amount",
+          "denom"
+        ],
+        "properties": {
+          "amount": {
+            "$ref": "#/definitions/Uint128"
+          },
+          "denom": {
+            "type": "string"
+          }
+        }
+      },
+      "ConfigUpdates": {
+        "description": "Used when you want to update fields on Instantiate config",
+        "type": "object",
+        "properties": {
+          "account_nft": {
+            "anyOf": [
+              {
+                "$ref": "#/definitions/AccountNftBase_for_String"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "health_contract": {
+            "anyOf": [
+              {
+                "$ref": "#/definitions/HealthContractBase_for_String"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "incentives": {
+            "anyOf": [
+              {
+                "$ref": "#/definitions/IncentivesUnchecked"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "max_slippage": {
+            "anyOf": [
+              {
+                "$ref": "#/definitions/Decimal"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "max_unlocking_positions": {
+            "anyOf": [
+              {
+                "$ref": "#/definitions/Uint128"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "oracle": {
+            "anyOf": [
+              {
+                "$ref": "#/definitions/OracleBase_for_String"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "red_bank": {
+            "anyOf": [
+              {
+                "$ref": "#/definitions/RedBankUnchecked"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "rewards_collector": {
+            "description": "The Mars Protocol rewards-collector contract. We collect protocol fee for its account.",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "swapper": {
+            "anyOf": [
+              {
+                "$ref": "#/definitions/SwapperBase_for_String"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "zapper": {
+            "anyOf": [
+              {
+                "$ref": "#/definitions/ZapperBase_for_String"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "additionalProperties": false
+      },
+      "Decimal": {
+        "description": "A fixed-point decimal value with 18 fractional digits, i.e. Decimal(1_000_000_000_000_000_000) == 1.0\n\nThe greatest possible value that can be represented is 340282366920938463463.374607431768211455 (which is (2^128 - 1) / 10^18)",
+        "type": "string"
+      },
+      "Expiration": {
+        "description": "Expiration represents a point in time when some event happens. It can compare with a BlockInfo and will return is_expired() == true once the condition is hit (and for every block in the future)",
+        "oneOf": [
+          {
+            "description": "AtHeight will expire when `env.block.height` >= height",
+            "type": "object",
+            "required": [
+              "at_height"
+            ],
+            "properties": {
+              "at_height": {
+                "type": "integer",
+                "format": "uint64",
+                "minimum": 0.0
+              }
+            },
+            "additionalProperties": false
+          },
+          {
+            "description": "AtTime will expire when `env.block.time` >= time",
+            "type": "object",
+            "required": [
+              "at_time"
+            ],
+            "properties": {
+              "at_time": {
+                "$ref": "#/definitions/Timestamp"
+              }
+            },
+            "additionalProperties": false
+          },
+          {
+            "description": "Never will never expire. Used to express the empty variant",
+            "type": "object",
+            "required": [
+              "never"
+            ],
+            "properties": {
+              "never": {
+                "type": "object",
+                "additionalProperties": false
+              }
+            },
+            "additionalProperties": false
+          }
+        ]
+      },
+      "HealthContractBase_for_String": {
+        "type": "string"
+      },
+      "HealthState": {
+        "oneOf": [
+          {
+            "type": "string",
+            "enum": [
+              "healthy"
+            ]
+          },
+          {
+            "type": "object",
+            "required": [
+              "unhealthy"
+            ],
+            "properties": {
+              "unhealthy": {
+                "type": "object",
+                "required": [
+                  "max_ltv_health_factor"
+                ],
+                "properties": {
+                  "max_ltv_health_factor": {
+                    "$ref": "#/definitions/Decimal"
+                  }
+                },
+                "additionalProperties": false
+              }
+            },
+            "additionalProperties": false
+          }
+        ]
+      },
+      "IncentivesUnchecked": {
+        "type": "string"
+      },
+      "LiquidateRequest_for_VaultBase_for_Addr": {
+        "oneOf": [
+          {
+            "description": "Pay back debt of a liquidatable rover account for a bonus. Requires specifying 1) the debt denom/amount of what the liquidator wants to payoff and 2) the request coin denom which the liquidatee should have a balance of. The amount returned to liquidator will be the request coin of the amount that precisely matches the value of the debt + a liquidation bonus. The debt amount will be adjusted down if: - Exceeds liquidatee's total debt for denom - Not enough liquidatee request coin balance to match - The value of the debt repaid exceeds the maximum close factor %\n\nLiquidation should prioritize first the not lent coin and if more needs to be serviced to the liquidator it should reclaim (withdrawn from Red Bank).",
+            "type": "object",
+            "required": [
+              "deposit"
+            ],
+            "properties": {
+              "deposit": {
+                "type": "string"
+              }
+            },
+            "additionalProperties": false
+          },
+          {
+            "description": "Pay back debt of a liquidatable rover account for a via liquidating a Lent position. Lent shares are transfered from the liquidatable to the liquidator.",
+            "type": "object",
+            "required": [
+              "lend"
+            ],
+            "properties": {
+              "lend": {
+                "type": "string"
+              }
+            },
+            "additionalProperties": false
+          },
+          {
+            "description": "Pay back debt of a liquidatable rover account for a via liquidating a vault position. Similar to `Deposit` msg and will make similar adjustments to the request. The vault position will be withdrawn (and force withdrawn if a locked vault position) and the underlying assets will transferred to the liquidator. The `VaultPositionType` will determine which bucket to liquidate from.",
+            "type": "object",
+            "required": [
+              "vault"
+            ],
+            "properties": {
+              "vault": {
+                "type": "object",
+                "required": [
+                  "position_type",
+                  "request_vault"
+                ],
+                "properties": {
+                  "position_type": {
+                    "$ref": "#/definitions/VaultPositionType"
+                  },
+                  "request_vault": {
+                    "$ref": "#/definitions/VaultBase_for_Addr"
+                  }
+                },
+                "additionalProperties": false
+              }
+            },
+            "additionalProperties": false
+          }
+        ]
+      },
+      "LiquidateRequest_for_VaultBase_for_String": {
+        "oneOf": [
+          {
+            "description": "Pay back debt of a liquidatable rover account for a bonus. Requires specifying 1) the debt denom/amount of what the liquidator wants to payoff and 2) the request coin denom which the liquidatee should have a balance of. The amount returned to liquidator will be the request coin of the amount that precisely matches the value of the debt + a liquidation bonus. The debt amount will be adjusted down if: - Exceeds liquidatee's total debt for denom - Not enough liquidatee request coin balance to match - The value of the debt repaid exceeds the maximum close factor %\n\nLiquidation should prioritize first the not lent coin and if more needs to be serviced to the liquidator it should reclaim (withdrawn from Red Bank).",
+            "type": "object",
+            "required": [
+              "deposit"
+            ],
+            "properties": {
+              "deposit": {
+                "type": "string"
+              }
+            },
+            "additionalProperties": false
+          },
+          {
+            "description": "Pay back debt of a liquidatable rover account for a via liquidating a Lent position. Lent shares are transfered from the liquidatable to the liquidator.",
+            "type": "object",
+            "required": [
+              "lend"
+            ],
+            "properties": {
+              "lend": {
+                "type": "string"
+              }
+            },
+            "additionalProperties": false
+          },
+          {
+            "description": "Pay back debt of a liquidatable rover account for a via liquidating a vault position. Similar to `Deposit` msg and will make similar adjustments to the request. The vault position will be withdrawn (and force withdrawn if a locked vault position) and the underlying assets will transferred to the liquidator. The `VaultPositionType` will determine which bucket to liquidate from.",
+            "type": "object",
+            "required": [
+              "vault"
+            ],
+            "properties": {
+              "vault": {
+                "type": "object",
+                "required": [
+                  "position_type",
+                  "request_vault"
+                ],
+                "properties": {
+                  "position_type": {
+                    "$ref": "#/definitions/VaultPositionType"
+                  },
+                  "request_vault": {
+                    "$ref": "#/definitions/VaultBase_for_String"
+                  }
+                },
+                "additionalProperties": false
+              }
+            },
+            "additionalProperties": false
+          }
+        ]
+      },
+      "NftConfigUpdates": {
+        "type": "object",
+        "properties": {
+          "credit_manager_contract_addr": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "health_contract_addr": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "max_value_for_burn": {
+            "anyOf": [
+              {
+                "$ref": "#/definitions/Uint128"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "additionalProperties": false
+      },
+      "OracleBase_for_String": {
+        "type": "string"
+      },
+      "OwnerUpdate": {
+        "oneOf": [
+          {
+            "description": "Proposes a new owner to take role. Only current owner can execute.",
+            "type": "object",
+            "required": [
+              "propose_new_owner"
+            ],
+            "properties": {
+              "propose_new_owner": {
+                "type": "object",
+                "required": [
+                  "proposed"
+                ],
+                "properties": {
+                  "proposed": {
+                    "type": "string"
+                  }
+                },
+                "additionalProperties": false
+              }
+            },
+            "additionalProperties": false
+          },
+          {
+            "description": "Clears the currently proposed owner. Only current owner can execute.",
+            "type": "string",
+            "enum": [
+              "clear_proposed"
+            ]
+          },
+          {
+            "description": "Promotes the proposed owner to be the current one. Only the proposed owner can execute.",
+            "type": "string",
+            "enum": [
+              "accept_proposed"
+            ]
+          },
+          {
+            "description": "Throws away the keys to the Owner role forever. Once done, no owner can ever be set later.",
+            "type": "string",
+            "enum": [
+              "abolish_owner_role"
+            ]
+          },
+          {
+            "description": "A separate entity managed by Owner that can be used for granting specific emergency powers.",
+            "type": "object",
+            "required": [
+              "set_emergency_owner"
+            ],
+            "properties": {
+              "set_emergency_owner": {
+                "type": "object",
+                "required": [
+                  "emergency_owner"
+                ],
+                "properties": {
+                  "emergency_owner": {
+                    "type": "string"
+                  }
+                },
+                "additionalProperties": false
+              }
+            },
+            "additionalProperties": false
+          },
+          {
+            "description": "Remove the entity in the Emergency Owner role",
+            "type": "string",
+            "enum": [
+              "clear_emergency_owner"
+            ]
+          }
+        ]
+      },
+      "RedBankUnchecked": {
+        "type": "string"
+      },
+      "SwapperBase_for_String": {
+        "type": "string"
+      },
+      "Timestamp": {
+        "description": "A point in time in nanosecond precision.\n\nThis type can represent times from 1970-01-01T00:00:00Z to 2554-07-21T23:34:33Z.\n\n## Examples\n\n``` # use cosmwasm_std::Timestamp; let ts = Timestamp::from_nanos(1_000_000_202); assert_eq!(ts.nanos(), 1_000_000_202); assert_eq!(ts.seconds(), 1); assert_eq!(ts.subsec_nanos(), 202);\n\nlet ts = ts.plus_seconds(2); assert_eq!(ts.nanos(), 3_000_000_202); assert_eq!(ts.seconds(), 3); assert_eq!(ts.subsec_nanos(), 202); ```",
+        "allOf": [
+          {
+            "$ref": "#/definitions/Uint64"
+          }
+        ]
+      },
+      "Uint128": {
+        "description": "A thin wrapper around u128 that is using strings for JSON encoding/decoding, such that the full u128 range can be used for clients that convert JSON numbers to floats, like JavaScript and jq.\n\n# Examples\n\nUse `from` to create instances of this and `u128` to get the value out:\n\n``` # use cosmwasm_std::Uint128; let a = Uint128::from(123u128); assert_eq!(a.u128(), 123);\n\nlet b = Uint128::from(42u64); assert_eq!(b.u128(), 42);\n\nlet c = Uint128::from(70u32); assert_eq!(c.u128(), 70); ```",
+        "type": "string"
+      },
+      "Uint64": {
+        "description": "A thin wrapper around u64 that is using strings for JSON encoding/decoding, such that the full u64 range can be used for clients that convert JSON numbers to floats, like JavaScript and jq.\n\n# Examples\n\nUse `from` to create instances of this and `u64` to get the value out:\n\n``` # use cosmwasm_std::Uint64; let a = Uint64::from(42u64); assert_eq!(a.u64(), 42);\n\nlet b = Uint64::from(70u32); assert_eq!(b.u64(), 70); ```",
+        "type": "string"
+      },
+      "VaultBase_for_Addr": {
+        "type": "object",
+        "required": [
+          "address"
+        ],
+        "properties": {
+          "address": {
+            "$ref": "#/definitions/Addr"
+          }
+        },
+        "additionalProperties": false
+      },
+      "VaultBase_for_String": {
+        "type": "object",
+        "required": [
+          "address"
+        ],
+        "properties": {
+          "address": {
+            "type": "string"
+          }
+        },
+        "additionalProperties": false
+      },
+      "VaultPositionType": {
+        "type": "string",
+        "enum": [
+          "u_n_l_o_c_k_e_d",
+          "l_o_c_k_e_d",
+          "u_n_l_o_c_k_i_n_g"
+        ]
+      },
+      "ZapperBase_for_String": {
+        "type": "string"
+      }
+    }
+  },
+  "query": {
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "title": "QueryMsg",
+    "oneOf": [
+      {
+        "type": "object",
+        "required": [
+          "account_kind"
+        ],
+        "properties": {
+          "account_kind": {
+            "type": "object",
+            "required": [
+              "account_id"
+            ],
+            "properties": {
+              "account_id": {
+                "type": "string"
+              }
+            },
+            "additionalProperties": false
+          }
+        },
+        "additionalProperties": false
+      },
+      {
+        "type": "object",
+        "required": [
+          "accounts"
+        ],
+        "properties": {
+          "accounts": {
+            "type": "object",
+            "required": [
+              "owner"
+            ],
+            "properties": {
+              "limit": {
+                "type": [
+                  "integer",
+                  "null"
+                ],
+                "format": "uint32",
+                "minimum": 0.0
+              },
+              "owner": {
+                "type": "string"
+              },
+              "start_after": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              }
+            },
+            "additionalProperties": false
+          }
+        },
+        "additionalProperties": false
+      },
+      {
+        "description": "Rover contract-level config",
+        "type": "object",
+        "required": [
+          "config"
+        ],
+        "properties": {
+          "config": {
+            "type": "object",
+            "additionalProperties": false
+          }
+        },
+        "additionalProperties": false
+      },
+      {
+        "description": "The amount the vault has been utilized, denominated in the same denom set in the vault config's deposit cap",
+        "type": "object",
+        "required": [
+          "vault_utilization"
+        ],
+        "properties": {
+          "vault_utilization": {
+            "type": "object",
+            "required": [
+              "vault"
+            ],
+            "properties": {
+              "vault": {
+                "$ref": "#/definitions/VaultBase_for_String"
+              }
+            },
+            "additionalProperties": false
+          }
+        },
+        "additionalProperties": false
+      },
+      {
+        "description": "All positions represented by token with value",
+        "type": "object",
+        "required": [
+          "positions"
+        ],
+        "properties": {
+          "positions": {
+            "type": "object",
+            "required": [
+              "account_id"
+            ],
+            "properties": {
+              "account_id": {
+                "type": "string"
+              }
+            },
+            "additionalProperties": false
+          }
+        },
+        "additionalProperties": false
+      },
+      {
+        "description": "Enumerate coin balances for all token positions; start_after accepts (account_id, denom)",
+        "type": "object",
+        "required": [
+          "all_coin_balances"
+        ],
+        "properties": {
+          "all_coin_balances": {
+            "type": "object",
+            "properties": {
+              "limit": {
+                "type": [
+                  "integer",
+                  "null"
+                ],
+                "format": "uint32",
+                "minimum": 0.0
+              },
+              "start_after": {
+                "type": [
+                  "array",
+                  "null"
+                ],
+                "items": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "string"
+                  }
+                ],
+                "maxItems": 2,
+                "minItems": 2
+              }
+            },
+            "additionalProperties": false
+          }
+        },
+        "additionalProperties": false
+      },
+      {
+        "description": "Enumerate debt shares for all token positions; start_after accepts (account_id, denom)",
+        "type": "object",
+        "required": [
+          "all_debt_shares"
+        ],
+        "properties": {
+          "all_debt_shares": {
+            "type": "object",
+            "properties": {
+              "limit": {
+                "type": [
+                  "integer",
+                  "null"
+                ],
+                "format": "uint32",
+                "minimum": 0.0
+              },
+              "start_after": {
+                "type": [
+                  "array",
+                  "null"
+                ],
+                "items": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "string"
+                  }
+                ],
+                "maxItems": 2,
+                "minItems": 2
+              }
+            },
+            "additionalProperties": false
+          }
+        },
+        "additionalProperties": false
+      },
+      {
+        "description": "Total debt shares issued for Coin",
+        "type": "object",
+        "required": [
+          "total_debt_shares"
+        ],
+        "properties": {
+          "total_debt_shares": {
+            "type": "string"
+          }
+        },
+        "additionalProperties": false
+      },
+      {
+        "description": "Enumerate total debt shares for all supported coins; start_after accepts denom string",
+        "type": "object",
+        "required": [
+          "all_total_debt_shares"
+        ],
+        "properties": {
+          "all_total_debt_shares": {
+            "type": "object",
+            "properties": {
+              "limit": {
+                "type": [
+                  "integer",
+                  "null"
+                ],
+                "format": "uint32",
+                "minimum": 0.0
+              },
+              "start_after": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              }
+            },
+            "additionalProperties": false
+          }
+        },
+        "additionalProperties": false
+      },
+      {
+        "description": "Enumerate all vault positions; start_after accepts (account_id, addr)",
+        "type": "object",
+        "required": [
+          "all_vault_positions"
+        ],
+        "properties": {
+          "all_vault_positions": {
+            "type": "object",
+            "properties": {
+              "limit": {
+                "type": [
+                  "integer",
+                  "null"
+                ],
+                "format": "uint32",
+                "minimum": 0.0
+              },
+              "start_after": {
+                "type": [
+                  "array",
+                  "null"
+                ],
+                "items": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "string"
+                  }
+                ],
+                "maxItems": 2,
+                "minItems": 2
+              }
+            },
+            "additionalProperties": false
+          }
+        },
+        "additionalProperties": false
+      },
+      {
+        "description": "Estimate how many LP tokens received in exchange for coins provided for liquidity",
+        "type": "object",
+        "required": [
+          "estimate_provide_liquidity"
+        ],
+        "properties": {
+          "estimate_provide_liquidity": {
+            "type": "object",
+            "required": [
+              "coins_in",
+              "lp_token_out"
+            ],
+            "properties": {
+              "coins_in": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/definitions/Coin"
+                }
+              },
+              "lp_token_out": {
+                "type": "string"
+              }
+            },
+            "additionalProperties": false
+          }
+        },
+        "additionalProperties": false
+      },
+      {
+        "description": "Estimate coins withdrawn if exchanged for LP tokens",
+        "type": "object",
+        "required": [
+          "estimate_withdraw_liquidity"
+        ],
+        "properties": {
+          "estimate_withdraw_liquidity": {
+            "type": "object",
+            "required": [
+              "lp_token"
+            ],
+            "properties": {
+              "lp_token": {
+                "$ref": "#/definitions/Coin"
+              }
+            },
+            "additionalProperties": false
+          }
+        },
+        "additionalProperties": false
+      },
+      {
+        "description": "Returns the value of the a vault coin position. Given the extremely low price-per-coin and lack of precision, individual vault coins cannot be priced, hence you must send the whole amount you want priced.",
+        "type": "object",
+        "required": [
+          "vault_position_value"
+        ],
+        "properties": {
+          "vault_position_value": {
+            "type": "object",
+            "required": [
+              "vault_position"
+            ],
+            "properties": {
+              "vault_position": {
+                "$ref": "#/definitions/VaultPosition"
+              }
+            },
+            "additionalProperties": false
+          }
+        },
+        "additionalProperties": false
+      }
+    ],
+    "definitions": {
+      "Addr": {
+        "description": "A human readable address.\n\nIn Cosmos, this is typically bech32 encoded. But for multi-chain smart contracts no assumptions should be made other than being UTF-8 encoded and of reasonable length.\n\nThis type represents a validated address. It can be created in the following ways 1. Use `Addr::unchecked(input)` 2. Use `let checked: Addr = deps.api.addr_validate(input)?` 3. Use `let checked: Addr = deps.api.addr_humanize(canonical_addr)?` 4. Deserialize from JSON. This must only be done from JSON that was validated before such as a contract's state. `Addr` must not be used in messages sent by the user because this would result in unvalidated instances.\n\nThis type is immutable. If you really need to mutate it (Really? Are you sure?), create a mutable copy using `let mut mutable = Addr::to_string()` and operate on that `String` instance.",
+        "type": "string"
+      },
+      "Coin": {
+        "type": "object",
+        "required": [
+          "amount",
+          "denom"
+        ],
+        "properties": {
+          "amount": {
+            "$ref": "#/definitions/Uint128"
+          },
+          "denom": {
+            "type": "string"
+          }
+        }
+      },
+      "LockingVaultAmount": {
+        "type": "object",
+        "required": [
+          "locked",
+          "unlocking"
+        ],
+        "properties": {
+          "locked": {
+            "$ref": "#/definitions/VaultAmount"
+          },
+          "unlocking": {
+            "$ref": "#/definitions/UnlockingPositions"
+          }
+        },
+        "additionalProperties": false
+      },
+      "Uint128": {
+        "description": "A thin wrapper around u128 that is using strings for JSON encoding/decoding, such that the full u128 range can be used for clients that convert JSON numbers to floats, like JavaScript and jq.\n\n# Examples\n\nUse `from` to create instances of this and `u128` to get the value out:\n\n``` # use cosmwasm_std::Uint128; let a = Uint128::from(123u128); assert_eq!(a.u128(), 123);\n\nlet b = Uint128::from(42u64); assert_eq!(b.u128(), 42);\n\nlet c = Uint128::from(70u32); assert_eq!(c.u128(), 70); ```",
+        "type": "string"
+      },
+      "UnlockingPositions": {
+        "type": "array",
+        "items": {
+          "$ref": "#/definitions/VaultUnlockingPosition"
+        }
+      },
+      "VaultAmount": {
+        "$ref": "#/definitions/Uint128"
+      },
+      "VaultBase_for_Addr": {
+        "type": "object",
+        "required": [
+          "address"
+        ],
+        "properties": {
+          "address": {
+            "$ref": "#/definitions/Addr"
+          }
+        },
+        "additionalProperties": false
+      },
+      "VaultBase_for_String": {
+        "type": "object",
+        "required": [
+          "address"
+        ],
+        "properties": {
+          "address": {
+            "type": "string"
+          }
+        },
+        "additionalProperties": false
+      },
+      "VaultPosition": {
+        "type": "object",
+        "required": [
+          "amount",
+          "vault"
+        ],
+        "properties": {
+          "amount": {
+            "$ref": "#/definitions/VaultPositionAmount"
+          },
+          "vault": {
+            "$ref": "#/definitions/VaultBase_for_Addr"
+          }
+        },
+        "additionalProperties": false
+      },
+      "VaultPositionAmount": {
+        "oneOf": [
+          {
+            "type": "object",
+            "required": [
+              "unlocked"
+            ],
+            "properties": {
+              "unlocked": {
+                "$ref": "#/definitions/VaultAmount"
+              }
+            },
+            "additionalProperties": false
+          },
+          {
+            "type": "object",
+            "required": [
+              "locking"
+            ],
+            "properties": {
+              "locking": {
+                "$ref": "#/definitions/LockingVaultAmount"
+              }
+            },
+            "additionalProperties": false
+          }
+        ]
+      },
+      "VaultUnlockingPosition": {
+        "type": "object",
+        "required": [
+          "coin",
+          "id"
+        ],
+        "properties": {
+          "coin": {
+            "description": "Coins that are awaiting to be unlocked (underlying, not vault tokens)",
+            "allOf": [
+              {
+                "$ref": "#/definitions/Coin"
+              }
+            ]
+          },
+          "id": {
+            "description": "Unique identifier representing the unlocking position. Needed for `ExecuteMsg::WithdrawUnlocked {}` call.",
+            "type": "integer",
+            "format": "uint64",
+            "minimum": 0.0
+          }
+        },
+        "additionalProperties": false
+      }
+    }
+  },
+  "migrate": null,
+  "sudo": null,
+  "responses": {
+    "account_kind": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "AccountKind",
+      "type": "string",
+      "enum": [
+        "default",
+        "high_levered_strategy"
+      ]
+    },
+    "accounts": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Array_of_Account",
+      "type": "array",
+      "items": {
+        "$ref": "#/definitions/Account"
+      },
+      "definitions": {
+        "Account": {
+          "type": "object",
+          "required": [
+            "id",
+            "kind"
+          ],
+          "properties": {
+            "id": {
+              "type": "string"
+            },
+            "kind": {
+              "$ref": "#/definitions/AccountKind"
+            }
+          },
+          "additionalProperties": false
+        },
+        "AccountKind": {
+          "type": "string",
+          "enum": [
+            "default",
+            "high_levered_strategy"
+          ]
+        }
+      }
+    },
+    "all_coin_balances": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Array_of_CoinBalanceResponseItem",
+      "type": "array",
+      "items": {
+        "$ref": "#/definitions/CoinBalanceResponseItem"
+      },
+      "definitions": {
+        "CoinBalanceResponseItem": {
+          "type": "object",
+          "required": [
+            "account_id",
+            "amount",
+            "denom"
+          ],
+          "properties": {
+            "account_id": {
+              "type": "string"
+            },
+            "amount": {
+              "$ref": "#/definitions/Uint128"
+            },
+            "denom": {
+              "type": "string"
+            }
+          },
+          "additionalProperties": false
+        },
+        "Uint128": {
+          "description": "A thin wrapper around u128 that is using strings for JSON encoding/decoding, such that the full u128 range can be used for clients that convert JSON numbers to floats, like JavaScript and jq.\n\n# Examples\n\nUse `from` to create instances of this and `u128` to get the value out:\n\n``` # use cosmwasm_std::Uint128; let a = Uint128::from(123u128); assert_eq!(a.u128(), 123);\n\nlet b = Uint128::from(42u64); assert_eq!(b.u128(), 42);\n\nlet c = Uint128::from(70u32); assert_eq!(c.u128(), 70); ```",
+          "type": "string"
+        }
+      }
+    },
+    "all_debt_shares": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Array_of_SharesResponseItem",
+      "type": "array",
+      "items": {
+        "$ref": "#/definitions/SharesResponseItem"
+      },
+      "definitions": {
+        "SharesResponseItem": {
+          "type": "object",
+          "required": [
+            "account_id",
+            "denom",
+            "shares"
+          ],
+          "properties": {
+            "account_id": {
+              "type": "string"
+            },
+            "denom": {
+              "type": "string"
+            },
+            "shares": {
+              "$ref": "#/definitions/Uint128"
+            }
+          },
+          "additionalProperties": false
+        },
+        "Uint128": {
+          "description": "A thin wrapper around u128 that is using strings for JSON encoding/decoding, such that the full u128 range can be used for clients that convert JSON numbers to floats, like JavaScript and jq.\n\n# Examples\n\nUse `from` to create instances of this and `u128` to get the value out:\n\n``` # use cosmwasm_std::Uint128; let a = Uint128::from(123u128); assert_eq!(a.u128(), 123);\n\nlet b = Uint128::from(42u64); assert_eq!(b.u128(), 42);\n\nlet c = Uint128::from(70u32); assert_eq!(c.u128(), 70); ```",
+          "type": "string"
+        }
+      }
+    },
+    "all_total_debt_shares": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Array_of_DebtShares",
+      "type": "array",
+      "items": {
+        "$ref": "#/definitions/DebtShares"
+      },
+      "definitions": {
+        "DebtShares": {
+          "type": "object",
+          "required": [
+            "denom",
+            "shares"
+          ],
+          "properties": {
+            "denom": {
+              "type": "string"
+            },
+            "shares": {
+              "$ref": "#/definitions/Uint128"
+            }
+          },
+          "additionalProperties": false
+        },
+        "Uint128": {
+          "description": "A thin wrapper around u128 that is using strings for JSON encoding/decoding, such that the full u128 range can be used for clients that convert JSON numbers to floats, like JavaScript and jq.\n\n# Examples\n\nUse `from` to create instances of this and `u128` to get the value out:\n\n``` # use cosmwasm_std::Uint128; let a = Uint128::from(123u128); assert_eq!(a.u128(), 123);\n\nlet b = Uint128::from(42u64); assert_eq!(b.u128(), 42);\n\nlet c = Uint128::from(70u32); assert_eq!(c.u128(), 70); ```",
+          "type": "string"
+        }
+      }
+    },
+    "all_vault_positions": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Array_of_VaultPositionResponseItem",
+      "type": "array",
+      "items": {
+        "$ref": "#/definitions/VaultPositionResponseItem"
+      },
+      "definitions": {
+        "Addr": {
+          "description": "A human readable address.\n\nIn Cosmos, this is typically bech32 encoded. But for multi-chain smart contracts no assumptions should be made other than being UTF-8 encoded and of reasonable length.\n\nThis type represents a validated address. It can be created in the following ways 1. Use `Addr::unchecked(input)` 2. Use `let checked: Addr = deps.api.addr_validate(input)?` 3. Use `let checked: Addr = deps.api.addr_humanize(canonical_addr)?` 4. Deserialize from JSON. This must only be done from JSON that was validated before such as a contract's state. `Addr` must not be used in messages sent by the user because this would result in unvalidated instances.\n\nThis type is immutable. If you really need to mutate it (Really? Are you sure?), create a mutable copy using `let mut mutable = Addr::to_string()` and operate on that `String` instance.",
+          "type": "string"
+        },
+        "Coin": {
+          "type": "object",
+          "required": [
+            "amount",
+            "denom"
+          ],
+          "properties": {
+            "amount": {
+              "$ref": "#/definitions/Uint128"
+            },
+            "denom": {
+              "type": "string"
+            }
+          }
+        },
+        "LockingVaultAmount": {
+          "type": "object",
+          "required": [
+            "locked",
+            "unlocking"
+          ],
+          "properties": {
+            "locked": {
+              "$ref": "#/definitions/VaultAmount"
+            },
+            "unlocking": {
+              "$ref": "#/definitions/UnlockingPositions"
+            }
+          },
+          "additionalProperties": false
+        },
+        "Uint128": {
+          "description": "A thin wrapper around u128 that is using strings for JSON encoding/decoding, such that the full u128 range can be used for clients that convert JSON numbers to floats, like JavaScript and jq.\n\n# Examples\n\nUse `from` to create instances of this and `u128` to get the value out:\n\n``` # use cosmwasm_std::Uint128; let a = Uint128::from(123u128); assert_eq!(a.u128(), 123);\n\nlet b = Uint128::from(42u64); assert_eq!(b.u128(), 42);\n\nlet c = Uint128::from(70u32); assert_eq!(c.u128(), 70); ```",
+          "type": "string"
+        },
+        "UnlockingPositions": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/VaultUnlockingPosition"
+          }
+        },
+        "VaultAmount": {
+          "$ref": "#/definitions/Uint128"
+        },
+        "VaultBase_for_Addr": {
+          "type": "object",
+          "required": [
+            "address"
+          ],
+          "properties": {
+            "address": {
+              "$ref": "#/definitions/Addr"
+            }
+          },
+          "additionalProperties": false
+        },
+        "VaultPosition": {
+          "type": "object",
+          "required": [
+            "amount",
+            "vault"
+          ],
+          "properties": {
+            "amount": {
+              "$ref": "#/definitions/VaultPositionAmount"
+            },
+            "vault": {
+              "$ref": "#/definitions/VaultBase_for_Addr"
+            }
+          },
+          "additionalProperties": false
+        },
+        "VaultPositionAmount": {
+          "oneOf": [
+            {
+              "type": "object",
+              "required": [
+                "unlocked"
+              ],
+              "properties": {
+                "unlocked": {
+                  "$ref": "#/definitions/VaultAmount"
+                }
+              },
+              "additionalProperties": false
+            },
+            {
+              "type": "object",
+              "required": [
+                "locking"
+              ],
+              "properties": {
+                "locking": {
+                  "$ref": "#/definitions/LockingVaultAmount"
+                }
+              },
+              "additionalProperties": false
+            }
+          ]
+        },
+        "VaultPositionResponseItem": {
+          "type": "object",
+          "required": [
+            "account_id",
+            "position"
+          ],
+          "properties": {
+            "account_id": {
+              "type": "string"
+            },
+            "position": {
+              "$ref": "#/definitions/VaultPosition"
+            }
+          },
+          "additionalProperties": false
+        },
+        "VaultUnlockingPosition": {
+          "type": "object",
+          "required": [
+            "coin",
+            "id"
+          ],
+          "properties": {
+            "coin": {
+              "description": "Coins that are awaiting to be unlocked (underlying, not vault tokens)",
+              "allOf": [
+                {
+                  "$ref": "#/definitions/Coin"
+                }
+              ]
+            },
+            "id": {
+              "description": "Unique identifier representing the unlocking position. Needed for `ExecuteMsg::WithdrawUnlocked {}` call.",
+              "type": "integer",
+              "format": "uint64",
+              "minimum": 0.0
+            }
+          },
+          "additionalProperties": false
+        }
+      }
+    },
+    "config": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "ConfigResponse",
+      "type": "object",
+      "required": [
+        "health_contract",
+        "incentives",
+        "max_slippage",
+        "max_unlocking_positions",
+        "oracle",
+        "ownership",
+        "params",
+        "red_bank",
+        "swapper",
+        "zapper"
+      ],
+      "properties": {
+        "account_nft": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "health_contract": {
+          "type": "string"
+        },
+        "incentives": {
+          "type": "string"
+        },
+        "max_slippage": {
+          "$ref": "#/definitions/Decimal"
+        },
+        "max_unlocking_positions": {
+          "$ref": "#/definitions/Uint128"
+        },
+        "oracle": {
+          "type": "string"
+        },
+        "ownership": {
+          "$ref": "#/definitions/OwnerResponse"
+        },
+        "params": {
+          "type": "string"
+        },
+        "red_bank": {
+          "type": "string"
+        },
+        "rewards_collector": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RewardsCollector"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "swapper": {
+          "type": "string"
+        },
+        "zapper": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": false,
+      "definitions": {
+        "Decimal": {
+          "description": "A fixed-point decimal value with 18 fractional digits, i.e. Decimal(1_000_000_000_000_000_000) == 1.0\n\nThe greatest possible value that can be represented is 340282366920938463463.374607431768211455 (which is (2^128 - 1) / 10^18)",
+          "type": "string"
+        },
+        "OwnerResponse": {
+          "description": "Returned from Owner.query()",
+          "type": "object",
+          "required": [
+            "abolished",
+            "initialized"
+          ],
+          "properties": {
+            "abolished": {
+              "type": "boolean"
+            },
+            "emergency_owner": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "initialized": {
+              "type": "boolean"
+            },
+            "owner": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "proposed": {
+              "type": [
+                "string",
+                "null"
+              ]
+            }
+          },
+          "additionalProperties": false
+        },
+        "RewardsCollector": {
+          "type": "object",
+          "required": [
+            "account_id",
+            "address"
+          ],
+          "properties": {
+            "account_id": {
+              "type": "string"
+            },
+            "address": {
+              "type": "string"
+            }
+          },
+          "additionalProperties": false
+        },
+        "Uint128": {
+          "description": "A thin wrapper around u128 that is using strings for JSON encoding/decoding, such that the full u128 range can be used for clients that convert JSON numbers to floats, like JavaScript and jq.\n\n# Examples\n\nUse `from` to create instances of this and `u128` to get the value out:\n\n``` # use cosmwasm_std::Uint128; let a = Uint128::from(123u128); assert_eq!(a.u128(), 123);\n\nlet b = Uint128::from(42u64); assert_eq!(b.u128(), 42);\n\nlet c = Uint128::from(70u32); assert_eq!(c.u128(), 70); ```",
+          "type": "string"
+        }
+      }
+    },
+    "estimate_provide_liquidity": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Uint128",
+      "description": "A thin wrapper around u128 that is using strings for JSON encoding/decoding, such that the full u128 range can be used for clients that convert JSON numbers to floats, like JavaScript and jq.\n\n# Examples\n\nUse `from` to create instances of this and `u128` to get the value out:\n\n``` # use cosmwasm_std::Uint128; let a = Uint128::from(123u128); assert_eq!(a.u128(), 123);\n\nlet b = Uint128::from(42u64); assert_eq!(b.u128(), 42);\n\nlet c = Uint128::from(70u32); assert_eq!(c.u128(), 70); ```",
+      "type": "string"
+    },
+    "estimate_withdraw_liquidity": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Array_of_Coin",
+      "type": "array",
+      "items": {
+        "$ref": "#/definitions/Coin"
+      },
+      "definitions": {
+        "Coin": {
+          "type": "object",
+          "required": [
+            "amount",
+            "denom"
+          ],
+          "properties": {
+            "amount": {
+              "$ref": "#/definitions/Uint128"
+            },
+            "denom": {
+              "type": "string"
+            }
+          }
+        },
+        "Uint128": {
+          "description": "A thin wrapper around u128 that is using strings for JSON encoding/decoding, such that the full u128 range can be used for clients that convert JSON numbers to floats, like JavaScript and jq.\n\n# Examples\n\nUse `from` to create instances of this and `u128` to get the value out:\n\n``` # use cosmwasm_std::Uint128; let a = Uint128::from(123u128); assert_eq!(a.u128(), 123);\n\nlet b = Uint128::from(42u64); assert_eq!(b.u128(), 42);\n\nlet c = Uint128::from(70u32); assert_eq!(c.u128(), 70); ```",
+          "type": "string"
+        }
+      }
+    },
+    "positions": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Positions",
+      "type": "object",
+      "required": [
+        "account_id",
+        "debts",
+        "deposits",
+        "lends",
+        "vaults"
+      ],
+      "properties": {
+        "account_id": {
+          "type": "string"
+        },
+        "debts": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/DebtAmount"
+          }
+        },
+        "deposits": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/Coin"
+          }
+        },
+        "lends": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/Coin"
+          }
+        },
+        "vaults": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/VaultPosition"
+          }
+        }
+      },
+      "additionalProperties": false,
+      "definitions": {
+        "Addr": {
+          "description": "A human readable address.\n\nIn Cosmos, this is typically bech32 encoded. But for multi-chain smart contracts no assumptions should be made other than being UTF-8 encoded and of reasonable length.\n\nThis type represents a validated address. It can be created in the following ways 1. Use `Addr::unchecked(input)` 2. Use `let checked: Addr = deps.api.addr_validate(input)?` 3. Use `let checked: Addr = deps.api.addr_humanize(canonical_addr)?` 4. Deserialize from JSON. This must only be done from JSON that was validated before such as a contract's state. `Addr` must not be used in messages sent by the user because this would result in unvalidated instances.\n\nThis type is immutable. If you really need to mutate it (Really? Are you sure?), create a mutable copy using `let mut mutable = Addr::to_string()` and operate on that `String` instance.",
+          "type": "string"
+        },
+        "Coin": {
+          "type": "object",
+          "required": [
+            "amount",
+            "denom"
+          ],
+          "properties": {
+            "amount": {
+              "$ref": "#/definitions/Uint128"
+            },
+            "denom": {
+              "type": "string"
+            }
+          }
+        },
+        "DebtAmount": {
+          "type": "object",
+          "required": [
+            "amount",
+            "denom",
+            "shares"
+          ],
+          "properties": {
+            "amount": {
+              "description": "amount of coins",
+              "allOf": [
+                {
+                  "$ref": "#/definitions/Uint128"
+                }
+              ]
+            },
+            "denom": {
+              "type": "string"
+            },
+            "shares": {
+              "description": "number of shares in debt pool",
+              "allOf": [
+                {
+                  "$ref": "#/definitions/Uint128"
+                }
+              ]
+            }
+          },
+          "additionalProperties": false
+        },
+        "LockingVaultAmount": {
+          "type": "object",
+          "required": [
+            "locked",
+            "unlocking"
+          ],
+          "properties": {
+            "locked": {
+              "$ref": "#/definitions/VaultAmount"
+            },
+            "unlocking": {
+              "$ref": "#/definitions/UnlockingPositions"
+            }
+          },
+          "additionalProperties": false
+        },
+        "Uint128": {
+          "description": "A thin wrapper around u128 that is using strings for JSON encoding/decoding, such that the full u128 range can be used for clients that convert JSON numbers to floats, like JavaScript and jq.\n\n# Examples\n\nUse `from` to create instances of this and `u128` to get the value out:\n\n``` # use cosmwasm_std::Uint128; let a = Uint128::from(123u128); assert_eq!(a.u128(), 123);\n\nlet b = Uint128::from(42u64); assert_eq!(b.u128(), 42);\n\nlet c = Uint128::from(70u32); assert_eq!(c.u128(), 70); ```",
+          "type": "string"
+        },
+        "UnlockingPositions": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/VaultUnlockingPosition"
+          }
+        },
+        "VaultAmount": {
+          "$ref": "#/definitions/Uint128"
+        },
+        "VaultBase_for_Addr": {
+          "type": "object",
+          "required": [
+            "address"
+          ],
+          "properties": {
+            "address": {
+              "$ref": "#/definitions/Addr"
+            }
+          },
+          "additionalProperties": false
+        },
+        "VaultPosition": {
+          "type": "object",
+          "required": [
+            "amount",
+            "vault"
+          ],
+          "properties": {
+            "amount": {
+              "$ref": "#/definitions/VaultPositionAmount"
+            },
+            "vault": {
+              "$ref": "#/definitions/VaultBase_for_Addr"
+            }
+          },
+          "additionalProperties": false
+        },
+        "VaultPositionAmount": {
+          "oneOf": [
+            {
+              "type": "object",
+              "required": [
+                "unlocked"
+              ],
+              "properties": {
+                "unlocked": {
+                  "$ref": "#/definitions/VaultAmount"
+                }
+              },
+              "additionalProperties": false
+            },
+            {
+              "type": "object",
+              "required": [
+                "locking"
+              ],
+              "properties": {
+                "locking": {
+                  "$ref": "#/definitions/LockingVaultAmount"
+                }
+              },
+              "additionalProperties": false
+            }
+          ]
+        },
+        "VaultUnlockingPosition": {
+          "type": "object",
+          "required": [
+            "coin",
+            "id"
+          ],
+          "properties": {
+            "coin": {
+              "description": "Coins that are awaiting to be unlocked (underlying, not vault tokens)",
+              "allOf": [
+                {
+                  "$ref": "#/definitions/Coin"
+                }
+              ]
+            },
+            "id": {
+              "description": "Unique identifier representing the unlocking position. Needed for `ExecuteMsg::WithdrawUnlocked {}` call.",
+              "type": "integer",
+              "format": "uint64",
+              "minimum": 0.0
+            }
+          },
+          "additionalProperties": false
+        }
+      }
+    },
+    "total_debt_shares": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "DebtShares",
+      "type": "object",
+      "required": [
+        "denom",
+        "shares"
+      ],
+      "properties": {
+        "denom": {
+          "type": "string"
+        },
+        "shares": {
+          "$ref": "#/definitions/Uint128"
+        }
+      },
+      "additionalProperties": false,
+      "definitions": {
+        "Uint128": {
+          "description": "A thin wrapper around u128 that is using strings for JSON encoding/decoding, such that the full u128 range can be used for clients that convert JSON numbers to floats, like JavaScript and jq.\n\n# Examples\n\nUse `from` to create instances of this and `u128` to get the value out:\n\n``` # use cosmwasm_std::Uint128; let a = Uint128::from(123u128); assert_eq!(a.u128(), 123);\n\nlet b = Uint128::from(42u64); assert_eq!(b.u128(), 42);\n\nlet c = Uint128::from(70u32); assert_eq!(c.u128(), 70); ```",
+          "type": "string"
+        }
+      }
+    },
+    "vault_position_value": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "VaultPositionValue",
+      "type": "object",
+      "required": [
+        "base_coin",
+        "vault_coin"
+      ],
+      "properties": {
+        "base_coin": {
+          "description": "value of all unlocking positions",
+          "allOf": [
+            {
+              "$ref": "#/definitions/CoinValue"
+            }
+          ]
+        },
+        "vault_coin": {
+          "description": "value of locked or unlocked",
+          "allOf": [
+            {
+              "$ref": "#/definitions/CoinValue"
+            }
+          ]
+        }
+      },
+      "additionalProperties": false,
+      "definitions": {
+        "CoinValue": {
+          "type": "object",
+          "required": [
+            "amount",
+            "denom",
+            "value"
+          ],
+          "properties": {
+            "amount": {
+              "$ref": "#/definitions/Uint128"
+            },
+            "denom": {
+              "type": "string"
+            },
+            "value": {
+              "$ref": "#/definitions/Uint128"
+            }
+          },
+          "additionalProperties": false
+        },
+        "Uint128": {
+          "description": "A thin wrapper around u128 that is using strings for JSON encoding/decoding, such that the full u128 range can be used for clients that convert JSON numbers to floats, like JavaScript and jq.\n\n# Examples\n\nUse `from` to create instances of this and `u128` to get the value out:\n\n``` # use cosmwasm_std::Uint128; let a = Uint128::from(123u128); assert_eq!(a.u128(), 123);\n\nlet b = Uint128::from(42u64); assert_eq!(b.u128(), 42);\n\nlet c = Uint128::from(70u32); assert_eq!(c.u128(), 70); ```",
+          "type": "string"
+        }
+      }
+    },
+    "vault_utilization": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "VaultUtilizationResponse",
+      "type": "object",
+      "required": [
+        "utilization",
+        "vault"
+      ],
+      "properties": {
+        "utilization": {
+          "$ref": "#/definitions/Coin"
+        },
+        "vault": {
+          "$ref": "#/definitions/VaultBase_for_String"
+        }
+      },
+      "additionalProperties": false,
+      "definitions": {
+        "Coin": {
+          "type": "object",
+          "required": [
+            "amount",
+            "denom"
+          ],
+          "properties": {
+            "amount": {
+              "$ref": "#/definitions/Uint128"
+            },
+            "denom": {
+              "type": "string"
+            }
+          }
+        },
+        "Uint128": {
+          "description": "A thin wrapper around u128 that is using strings for JSON encoding/decoding, such that the full u128 range can be used for clients that convert JSON numbers to floats, like JavaScript and jq.\n\n# Examples\n\nUse `from` to create instances of this and `u128` to get the value out:\n\n``` # use cosmwasm_std::Uint128; let a = Uint128::from(123u128); assert_eq!(a.u128(), 123);\n\nlet b = Uint128::from(42u64); assert_eq!(b.u128(), 42);\n\nlet c = Uint128::from(70u32); assert_eq!(c.u128(), 70); ```",
+          "type": "string"
+        },
+        "VaultBase_for_String": {
+          "type": "object",
+          "required": [
+            "address"
+          ],
+          "properties": {
+            "address": {
+              "type": "string"
+            }
+          },
+          "additionalProperties": false
+        }
+      }
+    }
+  }
+}

@@ -5,9 +5,9 @@
  * and run the @cosmwasm/ts-codegen generate command to regenerate this file.
  */
 
-import * as _12 from './MarsParams.types'
-import * as _13 from './MarsParams.client'
-import * as _14 from './MarsParams.react-query'
+import * as _30 from './MarsParams.types'
+import * as _31 from './MarsParams.client'
+import * as _32 from './MarsParams.react-query'
 export namespace contracts {
-  export const MarsParams = { ..._12, ..._13, ..._14 }
+  export const MarsParams = { ..._30, ..._31, ..._32 }
 }

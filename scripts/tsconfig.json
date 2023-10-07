@@ -2,7 +2,7 @@
   "compilerOptions": {
     "target": "ES2021",
     "lib": ["ES2021"],
-    "types": ["node"],
+    "types": ["jest", "node"],
     "module": "NodeNext",
     "declaration": true,
     "noImplicitAny": true,
@@ -15,6 +15,7 @@
     "forceConsistentCasingInFileNames": true,
     "strict": true,
     "noEmit": false,
+    "moduleResolution": "NodeNext",
     "isolatedModules": true,
     "resolveJsonModule": true,
     "noUnusedLocals": true,
@@ -23,8 +24,9 @@
     "noImplicitThis": true,
     "strictNullChecks": true,
     "allowSyntheticDefaultImports": true,
-    "skipLibCheck": true
+    "skipLibCheck": true,
+    "allowJs": true
   },
   "include": ["**/*.ts", "**/*.tsx", "types.d.ts"],
-  "exclude": ["node_modules", "./build/**/*"]
+  "exclude": ["node_modules", "./build/**/*", "types/generated/**/*", "health/example-react"]
 }
