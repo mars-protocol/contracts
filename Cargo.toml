@@ -49,7 +49,7 @@ cw-storage-plus   = "1.1.0"
 cw-utils          = "1.0.1"
 ica-oracle        = { git = "https://github.com/Stride-Labs/ica-oracle", rev = "2fdf76f", features = ["library"] }
 mars-owner        = { version = "2.0.0", features = ["emergency-owner"] }
-neutron-sdk       = "0.6.1"
+neutron-sdk       = { git = "https://github.com/neutron-org/neutron-sdk", rev = "74fea05" }
 osmosis-std       = "0.19.2"
 prost             = { version = "0.11.9", default-features = false }
 pyth-sdk-cw       = "1.2.0"
