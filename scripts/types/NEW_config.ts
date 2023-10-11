@@ -68,11 +68,10 @@ export interface DeploymentConfig {
     epochDuration: number
     maxWhitelistedIncentiveDenoms: number
   }
-  assets: AssetConfig[]
-  vaults: VaultConfig[]
-  oracleConfigs: OracleConfig[]
-  swapperDexName: string
-  swapRoutes: SwapRoute[]
+  swapper: {
+    name: string
+    routes: SwapRoute[]
+  }
   targetHealthFactor: string
   creditLineCoins: { denom: string; creditLine: String }[]
   maxValueForBurn: string
@@ -82,6 +81,9 @@ export interface DeploymentConfig {
   zapperContractName: string
   multisigAddr?: string
   runTests: boolean
+  assets: AssetConfig[]
+  vaults: VaultConfig[]
+  oracleConfigs: OracleConfig[]
 }
 
 export interface AssetConfig {
