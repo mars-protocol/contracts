@@ -1,5 +1,5 @@
 use cosmwasm_std::{Deps, Response};
-use mars_params::types::hls::HlsAssetType;
+use mars_red_bank_types::params::HlsAssetType;
 use mars_rover::error::{ContractError, ContractResult};
 use mars_rover_health_types::AccountKind;
 

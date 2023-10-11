@@ -1,9 +1,9 @@
 use cosmwasm_std::{Decimal, DepsMut, MessageInfo, Response};
+use mars_red_bank_types::params::{AssetParamsUpdate, VaultConfigUpdate};
 use mars_utils::{error::ValidationError, helpers::option_string_to_addr};
 
 use crate::{
     error::{ContractError, ContractResult},
-    msg::{AssetParamsUpdate, VaultConfigUpdate},
     state::{ADDRESS_PROVIDER, ASSET_PARAMS, OWNER, TARGET_HEALTH_FACTOR, VAULT_CONFIGS},
 };
 
@@ -100,35 +100,6 @@ pub fn assert_thf(thf: Decimal) -> Result<(), ContractError> {
             predicate: "[1, 2]".to_string(),
         }
         .into());
-    }
-    Ok(())
-}
-
-/// liquidation_threshold should be greater than or equal to max_loan_to_value
-pub fn assert_lqt_gt_max_ltv(
-    max_ltv: Decimal,
-    liq_threshold: Decimal,
-) -> Result<(), ValidationError> {
-    if liq_threshold <= max_ltv {
-        return Err(ValidationError::InvalidParam {
-            param_name: "liquidation_threshold".to_string(),
-            invalid_value: liq_threshold.to_string(),
-            predicate: format!("> {} (max LTV)", max_ltv),
-        });
-    }
-    Ok(())
-}
-
-pub fn assert_hls_lqt_gt_max_ltv(
-    max_ltv: Decimal,
-    liq_threshold: Decimal,
-) -> Result<(), ValidationError> {
-    if liq_threshold <= max_ltv {
-        return Err(ValidationError::InvalidParam {
-            param_name: "hls_liquidation_threshold".to_string(),
-            invalid_value: liq_threshold.to_string(),
-            predicate: format!("> {} (hls max LTV)", max_ltv),
-        });
     }
     Ok(())
 }

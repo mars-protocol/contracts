@@ -1,10 +1,8 @@
 use std::collections::HashMap;
 
 use cosmwasm_std::{Addr, Coin, Decimal, Uint128};
-use mars_params::types::{
-    asset::{AssetParams, CmSettings, LiquidationBonus, RedBankSettings},
-    hls::HlsParams,
-    vault::VaultConfig,
+use mars_red_bank_types::params::{
+    AssetParams, CmSettings, HlsParams, LiquidationBonus, RedBankSettings, VaultConfig,
 };
 use mars_rover::{
     adapters::vault::{
@@ -174,8 +172,10 @@ fn random_param_maps() -> impl Strategy<Value = (DenomsData, VaultsData)> {
     random_denoms_data().prop_flat_map(|denoms_data| {
         vec(random_vault(denoms_data.clone()), 0..=3).prop_map(move |vaults| {
             let mut vault_values = HashMap::new();
-            let mut vault_configs: HashMap<Addr, mars_params::types::vault::VaultConfigBase<Addr>> =
-                HashMap::new();
+            let mut vault_configs: HashMap<
+                Addr,
+                mars_red_bank_types::params::VaultConfigBase<Addr>,
+            > = HashMap::new();
 
             for (addr, position_val, config) in vaults {
                 let addr = Addr::unchecked(addr.clone());

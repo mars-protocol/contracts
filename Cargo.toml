@@ -119,11 +119,7 @@ mars-mock-pyth                 = { path = "./contracts/mock-pyth" }
 mars-oracle-base               = { path = "./contracts/oracle/base" }
 mars-oracle-osmosis            = { path = "./contracts/oracle/osmosis" }
 mars-oracle-wasm               = { path = "./contracts/oracle/wasm" }
-# mars-params needs the `library` flag because mars-rover-health depends on it.
-# We should remove the type definitions in a "mars-types" crate and have the
-# health contract depend on it instead. This way, we can remove the library flag
-# here.
-mars-params                    = { path = "./contracts/params", features = ["library"] }
+mars-params                    = { path = "./contracts/params" }
 mars-red-bank                  = { path = "./contracts/red-bank" }
 mars-rewards-collector-base    = { path = "./contracts/rewards-collector/base" }
 mars-rewards-collector-neutron = { path = "./contracts/rewards-collector/neutron" }

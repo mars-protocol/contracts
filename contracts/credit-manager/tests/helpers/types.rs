@@ -1,9 +1,8 @@
 use cosmwasm_schema::cw_serde;
 use cosmwasm_std::{coin, Addr, Coin, Decimal, Uint128};
 use cw_utils::Duration;
-use mars_params::types::{
-    asset::{AssetParamsUnchecked, CmSettings, LiquidationBonus, RedBankSettings},
-    hls::HlsParamsUnchecked,
+use mars_red_bank_types::params::{
+    AssetParamsUnchecked, CmSettings, HlsParamsUnchecked, LiquidationBonus, RedBankSettings,
 };
 use mars_rover::msg::execute::{ActionAmount, ActionCoin};
 

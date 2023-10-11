@@ -1,11 +1,9 @@
 use cosmwasm_std::Addr;
 use mars_owner::OwnerError;
-use mars_params::{
-    error::ContractError::Owner,
-    msg::{
-        AssetParamsUpdate, CmEmergencyUpdate, EmergencyUpdate, RedBankEmergencyUpdate,
-        VaultConfigUpdate,
-    },
+use mars_params::error::ContractError::Owner;
+use mars_red_bank_types::params::{
+    AssetParamsUpdate, CmEmergencyUpdate, EmergencyUpdate, RedBankEmergencyUpdate,
+    VaultConfigUpdate,
 };
 
 use super::helpers::{assert_err, default_asset_params, default_vault_config, MockEnv};

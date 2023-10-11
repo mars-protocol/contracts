@@ -6,7 +6,6 @@ use anyhow::Result as AnyResult;
 use cosmwasm_std::{coin, Addr, Coin, Decimal, Empty, StdResult, Uint128};
 use cw_multi_test::{App, AppResponse, BankSudo, BasicApp, Executor, SudoMsg};
 use mars_oracle_osmosis::OsmosisPriceSourceUnchecked;
-use mars_params::{msg::AssetParamsUpdate, types::asset::AssetParams};
 use mars_red_bank_types::{
     address_provider::{self, MarsAddressType},
     incentives,
@@ -15,6 +14,7 @@ use mars_red_bank_types::{
         ActionKind::{Default as ActionDefault, Liquidation},
         PriceResponse,
     },
+    params::{AssetParams, AssetParamsUpdate},
     red_bank::{
         self, CreateOrUpdateConfig, InitOrUpdateAssetParams, Market,
         UncollateralizedLoanLimitResponse, UserCollateralResponse, UserDebtResponse,
@@ -704,9 +704,11 @@ impl Params {
             .execute_contract(
                 env.owner.clone(),
                 self.contract_addr.clone(),
-                &mars_params::msg::ExecuteMsg::UpdateAssetParams(AssetParamsUpdate::AddOrUpdate {
-                    params: params.into(),
-                }),
+                &mars_red_bank_types::params::ExecuteMsg::UpdateAssetParams(
+                    AssetParamsUpdate::AddOrUpdate {
+                        params: params.into(),
+                    },
+                ),
                 &[],
             )
             .unwrap();
@@ -717,7 +719,7 @@ impl Params {
             .wrap()
             .query_wasm_smart(
                 self.contract_addr.clone(),
-                &mars_params::msg::QueryMsg::AssetParams {
+                &mars_red_bank_types::params::QueryMsg::AssetParams {
                     denom: denom.to_string(),
                 },
             )
@@ -983,7 +985,7 @@ impl MockEnvBuilder {
             .instantiate_contract(
                 code_id,
                 self.owner.clone(),
-                &mars_params::msg::InstantiateMsg {
+                &mars_red_bank_types::params::InstantiateMsg {
                     owner: self.owner.to_string(),
                     address_provider: address_provider_addr.to_string(),
                     target_health_factor: self.target_health_factor,

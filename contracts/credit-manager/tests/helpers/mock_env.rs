@@ -22,22 +22,17 @@ use mars_mock_vault::{
     contract::DEFAULT_VAULT_TOKEN_PREFUND, msg::InstantiateMsg as VaultInstantiateMsg,
 };
 use mars_owner::OwnerUpdate;
-use mars_params::{
-    msg::{
-        AssetParamsUpdate,
-        AssetParamsUpdate::AddOrUpdate,
-        ExecuteMsg::{UpdateAssetParams, UpdateVaultConfig},
-        InstantiateMsg as ParamsInstantiateMsg, QueryMsg as ParamsQueryMsg, VaultConfigUpdate,
-    },
-    types::{
-        asset::AssetParams,
-        vault::{VaultConfig, VaultConfigUnchecked},
-    },
-};
 use mars_red_bank_types::{
     address_provider::{self, MarsAddressType},
     incentives::{ExecuteMsg::BalanceChange, QueryMsg::UserUnclaimedRewards},
     oracle::ActionKind,
+    params::{
+        AssetParams, AssetParamsUpdate,
+        AssetParamsUpdate::AddOrUpdate,
+        ExecuteMsg::{UpdateAssetParams, UpdateVaultConfig},
+        InstantiateMsg as ParamsInstantiateMsg, QueryMsg as ParamsQueryMsg, VaultConfig,
+        VaultConfigUnchecked, VaultConfigUpdate,
+    },
     red_bank::{
         self, InitOrUpdateAssetParams, InterestRateModel,
         QueryMsg::{UserCollateral, UserDebt},

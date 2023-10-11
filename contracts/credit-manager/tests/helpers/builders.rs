@@ -1,6 +1,6 @@
 use cosmwasm_std::{coin, Decimal};
 use cw_utils::Duration;
-use mars_params::types::asset::LiquidationBonus;
+use mars_red_bank_types::params::LiquidationBonus;
 
 use crate::helpers::{lp_token_info, CoinInfo, VaultTestInfo};
 

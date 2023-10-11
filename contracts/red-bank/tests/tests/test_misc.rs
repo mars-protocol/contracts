@@ -6,14 +6,16 @@ use mars_interest_rate::{
     get_updated_liquidity_index, ScalingOperation, SCALING_FACTOR,
 };
 use mars_owner::OwnerError::NotOwner;
-use mars_params::types::asset::AssetParams;
 use mars_red_bank::{
     contract::execute,
     error::ContractError,
     health,
     state::{DEBTS, MARKETS, UNCOLLATERALIZED_LOAN_LIMITS},
 };
-use mars_red_bank_types::red_bank::{Debt, ExecuteMsg, Market};
+use mars_red_bank_types::{
+    params::AssetParams,
+    red_bank::{Debt, ExecuteMsg, Market},
+};
 use mars_testing::{mock_env, mock_env_at_block_time, MockEnvParams};
 
 use super::helpers::{

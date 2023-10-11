@@ -5,7 +5,7 @@ use std::{
 
 use cosmwasm_std::{Decimal, StdError, Uint128};
 use mars_health::health::Health;
-use mars_params::types::asset::AssetParams;
+use mars_red_bank_types::params::AssetParams;
 
 use crate::error::LiquidationError;
 

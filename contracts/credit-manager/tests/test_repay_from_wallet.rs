@@ -1,6 +1,6 @@
 use cosmwasm_std::{coin, coins, Addr, Uint128};
 use cw_utils::PaymentError;
-use mars_params::msg::AssetParamsUpdate::AddOrUpdate;
+use mars_red_bank_types::params::AssetParamsUpdate::AddOrUpdate;
 use mars_rover::{
     error::ContractError,
     msg::execute::Action::{Borrow, Deposit},

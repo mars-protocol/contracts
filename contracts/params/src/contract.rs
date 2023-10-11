@@ -3,6 +3,10 @@ use cosmwasm_std::entry_point;
 use cosmwasm_std::{to_binary, Binary, Deps, DepsMut, Env, MessageInfo, Response};
 use cw2::set_contract_version;
 use mars_owner::OwnerInit::SetInitialOwner;
+use mars_red_bank_types::params::{
+    CmEmergencyUpdate, EmergencyUpdate, ExecuteMsg, InstantiateMsg, QueryMsg,
+    RedBankEmergencyUpdate,
+};
 
 use crate::{
     emergency_powers::{disable_borrowing, disallow_coin, set_zero_deposit_cap, set_zero_max_ltv},
@@ -10,10 +14,6 @@ use crate::{
     execute::{
         assert_thf, update_asset_params, update_config, update_target_health_factor,
         update_vault_config,
-    },
-    msg::{
-        CmEmergencyUpdate, EmergencyUpdate, ExecuteMsg, InstantiateMsg, QueryMsg,
-        RedBankEmergencyUpdate,
     },
     query::{
         query_all_asset_params, query_all_vault_configs, query_config, query_total_deposit,

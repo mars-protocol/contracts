@@ -1,5 +1,5 @@
 use cosmwasm_std::{Addr, Deps, QuerierWrapper, StdError, StdResult};
-use mars_params::types::vault::VaultConfig;
+use mars_red_bank_types::params::VaultConfig;
 use mars_rover::{
     adapters::{oracle::Oracle, params::Params, vault::Vault},
     msg::query::{ConfigResponse, Positions, QueryMsg as CmQueryMsg},

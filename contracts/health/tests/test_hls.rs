@@ -1,8 +1,7 @@
 use std::str::FromStr;
 
 use cosmwasm_std::{Decimal, Uint128};
-use mars_params::msg::AssetParamsUpdate::AddOrUpdate;
-use mars_red_bank_types::oracle::ActionKind;
+use mars_red_bank_types::{oracle::ActionKind, params::AssetParamsUpdate::AddOrUpdate};
 use mars_rover::{
     adapters::vault::{Vault, VaultAmount, VaultPosition, VaultPositionAmount},
     msg::query::{DebtAmount, Positions},

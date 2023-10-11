@@ -1,9 +1,8 @@
 use std::str::FromStr;
 
 use cosmwasm_std::{coin, Decimal, Uint128};
-use mars_params::types::{
-    asset::{AssetParamsUnchecked, CmSettings, LiquidationBonus, RedBankSettings},
-    vault::VaultConfigUnchecked,
+use mars_red_bank_types::params::{
+    AssetParamsUnchecked, CmSettings, LiquidationBonus, RedBankSettings, VaultConfigUnchecked,
 };
 
 pub fn default_asset_params(denom: &str) -> AssetParamsUnchecked {

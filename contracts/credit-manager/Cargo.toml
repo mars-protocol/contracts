@@ -30,7 +30,6 @@ cw-utils                = { workspace = true }
 cw-vault-standard       = { workspace = true }
 mars-account-nft-types  = { workspace = true }
 mars-liquidation        = { workspace = true }
-mars-params             = { workspace = true }
 mars-owner              = { workspace = true }
 mars-red-bank-types     = { workspace = true }
 mars-rover              = { workspace = true }
@@ -46,6 +45,7 @@ mars-mock-incentives  = { workspace = true }
 mars-mock-oracle      = { workspace = true }
 mars-mock-red-bank    = { workspace = true }
 mars-mock-vault       = { workspace = true }
+mars-params           = { workspace = true }
 mars-rover-health     = { workspace = true }
 mars-swapper-mock     = { workspace = true }
 mars-zapper-mock      = { workspace = true }

@@ -3,11 +3,10 @@ use std::ops::{Add, Mul};
 use cosmwasm_std::{coin, coins, Addr, Coin, Decimal, Uint128};
 use mars_credit_manager::borrow::DEFAULT_DEBT_SHARES_PER_COIN_BORROWED;
 use mars_mock_oracle::msg::CoinPrice;
-use mars_params::{
-    msg::{AssetParamsUpdate::AddOrUpdate, VaultConfigUpdate},
-    types::asset::LiquidationBonus,
+use mars_red_bank_types::{
+    oracle::ActionKind,
+    params::{AssetParamsUpdate::AddOrUpdate, LiquidationBonus, VaultConfigUpdate},
 };
-use mars_red_bank_types::oracle::ActionKind;
 use mars_rover::{
     error::ContractError,
     msg::{

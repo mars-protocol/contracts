@@ -3,9 +3,11 @@
 use anyhow::Result as AnyResult;
 use cosmwasm_std::{Coin, Decimal, Fraction, Uint128};
 use cw_multi_test::AppResponse;
-use mars_params::types::asset::{AssetParams, CmSettings, LiquidationBonus, RedBankSettings};
-use mars_red_bank_types::red_bank::{
-    InitOrUpdateAssetParams, InterestRateModel, UserHealthStatus, UserPositionResponse,
+use mars_red_bank_types::{
+    params::{AssetParams, CmSettings, LiquidationBonus, RedBankSettings},
+    red_bank::{
+        InitOrUpdateAssetParams, InterestRateModel, UserHealthStatus, UserPositionResponse,
+    },
 };
 use osmosis_std::types::osmosis::{
     gamm::v1beta1::{MsgSwapExactAmountIn, MsgSwapExactAmountInResponse},

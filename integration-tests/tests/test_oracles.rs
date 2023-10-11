@@ -7,13 +7,13 @@ use mars_oracle_osmosis::{
     msg::PriceSourceResponse, DowntimeDetector, GeometricTwap, OsmosisPriceSourceChecked,
     OsmosisPriceSourceUnchecked, RedemptionRate,
 };
-use mars_params::msg::AssetParamsUpdate;
 use mars_red_bank_types::{
     address_provider::{
         ExecuteMsg::SetAddress, InstantiateMsg as InstantiateAddr, MarsAddressType,
     },
     incentives::InstantiateMsg as InstantiateIncentives,
     oracle::{ExecuteMsg, InstantiateMsg, PriceResponse, QueryMsg},
+    params::AssetParamsUpdate,
     red_bank::{
         CreateOrUpdateConfig, ExecuteMsg as ExecuteRedBank,
         ExecuteMsg::{Borrow, Deposit},
@@ -1292,7 +1292,7 @@ fn setup_redbank(wasm: &Wasm<OsmosisTestApp>, signer: &SigningAccount) -> (Strin
         wasm,
         signer,
         OSMOSIS_PARAMS_CONTRACT_NAME,
-        &mars_params::msg::InstantiateMsg {
+        &mars_red_bank_types::params::InstantiateMsg {
             owner: (signer.address()),
             address_provider: addr_provider_addr.clone(),
             target_health_factor: Decimal::from_str("1.05").unwrap(),
@@ -1380,9 +1380,11 @@ fn setup_redbank(wasm: &Wasm<OsmosisTestApp>, signer: &SigningAccount) -> (Strin
     .unwrap();
     wasm.execute(
         &params_addr,
-        &mars_params::msg::ExecuteMsg::UpdateAssetParams(AssetParamsUpdate::AddOrUpdate {
-            params: asset_params.into(),
-        }),
+        &mars_red_bank_types::params::ExecuteMsg::UpdateAssetParams(
+            AssetParamsUpdate::AddOrUpdate {
+                params: asset_params.into(),
+            },
+        ),
         &[],
         signer,
     )
@@ -1403,9 +1405,11 @@ fn setup_redbank(wasm: &Wasm<OsmosisTestApp>, signer: &SigningAccount) -> (Strin
 
     wasm.execute(
         &params_addr,
-        &mars_params::msg::ExecuteMsg::UpdateAssetParams(AssetParamsUpdate::AddOrUpdate {
-            params: asset_params.into(),
-        }),
+        &mars_red_bank_types::params::ExecuteMsg::UpdateAssetParams(
+            AssetParamsUpdate::AddOrUpdate {
+                params: asset_params.into(),
+            },
+        ),
         &[],
         signer,
     )

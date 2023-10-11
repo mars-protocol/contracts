@@ -1,14 +1,13 @@
 use std::str::FromStr;
 
 use cosmwasm_std::{Coin, Decimal, StdError, Uint128};
-use mars_params::{
-    msg::{AssetParamsUpdate::AddOrUpdate, VaultConfigUpdate},
-    types::{
-        asset::{AssetParamsUnchecked, CmSettings, LiquidationBonus, RedBankSettings},
-        hls::HlsParamsUnchecked,
+use mars_red_bank_types::{
+    oracle::ActionKind,
+    params::{
+        AssetParamsUnchecked, AssetParamsUpdate::AddOrUpdate, CmSettings, HlsParamsUnchecked,
+        LiquidationBonus, RedBankSettings, VaultConfigUpdate,
     },
 };
-use mars_red_bank_types::oracle::ActionKind;
 use mars_rover::{
     adapters::vault::{
         LockingVaultAmount, UnlockingPositions, Vault, VaultAmount, VaultPosition,

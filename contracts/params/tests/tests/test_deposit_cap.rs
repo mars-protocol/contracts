@@ -3,11 +3,13 @@ use std::str::FromStr;
 use cosmwasm_std::{coins, Addr, Decimal, Uint128};
 use mars_interest_rate::get_underlying_liquidity_amount;
 use mars_params::{
-    msg::TotalDepositResponse,
     query::query_total_deposit,
     state::{ADDRESS_PROVIDER, ASSET_PARAMS},
 };
-use mars_red_bank_types::red_bank::{Market, UserDebtResponse};
+use mars_red_bank_types::{
+    params::TotalDepositResponse,
+    red_bank::{Market, UserDebtResponse},
+};
 use mars_testing::{mock_dependencies, mock_env_at_block_time};
 use test_case::test_case;
 

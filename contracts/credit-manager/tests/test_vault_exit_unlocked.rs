@@ -1,7 +1,7 @@
 use cosmwasm_std::{Addr, Uint128};
 use cw_utils::Duration;
 use mars_mock_vault::contract::STARTING_VAULT_SHARES;
-use mars_params::msg::VaultConfigUpdate;
+use mars_red_bank_types::params::VaultConfigUpdate;
 use mars_rover::{
     error::ContractError,
     msg::{

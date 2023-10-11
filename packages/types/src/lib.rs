@@ -3,6 +3,7 @@ pub mod error;
 pub mod incentives;
 pub mod keys;
 pub mod oracle;
+pub mod params;
 pub mod red_bank;
 pub mod rewards_collector;
 pub mod swapper;

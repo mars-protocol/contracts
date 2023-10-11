@@ -1,6 +1,6 @@
 use cosmwasm_std::{coin, Addr, Coin, OverflowError, OverflowOperation::Sub, Uint128};
 use mars_mock_vault::contract::STARTING_VAULT_SHARES;
-use mars_params::msg::VaultConfigUpdate;
+use mars_red_bank_types::params::VaultConfigUpdate;
 use mars_rover::{
     adapters::vault::VaultBase,
     error::{ContractError, ContractError::NotTokenOwner},
