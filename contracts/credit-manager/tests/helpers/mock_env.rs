@@ -27,12 +27,11 @@ use mars_red_bank_types::{
     incentives::{ExecuteMsg::BalanceChange, QueryMsg::UserUnclaimedRewards},
     oracle::ActionKind,
     params::{
-        asset::AssetParams,
-        vault::{VaultConfig, VaultConfigUnchecked},
-        AssetParamsUpdate,
+        AssetParams, AssetParamsUpdate,
         AssetParamsUpdate::AddOrUpdate,
         ExecuteMsg::{UpdateAssetParams, UpdateVaultConfig},
-        InstantiateMsg as ParamsInstantiateMsg, QueryMsg as ParamsQueryMsg, VaultConfigUpdate,
+        InstantiateMsg as ParamsInstantiateMsg, QueryMsg as ParamsQueryMsg, VaultConfig,
+        VaultConfigUnchecked, VaultConfigUpdate,
     },
     red_bank::{
         self, InitOrUpdateAssetParams, InterestRateModel,

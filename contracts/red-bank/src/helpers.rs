@@ -1,5 +1,5 @@
 use cosmwasm_std::{Coin, Decimal, QuerierWrapper, StdResult};
-use mars_red_bank_types::params::{asset::AssetParams, QueryMsg};
+use mars_red_bank_types::params::{AssetParams, QueryMsg};
 
 pub fn query_asset_params(
     querier: &QuerierWrapper,

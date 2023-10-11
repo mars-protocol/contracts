@@ -21,7 +21,7 @@ use mars_red_bank::{
 };
 use mars_red_bank_types::{
     keys::{UserId, UserIdKey},
-    params::asset::{AssetParams, CmSettings, LiquidationBonus, RedBankSettings},
+    params::{AssetParams, CmSettings, LiquidationBonus, RedBankSettings},
     red_bank::{
         Collateral, CreateOrUpdateConfig, Debt, InitOrUpdateAssetParams, InstantiateMsg,
         InterestRateModel, Market, QueryMsg, UserCollateralResponse, UserDebtResponse,

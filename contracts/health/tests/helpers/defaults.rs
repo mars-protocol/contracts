@@ -2,8 +2,7 @@ use std::str::FromStr;
 
 use cosmwasm_std::Decimal;
 use mars_red_bank_types::params::{
-    asset::{AssetParamsUnchecked, CmSettings, LiquidationBonus, RedBankSettings},
-    hls::HlsParamsUnchecked,
+    AssetParamsUnchecked, CmSettings, HlsParamsUnchecked, LiquidationBonus, RedBankSettings,
 };
 
 pub fn default_asset_params(denom: &str) -> AssetParamsUnchecked {

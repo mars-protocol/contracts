@@ -19,7 +19,7 @@ use mars_red_bank_types::{
     error::MarsError,
     incentives,
     keys::{UserId, UserIdKey},
-    params::asset::{AssetParams, CmSettings, LiquidationBonus, RedBankSettings},
+    params::{AssetParams, CmSettings, LiquidationBonus, RedBankSettings},
     red_bank::{Collateral, ExecuteMsg, Market},
 };
 use mars_testing::{mock_env_at_block_time, MarsMockQuerier};

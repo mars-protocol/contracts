@@ -5,7 +5,14 @@ use mars_utils::{
     helpers::{decimal_param_le_one, decimal_param_lt_one, validate_native_denom},
 };
 
-use super::{assert_hls_lqt_gt_max_ltv, assert_lqt_gt_max_ltv, hls::HlsParamsBase};
+use super::{
+    assertions::{
+        assert_hls_lqt_gt_max_ltv, assert_lb_slope_within_range, assert_lqt_gt_max_ltv,
+        assert_max_lb_gt_min_lb, assert_max_lb_within_range, assert_min_lb_within_range,
+        assert_starting_lb_within_range,
+    },
+    hls::HlsParamsBase,
+};
 use crate::error::MarsError;
 
 #[cw_serde]
@@ -52,61 +59,6 @@ impl LiquidationBonus {
         assert_max_lb_gt_min_lb(self.min_lb, self.max_lb)?;
         Ok(())
     }
-}
-
-fn assert_starting_lb_within_range(b: Decimal) -> Result<(), ValidationError> {
-    if b > Decimal::percent(10) {
-        return Err(ValidationError::InvalidParam {
-            param_name: "starting_lb".to_string(),
-            invalid_value: b.to_string(),
-            predicate: "[0, 0.1]".to_string(),
-        });
-    }
-    Ok(())
-}
-
-fn assert_lb_slope_within_range(slope: Decimal) -> Result<(), ValidationError> {
-    if slope < Decimal::one() || slope > Decimal::from_ratio(5u8, 1u8) {
-        return Err(ValidationError::InvalidParam {
-            param_name: "slope".to_string(),
-            invalid_value: slope.to_string(),
-            predicate: "[1, 5]".to_string(),
-        });
-    }
-    Ok(())
-}
-
-fn assert_min_lb_within_range(min_lb: Decimal) -> Result<(), ValidationError> {
-    if min_lb > Decimal::percent(10) {
-        return Err(ValidationError::InvalidParam {
-            param_name: "min_lb".to_string(),
-            invalid_value: min_lb.to_string(),
-            predicate: "[0, 0.1]".to_string(),
-        });
-    }
-    Ok(())
-}
-
-fn assert_max_lb_within_range(max_lb: Decimal) -> Result<(), ValidationError> {
-    if max_lb < Decimal::percent(5) || max_lb > Decimal::percent(30) {
-        return Err(ValidationError::InvalidParam {
-            param_name: "max_lb".to_string(),
-            invalid_value: max_lb.to_string(),
-            predicate: "[0.05, 0.3]".to_string(),
-        });
-    }
-    Ok(())
-}
-
-fn assert_max_lb_gt_min_lb(min_lb: Decimal, max_lb: Decimal) -> Result<(), ValidationError> {
-    if min_lb > max_lb {
-        return Err(ValidationError::InvalidParam {
-            param_name: "max_lb".to_string(),
-            invalid_value: max_lb.to_string(),
-            predicate: format!("> {} (min LB)", min_lb),
-        });
-    }
-    Ok(())
 }
 
 #[cw_serde]

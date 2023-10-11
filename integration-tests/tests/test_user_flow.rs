@@ -2,7 +2,7 @@ use std::str::FromStr;
 
 use cosmwasm_std::{coin, Addr, Decimal, Uint128};
 use mars_red_bank::error::ContractError;
-use mars_red_bank_types::params::asset::LiquidationBonus;
+use mars_red_bank_types::params::LiquidationBonus;
 use mars_testing::integration::mock_env::{MockEnv, MockEnvBuilder, RedBank};
 
 use crate::helpers::{assert_red_bank_err, default_asset_params, default_asset_params_with};

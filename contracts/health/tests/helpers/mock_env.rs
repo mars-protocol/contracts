@@ -10,10 +10,9 @@ use mars_mock_vault::contract::STARTING_VAULT_SHARES;
 use mars_red_bank_types::{
     oracle::ActionKind,
     params::{
-        vault::VaultConfig,
         AssetParamsUpdate,
         ExecuteMsg::{UpdateAssetParams, UpdateVaultConfig},
-        QueryMsg as ParamsQueryMsg, VaultConfigUpdate,
+        QueryMsg as ParamsQueryMsg, VaultConfig, VaultConfigUpdate,
     },
 };
 use mars_rover::{adapters::vault::VaultUnchecked, msg::query::Positions};

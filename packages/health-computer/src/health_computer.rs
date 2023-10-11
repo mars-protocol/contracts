@@ -2,10 +2,7 @@ use std::cmp::min;
 
 use cosmwasm_schema::cw_serde;
 use cosmwasm_std::{Coin, Decimal, Uint128};
-use mars_red_bank_types::params::{
-    asset::{AssetParams, CmSettings},
-    vault::VaultConfig,
-};
+use mars_red_bank_types::params::{AssetParams, CmSettings, VaultConfig};
 use mars_rover::msg::query::Positions;
 use mars_rover_health_types::{
     AccountKind, BorrowTarget, Health,

@@ -6,9 +6,7 @@ use cosmwasm_std::{
 };
 use ica_oracle::msg::RedemptionRateResponse;
 use mars_oracle_osmosis::DowntimeDetector;
-use mars_red_bank_types::{
-    address_provider, incentives, oracle, params::asset::AssetParams, red_bank,
-};
+use mars_red_bank_types::{address_provider, incentives, oracle, params::AssetParams, red_bank};
 use osmosis_std::types::osmosis::{
     downtimedetector::v1beta1::RecoveredSinceDowntimeOfLengthResponse,
     poolmanager::v1beta1::{PoolResponse, SpotPriceResponse},

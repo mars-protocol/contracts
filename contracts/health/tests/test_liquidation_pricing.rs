@@ -4,9 +4,8 @@ use cosmwasm_std::{Coin, Decimal, StdError, Uint128};
 use mars_red_bank_types::{
     oracle::ActionKind,
     params::{
-        asset::{AssetParamsUnchecked, CmSettings, LiquidationBonus, RedBankSettings},
-        hls::HlsParamsUnchecked,
-        AssetParamsUpdate::AddOrUpdate,
+        AssetParamsUnchecked, AssetParamsUpdate::AddOrUpdate, CmSettings, HlsParamsUnchecked,
+        LiquidationBonus, RedBankSettings,
     },
 };
 use mars_rover::msg::query::{DebtAmount, Positions};

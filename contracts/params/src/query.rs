@@ -3,7 +3,7 @@ use cw_storage_plus::Bound;
 use mars_interest_rate::get_underlying_liquidity_amount;
 use mars_red_bank_types::{
     address_provider::{self, MarsAddressType},
-    params::{asset::AssetParams, vault::VaultConfig, ConfigResponse, TotalDepositResponse},
+    params::{AssetParams, ConfigResponse, TotalDepositResponse, VaultConfig},
     red_bank::{self, Market, UserDebtResponse},
 };
 

@@ -2,7 +2,10 @@ use cosmwasm_schema::cw_serde;
 use cosmwasm_std::{Addr, Api, Coin, Decimal};
 use mars_utils::helpers::decimal_param_le_one;
 
-use super::{assert_hls_lqt_gt_max_ltv, assert_lqt_gt_max_ltv, hls::HlsParamsBase};
+use super::{
+    assertions::{assert_hls_lqt_gt_max_ltv, assert_lqt_gt_max_ltv},
+    hls::HlsParamsBase,
+};
 use crate::error::MarsError;
 
 #[cw_serde]

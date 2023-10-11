@@ -35,24 +35,24 @@ pub enum QueryMsg {
     #[returns(super::msg::ConfigResponse)]
     Config {},
 
-    #[returns(super::types::asset::AssetParams)]
+    #[returns(super::asset::AssetParams)]
     AssetParams {
         denom: String,
     },
 
-    #[returns(Vec<super::types::asset::AssetParams>)]
+    #[returns(Vec<super::asset::AssetParams>)]
     AllAssetParams {
         start_after: Option<String>,
         limit: Option<u32>,
     },
 
-    #[returns(super::types::vault::VaultConfig)]
+    #[returns(super::vault::VaultConfig)]
     VaultConfig {
         /// Address of vault
         address: String,
     },
 
-    #[returns(Vec<super::types::vault::VaultConfig>)]
+    #[returns(Vec<super::vault::VaultConfig>)]
     AllVaultConfigs {
         start_after: Option<String>,
         limit: Option<u32>,

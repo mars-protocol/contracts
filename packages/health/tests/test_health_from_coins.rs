@@ -6,7 +6,7 @@ use cosmwasm_std::{
 };
 use mars_health::{error::HealthError, health::Health};
 use mars_red_bank_types::{
-    params::asset::{AssetParams, CmSettings, LiquidationBonus, RedBankSettings},
+    params::{AssetParams, CmSettings, LiquidationBonus, RedBankSettings},
     red_bank::Market,
 };
 use mars_testing::MarsMockQuerier;

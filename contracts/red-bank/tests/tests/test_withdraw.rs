@@ -19,7 +19,7 @@ use mars_red_bank_types::{
     error::MarsError,
     incentives,
     keys::{UserId, UserIdKey},
-    params::asset::AssetParams,
+    params::AssetParams,
     red_bank::{Collateral, Debt, ExecuteMsg, Market},
 };
 use mars_testing::{

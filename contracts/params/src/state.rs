@@ -1,7 +1,7 @@
 use cosmwasm_std::{Addr, Decimal};
 use cw_storage_plus::{Item, Map};
 use mars_owner::Owner;
-use mars_red_bank_types::params::{asset::AssetParams, vault::VaultConfig};
+use mars_red_bank_types::params::{AssetParams, VaultConfig};
 
 pub const OWNER: Owner = Owner::new("owner");
 pub const ADDRESS_PROVIDER: Item<Addr> = Item::new("address_provider");

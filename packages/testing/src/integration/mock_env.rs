@@ -14,7 +14,7 @@ use mars_red_bank_types::{
         ActionKind::{Default as ActionDefault, Liquidation},
         PriceResponse,
     },
-    params::{asset::AssetParams, AssetParamsUpdate},
+    params::{AssetParams, AssetParamsUpdate},
     red_bank::{
         self, CreateOrUpdateConfig, InitOrUpdateAssetParams, Market,
         UncollateralizedLoanLimitResponse, UserCollateralResponse, UserDebtResponse,

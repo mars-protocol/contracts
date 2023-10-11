@@ -4,10 +4,7 @@ use cosmwasm_std::Decimal;
 use mars_params::error::ContractError;
 use mars_red_bank_types::{
     error::MarsError::Validation,
-    params::{
-        hls::{HlsAssetType, HlsParamsUnchecked},
-        AssetParamsUpdate,
-    },
+    params::{AssetParamsUpdate, HlsAssetType, HlsParamsUnchecked},
 };
 use mars_utils::error::ValidationError::{InvalidDenom, InvalidParam};
 

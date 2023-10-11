@@ -4,7 +4,7 @@ pub mod helpers;
 use std::collections::HashMap;
 
 use cosmwasm_std::{Addr, Coin, Coins, Decimal, StdResult, Uint128};
-use mars_red_bank_types::params::{asset::AssetParams, AssetParamsUpdate};
+use mars_red_bank_types::params::{AssetParams, AssetParamsUpdate};
 use mars_rover::{
     error::ContractError,
     msg::execute::{Action, ActionAmount, ActionCoin},

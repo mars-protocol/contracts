@@ -1,7 +1,7 @@
 use cosmwasm_std::{Addr, Decimal, QuerierWrapper, StdResult};
 use mars_red_bank_types::{
     oracle::{self, ActionKind, PriceResponse},
-    params::asset::AssetParams,
+    params::AssetParams,
 };
 
 pub struct MarsQuerier<'a> {

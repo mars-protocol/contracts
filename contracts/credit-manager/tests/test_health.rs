@@ -5,7 +5,7 @@ use mars_credit_manager::borrow::DEFAULT_DEBT_SHARES_PER_COIN_BORROWED;
 use mars_mock_oracle::msg::CoinPrice;
 use mars_red_bank_types::{
     oracle::ActionKind,
-    params::{asset::LiquidationBonus, AssetParamsUpdate::AddOrUpdate, VaultConfigUpdate},
+    params::{AssetParamsUpdate::AddOrUpdate, LiquidationBonus, VaultConfigUpdate},
 };
 use mars_rover::{
     error::ContractError,

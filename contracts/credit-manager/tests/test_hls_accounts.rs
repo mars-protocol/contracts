@@ -1,7 +1,7 @@
 use cosmwasm_std::{coins, Addr, Decimal, Uint128};
 use mars_red_bank_types::{
     oracle::ActionKind,
-    params::{hls::HlsAssetType, AssetParamsUpdate::AddOrUpdate},
+    params::{AssetParamsUpdate::AddOrUpdate, HlsAssetType},
 };
 use mars_rover::{
     error::ContractError,

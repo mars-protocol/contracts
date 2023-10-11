@@ -3,7 +3,7 @@ use std::str::FromStr;
 use cosmwasm_std::{Addr, Decimal};
 use mars_owner::OwnerError;
 use mars_params::error::ContractError::Owner;
-use mars_red_bank_types::params::{vault::VaultConfigUnchecked, VaultConfigUpdate};
+use mars_red_bank_types::params::{VaultConfigUnchecked, VaultConfigUpdate};
 
 use super::helpers::{assert_contents_equal, assert_err, default_vault_config, MockEnv};
 

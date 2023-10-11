@@ -1,5 +1,5 @@
 use cosmwasm_std::{Addr, Uint128};
-use mars_red_bank_types::params::{hls::HlsAssetType, AssetParamsUpdate::AddOrUpdate};
+use mars_red_bank_types::params::{AssetParamsUpdate::AddOrUpdate, HlsAssetType};
 use mars_rover::{
     error::ContractError,
     msg::execute::Action::{Borrow, ClaimRewards, Deposit},

@@ -12,7 +12,7 @@ use mars_red_bank::{
     state::{DEBTS, MARKETS, UNCOLLATERALIZED_LOAN_LIMITS},
 };
 use mars_red_bank_types::{
-    params::asset::{AssetParams, CmSettings, RedBankSettings},
+    params::{AssetParams, CmSettings, RedBankSettings},
     red_bank::{ExecuteMsg, Market},
 };
 use mars_testing::{mock_env, mock_env_at_block_time, MockEnvParams};
