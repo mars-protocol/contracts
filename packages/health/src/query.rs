@@ -1,6 +1,8 @@
 use cosmwasm_std::{Addr, Decimal, QuerierWrapper, StdResult};
-use mars_params::types::asset::AssetParams;
-use mars_red_bank_types::oracle::{self, ActionKind, PriceResponse};
+use mars_red_bank_types::{
+    oracle::{self, ActionKind, PriceResponse},
+    params::asset::AssetParams,
+};
 
 pub struct MarsQuerier<'a> {
     querier: &'a QuerierWrapper<'a>,
@@ -20,7 +22,7 @@ impl<'a> MarsQuerier<'a> {
     pub fn query_asset_params(&self, denom: &str) -> StdResult<AssetParams> {
         self.querier.query_wasm_smart(
             self.params_addr,
-            &mars_params::msg::QueryMsg::AssetParams {
+            &mars_red_bank_types::params::QueryMsg::AssetParams {
                 denom: denom.to_string(),
             },
         )

@@ -5,8 +5,10 @@ use cosmwasm_std::{
     Uint128,
 };
 use mars_health::{error::HealthError, health::Health};
-use mars_params::types::asset::{AssetParams, CmSettings, LiquidationBonus, RedBankSettings};
-use mars_red_bank_types::red_bank::Market;
+use mars_red_bank_types::{
+    params::asset::{AssetParams, CmSettings, LiquidationBonus, RedBankSettings},
+    red_bank::Market,
+};
 use mars_testing::MarsMockQuerier;
 
 #[test]

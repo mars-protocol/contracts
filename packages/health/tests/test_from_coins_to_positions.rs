@@ -7,8 +7,10 @@ use mars_health::{
     health::{Health, Position},
     query::MarsQuerier,
 };
-use mars_params::types::asset::{AssetParams, CmSettings, LiquidationBonus, RedBankSettings};
-use mars_red_bank_types::red_bank::Market;
+use mars_red_bank_types::{
+    params::asset::{AssetParams, CmSettings, LiquidationBonus, RedBankSettings},
+    red_bank::Market,
+};
 use mars_testing::MarsMockQuerier;
 
 // Test converting a collection of coins (collateral and debts) to a map of `Position`

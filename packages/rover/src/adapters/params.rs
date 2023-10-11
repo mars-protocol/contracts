@@ -1,8 +1,7 @@
 use cosmwasm_schema::cw_serde;
 use cosmwasm_std::{Addr, Api, Decimal, QuerierWrapper, StdResult};
-use mars_params::{
-    msg::{QueryMsg, TotalDepositResponse},
-    types::{asset::AssetParams, vault::VaultConfig},
+use mars_red_bank_types::params::{
+    asset::AssetParams, vault::VaultConfig, QueryMsg, TotalDepositResponse,
 };
 
 #[cw_serde]

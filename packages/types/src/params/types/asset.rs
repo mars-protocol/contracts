@@ -5,11 +5,8 @@ use mars_utils::{
     helpers::{decimal_param_le_one, decimal_param_lt_one, validate_native_denom},
 };
 
-use crate::{
-    error::ContractResult,
-    execute::{assert_hls_lqt_gt_max_ltv, assert_lqt_gt_max_ltv},
-    types::hls::HlsParamsBase,
-};
+use super::{assert_hls_lqt_gt_max_ltv, assert_lqt_gt_max_ltv, hls::HlsParamsBase};
+use crate::error::MarsError;
 
 #[cw_serde]
 pub struct CmSettings<T> {
@@ -146,7 +143,7 @@ impl From<AssetParams> for AssetParamsUnchecked {
 }
 
 impl AssetParamsUnchecked {
-    pub fn check(&self, api: &dyn Api) -> ContractResult<AssetParams> {
+    pub fn check(&self, api: &dyn Api) -> Result<AssetParams, MarsError> {
         validate_native_denom(&self.denom)?;
 
         decimal_param_lt_one(self.max_loan_to_value, "max_loan_to_value")?;

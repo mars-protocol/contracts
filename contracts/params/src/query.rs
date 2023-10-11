@@ -3,14 +3,11 @@ use cw_storage_plus::Bound;
 use mars_interest_rate::get_underlying_liquidity_amount;
 use mars_red_bank_types::{
     address_provider::{self, MarsAddressType},
+    params::{asset::AssetParams, vault::VaultConfig, ConfigResponse, TotalDepositResponse},
     red_bank::{self, Market, UserDebtResponse},
 };
 
-use crate::{
-    msg::{ConfigResponse, TotalDepositResponse},
-    state::{ADDRESS_PROVIDER, ASSET_PARAMS, VAULT_CONFIGS},
-    types::{asset::AssetParams, vault::VaultConfig},
-};
+use crate::state::{ADDRESS_PROVIDER, ASSET_PARAMS, VAULT_CONFIGS};
 
 pub const DEFAULT_LIMIT: u32 = 10;
 pub const MAX_LIMIT: u32 = 30;

@@ -4,12 +4,9 @@ use anyhow::Result as AnyResult;
 use cosmwasm_std::{Addr, Decimal};
 use cw_multi_test::{App, AppResponse, BasicApp, Executor};
 use mars_owner::{OwnerResponse, OwnerUpdate};
-use mars_params::{
-    msg::{
-        AssetParamsUpdate, ConfigResponse, EmergencyUpdate, ExecuteMsg, InstantiateMsg, QueryMsg,
-        VaultConfigUpdate,
-    },
-    types::{asset::AssetParams, vault::VaultConfig},
+use mars_red_bank_types::params::{
+    asset::AssetParams, vault::VaultConfig, AssetParamsUpdate, ConfigResponse, EmergencyUpdate,
+    ExecuteMsg, InstantiateMsg, QueryMsg, VaultConfigUpdate,
 };
 
 use super::contracts::mock_params_contract;

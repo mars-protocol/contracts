@@ -6,11 +6,11 @@ use cosmwasm_std::{
     to_binary, Addr, Decimal, SubMsg, Uint128, WasmMsg,
 };
 use cw_utils::PaymentError;
-use mars_params::types::asset::{AssetParams, CmSettings, LiquidationBonus, RedBankSettings};
 use mars_red_bank::{contract::execute, error::ContractError};
 use mars_red_bank_types::{
     address_provider::MarsAddressType,
     incentives,
+    params::asset::{AssetParams, CmSettings, LiquidationBonus, RedBankSettings},
     red_bank::{
         ExecuteMsg, InitOrUpdateAssetParams, InterestRateModel, Market, QueryMsg,
         UserCollateralResponse, UserDebtResponse,

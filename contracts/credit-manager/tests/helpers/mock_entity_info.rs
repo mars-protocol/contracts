@@ -2,7 +2,7 @@ use std::str::FromStr;
 
 use cosmwasm_std::{coin, Decimal};
 use cw_utils::Duration;
-use mars_params::types::{
+use mars_red_bank_types::params::{
     asset::LiquidationBonus,
     hls::{HlsAssetType, HlsParamsUnchecked},
 };

@@ -2,7 +2,7 @@ use std::cmp::min;
 
 use cosmwasm_schema::cw_serde;
 use cosmwasm_std::{Coin, Decimal, Uint128};
-use mars_params::types::{
+use mars_red_bank_types::params::{
     asset::{AssetParams, CmSettings},
     vault::VaultConfig,
 };

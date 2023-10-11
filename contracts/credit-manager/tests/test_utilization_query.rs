@@ -1,7 +1,7 @@
 use std::str::FromStr;
 
 use cosmwasm_std::{Addr, Decimal, Uint128};
-use mars_params::types::asset::LiquidationBonus;
+use mars_red_bank_types::params::asset::LiquidationBonus;
 use mars_rover::{
     adapters::vault::VaultUnchecked,
     msg::execute::{

@@ -1,6 +1,5 @@
 use cosmwasm_std::{Coin, Decimal, Uint128};
-use mars_params::msg::AssetParamsUpdate::AddOrUpdate;
-use mars_red_bank_types::oracle::ActionKind;
+use mars_red_bank_types::{oracle::ActionKind, params::AssetParamsUpdate::AddOrUpdate};
 use mars_rover::msg::query::{DebtAmount, Positions};
 use mars_rover_health_types::{AccountKind, HealthState};
 

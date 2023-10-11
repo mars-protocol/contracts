@@ -9,7 +9,6 @@ use cw_utils::PaymentError;
 use mars_interest_rate::{
     compute_scaled_amount, get_underlying_liquidity_amount, ScalingOperation, SCALING_FACTOR,
 };
-use mars_params::types::asset::{AssetParams, CmSettings, LiquidationBonus, RedBankSettings};
 use mars_red_bank::{
     contract::execute,
     error::ContractError,
@@ -20,6 +19,7 @@ use mars_red_bank_types::{
     error::MarsError,
     incentives,
     keys::{UserId, UserIdKey},
+    params::asset::{AssetParams, CmSettings, LiquidationBonus, RedBankSettings},
     red_bank::{Collateral, ExecuteMsg, Market},
 };
 use mars_testing::{mock_env_at_block_time, MarsMockQuerier};

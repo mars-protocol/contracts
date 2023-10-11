@@ -1,7 +1,7 @@
 use std::collections::BTreeSet;
 
 use cosmwasm_std::{Coin, Deps, DepsMut, Response, Uint128};
-use mars_params::msg::TotalDepositResponse;
+use mars_red_bank_types::params::TotalDepositResponse;
 use mars_rover::{
     coins::Coins,
     error::{ContractError, ContractResult},

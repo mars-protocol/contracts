@@ -20,6 +20,7 @@ cosmwasm-schema         = { workspace = true }
 cosmwasm-std            = { workspace = true }
 cw-vault-standard       = { workspace = true }
 mars-params             = { workspace = true }
+mars-red-bank-types     = { workspace = true }
 mars-rover              = { workspace = true }
 mars-rover-health-types = { workspace = true }
 schemars                = { workspace = true }

@@ -2,7 +2,7 @@ use std::str::FromStr;
 
 use cosmwasm_schema::cw_serde;
 use cosmwasm_std::Decimal;
-use mars_params::types::{
+use mars_red_bank_types::params::{
     asset::{AssetParams, CmSettings, LiquidationBonus, RedBankSettings},
     hls::{HlsAssetType, HlsParams},
 };

@@ -1,7 +1,7 @@
 use std::collections::HashMap;
 
 use cosmwasm_std::{coin, Addr, Uint128};
-use mars_params::types::vault::VaultConfig;
+use mars_red_bank_types::params::vault::VaultConfig;
 use mars_rover::{
     adapters::vault::{
         CoinValue, Vault, VaultAmount, VaultPosition, VaultPositionAmount, VaultPositionValue,

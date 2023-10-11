@@ -6,13 +6,15 @@ use mars_interest_rate::{
     calculate_applied_linear_interest_rate, compute_scaled_amount, compute_underlying_amount,
     ScalingOperation, SCALING_FACTOR,
 };
-use mars_params::types::asset::{AssetParams, CmSettings, RedBankSettings};
 use mars_red_bank::{
     contract::execute,
     error::ContractError,
     state::{DEBTS, MARKETS, UNCOLLATERALIZED_LOAN_LIMITS},
 };
-use mars_red_bank_types::red_bank::{ExecuteMsg, Market};
+use mars_red_bank_types::{
+    params::asset::{AssetParams, CmSettings, RedBankSettings},
+    red_bank::{ExecuteMsg, Market},
+};
 use mars_testing::{mock_env, mock_env_at_block_time, MockEnvParams};
 
 use super::helpers::{

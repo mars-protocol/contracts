@@ -14,7 +14,6 @@ use mars_interest_rate::{
     calculate_applied_linear_interest_rate, compute_scaled_amount, compute_underlying_amount,
     ScalingOperation,
 };
-use mars_params::types::asset::{AssetParams, CmSettings, LiquidationBonus, RedBankSettings};
 use mars_red_bank::{
     contract::{instantiate, query},
     error::ContractError,
@@ -22,6 +21,7 @@ use mars_red_bank::{
 };
 use mars_red_bank_types::{
     keys::{UserId, UserIdKey},
+    params::asset::{AssetParams, CmSettings, LiquidationBonus, RedBankSettings},
     red_bank::{
         Collateral, CreateOrUpdateConfig, Debt, InitOrUpdateAssetParams, InstantiateMsg,
         InterestRateModel, Market, QueryMsg, UserCollateralResponse, UserDebtResponse,
