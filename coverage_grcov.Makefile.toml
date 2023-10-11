@@ -22,6 +22,7 @@ run_task = "test"
 
 [tasks.coverage-grcov-run-test.env]
 CARGO_BUILD_TARGET_DIR = "${COVERAGE_TARGET_DIRECTORY}"
+CARGO_INCREMENTAL = "0"
 RUSTFLAGS = "-Cinstrument-coverage"
 LLVM_PROFILE_FILE = "${COVERAGE_PROF_OUTPUT}/coverage-%p-%m.profraw"
 
@@ -31,6 +32,7 @@ private = true
 command = "cargo"
 args = ["install", "grcov", "--locked"]
 
+# NOTE: ignore coverage for swapper and zapper contracts because their tests are based on `osmosis-testing` which don't work for grcov
 [tasks.coverage-grcov]
 condition = { rust_version = { min = "1.60.0" } }
 private = true
@@ -40,7 +42,7 @@ set -eux
 
 grcov ${COVERAGE_PROF_OUTPUT} \
   -b ${COVERAGE_BINARIES} -s ${CARGO_MAKE_WORKSPACE_WORKING_DIRECTORY} \
-  -t ${GRCOV_OUTPUT_TYPE} --llvm --branch --ignore-not-existing --ignore "/*" --ignore "*/tests/*" --ignore "*/testing/*" --ignore "target/*" --ignore "contracts/swapper/mock/*" --ignore "contracts/swapper/osmosis/*" -o ${GRCOV_OUTPUT_PATH}
+  -t ${GRCOV_OUTPUT_TYPE} --llvm --branch --ignore-not-existing --ignore "/*" --ignore "*/mock*" --ignore "*/tests/*" --ignore "*/testing/*" --ignore "target/*" --ignore "contracts/swapper/*" --ignore "*/zapper/*" -o ${GRCOV_OUTPUT_PATH}
 '''
 dependencies = ["install-grcov", "coverage-grcov-prepare-outdir", "coverage-grcov-run-test"]
 

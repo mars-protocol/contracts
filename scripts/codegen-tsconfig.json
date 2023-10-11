@@ -1,5 +1,5 @@
 {
   "extends": "./tsconfig.json",
   "include": ["codegen"],
-  "exclude": ["deploy", "types", "utils", "build"]
+  "exclude": ["deploy", "types", "utils", "build", "health/example-react"]
 }

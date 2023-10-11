@@ -15,3 +15,7 @@ export const printGreen = (text: string) => {
 export const printYellow = (text: string) => {
   console.log(chalk.yellow(text))
 }
+
+export const printGray = (text: string) => {
+  console.log(chalk.gray(text))
+}

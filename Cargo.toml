@@ -1,23 +1,42 @@
 [workspace]
-members = [
+resolver = "2"
+members  = [
+  # prod contracts
   "contracts/address-provider",
+  "contracts/account-nft",
+  "contracts/credit-manager",
+  "contracts/health",
   "contracts/incentives",
-  "contracts/mock-pyth",
   "contracts/oracle/*",
   "contracts/params",
-  "contracts/swapper/*",
   "contracts/red-bank",
   "contracts/rewards-collector/*",
+  "contracts/swapper/*",
+  "contracts/v2-zapper/*",
+
+  # mock contracts
+  "contracts/mock-credit-manager",
+  "contracts/mock-health",
+  "contracts/mock-incentives",
+  "contracts/mock-oracle",
+  "contracts/mock-pyth",
+  "contracts/mock-red-bank",
+  "contracts/mock-vault",
+
+  # packages
+  "packages/account-nft-types",
   "packages/chains/*",
   "packages/health",
+  "packages/health-computer",
+  "packages/health-types",
   "packages/interest-rate",
   "packages/liquidation",
+  "packages/rover",
   "packages/testing",
   "packages/types",
   "packages/utils",
   "integration-tests",
 ]
-resolver = "2"
 
 [workspace.package]
 version       = "2.0.0"
@@ -38,26 +57,37 @@ documentation = "https://docs.marsprotocol.io/"
 keywords      = ["mars", "cosmos", "cosmwasm"]
 
 [workspace.dependencies]
-anyhow            = "1.0.75"
-astroport         = "2.8.0"
-bech32            = "0.9.1"
-cosmwasm-schema   = "1.4.0"
-cosmwasm-std      = "1.4.0"
-cw2               = "1.1.0"
-cw-paginate       = "0.2.1"
-cw-storage-plus   = "1.1.0"
-cw-utils          = "1.0.1"
-ica-oracle        = { git = "https://github.com/Stride-Labs/ica-oracle", rev = "2fdf76f", features = ["library"] }
-mars-owner        = { version = "2.0.0", features = ["emergency-owner"] }
-neutron-sdk       = "0.6.1"
-osmosis-std       = "0.19.2"
-prost             = { version = "0.11.9", default-features = false }
-pyth-sdk-cw       = "1.2.0"
-schemars          = "0.8.12"
-serde             = { version = "1.0.188", default-features = false }
-serde-json-wasm   = "1.0.0"
-strum             = "0.25.0"
-thiserror         = "1.0.48"
+anyhow             = "1.0.75"
+astroport          = "2.8.0"
+bech32             = "0.9.1"
+cosmwasm-schema    = "1.4.0"
+cosmwasm-std       = "1.4.0"
+cw2                = "1.1.0"
+cw721              = { git = "https://github.com/CosmWasm/cw-nfts/", branch = "main" }
+cw721-base         = { git = "https://github.com/CosmWasm/cw-nfts/", branch = "main", features = ["library"] }
+cw-dex             = { version = "0.3.1", features = ["osmosis"] }
+cw-paginate        = "0.2.1"
+cw-storage-plus    = "1.1.0"
+cw-utils           = "1.0.1"
+cw-vault-standard  = { version = "0.3.1", features = ["lockup", "force-unlock"] }
+ica-oracle         = { git = "https://github.com/Stride-Labs/ica-oracle", rev = "2fdf76f", features = ["library"] }
+itertools          = "0.11.0"
+mars-owner         = { version = "2.0.0", features = ["emergency-owner"] }
+# Use the latest Github main branch which includes a fix related to protobuf versioning:
+# https://github.com/neutron-org/neutron-sdk/commit/ef6351974099bf0d301edf2c689f0c920958331a
+neutron-sdk        = { git = "https://github.com/neutron-org/neutron-sdk", rev = "74fea05" }
+osmosis-std        = "0.19.2"
+prost              = { version = "0.11.9", default-features = false }
+pyth-sdk-cw        = "1.2.0"
+schemars           = "0.8.12"
+serde              = { version = "1.0.188", default-features = false }
+serde_json         = "1.0.103"
+serde-json-wasm    = "1.0.0"
+serde-wasm-bindgen = "0.5.0"
+strum              = "0.25.0"
+thiserror          = "1.0.48"
+tsify              = "0.4.5"
+wasm-bindgen       = "0.2.87"
 
 # dev-dependencies
 cw-multi-test     = "0.17.0"
@@ -67,29 +97,52 @@ proptest          = "1.2.0"
 test-case         = "3.2.1"
 
 # packages
-mars-health             = { path = "./packages/health" }
-mars-interest-rate      = { path = "./packages/interest-rate" }
-mars-liquidation        = { path = "./packages/liquidation" }
-mars-osmosis            = { path = "./packages/chains/osmosis" }
-mars-red-bank-types     = { path = "./packages/types" }
-mars-testing            = { path = "./packages/testing" }
-mars-utils              = { path = "./packages/utils" }
+mars-account-nft-types     = { path = "./packages/account-nft-types" }
+mars-health                = { path = "./packages/health" }
+mars-rover-health-computer = { path = "./packages/health-computer" }
+mars-rover-health-types    = { path = "./packages/health-types" }
+mars-interest-rate         = { path = "./packages/interest-rate" }
+mars-liquidation           = { path = "./packages/liquidation" }
+mars-osmosis               = { path = "./packages/chains/osmosis" }
+mars-red-bank-types        = { path = "./packages/types" }
+mars-rover                 = { path = "./packages/rover" }
+# Old rover types used for migration (https://github.com/mars-protocol/v2-fields-of-mars/releases/tag/v1.0.0)
+mars-rover-old             = { package = "mars-rover", git = "https://github.com/mars-protocol/v2-fields-of-mars", rev = "183e4c5" }
+mars-testing               = { path = "./packages/testing" }
+mars-utils                 = { path = "./packages/utils" }
 
 # contracts
+mars-account-nft               = { path = "./contracts/account-nft" }
 mars-address-provider          = { path = "./contracts/address-provider" }
 mars-incentives                = { path = "./contracts/incentives" }
 mars-mock-pyth                 = { path = "./contracts/mock-pyth" }
 mars-oracle-base               = { path = "./contracts/oracle/base" }
 mars-oracle-osmosis            = { path = "./contracts/oracle/osmosis" }
 mars-oracle-wasm               = { path = "./contracts/oracle/wasm" }
-mars-params                    = { path = "./contracts/params" }
+# mars-params needs the `library` flag because mars-rover-health depends on it.
+# We should remove the type definitions in a "mars-types" crate and have the
+# health contract depend on it instead. This way, we can remove the library flag
+# here.
+mars-params                    = { path = "./contracts/params", features = ["library"] }
 mars-red-bank                  = { path = "./contracts/red-bank" }
 mars-rewards-collector-base    = { path = "./contracts/rewards-collector/base" }
 mars-rewards-collector-neutron = { path = "./contracts/rewards-collector/neutron" }
 mars-rewards-collector-osmosis = { path = "./contracts/rewards-collector/osmosis" }
+mars-rover-health              = { path = "./contracts/health" }
 mars-swapper-astroport         = { path = "./contracts/swapper/astroport" }
 mars-swapper-base              = { path = "./contracts/swapper/base" }
 mars-swapper-osmosis           = { path = "./contracts/swapper/osmosis" }
+mars-zapper-base               = { path = "./contracts/v2-zapper/base" }
+
+# mocks
+mars-mock-credit-manager = { path = "./contracts/mock-credit-manager" }
+mars-mock-incentives     = { path = "./contracts/mock-incentives" }
+mars-mock-oracle         = { path = "./contracts/mock-oracle" }
+mars-mock-red-bank       = { path = "./contracts/mock-red-bank" }
+mars-mock-vault          = { path = "./contracts/mock-vault" }
+mars-mock-rover-health   = { path = "./contracts/mock-health" }
+mars-swapper-mock        = { path = "./contracts/swapper/mock" }
+mars-zapper-mock         = { path = "./contracts/v2-zapper/mock" }
 
 [profile.release]
 codegen-units    = 1

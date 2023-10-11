@@ -29,3 +29,9 @@ artifacts/
 
 yarn-error.log
 
+# private scripts that I don't want to commit are prefixed by an underscore
+**/_*.js
+**/_*.ts
+
+# proptest generated files
+**/*.proptest-regressions

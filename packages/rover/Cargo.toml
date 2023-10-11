@@ -1,0 +1,38 @@
+[package]
+name          = "mars-rover"
+version       = { workspace = true }
+authors       = { workspace = true }
+license       = { workspace = true }
+edition       = { workspace = true }
+repository    = { workspace = true }
+homepage      = { workspace = true }
+documentation = { workspace = true }
+keywords      = { workspace = true }
+
+[lib]
+doctest = false
+
+[features]
+# for quicker tests, cargo test --lib
+# for more explicit tests, cargo test --features=backtraces
+backtraces = ["cosmwasm-std/backtraces"]
+
+[dependencies]
+cosmwasm-schema         = { workspace = true }
+cosmwasm-std            = { workspace = true }
+cw2                     = { workspace = true }
+cw721                   = { workspace = true }
+cw721-base              = { workspace = true }
+cw-storage-plus         = { workspace = true }
+cw-utils                = { workspace = true }
+cw-vault-standard       = { workspace = true }
+mars-account-nft-types  = { workspace = true }
+mars-liquidation        = { workspace = true }
+mars-rover-health-types = { workspace = true }
+mars-red-bank-types     = { workspace = true }
+mars-zapper-base        = { workspace = true }
+mars-owner              = { workspace = true }
+mars-params             = { workspace = true }
+schemars                = { workspace = true }
+serde                   = { workspace = true }
+thiserror               = { workspace = true }

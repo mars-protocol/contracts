@@ -1,0 +1,42 @@
+[package]
+name          = "mars-account-nft"
+version       = { workspace = true }
+authors       = { workspace = true }
+license       = { workspace = true }
+edition       = { workspace = true }
+repository    = { workspace = true }
+homepage      = { workspace = true }
+documentation = { workspace = true }
+keywords      = { workspace = true }
+
+[lib]
+crate-type = ["cdylib", "rlib"]
+
+[features]
+# for quicker tests, cargo test --lib
+# for more explicit tests, cargo test --features=backtraces
+backtraces = ["cosmwasm-std/backtraces"]
+library    = []
+
+[dependencies]
+cosmwasm-schema         = { workspace = true }
+cosmwasm-std            = { workspace = true }
+cw2                     = { workspace = true }
+cw721                   = { workspace = true }
+cw721-base              = { workspace = true }
+cw-storage-plus         = { workspace = true }
+mars-account-nft-types  = { workspace = true }
+mars-red-bank-types     = { workspace = true }
+mars-rover              = { workspace = true }
+mars-rover-health-types = { workspace = true }
+mars-rover-old          = { workspace = true }
+thiserror               = { workspace = true }
+
+[dev-dependencies]
+anyhow                   = { workspace = true }
+cw721-base-v16           = { package = "cw721-base", version = "0.16.0" }
+cw-multi-test            = { workspace = true }
+mars-mock-credit-manager = { workspace = true }
+mars-mock-rover-health   = { workspace = true }
+mars-owner               = { workspace = true }
+serde_json               = { workspace = true }
