@@ -1,5 +1,5 @@
 use cosmwasm_schema::{cw_serde, QueryResponses};
-use cosmwasm_std::{Addr, Coin, Decimal, Uint128};
+use cosmwasm_std::{Addr, Decimal, Uint128};
 use mars_owner::OwnerUpdate;
 
 /// Global configuration
@@ -247,7 +247,7 @@ pub enum QueryMsg {
     },
 
     /// Query user current unclaimed rewards
-    #[returns(Vec<Coin>)]
+    #[returns(Vec<cosmwasm_std::Coin>)]
     UserUnclaimedRewards {
         /// The user address for which to query unclaimed rewards
         user: String,
