@@ -1,5 +1,5 @@
-import { taskRunner } from '../base'
-import { DeploymentConfig } from '../../types/config'
+import { taskRunner } from '../base/index.rover'
+import { DeploymentConfig } from '../../types/config.rover'
 
 const osmo = 'uosmo'
 const atom = 'ibc/27394FB092D2ECCD56123C74F36E4C1F926001CEADA9CA97EA622B25F41E5EB2'

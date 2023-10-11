@@ -1,4 +1,4 @@
-import { taskRunner } from '../base'
+import { taskRunner } from '../base/index.rover'
 import { osmosisTestnetConfig } from './testnet-config'
 
 void (async function () {

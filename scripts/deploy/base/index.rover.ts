@@ -1,6 +1,6 @@
-import { setupDeployer } from './setupDeployer'
+import { setupDeployer } from './setupDeployer.rover'
 import { printRed, printYellow } from '../../utils/chalk'
-import { DeploymentConfig } from '../../types/config'
+import { DeploymentConfig } from '../../types/config.rover'
 import { wasmFile } from '../../utils/environment'
 
 export interface TaskRunnerProps {

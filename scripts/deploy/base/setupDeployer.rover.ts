@@ -1,9 +1,9 @@
 import { SigningCosmWasmClient, SigningCosmWasmClientOptions } from '@cosmjs/cosmwasm-stargate'
 import { DirectSecp256k1HdWallet } from '@cosmjs/proto-signing'
 import { GasPrice } from '@cosmjs/stargate'
-import { DeploymentConfig } from '../../types/config'
-import { Deployer } from './deployer'
-import { Storage } from './storage'
+import { DeploymentConfig } from '../../types/config.rover'
+import { Deployer } from './deployer.rover'
+import { Storage } from './storage.rover'
 import { printGray } from '../../utils/chalk'
 
 export const getWallet = async (mnemonic: string, chainPrefix: string) => {

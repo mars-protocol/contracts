@@ -1,4 +1,4 @@
-import { DeploymentConfig, VaultType } from '../../types/config'
+import { DeploymentConfig, VaultType } from '../../types/config.rover'
 
 // Note: since osmo-test-5 upgrade, testnet and mainnet denoms are no longer the same. Reference asset info here: https://docs.osmosis.zone/osmosis-core/asset-info/
 const uosmo = 'uosmo'
