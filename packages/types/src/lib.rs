@@ -1,6 +1,7 @@
 pub mod account_nft;
 pub mod address_provider;
 pub mod error;
+pub mod health;
 pub mod incentives;
 pub mod keys;
 pub mod oracle;
