@@ -34,14 +34,10 @@ use mars_types::{
     },
     address_provider::{self, MarsAddressType},
     credit_manager::{
-        execute::{Action, CallbackMsg},
-        instantiate::ConfigUpdates,
-        query::{
-            Account, CoinBalanceResponseItem, ConfigResponse, DebtShares, Positions,
-            SharesResponseItem, VaultPositionResponseItem, VaultUtilizationResponse,
-        },
-        ExecuteMsg, InstantiateMsg, QueryMsg,
+        Account, Action, CallbackMsg, CoinBalanceResponseItem, ConfigResponse, ConfigUpdates,
+        DebtShares, ExecuteMsg, InstantiateMsg, Positions, QueryMsg,
         QueryMsg::{EstimateProvideLiquidity, VaultPositionValue},
+        SharesResponseItem, VaultPositionResponseItem, VaultUtilizationResponse,
     },
     health::{
         AccountKind, ExecuteMsg::UpdateConfig, HealthValuesResponse,

@@ -6,11 +6,8 @@ use mars_credit_manager::error::ContractError;
 use mars_mock_oracle::msg::CoinPrice;
 use mars_types::{
     credit_manager::{
-        execute::{
-            Action::{Borrow, Deposit, EnterVault, Repay, Withdraw},
-            ActionAmount, ActionCoin,
-        },
-        query::DebtAmount,
+        Action::{Borrow, Deposit, EnterVault, Repay, Withdraw},
+        ActionAmount, ActionCoin, DebtAmount,
     },
     health::AccountKind,
 };

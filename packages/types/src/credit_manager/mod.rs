@@ -1,8 +1,8 @@
-pub mod execute;
-pub mod instantiate;
-pub mod migrate;
-pub mod query;
-pub mod reply;
+mod execute;
+mod instantiate;
+mod migrate;
+mod query;
+mod reply;
 
 pub use execute::*;
 pub use instantiate::*;

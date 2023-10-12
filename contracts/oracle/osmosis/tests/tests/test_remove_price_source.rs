@@ -7,7 +7,7 @@ use mars_oracle_osmosis::{
 };
 use mars_owner::OwnerError::NotOwner;
 use mars_testing::mock_info;
-use mars_types::oracle::msg::QueryMsg;
+use mars_types::oracle::QueryMsg;
 
 use super::helpers;
 

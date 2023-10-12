@@ -1,8 +1,7 @@
 use cosmwasm_schema::write_api;
 use mars_oracle_wasm::WasmPriceSourceUnchecked;
 use mars_types::oracle::{
-    msg::{ExecuteMsg, InstantiateMsg, QueryMsg},
-    WasmOracleCustomExecuteMsg, WasmOracleCustomInitParams,
+    ExecuteMsg, InstantiateMsg, QueryMsg, WasmOracleCustomExecuteMsg, WasmOracleCustomInitParams,
 };
 
 fn main() {

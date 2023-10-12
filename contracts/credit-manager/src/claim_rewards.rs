@@ -3,7 +3,7 @@ use cosmwasm_std::{
     WasmMsg,
 };
 use mars_types::{
-    credit_manager::{execute::CallbackMsg, ExecuteMsg},
+    credit_manager::{CallbackMsg, ExecuteMsg},
     traits::Denoms,
 };
 

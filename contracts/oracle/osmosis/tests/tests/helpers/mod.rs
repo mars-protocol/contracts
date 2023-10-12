@@ -11,7 +11,7 @@ use mars_oracle_base::ContractError;
 use mars_oracle_osmosis::{contract::entry, msg::ExecuteMsg, OsmosisPriceSourceUnchecked};
 use mars_osmosis::{BalancerPool, ConcentratedLiquidityPool, StableSwapPool};
 use mars_testing::{mock_info, MarsMockQuerier};
-use mars_types::oracle::msg::{InstantiateMsg, QueryMsg};
+use mars_types::oracle::{InstantiateMsg, QueryMsg};
 use osmosis_std::types::osmosis::{gamm::v1beta1::PoolAsset, poolmanager::v1beta1::PoolResponse};
 use pyth_sdk_cw::PriceIdentifier;
 

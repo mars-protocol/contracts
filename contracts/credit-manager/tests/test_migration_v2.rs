@@ -17,7 +17,7 @@ use mars_types::{
         health::HealthContractUnchecked, incentives::IncentivesUnchecked, params::ParamsUnchecked,
         swapper::SwapperUnchecked,
     },
-    credit_manager::{migrate::V2Updates, MigrateMsg},
+    credit_manager::{MigrateMsg, V2Updates},
 };
 
 pub mod helpers;

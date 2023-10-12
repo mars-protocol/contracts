@@ -5,8 +5,8 @@ use mars_mock_vault::contract::STARTING_VAULT_SHARES;
 use mars_types::{
     adapters::vault::VaultError,
     credit_manager::{
-        execute::Action::{Deposit, EnterVault, ExitVaultUnlocked, RequestVaultUnlock},
-        query::Positions,
+        Action::{Deposit, EnterVault, ExitVaultUnlocked, RequestVaultUnlock},
+        Positions,
     },
     params::VaultConfigUpdate,
 };

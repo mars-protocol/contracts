@@ -746,7 +746,7 @@ fn twap_window_size_not_gt_tolerance() {
     };
 
     let wasm = Wasm::new(&runner);
-    let msg = mars_types::oracle::msg::ExecuteMsg::<_, Empty>::SetPriceSource {
+    let msg = mars_types::oracle::ExecuteMsg::<_, Empty>::SetPriceSource {
         denom: "uatom".to_string(),
         price_source,
     };
