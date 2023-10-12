@@ -1,10 +1,10 @@
 use cosmwasm_std::{
     to_binary, Addr, Coin, CosmosMsg, Deps, DepsMut, QuerierWrapper, Response, Uint128, WasmMsg,
 };
-use mars_types::oracle::ActionKind;
 use mars_types::{
     adapters::vault::{UpdateType, Vault, VaultPositionUpdate},
     credit_manager::{ActionAmount, ActionCoin, CallbackMsg, ExecuteMsg},
+    oracle::ActionKind,
 };
 
 use crate::{

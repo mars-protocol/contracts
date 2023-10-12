@@ -1,8 +1,7 @@
 use std::ops::{Add, Mul};
 
 use cosmwasm_std::{coin, coins, Addr, Coin, Decimal, Uint128};
-use mars_credit_manager::borrow::DEFAULT_DEBT_SHARES_PER_COIN_BORROWED;
-use mars_credit_manager::error::ContractError;
+use mars_credit_manager::{borrow::DEFAULT_DEBT_SHARES_PER_COIN_BORROWED, error::ContractError};
 use mars_mock_oracle::msg::CoinPrice;
 use mars_types::{
     credit_manager::{
@@ -10,8 +9,6 @@ use mars_types::{
         ActionAmount, ActionCoin, DebtAmount,
     },
     health::AccountKind,
-};
-use mars_types::{
     oracle::ActionKind,
     params::{AssetParamsUpdate::AddOrUpdate, LiquidationBonus, VaultConfigUpdate},
 };

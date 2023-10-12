@@ -1,7 +1,6 @@
 use cosmwasm_std::{Coin, DepsMut, QuerierWrapper, Uint128};
 use mars_liquidation::liquidation::calculate_liquidation_amounts;
-use mars_types::oracle::ActionKind;
-use mars_types::{adapters::oracle::Oracle, traits::Stringify};
+use mars_types::{adapters::oracle::Oracle, oracle::ActionKind, traits::Stringify};
 
 use crate::{
     error::{ContractError, ContractResult},

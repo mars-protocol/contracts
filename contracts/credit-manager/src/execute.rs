@@ -3,11 +3,11 @@ use std::collections::BTreeSet;
 use cosmwasm_std::{
     to_binary, Addr, Coins, CosmosMsg, DepsMut, Env, MessageInfo, Response, StdResult, WasmMsg,
 };
-use mars_types::oracle::ActionKind;
 use mars_types::{
     account_nft::ExecuteMsg as NftExecuteMsg,
     credit_manager::{Action, CallbackMsg, LiquidateRequest},
     health::AccountKind,
+    oracle::ActionKind,
 };
 
 use crate::{
