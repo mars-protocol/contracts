@@ -1,7 +1,7 @@
 use cosmwasm_std::{DecimalRangeExceeded, StdError};
 use mars_owner::OwnerError;
 use mars_types::error::MarsError;
-pub use mars_utils::error::ValidationError;
+use mars_utils::error::ValidationError;
 use thiserror::Error;
 
 pub type ContractResult<T> = Result<T, ContractError>;
