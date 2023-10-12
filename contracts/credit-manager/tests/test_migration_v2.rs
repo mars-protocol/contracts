@@ -15,7 +15,7 @@ use mars_credit_manager::{
 use mars_types::{
     adapters::{
         health::HealthContractUnchecked, incentives::IncentivesUnchecked, params::ParamsUnchecked,
-        swap::SwapperUnchecked,
+        swapper::SwapperUnchecked,
     },
     credit_manager::{migrate::V2Updates, MigrateMsg},
 };

@@ -3,7 +3,7 @@ use cosmwasm_std::Decimal;
 
 use crate::adapters::{
     health::HealthContractUnchecked, incentives::IncentivesUnchecked, params::ParamsUnchecked,
-    swap::SwapperUnchecked,
+    swapper::SwapperUnchecked,
 };
 
 #[cw_serde]

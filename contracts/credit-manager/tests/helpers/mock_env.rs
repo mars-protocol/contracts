@@ -28,10 +28,7 @@ use mars_types::{
         oracle::{Oracle, OracleBase, OracleUnchecked},
         params::Params,
         red_bank::RedBankUnchecked,
-        swap::{
-            EstimateExactInSwapResponse, InstantiateMsg as SwapperInstantiateMsg,
-            QueryMsg::EstimateExactInSwap, Swapper, SwapperBase,
-        },
+        swapper::{Swapper, SwapperBase},
         vault::{Vault, VaultPosition, VaultPositionValue as VPositionValue, VaultUnchecked},
         zapper::{Zapper, ZapperBase},
     },
@@ -63,6 +60,10 @@ use mars_types::{
         self, InitOrUpdateAssetParams, InterestRateModel,
         QueryMsg::{UserCollateral, UserDebt},
         UserCollateralResponse, UserDebtResponse,
+    },
+    swapper::{
+        EstimateExactInSwapResponse, InstantiateMsg as SwapperInstantiateMsg,
+        QueryMsg::EstimateExactInSwap,
     },
 };
 use mars_zapper_mock::msg::{InstantiateMsg as ZapperInstantiateMsg, LpConfig};

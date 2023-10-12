@@ -4,7 +4,7 @@ use mars_owner::Owner;
 use mars_types::{
     adapters::{
         account_nft::AccountNft, health::HealthContract, incentives::Incentives, oracle::Oracle,
-        params::Params, red_bank::RedBank, rewards_collector::RewardsCollector, swap::Swapper,
+        params::Params, red_bank::RedBank, rewards_collector::RewardsCollector, swapper::Swapper,
         vault::VaultPositionAmount, zapper::Zapper,
     },
     health::AccountKind,

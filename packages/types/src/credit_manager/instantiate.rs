@@ -4,7 +4,7 @@ use cosmwasm_std::{Decimal, Uint128};
 use crate::adapters::{
     account_nft::AccountNftUnchecked, health::HealthContractUnchecked,
     incentives::IncentivesUnchecked, oracle::OracleUnchecked, params::ParamsUnchecked,
-    red_bank::RedBankUnchecked, swap::SwapperUnchecked, zapper::ZapperUnchecked,
+    red_bank::RedBankUnchecked, swapper::SwapperUnchecked, zapper::ZapperUnchecked,
 };
 
 #[cw_serde]

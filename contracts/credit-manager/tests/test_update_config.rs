@@ -6,7 +6,7 @@ use mars_mock_oracle::msg::{CoinPrice, InstantiateMsg as OracleInstantiateMsg};
 use mars_types::{
     adapters::{
         health::HealthContractUnchecked, incentives::IncentivesUnchecked, oracle::OracleUnchecked,
-        red_bank::RedBankUnchecked, rewards_collector::RewardsCollector, swap::SwapperBase,
+        red_bank::RedBankUnchecked, rewards_collector::RewardsCollector, swapper::SwapperBase,
         zapper::ZapperBase,
     },
     credit_manager::ConfigUpdates,
