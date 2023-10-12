@@ -1,5 +1,5 @@
 use cosmwasm_schema::write_api;
-use mars_red_bank_types::address_provider::{ExecuteMsg, InstantiateMsg, QueryMsg};
+use mars_types::address_provider::{ExecuteMsg, InstantiateMsg, QueryMsg};
 
 fn main() {
     write_api! {

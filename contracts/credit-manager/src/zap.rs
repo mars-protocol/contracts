@@ -1,13 +1,13 @@
 use cosmwasm_std::{
     CheckedMultiplyFractionError, Coin, Decimal, Deps, DepsMut, Env, Response, Uint128,
 };
-use mars_rover::{
-    error::{ContractError, ContractResult},
-    msg::execute::{ActionAmount, ActionCoin, ChangeExpected},
+use mars_types::{
+    credit_manager::{ActionAmount, ActionCoin, ChangeExpected},
     traits::{Denoms, Stringify},
 };
 
 use crate::{
+    error::{ContractError, ContractResult},
     state::{COIN_BALANCES, ZAPPER},
     utils::{
         assert_coin_is_whitelisted, assert_coins_are_whitelisted, assert_slippage,

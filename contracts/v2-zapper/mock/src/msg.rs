@@ -1,5 +1,5 @@
 use cosmwasm_schema::cw_serde;
-use mars_rover::adapters::oracle::OracleUnchecked;
+use mars_types::adapters::oracle::OracleUnchecked;
 
 #[cw_serde]
 pub struct LpConfig {

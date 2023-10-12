@@ -15,7 +15,7 @@ fn transfer_result_unauthorized() {
     let denom_in = "uosmo".to_string();
     let denom_out = "usd".to_string();
 
-    let msg = mars_red_bank_types::swapper::ExecuteMsg::<AstroportRoute>::TransferResult {
+    let msg = mars_types::swapper::ExecuteMsg::<AstroportRoute>::TransferResult {
         recipient: Addr::unchecked(admin.address()),
         denom_in,
         denom_out,

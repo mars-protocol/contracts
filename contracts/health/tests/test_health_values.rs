@@ -1,21 +1,19 @@
-use std::str::FromStr;
+use std::{any::type_name, str::FromStr};
 
 use cosmwasm_std::{Coin, Decimal, StdError, Uint128};
-use mars_red_bank_types::{
+use mars_types::{
+    adapters::vault::{
+        LockingVaultAmount, UnlockingPositions, Vault, VaultAmount, VaultPosition,
+        VaultPositionAmount, VaultUnlockingPosition,
+    },
+    credit_manager::Positions,
+    health::AccountKind,
     oracle::ActionKind,
     params::{
         AssetParamsUnchecked, AssetParamsUpdate::AddOrUpdate, CmSettings, HlsParamsUnchecked,
         LiquidationBonus, RedBankSettings, VaultConfigUpdate,
     },
 };
-use mars_rover::{
-    adapters::vault::{
-        LockingVaultAmount, UnlockingPositions, Vault, VaultAmount, VaultPosition,
-        VaultPositionAmount, VaultUnlockingPosition,
-    },
-    msg::query::Positions,
-};
-use mars_rover_health_types::AccountKind;
 
 use crate::helpers::MockEnv;
 
@@ -41,10 +39,10 @@ fn raises_with_non_existent_account_id() {
         mock.query_health_values("xyz", AccountKind::Default, ActionKind::Default).unwrap_err();
     assert_eq!(
         err,
-        StdError::generic_err(
-            "Querier contract error: Generic error: Querier contract error: mars_rover::msg::query::Positions not found"
-                .to_string()
-        )
+        StdError::generic_err(format!(
+            "Querier contract error: Generic error: Querier contract error: {} not found",
+            type_name::<Positions>()
+        ))
     );
 }
 

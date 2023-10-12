@@ -1,11 +1,10 @@
 use std::ops::{Add, Mul, Sub};
 
 use cosmwasm_std::{coin, coins, Addr, Decimal, OverflowError, OverflowOperation, Uint128};
-use mars_credit_manager::borrow::DEFAULT_DEBT_SHARES_PER_COIN_BORROWED;
-use mars_red_bank_types::params::LiquidationBonus;
-use mars_rover::{
-    error::ContractError,
-    msg::execute::Action::{Borrow, Deposit, Repay, Withdraw},
+use mars_credit_manager::{borrow::DEFAULT_DEBT_SHARES_PER_COIN_BORROWED, error::ContractError};
+use mars_types::{
+    credit_manager::Action::{Borrow, Deposit, Repay, Withdraw},
+    params::LiquidationBonus,
 };
 
 use crate::helpers::{

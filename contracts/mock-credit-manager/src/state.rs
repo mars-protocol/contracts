@@ -1,6 +1,8 @@
 use cw_storage_plus::{Item, Map};
-use mars_rover::msg::query::{ConfigResponse, Positions};
-use mars_rover_health_types::AccountKind;
+use mars_types::{
+    credit_manager::{ConfigResponse, Positions},
+    health::AccountKind,
+};
 
 pub const CONFIG: Item<ConfigResponse> = Item::new("config");
 

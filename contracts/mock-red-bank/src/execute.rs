@@ -3,7 +3,7 @@ use cosmwasm_std::{
     StdResult, Uint128,
 };
 use cw_utils::one_coin;
-use mars_red_bank_types::red_bank::{InitOrUpdateAssetParams, Market};
+use mars_types::red_bank::{InitOrUpdateAssetParams, Market};
 
 use crate::{
     helpers::{load_collateral_amount, load_debt_amount},

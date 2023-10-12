@@ -1,18 +1,18 @@
 use cosmwasm_std::{Addr, Decimal, Empty, Uint128};
 use cw_multi_test::{BasicApp, Executor};
 use helpers::assert_err;
+use mars_credit_manager::error::ContractError;
 use mars_mock_oracle::msg::{CoinPrice, InstantiateMsg as OracleInstantiateMsg};
-use mars_red_bank_types::oracle::ActionKind;
-use mars_rover::{
+use mars_types::{
     adapters::{
         health::HealthContractUnchecked, incentives::IncentivesUnchecked, oracle::OracleUnchecked,
         red_bank::RedBankUnchecked, rewards_collector::RewardsCollector, swap::SwapperBase,
         zapper::ZapperBase,
     },
-    error::ContractError,
-    msg::instantiate::ConfigUpdates,
+    credit_manager::ConfigUpdates,
+    health::AccountKind,
+    oracle::ActionKind,
 };
-use mars_rover_health_types::AccountKind;
 
 use crate::helpers::{mock_oracle_contract, mock_red_bank_contract, MockEnv};
 

@@ -1,15 +1,12 @@
 use cosmwasm_std::{to_binary, CosmosMsg, DepsMut, Env, Response, WasmMsg};
 use cw_vault_standard::extensions::lockup::UnlockingPosition;
-use mars_rover::{
-    adapters::vault::{UnlockingChange, Vault, VaultPositionUpdate},
-    error::{ContractError, ContractResult},
-    msg::{
-        execute::{CallbackMsg, ChangeExpected},
-        ExecuteMsg,
-    },
+use mars_types::{
+    adapters::vault::{UnlockingChange, Vault, VaultError, VaultPositionUpdate},
+    credit_manager::{CallbackMsg, ChangeExpected, ExecuteMsg},
 };
 
 use crate::{
+    error::{ContractError, ContractResult},
     state::VAULT_POSITIONS,
     vault::utils::{query_withdraw_denom_balance, update_vault_position},
 };
@@ -24,7 +21,7 @@ pub fn exit_vault_unlocked(
     let vault_position = VAULT_POSITIONS.load(deps.storage, (account_id, vault.address.clone()))?;
     let matching_unlock = vault_position
         .get_unlocking_position(position_id)
-        .ok_or_else(|| ContractError::NoPositionMatch(position_id.to_string()))?;
+        .ok_or_else(|| VaultError::NoPositionMatch(position_id.to_string()))?;
     let UnlockingPosition {
         release_at,
         ..

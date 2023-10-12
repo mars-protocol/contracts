@@ -1,13 +1,11 @@
 use cosmwasm_std::{coins, Addr, Coin, Decimal};
+use mars_credit_manager::error::ContractError;
 use mars_mock_oracle::msg::CoinPrice;
-use mars_red_bank_types::oracle::ActionKind;
-use mars_rover::{
-    error::ContractError,
-    msg::execute::{
-        Action::{Borrow, Deposit, Liquidate},
-        LiquidateRequest,
-    },
+use mars_types::credit_manager::{
+    Action::{Borrow, Deposit, Liquidate},
+    LiquidateRequest,
 };
+use mars_types::oracle::ActionKind;
 
 use crate::helpers::{assert_err, uatom_info, uosmo_info, AccountToFund, MockEnv};
 

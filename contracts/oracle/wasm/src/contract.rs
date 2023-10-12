@@ -1,6 +1,6 @@
 use cosmwasm_std::Empty;
 use mars_oracle_base::OracleBase;
-use mars_red_bank_types::oracle::{WasmOracleCustomExecuteMsg, WasmOracleCustomInitParams};
+use mars_types::oracle::{WasmOracleCustomExecuteMsg, WasmOracleCustomInitParams};
 
 use crate::{
     astroport_twap::ExecuteTwapSnapshots, WasmPriceSourceChecked, WasmPriceSourceUnchecked,
@@ -25,7 +25,7 @@ pub mod entry {
     use cosmwasm_std::{entry_point, Binary, Decimal, Deps, DepsMut, Env, MessageInfo, Response};
     use cw2::set_contract_version;
     use mars_oracle_base::{ContractError, ContractResult};
-    use mars_red_bank_types::oracle::msg::{ExecuteMsg, InstantiateMsg, QueryMsg};
+    use mars_types::oracle::msg::{ExecuteMsg, InstantiateMsg, QueryMsg};
 
     use super::*;
     use crate::{state::ASTROPORT_FACTORY, WasmPriceSourceUnchecked};

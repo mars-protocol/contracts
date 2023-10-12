@@ -1,11 +1,11 @@
 use cosmwasm_std::{coins, Addr, OverflowError, OverflowOperation::Sub, Uint128};
 use cw_multi_test::{BankSudo, SudoMsg};
 use cw_utils::{Duration, Expiration};
+use mars_credit_manager::error::ContractError;
 use mars_mock_vault::contract::STARTING_VAULT_SHARES;
-use mars_rover::{
-    adapters::vault::VaultUnchecked,
-    error::ContractError,
-    msg::execute::Action::{Deposit, EnterVault, RequestVaultUnlock},
+use mars_types::{
+    adapters::vault::{VaultError, VaultUnchecked},
+    credit_manager::Action::{Deposit, EnterVault, RequestVaultUnlock},
 };
 
 use crate::helpers::{
@@ -123,11 +123,12 @@ fn no_vault_tokens_for_request() {
 
     assert_err(
         res,
-        ContractError::Overflow(OverflowError {
+        VaultError::Overflow(OverflowError {
             operation: Sub,
             operand1: "0".to_string(),
             operand2: STARTING_VAULT_SHARES.to_string(),
-        }),
+        })
+        .into(),
     );
 }
 
@@ -177,11 +178,12 @@ fn not_enough_vault_tokens_for_request() {
 
     assert_err(
         res,
-        ContractError::Overflow(OverflowError {
+        VaultError::Overflow(OverflowError {
             operation: Sub,
             operand1: STARTING_VAULT_SHARES.to_string(),
             operand2: (STARTING_VAULT_SHARES + Uint128::new(100)).to_string(),
-        }),
+        })
+        .into(),
     );
 }
 

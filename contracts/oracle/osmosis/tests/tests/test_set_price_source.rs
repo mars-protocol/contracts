@@ -9,8 +9,8 @@ use mars_oracle_osmosis::{
     RedemptionRate,
 };
 use mars_owner::OwnerError::NotOwner;
-use mars_red_bank_types::oracle::msg::QueryMsg;
 use mars_testing::mock_info;
+use mars_types::oracle::msg::QueryMsg;
 use mars_utils::error::ValidationError;
 use osmosis_std::types::osmosis::downtimedetector::v1beta1::Downtime;
 use pyth_sdk_cw::PriceIdentifier;

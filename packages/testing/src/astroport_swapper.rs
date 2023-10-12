@@ -11,8 +11,8 @@ use cw_it::{
     ContractMap, ContractType, TestRunner,
 };
 use mars_owner::OwnerResponse;
-use mars_red_bank_types::swapper::{EstimateExactInSwapResponse, RouteResponse, RoutesResponse};
 use mars_swapper_astroport::route::AstroportRoute;
+use mars_types::swapper::{EstimateExactInSwapResponse, RouteResponse, RoutesResponse};
 
 use crate::wasm_oracle::{get_wasm_oracle_contract, WasmOracleTestRobot};
 
@@ -103,7 +103,7 @@ impl<'a> AstroportSwapperRobot<'a> {
         let swapper = wasm
             .instantiate(
                 swapper_code_id,
-                &mars_red_bank_types::swapper::InstantiateMsg {
+                &mars_types::swapper::InstantiateMsg {
                     owner: admin.address(),
                 },
                 None,
@@ -144,7 +144,7 @@ impl<'a> AstroportSwapperRobot<'a> {
         self.wasm()
             .execute(
                 &self.swapper,
-                &mars_red_bank_types::swapper::ExecuteMsg::SetRoute {
+                &mars_types::swapper::ExecuteMsg::SetRoute {
                     route: AstroportRoute {
                         operations,
                         router: self.astroport_contracts().router.address.clone(),
@@ -183,7 +183,7 @@ impl<'a> AstroportSwapperRobot<'a> {
         println!("sending {} to swapper contract", coin_in);
         self.wasm().execute(
             &self.swapper,
-            &mars_red_bank_types::swapper::ExecuteMsg::<AstroportRoute>::SwapExactIn {
+            &mars_types::swapper::ExecuteMsg::<AstroportRoute>::SwapExactIn {
                 coin_in: coin_in.clone(),
                 denom_out: denom_out.into(),
                 slippage,
@@ -201,7 +201,7 @@ impl<'a> AstroportSwapperRobot<'a> {
         self.wasm()
             .query::<_, EstimateExactInSwapResponse>(
                 &self.swapper,
-                &mars_red_bank_types::swapper::QueryMsg::EstimateExactInSwap {
+                &mars_types::swapper::QueryMsg::EstimateExactInSwap {
                     coin_in: coin_in.clone(),
                     denom_out: denom_out.into(),
                 },
@@ -218,7 +218,7 @@ impl<'a> AstroportSwapperRobot<'a> {
         self.wasm()
             .query::<_, RouteResponse<AstroportRoute>>(
                 &self.swapper,
-                &mars_red_bank_types::swapper::QueryMsg::Route {
+                &mars_types::swapper::QueryMsg::Route {
                     denom_in: denom_in.into(),
                     denom_out: denom_out.into(),
                 },
@@ -235,7 +235,7 @@ impl<'a> AstroportSwapperRobot<'a> {
         self.wasm()
             .query::<_, RoutesResponse<AstroportRoute>>(
                 &self.swapper,
-                &mars_red_bank_types::swapper::QueryMsg::Routes {
+                &mars_types::swapper::QueryMsg::Routes {
                     start_after,
                     limit,
                 },
@@ -245,10 +245,7 @@ impl<'a> AstroportSwapperRobot<'a> {
 
     pub fn query_owner(&self) -> Option<String> {
         self.wasm()
-            .query::<_, OwnerResponse>(
-                &self.swapper,
-                &mars_red_bank_types::swapper::QueryMsg::Owner {},
-            )
+            .query::<_, OwnerResponse>(&self.swapper, &mars_types::swapper::QueryMsg::Owner {})
             .unwrap()
             .owner
     }

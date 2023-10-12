@@ -1,6 +1,6 @@
 use cosmwasm_std::Addr;
 use cw_storage_plus::{Item, Map};
-use mars_red_bank_types::oracle::AstroportTwapSnapshot;
+use mars_types::oracle::AstroportTwapSnapshot;
 
 /// The Astroport Factory contract address
 pub const ASTROPORT_FACTORY: Item<Addr> = Item::new("astroport_factory");

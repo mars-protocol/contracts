@@ -1,14 +1,14 @@
 use std::str::FromStr;
 
 use cosmwasm_std::{Addr, Decimal, Uint128};
-use mars_red_bank_types::params::LiquidationBonus;
-use mars_rover::{
+use mars_types::{
     adapters::vault::VaultUnchecked,
-    msg::execute::{
+    credit_manager::{
         Action::{Deposit, EnterVault},
         ActionAmount::Exact,
         ActionCoin,
     },
+    params::LiquidationBonus,
 };
 
 use crate::helpers::{

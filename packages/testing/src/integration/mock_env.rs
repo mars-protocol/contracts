@@ -6,7 +6,7 @@ use anyhow::Result as AnyResult;
 use cosmwasm_std::{coin, Addr, Coin, Decimal, Empty, StdResult, Uint128};
 use cw_multi_test::{App, AppResponse, BankSudo, BasicApp, Executor, SudoMsg};
 use mars_oracle_osmosis::OsmosisPriceSourceUnchecked;
-use mars_red_bank_types::{
+use mars_types::{
     address_provider::{self, MarsAddressType},
     incentives,
     oracle::{
@@ -675,7 +675,7 @@ impl RewardsCollector {
             .execute_contract(
                 Addr::unchecked("anyone"),
                 self.contract_addr.clone(),
-                &mars_red_bank_types::rewards_collector::ExecuteMsg::WithdrawFromRedBank {
+                &mars_types::rewards_collector::ExecuteMsg::WithdrawFromRedBank {
                     denom: denom.to_string(),
                     amount,
                 },
@@ -688,7 +688,7 @@ impl RewardsCollector {
         env.app.execute_contract(
             Addr::unchecked("anyone"),
             self.contract_addr.clone(),
-            &mars_red_bank_types::rewards_collector::ExecuteMsg::ClaimIncentiveRewards {
+            &mars_types::rewards_collector::ExecuteMsg::ClaimIncentiveRewards {
                 start_after_collateral_denom: None,
                 start_after_incentive_denom: None,
                 limit: None,
@@ -704,7 +704,7 @@ impl Params {
             .execute_contract(
                 env.owner.clone(),
                 self.contract_addr.clone(),
-                &mars_red_bank_types::params::ExecuteMsg::UpdateAssetParams(
+                &mars_types::params::ExecuteMsg::UpdateAssetParams(
                     AssetParamsUpdate::AddOrUpdate {
                         params: params.into(),
                     },
@@ -719,7 +719,7 @@ impl Params {
             .wrap()
             .query_wasm_smart(
                 self.contract_addr.clone(),
-                &mars_red_bank_types::params::QueryMsg::AssetParams {
+                &mars_types::params::QueryMsg::AssetParams {
                     denom: denom.to_string(),
                 },
             )
@@ -985,7 +985,7 @@ impl MockEnvBuilder {
             .instantiate_contract(
                 code_id,
                 self.owner.clone(),
-                &mars_red_bank_types::params::InstantiateMsg {
+                &mars_types::params::InstantiateMsg {
                     owner: self.owner.to_string(),
                     address_provider: address_provider_addr.to_string(),
                     target_health_factor: self.target_health_factor,

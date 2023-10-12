@@ -12,7 +12,7 @@ use mars_osmosis::helpers::{
     query_arithmetic_twap_price, query_geometric_twap_price, query_pool, query_spot_price,
     recovered_since_downtime_of_length, Pool,
 };
-use mars_red_bank_types::oracle::{ActionKind, Config};
+use mars_types::oracle::{ActionKind, Config};
 use mars_utils::helpers::validate_native_denom;
 use osmosis_std::types::osmosis::downtimedetector::v1beta1::Downtime;
 use pyth_sdk_cw::PriceIdentifier;

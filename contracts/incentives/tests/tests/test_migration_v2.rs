@@ -15,12 +15,12 @@ use mars_incentives::{
     },
     ContractError,
 };
-use mars_red_bank_types::{
+use mars_testing::{mock_dependencies, MockEnvParams};
+use mars_types::{
     incentives::{Config, ExecuteMsg, IncentiveState, MigrateMsg, MigrateV1ToV2},
     keys::{UserId, UserIdKey},
     red_bank::{Market, UserCollateralResponse},
 };
-use mars_testing::{mock_dependencies, MockEnvParams};
 use mars_utils::error::GuardError;
 
 #[test]

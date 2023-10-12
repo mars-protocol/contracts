@@ -6,16 +6,13 @@ use cosmwasm_std::{
 };
 use cw721::OwnerOfResponse;
 use cw721_base::QueryMsg;
-use mars_rover::{
-    error::{ContractError, ContractResult},
-    msg::{
-        execute::{CallbackMsg, ChangeExpected},
-        ExecuteMsg,
-    },
+use mars_types::{
+    credit_manager::{CallbackMsg, ChangeExpected, ExecuteMsg},
+    health::AccountKind,
 };
-use mars_rover_health_types::AccountKind;
 
 use crate::{
+    error::{ContractError, ContractResult},
     state::{
         ACCOUNT_KINDS, ACCOUNT_NFT, COIN_BALANCES, MAX_SLIPPAGE, PARAMS, RED_BANK,
         TOTAL_DEBT_SHARES,

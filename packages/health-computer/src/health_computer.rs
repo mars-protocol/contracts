@@ -2,14 +2,16 @@ use std::cmp::min;
 
 use cosmwasm_schema::cw_serde;
 use cosmwasm_std::{Coin, Decimal, Uint128};
-use mars_red_bank_types::params::{AssetParams, CmSettings, VaultConfig};
-use mars_rover::msg::query::Positions;
-use mars_rover_health_types::{
-    AccountKind, BorrowTarget, Health,
-    HealthError::{
-        MissingHLSParams, MissingParams, MissingPrice, MissingVaultConfig, MissingVaultValues,
+use mars_types::{
+    credit_manager::Positions,
+    health::{
+        AccountKind, BorrowTarget, Health,
+        HealthError::{
+            MissingHLSParams, MissingParams, MissingPrice, MissingVaultConfig, MissingVaultValues,
+        },
+        HealthResult, SwapKind,
     },
-    HealthResult, SwapKind,
+    params::{AssetParams, CmSettings, VaultConfig},
 };
 #[cfg(feature = "javascript")]
 use tsify::Tsify;

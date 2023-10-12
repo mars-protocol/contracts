@@ -1,7 +1,7 @@
 use cosmwasm_std::{
     to_binary, Addr, CosmosMsg, Order, Response, StdResult, Storage, Uint128, WasmMsg,
 };
-use mars_red_bank_types::{
+use mars_types::{
     incentives,
     keys::{UserId, UserIdKey},
     red_bank::{Collateral, Debt, Market},

@@ -7,8 +7,7 @@ use mars_account_nft::error::{
     ContractError,
     ContractError::{BaseError, BurnNotAllowed, HealthContractNotSet},
 };
-use mars_account_nft_types::msg::QueryMsg::NftInfo;
-use mars_rover_health_types::AccountKind;
+use mars_types::{account_nft::QueryMsg::NftInfo, health::AccountKind};
 
 use crate::helpers::{below_max_for_burn, generate_health_response, MockEnv, MAX_VALUE_FOR_BURN};
 

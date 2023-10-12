@@ -1,6 +1,8 @@
 use cosmwasm_std::{Deps, StdResult};
-use mars_rover::msg::query::{ConfigResponse, Positions};
-use mars_rover_health_types::AccountKind;
+use mars_types::{
+    credit_manager::{ConfigResponse, Positions},
+    health::AccountKind,
+};
 
 use crate::state::{ACCOUNT_KINDS, CONFIG, POSITION_RESPONSES};
 

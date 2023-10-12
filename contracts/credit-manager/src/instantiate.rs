@@ -1,8 +1,9 @@
 use cosmwasm_std::{DepsMut, Env};
 use mars_owner::OwnerInit::SetInitialOwner;
-use mars_rover::{error::ContractResult, msg::InstantiateMsg};
+use mars_types::credit_manager::InstantiateMsg;
 
 use crate::{
+    error::ContractResult,
     state::{
         HEALTH_CONTRACT, INCENTIVES, MAX_SLIPPAGE, MAX_UNLOCKING_POSITIONS, ORACLE, OWNER, PARAMS,
         RED_BANK, SWAPPER, ZAPPER,

@@ -9,11 +9,11 @@ use mars_incentives::{
     ContractError,
 };
 use mars_owner::OwnerError::NotOwner;
-use mars_red_bank_types::{
+use mars_testing::MockEnvParams;
+use mars_types::{
     incentives::{ConfigResponse, ExecuteMsg, QueryMsg, WhitelistEntry},
     red_bank::{Market, UserCollateralResponse},
 };
-use mars_testing::MockEnvParams;
 use mars_utils::error::ValidationError;
 
 use super::helpers::{

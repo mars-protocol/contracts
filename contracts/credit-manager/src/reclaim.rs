@@ -1,12 +1,13 @@
 use std::cmp::min;
 
 use cosmwasm_std::{Coin, DepsMut, Response, Uint128};
-use mars_rover::{
-    error::{ContractError::NoneLent, ContractResult},
-    msg::execute::ActionCoin,
-};
+use mars_types::credit_manager::ActionCoin;
 
-use crate::{state::RED_BANK, utils::increment_coin_balance};
+use crate::{
+    error::{ContractError::NoneLent, ContractResult},
+    state::RED_BANK,
+    utils::increment_coin_balance,
+};
 
 pub fn reclaim(deps: DepsMut, account_id: &str, coin: &ActionCoin) -> ContractResult<Response> {
     let red_bank = RED_BANK.load(deps.storage)?;

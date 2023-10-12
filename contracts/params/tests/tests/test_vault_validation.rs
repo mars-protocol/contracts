@@ -2,7 +2,7 @@ use std::str::FromStr;
 
 use cosmwasm_std::{Decimal, StdError::GenericErr};
 use mars_params::error::ContractError;
-use mars_red_bank_types::{
+use mars_types::{
     error::MarsError::{Std, Validation},
     params::{HlsParamsUnchecked, VaultConfigUpdate},
 };

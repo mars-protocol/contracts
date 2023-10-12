@@ -1,14 +1,12 @@
 use std::str::FromStr;
 
 use cosmwasm_std::{coins, Addr, Coin, Decimal, OverflowError, OverflowOperation::Sub, Uint128};
-use mars_rover::{
-    error::ContractError,
-    msg::execute::{
-        Action::{Deposit, SwapExactIn},
-        ActionAmount, ActionCoin,
-    },
-};
+use mars_credit_manager::error::ContractError;
 use mars_swapper_mock::contract::MOCK_SWAP_RESULT;
+use mars_types::credit_manager::{
+    Action::{Deposit, SwapExactIn},
+    ActionAmount, ActionCoin,
+};
 
 use crate::helpers::{
     assert_err, blacklisted_coin, uatom_info, uosmo_info, AccountToFund, MockEnv,

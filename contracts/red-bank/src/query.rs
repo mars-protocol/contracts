@@ -4,7 +4,7 @@ use mars_interest_rate::{
     get_scaled_debt_amount, get_scaled_liquidity_amount, get_underlying_debt_amount,
     get_underlying_liquidity_amount,
 };
-use mars_red_bank_types::{
+use mars_types::{
     address_provider::{self, MarsAddressType},
     keys::{UserId, UserIdKey},
     red_bank::{

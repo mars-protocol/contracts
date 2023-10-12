@@ -5,8 +5,8 @@ use cosmwasm_std::{
     DepsMut, OwnedDeps,
 };
 use mars_oracle_wasm::{contract::entry, WasmPriceSourceUnchecked};
-use mars_red_bank_types::oracle::{ExecuteMsg, InstantiateMsg, WasmOracleCustomInitParams};
 use mars_testing::{mock_info, MarsMockQuerier};
+use mars_types::oracle::{ExecuteMsg, InstantiateMsg, WasmOracleCustomInitParams};
 
 pub fn setup_test(
     astroport_factory_address: &str,

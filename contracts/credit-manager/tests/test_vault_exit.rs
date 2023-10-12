@@ -1,10 +1,10 @@
 use cosmwasm_std::{coin, Addr, Coin, OverflowError, OverflowOperation::Sub, Uint128};
+use mars_credit_manager::error::ContractError::NotTokenOwner;
 use mars_mock_vault::contract::STARTING_VAULT_SHARES;
-use mars_red_bank_types::params::VaultConfigUpdate;
-use mars_rover::{
-    adapters::vault::VaultBase,
-    error::{ContractError, ContractError::NotTokenOwner},
-    msg::execute::Action::{Deposit, EnterVault, ExitVault},
+use mars_types::{
+    adapters::vault::{VaultBase, VaultError},
+    credit_manager::Action::{Deposit, EnterVault, ExitVault},
+    params::VaultConfigUpdate,
 };
 
 use crate::helpers::{
@@ -78,11 +78,12 @@ fn no_unlocked_vault_coins_to_withdraw() {
 
     assert_err(
         res,
-        ContractError::Overflow(OverflowError {
+        VaultError::from(OverflowError {
             operation: Sub,
             operand1: "0".to_string(),
             operand2: STARTING_VAULT_SHARES.to_string(),
-        }),
+        })
+        .into(),
     )
 }
 

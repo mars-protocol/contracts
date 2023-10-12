@@ -1,6 +1,6 @@
 use cosmwasm_std::{Addr, DepsMut, Env, MessageInfo, Response, Uint128};
 use mars_interest_rate::get_scaled_liquidity_amount;
-use mars_red_bank_types::{
+use mars_types::{
     address_provider::{self, MarsAddressType},
     error::MarsError,
 };

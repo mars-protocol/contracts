@@ -1,7 +1,7 @@
 use cosmwasm_std::{Coin, DepsMut, Env, Response};
-use mars_rover::error::{ContractError::NoneLent, ContractResult};
 
 use crate::{
+    error::{ContractError::NoneLent, ContractResult},
     liquidate::calculate_liquidation,
     liquidate_deposit::repay_debt,
     state::{RED_BANK, REWARDS_COLLECTOR},

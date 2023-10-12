@@ -1,13 +1,7 @@
 use cosmwasm_std::{to_binary, Addr, CosmosMsg, DepsMut, Env, Response, WasmMsg};
-use mars_rover::{
-    error::ContractResult,
-    msg::{
-        execute::{ActionAmount, ActionCoin, CallbackMsg},
-        ExecuteMsg,
-    },
-};
+use mars_types::credit_manager::{ActionAmount, ActionCoin, CallbackMsg, ExecuteMsg};
 
-use crate::{query::query_coin_balances, utils::query_nft_token_owner};
+use crate::{error::ContractResult, query::query_coin_balances, utils::query_nft_token_owner};
 
 pub fn refund_coin_balances(deps: DepsMut, env: Env, account_id: &str) -> ContractResult<Response> {
     let coins = query_coin_balances(deps.as_ref(), account_id)?;

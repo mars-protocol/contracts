@@ -1,13 +1,10 @@
 use std::collections::BTreeSet;
 
-use cosmwasm_std::{Coin, Deps, DepsMut, Response, Uint128};
-use mars_red_bank_types::params::TotalDepositResponse;
-use mars_rover::{
-    coins::Coins,
-    error::{ContractError, ContractResult},
-};
+use cosmwasm_std::{Coin, Coins, Deps, DepsMut, Response};
+use mars_types::params::TotalDepositResponse;
 
 use crate::{
+    error::{ContractError, ContractResult},
     state::PARAMS,
     utils::{assert_coin_is_whitelisted, increment_coin_balance},
 };
@@ -27,7 +24,7 @@ pub fn deposit(
 
     assert_sent_fund(coin, received_coins)?;
 
-    received_coins.deduct(coin)?;
+    received_coins.sub(coin.clone())?;
 
     increment_coin_balance(deps.storage, account_id, coin)?;
 
@@ -38,7 +35,7 @@ pub fn deposit(
 
 /// Assert that fund of exactly the same type and amount was sent along with a message
 fn assert_sent_fund(expected: &Coin, received_coins: &Coins) -> ContractResult<()> {
-    let received = received_coins.amount(&expected.denom).unwrap_or_else(Uint128::zero);
+    let received = received_coins.amount_of(&expected.denom);
 
     if received != expected.amount {
         return Err(ContractError::FundsMismatch {

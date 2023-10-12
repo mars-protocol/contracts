@@ -5,7 +5,7 @@ use mars_interest_rate::{
     calculate_applied_linear_interest_rate, compute_scaled_amount, compute_underlying_amount,
     get_underlying_debt_amount, get_underlying_liquidity_amount, ScalingOperation,
 };
-use mars_red_bank_types::red_bank::Market;
+use mars_types::red_bank::Market;
 
 use crate::{error::ContractError, user::User};
 

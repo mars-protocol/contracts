@@ -6,11 +6,11 @@ use mars_params::{
     query::query_total_deposit,
     state::{ADDRESS_PROVIDER, ASSET_PARAMS},
 };
-use mars_red_bank_types::{
+use mars_testing::{mock_dependencies, mock_env_at_block_time};
+use mars_types::{
     params::TotalDepositResponse,
     red_bank::{Market, UserDebtResponse},
 };
-use mars_testing::{mock_dependencies, mock_env_at_block_time};
 use test_case::test_case;
 
 use super::helpers::default_asset_params;

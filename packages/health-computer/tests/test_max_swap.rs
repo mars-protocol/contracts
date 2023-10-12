@@ -1,9 +1,11 @@
 use std::collections::HashMap;
 
 use cosmwasm_std::{coin, Uint128};
-use mars_rover::msg::query::Positions;
 use mars_rover_health_computer::{DenomsData, HealthComputer, VaultsData};
-use mars_rover_health_types::{AccountKind, SwapKind};
+use mars_types::{
+    credit_manager::Positions,
+    health::{AccountKind, SwapKind},
+};
 
 use crate::helpers::{udai_info, umars_info};
 

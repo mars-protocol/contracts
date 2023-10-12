@@ -8,12 +8,15 @@ use mars_mock_credit_manager::msg::InstantiateMsg as CmMockInstantiateMsg;
 use mars_mock_oracle::msg::InstantiateMsg as OracleInstantiateMsg;
 use mars_mock_vault::msg::InstantiateMsg as VaultInstantiateMsg;
 use mars_owner::OwnerResponse;
-use mars_red_bank_types::params::{
-    ExecuteMsg::UpdateVaultConfig, HlsParamsUnchecked, InstantiateMsg as ParamsInstantiateMsg,
-    VaultConfigUnchecked, VaultConfigUpdate::AddOrUpdate,
+use mars_types::{
+    adapters::oracle::OracleUnchecked,
+    credit_manager::ConfigResponse,
+    health::{ExecuteMsg::UpdateConfig, InstantiateMsg},
+    params::{
+        ExecuteMsg::UpdateVaultConfig, HlsParamsUnchecked, InstantiateMsg as ParamsInstantiateMsg,
+        VaultConfigUnchecked, VaultConfigUpdate::AddOrUpdate,
+    },
 };
-use mars_rover::{adapters::oracle::OracleUnchecked, msg::query::ConfigResponse};
-use mars_rover_health_types::{ExecuteMsg::UpdateConfig, InstantiateMsg};
 
 use crate::helpers::{
     mock_credit_manager_contract, mock_health_contract, mock_oracle_contract, mock_params_contract,

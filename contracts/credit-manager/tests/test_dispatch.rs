@@ -1,9 +1,7 @@
 use cosmwasm_std::{coin, Addr};
 use helpers::assert_err;
-use mars_rover::{
-    error::{ContractError, ContractError::NotTokenOwner},
-    msg::execute::CallbackMsg,
-};
+use mars_credit_manager::error::{ContractError, ContractError::NotTokenOwner};
+use mars_types::credit_manager::CallbackMsg;
 
 use crate::helpers::MockEnv;
 

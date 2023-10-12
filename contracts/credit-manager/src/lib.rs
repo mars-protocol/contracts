@@ -1,8 +1,8 @@
-pub mod contract;
-
 pub mod borrow;
 pub mod claim_rewards;
+pub mod contract;
 pub mod deposit;
+pub mod error;
 pub mod execute;
 pub mod health;
 pub mod hls;

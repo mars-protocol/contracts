@@ -1,14 +1,14 @@
 use cosmwasm_schema::cw_serde;
 use cosmwasm_std::{Addr, Coin, DepsMut, Reply, Response, Uint128};
-use mars_rover::{
+use mars_types::{
     adapters::vault::{
         UnlockingChange, UpdateType, Vault, VaultBase, VaultPositionUpdate, VaultUnlockingPosition,
     },
-    error::{ContractError, ContractResult},
-    extensions::AttrParse,
+    credit_manager::AttrParse,
 };
 
 use crate::{
+    error::{ContractError, ContractResult},
     state::VAULT_REQUEST_TEMP_STORAGE,
     vault::{
         assert_under_max_unlocking_limit,

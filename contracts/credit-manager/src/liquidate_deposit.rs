@@ -1,10 +1,8 @@
 use cosmwasm_std::{Coin, CosmosMsg, DepsMut, Env, Response, Storage};
-use mars_rover::{
-    error::{ContractError, ContractResult},
-    msg::execute::CallbackMsg,
-};
+use mars_types::credit_manager::CallbackMsg;
 
 use crate::{
+    error::{ContractError, ContractResult},
     liquidate::calculate_liquidation,
     state::{COIN_BALANCES, REWARDS_COLLECTOR},
     utils::{decrement_coin_balance, increment_coin_balance},

@@ -8,7 +8,7 @@ use cw_vault_standard::{
     },
     msg::{ExtensionExecuteMsg, ExtensionQueryMsg},
 };
-use mars_rover::adapters::vault::{ExecuteMsg, QueryMsg};
+use mars_types::adapters::vault::{ExecuteMsg, QueryMsg};
 
 use crate::{
     deposit::deposit,

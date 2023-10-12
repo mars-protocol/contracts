@@ -2140,8 +2140,10 @@ dependencies = [
  "mars-rover-health",
  "mars-swapper-mock",
  "mars-types",
+ "mars-utils 2.0.0",
  "mars-zapper-mock",
  "test-case",
+ "thiserror",
 ]
 
 [[package]]
@@ -2742,6 +2744,7 @@ dependencies = [
  "cw-dex",
  "cw-utils 1.0.2",
  "cw2 1.1.1",
+ "mars-types",
  "mars-zapper-base",
  "osmosis-std 0.19.2",
  "osmosis-test-tube",

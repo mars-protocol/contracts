@@ -1,5 +1,5 @@
 use cosmwasm_std::{Decimal, DepsMut, MessageInfo, Response};
-use mars_red_bank_types::params::{AssetParamsUpdate, VaultConfigUpdate};
+use mars_types::params::{AssetParamsUpdate, VaultConfigUpdate};
 use mars_utils::{error::ValidationError, helpers::option_string_to_addr};
 
 use crate::{

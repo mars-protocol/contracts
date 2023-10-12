@@ -1,12 +1,10 @@
 use std::ops::Add;
 
 use cosmwasm_std::{coin, coins, Addr, Coin, OverflowError, OverflowOperation, Uint128};
-use mars_rover::{
-    error::ContractError,
-    msg::execute::{
-        Action::{Deposit, Lend},
-        ActionAmount, ActionCoin,
-    },
+use mars_credit_manager::error::ContractError;
+use mars_types::credit_manager::{
+    Action::{Deposit, Lend},
+    ActionAmount, ActionCoin,
 };
 
 use crate::helpers::{

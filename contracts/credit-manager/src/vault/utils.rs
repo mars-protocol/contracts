@@ -1,14 +1,12 @@
 use cosmwasm_std::{Addr, Coin, Deps, DepsMut, StdResult, Storage, Uint128};
-use mars_red_bank_types::oracle::ActionKind;
-use mars_rover::{
-    adapters::vault::{
-        LockingVaultAmount, UnlockingPositions, Vault, VaultAmount, VaultPosition,
-        VaultPositionAmount, VaultPositionUpdate,
-    },
-    error::{ContractError, ContractResult},
+use mars_types::adapters::vault::{
+    LockingVaultAmount, UnlockingPositions, Vault, VaultAmount, VaultPosition, VaultPositionAmount,
+    VaultPositionUpdate,
 };
+use mars_types::oracle::ActionKind;
 
 use crate::{
+    error::{ContractError, ContractResult},
     state::{MAX_UNLOCKING_POSITIONS, ORACLE, PARAMS, VAULT_POSITIONS},
     update_coin_balances::query_balance,
 };

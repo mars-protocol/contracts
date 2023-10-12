@@ -1,6 +1,6 @@
 use cosmwasm_std::testing::{mock_dependencies, mock_env, mock_info};
 use mars_address_provider::{contract::instantiate, error::ContractError};
-use mars_red_bank_types::address_provider::{ConfigResponse, InstantiateMsg, QueryMsg};
+use mars_types::address_provider::{ConfigResponse, InstantiateMsg, QueryMsg};
 
 use super::helpers::th_query;
 

@@ -1,7 +1,6 @@
 use cosmwasm_std::{Coin, StdResult, Uint128};
-use mars_rover::msg::query::DebtAmount;
 use mars_rover_health_computer::HealthComputer;
-use mars_rover_health_types::SwapKind;
+use mars_types::{credit_manager::DebtAmount, health::SwapKind};
 use proptest::{
     strategy::Strategy,
     test_runner::{Config, TestRunner},

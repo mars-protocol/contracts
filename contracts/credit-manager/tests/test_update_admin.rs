@@ -1,9 +1,9 @@
 use cosmwasm_std::Addr;
+use mars_credit_manager::error::ContractError::Owner;
 use mars_owner::{
     OwnerError::{NotOwner, NotProposedOwner, StateTransitionError},
     OwnerUpdate,
 };
-use mars_rover::error::ContractError::Owner;
 
 use crate::helpers::{assert_err, MockEnv};
 

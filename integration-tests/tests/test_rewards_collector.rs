@@ -1,11 +1,11 @@
 use cosmwasm_std::{coin, Decimal};
-use mars_red_bank_types::{
+use mars_swapper_osmosis::route::{OsmosisRoute, SwapAmountInRoute};
+use mars_types::{
     address_provider::{
         ExecuteMsg as ExecuteMsgAddr, InstantiateMsg as InstantiateAddr, MarsAddressType,
     },
     rewards_collector::{ExecuteMsg, InstantiateMsg as InstantiateRewards, UpdateConfig},
 };
-use mars_swapper_osmosis::route::{OsmosisRoute, SwapAmountInRoute};
 use osmosis_test_tube::{Account, Gamm, Module, OsmosisTestApp, Wasm};
 
 use crate::{
@@ -76,7 +76,7 @@ fn swapping_rewards() {
         &wasm,
         signer,
         OSMOSIS_SWAPPER_CONTRACT_NAME,
-        &mars_red_bank_types::swapper::InstantiateMsg {
+        &mars_types::swapper::InstantiateMsg {
             owner: signer.address(),
         },
     );
@@ -84,7 +84,7 @@ fn swapping_rewards() {
     // Set swapper addr in address provider
     wasm.execute(
         &addr_provider_addr,
-        &mars_red_bank_types::address_provider::ExecuteMsg::SetAddress {
+        &mars_types::address_provider::ExecuteMsg::SetAddress {
             address_type: MarsAddressType::Swapper,
             address: swapper_addr.clone(),
         },
@@ -142,7 +142,7 @@ fn swapping_rewards() {
     // set routes
     wasm.execute(
         &swapper_addr,
-        &mars_red_bank_types::swapper::ExecuteMsg::SetRoute {
+        &mars_types::swapper::ExecuteMsg::SetRoute {
             denom_in: "uosmo".to_string(),
             denom_out: safety_fund_denom.to_string(),
             route: OsmosisRoute(vec![SwapAmountInRoute {
@@ -156,7 +156,7 @@ fn swapping_rewards() {
     .unwrap();
     wasm.execute(
         &swapper_addr,
-        &mars_red_bank_types::swapper::ExecuteMsg::SetRoute {
+        &mars_types::swapper::ExecuteMsg::SetRoute {
             denom_in: "uosmo".to_string(),
             denom_out: fee_collector_denom.to_string(),
             route: OsmosisRoute(vec![SwapAmountInRoute {
@@ -170,7 +170,7 @@ fn swapping_rewards() {
     .unwrap();
     wasm.execute(
         &swapper_addr,
-        &mars_red_bank_types::swapper::ExecuteMsg::SetRoute {
+        &mars_types::swapper::ExecuteMsg::SetRoute {
             denom_in: "uatom".to_string(),
             denom_out: safety_fund_denom.to_string(),
             route: OsmosisRoute(vec![
@@ -190,7 +190,7 @@ fn swapping_rewards() {
     .unwrap();
     wasm.execute(
         &swapper_addr,
-        &mars_red_bank_types::swapper::ExecuteMsg::SetRoute {
+        &mars_types::swapper::ExecuteMsg::SetRoute {
             denom_in: "uatom".to_string(),
             denom_out: fee_collector_denom.to_string(),
             route: OsmosisRoute(vec![

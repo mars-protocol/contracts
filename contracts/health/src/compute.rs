@@ -1,10 +1,12 @@
 use std::collections::HashMap;
 
 use cosmwasm_std::{Deps, StdResult};
-use mars_red_bank_types::oracle::ActionKind;
-use mars_rover::msg::query::Positions;
 use mars_rover_health_computer::{DenomsData, HealthComputer, VaultsData};
-use mars_rover_health_types::{AccountKind, HealthResult, HealthState, HealthValuesResponse};
+use mars_types::{
+    credit_manager::Positions,
+    health::{AccountKind, HealthResult, HealthState, HealthValuesResponse},
+    oracle::ActionKind,
+};
 
 use crate::querier::HealthQuerier;
 

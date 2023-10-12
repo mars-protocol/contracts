@@ -3,7 +3,7 @@
 use anyhow::Result as AnyResult;
 use cosmwasm_std::{Coin, Decimal, Fraction, Uint128};
 use cw_multi_test::AppResponse;
-use mars_red_bank_types::{
+use mars_types::{
     params::{AssetParams, CmSettings, LiquidationBonus, RedBankSettings},
     red_bank::{
         InitOrUpdateAssetParams, InterestRateModel, UserHealthStatus, UserPositionResponse,

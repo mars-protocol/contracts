@@ -1,5 +1,5 @@
 use cosmwasm_std::{DepsMut, Env, MessageInfo, Response};
-use mars_red_bank_types::{
+use mars_types::{
     self,
     address_provider::{self, MarsAddressType},
     keys::{UserId, UserIdKey},

@@ -1,18 +1,18 @@
 use cosmwasm_std::{Coin, Deps, Env, Order, StdResult};
 use cw_paginate::paginate_map;
 use cw_storage_plus::Bound;
-use mars_red_bank_types::oracle::ActionKind;
-use mars_rover::{
+use mars_types::{
     adapters::vault::{VaultBase, VaultPosition, VaultPositionValue, VaultUnchecked},
-    error::ContractResult,
-    msg::query::{
+    credit_manager::{
         Account, CoinBalanceResponseItem, ConfigResponse, DebtAmount, DebtShares, Positions,
         SharesResponseItem, VaultPositionResponseItem, VaultUtilizationResponse,
     },
+    health::AccountKind,
+    oracle::ActionKind,
 };
-use mars_rover_health_types::AccountKind;
 
 use crate::{
+    error::ContractResult,
     state::{
         ACCOUNT_KINDS, ACCOUNT_NFT, COIN_BALANCES, DEBT_SHARES, HEALTH_CONTRACT, INCENTIVES,
         MAX_SLIPPAGE, MAX_UNLOCKING_POSITIONS, ORACLE, OWNER, PARAMS, RED_BANK, REWARDS_COLLECTOR,

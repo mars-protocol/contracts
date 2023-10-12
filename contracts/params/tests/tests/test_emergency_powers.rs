@@ -1,7 +1,7 @@
 use cosmwasm_std::Addr;
 use mars_owner::OwnerError;
 use mars_params::error::ContractError::Owner;
-use mars_red_bank_types::params::{
+use mars_types::params::{
     AssetParamsUpdate, CmEmergencyUpdate, EmergencyUpdate, RedBankEmergencyUpdate,
     VaultConfigUpdate,
 };

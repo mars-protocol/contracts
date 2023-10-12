@@ -1,6 +1,6 @@
 use cosmwasm_schema::write_api;
 use mars_oracle_wasm::WasmPriceSourceUnchecked;
-use mars_red_bank_types::oracle::{
+use mars_types::oracle::{
     msg::{ExecuteMsg, InstantiateMsg, QueryMsg},
     WasmOracleCustomExecuteMsg, WasmOracleCustomInitParams,
 };

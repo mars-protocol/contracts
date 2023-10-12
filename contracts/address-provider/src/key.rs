@@ -2,7 +2,7 @@ use std::{convert::TryFrom, str::FromStr};
 
 use cosmwasm_std::{StdError, StdResult};
 use cw_storage_plus::{Key, KeyDeserialize, Prefixer, PrimaryKey};
-use mars_red_bank_types::address_provider::MarsAddressType;
+use mars_types::address_provider::MarsAddressType;
 
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct MarsAddressTypeKey(pub Vec<u8>);

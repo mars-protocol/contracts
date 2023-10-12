@@ -6,7 +6,7 @@ use cosmwasm_std::{
 };
 use cw_storage_plus::{Bound, Item, Map};
 use mars_owner::{Owner, OwnerInit::SetInitialOwner, OwnerUpdate};
-use mars_red_bank_types::oracle::msg::{
+use mars_types::oracle::msg::{
     ActionKind, Config, ConfigResponse, ExecuteMsg, InstantiateMsg, PriceResponse,
     PriceSourceResponse, QueryMsg,
 };

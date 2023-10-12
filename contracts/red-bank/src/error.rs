@@ -5,7 +5,7 @@ use cw_utils::PaymentError;
 use mars_health::error::HealthError;
 use mars_liquidation::error::LiquidationError;
 use mars_owner::OwnerError;
-use mars_red_bank_types::error::MarsError;
+use mars_types::error::MarsError;
 use mars_utils::error::{GuardError, ValidationError};
 use thiserror::Error;
 

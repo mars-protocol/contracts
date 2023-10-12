@@ -1,5 +1,5 @@
 use cosmwasm_std::{Decimal, DepsMut, Env, MessageInfo, Response, Uint128};
-use mars_red_bank_types::{
+use mars_types::{
     address_provider,
     address_provider::MarsAddressType,
     error::MarsError,

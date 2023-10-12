@@ -1,12 +1,13 @@
 use std::str::FromStr;
 
 use cosmwasm_std::{Decimal, Uint128};
-use mars_red_bank_types::{oracle::ActionKind, params::AssetParamsUpdate::AddOrUpdate};
-use mars_rover::{
+use mars_types::{
     adapters::vault::{Vault, VaultAmount, VaultPosition, VaultPositionAmount},
-    msg::query::{DebtAmount, Positions},
+    credit_manager::{DebtAmount, Positions},
+    health::AccountKind,
+    oracle::ActionKind,
+    params::AssetParamsUpdate::AddOrUpdate,
 };
-use mars_rover_health_types::AccountKind;
 
 use crate::helpers::{default_asset_params, MockEnv};
 

@@ -1,15 +1,15 @@
 use cosmwasm_std::{Addr, Decimal, Uint128};
 use cw_storage_plus::{Item, Map};
 use mars_owner::Owner;
-use mars_rover::{
+use mars_types::{
     adapters::{
         account_nft::AccountNft, health::HealthContract, incentives::Incentives, oracle::Oracle,
         params::Params, red_bank::RedBank, rewards_collector::RewardsCollector, swap::Swapper,
         vault::VaultPositionAmount, zapper::Zapper,
     },
-    reentrancy_guard::ReentrancyGuard,
+    health::AccountKind,
 };
-use mars_rover_health_types::AccountKind;
+use mars_utils::guard::Guard;
 
 use crate::vault::RequestTempStorage;
 
@@ -26,7 +26,7 @@ pub const INCENTIVES: Item<Incentives> = Item::new("incentives");
 // Config
 pub const OWNER: Owner = Owner::new("owner");
 pub const MAX_UNLOCKING_POSITIONS: Item<Uint128> = Item::new("max_unlocking_positions");
-pub const REENTRANCY_GUARD: ReentrancyGuard = ReentrancyGuard::new("reentrancy_guard");
+pub const REENTRANCY_GUARD: Guard = Guard::new("reentrancy_guard");
 pub const MAX_SLIPPAGE: Item<Decimal> = Item::new("max_slippage");
 
 // Positions

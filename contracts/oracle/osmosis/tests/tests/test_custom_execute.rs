@@ -1,8 +1,8 @@
 use cosmwasm_std::{testing::mock_env, Empty};
 use mars_oracle_base::ContractError;
 use mars_oracle_osmosis::contract::entry;
-use mars_red_bank_types::oracle::ExecuteMsg;
 use mars_testing::mock_info;
+use mars_types::oracle::ExecuteMsg;
 
 use super::helpers;
 

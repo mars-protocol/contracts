@@ -1,6 +1,6 @@
 use cosmwasm_std::Addr;
 use itertools::Itertools;
-use mars_rover::msg::execute::Action;
+use mars_types::credit_manager::Action;
 
 use crate::helpers::{
     assert_contents_equal, build_mock_vaults, lp_token_info, AccountToFund, MockEnv,

@@ -2,7 +2,7 @@ use cosmwasm_std::{Addr, DepsMut, MessageInfo, Order, Response, StdResult};
 use cw2::{assert_contract_version, set_contract_version};
 use cw_storage_plus::Bound;
 use mars_owner::OwnerInit;
-use mars_red_bank_types::{
+use mars_types::{
     keys::{UserId, UserIdKey},
     red_bank::{Config, Market, MigrateV1ToV2},
 };
@@ -19,7 +19,7 @@ pub mod v1_state {
     use cosmwasm_schema::cw_serde;
     use cosmwasm_std::{Addr, Decimal, Uint128};
     use cw_storage_plus::{Item, Map};
-    use mars_red_bank_types::red_bank::{Collateral, InterestRateModel};
+    use mars_types::red_bank::{Collateral, InterestRateModel};
 
     pub const OWNER: Item<OwnerState> = Item::new("owner");
     pub const CONFIG: Item<Config> = Item::new("config");
@@ -223,7 +223,7 @@ mod tests {
     use std::collections::HashMap;
 
     use cosmwasm_std::{attr, testing::mock_dependencies, Addr, Uint128};
-    use mars_red_bank_types::red_bank::Collateral;
+    use mars_types::red_bank::Collateral;
     use mars_utils::error::GuardError;
 
     use super::*;

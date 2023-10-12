@@ -1,8 +1,8 @@
 use std::{collections::HashMap, fmt};
 
 use cosmwasm_std::{Addr, Coin, Decimal, Fraction, QuerierWrapper, StdResult, Uint128};
-use mars_red_bank_types::params::AssetParams;
 use mars_types::health::HealthValuesResponse;
+use mars_types::params::AssetParams;
 
 use crate::{error::HealthError, query::MarsQuerier};
 
@@ -47,7 +47,7 @@ impl fmt::Display for Health {
     }
 }
 
-impl From<HealthValuesResponse> for RedBankHealth {
+impl From<HealthValuesResponse> for Health {
     fn from(h: HealthValuesResponse) -> Self {
         Self {
             total_debt_value: h.total_debt_value,

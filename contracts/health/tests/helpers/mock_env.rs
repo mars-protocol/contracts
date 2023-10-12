@@ -7,18 +7,19 @@ use cw_vault_standard::{
 use mars_mock_credit_manager::msg::ExecuteMsg::SetPositionsResponse;
 use mars_mock_oracle::msg::{CoinPrice, ExecuteMsg::ChangePrice};
 use mars_mock_vault::contract::STARTING_VAULT_SHARES;
-use mars_red_bank_types::{
+use mars_types::{
+    adapters::vault::VaultUnchecked,
+    credit_manager::Positions,
+    health::{
+        AccountKind, ConfigResponse, ExecuteMsg::UpdateConfig, HealthState, HealthValuesResponse,
+        QueryMsg,
+    },
     oracle::ActionKind,
     params::{
         AssetParamsUpdate,
         ExecuteMsg::{UpdateAssetParams, UpdateVaultConfig},
         QueryMsg as ParamsQueryMsg, VaultConfig, VaultConfigUpdate,
     },
-};
-use mars_rover::{adapters::vault::VaultUnchecked, msg::query::Positions};
-use mars_rover_health_types::{
-    AccountKind, ConfigResponse, ExecuteMsg::UpdateConfig, HealthState, HealthValuesResponse,
-    QueryMsg,
 };
 
 use crate::helpers::MockEnvBuilder;

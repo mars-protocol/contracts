@@ -1,5 +1,5 @@
 use cosmwasm_std::{Deps, StdResult};
-use mars_account_nft_types::nft_config::UncheckedNftConfig;
+use mars_types::account_nft::UncheckedNftConfig;
 
 use crate::state::{CONFIG, NEXT_ID};
 

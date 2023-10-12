@@ -1,12 +1,10 @@
 use std::ops::Mul;
 
 use cosmwasm_std::{Addr, Decimal, OverflowError, OverflowOperation::Sub, Uint128};
-use mars_rover::{
-    error::ContractError as RoverError,
-    msg::execute::{
-        Action::{Deposit, ProvideLiquidity, WithdrawLiquidity},
-        ActionAmount, ActionCoin,
-    },
+use mars_credit_manager::error::ContractError as RoverError;
+use mars_types::credit_manager::{
+    Action::{Deposit, ProvideLiquidity, WithdrawLiquidity},
+    ActionAmount, ActionCoin,
 };
 use mars_zapper_mock::{contract::STARTING_LP_POOL_TOKENS, error::ContractError};
 
@@ -188,10 +186,10 @@ fn slippage_too_high() {
         )
         .unwrap_err();
 
-    let contract_err: mars_rover::error::ContractError = err.downcast().unwrap();
+    let contract_err: RoverError = err.downcast().unwrap();
     assert_eq!(
         contract_err,
-        mars_rover::error::ContractError::SlippageExceeded {
+        RoverError::SlippageExceeded {
             slippage,
             max_slippage
         }

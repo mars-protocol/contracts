@@ -1,14 +1,13 @@
 use cosmwasm_std::{to_binary, CosmosMsg, DepsMut, Env, Response, Uint128, WasmMsg};
-use mars_rover::{
+use mars_types::{
     adapters::vault::{UpdateType, Vault, VaultPositionUpdate},
-    error::ContractResult,
-    msg::{
-        execute::{CallbackMsg, ChangeExpected},
-        ExecuteMsg as RoverExecuteMsg,
-    },
+    credit_manager::{CallbackMsg, ChangeExpected, ExecuteMsg as RoverExecuteMsg},
 };
 
-use crate::vault::utils::{query_withdraw_denom_balance, update_vault_position};
+use crate::{
+    error::ContractResult,
+    vault::utils::{query_withdraw_denom_balance, update_vault_position},
+};
 
 pub fn exit_vault(
     deps: DepsMut,

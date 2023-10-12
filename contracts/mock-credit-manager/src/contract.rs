@@ -1,7 +1,7 @@
 #[cfg(not(feature = "library"))]
 use cosmwasm_std::entry_point;
 use cosmwasm_std::{to_binary, Binary, Deps, DepsMut, Env, MessageInfo, Response, StdResult};
-use mars_rover::msg::QueryMsg;
+use mars_types::credit_manager::QueryMsg;
 
 use crate::{
     execute::{set_account_kind_response, set_position_response},

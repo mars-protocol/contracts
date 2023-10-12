@@ -1,6 +1,5 @@
 use cosmwasm_std::Addr;
-use mars_rover::msg::query::Account;
-use mars_rover_health_types::AccountKind;
+use mars_types::{credit_manager::Account, health::AccountKind};
 
 use crate::helpers::MockEnv;
 

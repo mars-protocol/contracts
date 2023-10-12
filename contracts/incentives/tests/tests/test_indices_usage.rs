@@ -9,7 +9,7 @@ use mars_incentives::{
     },
     state::{CONFIG, EMISSIONS, EPOCH_DURATION, INCENTIVE_STATES},
 };
-use mars_red_bank_types::incentives::{Config, IncentiveState};
+use mars_types::incentives::{Config, IncentiveState};
 
 fn store_config_with_epoch_duration(storage: &mut dyn Storage, epoch_duration: u64) {
     CONFIG

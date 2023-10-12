@@ -1,5 +1,5 @@
 use cosmwasm_schema::write_api;
-use mars_red_bank_types::incentives::{ExecuteMsg, InstantiateMsg, QueryMsg};
+use mars_types::incentives::{ExecuteMsg, InstantiateMsg, QueryMsg};
 
 fn main() {
     write_api! {

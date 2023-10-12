@@ -1,5 +1,5 @@
 use cosmwasm_std::{coin, Addr, Uint128};
-use mars_rover::msg::execute::Action::{Deposit, EnterVault, RefundAllCoinBalances};
+use mars_types::credit_manager::Action::{Deposit, EnterVault, RefundAllCoinBalances};
 
 use crate::helpers::{
     locked_vault_info, lp_token_info, uatom_info, uosmo_info, AccountToFund, MockEnv,

@@ -1,8 +1,8 @@
 use cosmwasm_std::{Addr, Uint128};
-use mars_red_bank_types::params::{AssetParamsUpdate::AddOrUpdate, HlsAssetType};
-use mars_rover::{
-    error::ContractError,
-    msg::execute::Action::{Borrow, ClaimRewards, Deposit},
+use mars_credit_manager::error::ContractError;
+use mars_types::{
+    credit_manager::Action::{Borrow, ClaimRewards, Deposit},
+    params::{AssetParamsUpdate::AddOrUpdate, HlsAssetType},
 };
 
 use crate::helpers::{

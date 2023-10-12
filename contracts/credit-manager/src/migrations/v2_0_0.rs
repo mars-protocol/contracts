@@ -1,10 +1,11 @@
 use cosmwasm_std::{DepsMut, Env, Response};
 use cw2::{assert_contract_version, set_contract_version};
 use mars_owner::OwnerInit;
-use mars_rover::{adapters::red_bank::RedBank, error::ContractResult, msg::migrate::V2Updates};
+use mars_types::{adapters::red_bank::RedBank, credit_manager::V2Updates};
 
 use crate::{
     contract::{CONTRACT_NAME, CONTRACT_VERSION},
+    error::ContractResult,
     state::{HEALTH_CONTRACT, INCENTIVES, MAX_SLIPPAGE, OWNER, PARAMS, RED_BANK, SWAPPER},
     utils::assert_max_slippage,
 };

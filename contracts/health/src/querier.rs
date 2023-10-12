@@ -1,10 +1,10 @@
 use cosmwasm_std::{Addr, Deps, QuerierWrapper, StdError, StdResult};
-use mars_red_bank_types::params::VaultConfig;
-use mars_rover::{
+use mars_types::{
     adapters::{oracle::Oracle, params::Params, vault::Vault},
-    msg::query::{ConfigResponse, Positions, QueryMsg as CmQueryMsg},
+    credit_manager::{ConfigResponse, Positions, QueryMsg as CmQueryMsg},
+    health::HealthResult,
+    params::VaultConfig,
 };
-use mars_rover_health_types::HealthResult;
 
 use crate::state::CREDIT_MANAGER;
 

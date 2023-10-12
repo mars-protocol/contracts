@@ -1,9 +1,14 @@
 use cosmwasm_std::{Deps, Response};
-use mars_red_bank_types::oracle::ActionKind;
-use mars_rover::error::{ContractError, ContractResult};
-use mars_rover_health_types::{HealthState, HealthValuesResponse};
+use mars_types::{
+    health::{HealthState, HealthValuesResponse},
+    oracle::ActionKind,
+};
 
-use crate::{state::HEALTH_CONTRACT, utils::get_account_kind};
+use crate::{
+    error::{ContractError, ContractResult},
+    state::HEALTH_CONTRACT,
+    utils::get_account_kind,
+};
 
 pub fn query_health_state(
     deps: Deps,

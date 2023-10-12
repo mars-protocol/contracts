@@ -1,5 +1,5 @@
 use helpers::max_swap_prop_test_runner;
-use mars_rover_health_types::SwapKind;
+use mars_types::health::SwapKind;
 
 pub mod helpers;
 

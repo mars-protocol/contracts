@@ -1,7 +1,7 @@
 use cosmwasm_std::{Coin, DepsMut, Response, Uint128};
-use mars_rover::error::{ContractError, ContractResult};
 
 use crate::{
+    error::{ContractError, ContractResult},
     state::{DEBT_SHARES, RED_BANK, TOTAL_DEBT_SHARES},
     utils::{assert_coin_is_whitelisted, increment_coin_balance},
 };

@@ -1,14 +1,15 @@
 use cosmwasm_std::{to_binary, CosmosMsg, DepsMut, Env, MessageInfo, Response, WasmMsg};
 use cw721_base::Action;
-use mars_account_nft_types::{msg::ExecuteMsg as NftExecuteMsg, nft_config::NftConfigUpdates};
 use mars_owner::OwnerUpdate;
-use mars_rover::{
-    adapters::rewards_collector::RewardsCollector, error::ContractResult,
-    msg::instantiate::ConfigUpdates,
+use mars_types::{
+    account_nft::{ExecuteMsg as NftExecuteMsg, NftConfigUpdates},
+    adapters::rewards_collector::RewardsCollector,
+    credit_manager::ConfigUpdates,
+    health::AccountKind,
 };
-use mars_rover_health_types::AccountKind;
 
 use crate::{
+    error::ContractResult,
     execute::create_credit_account,
     state::{
         ACCOUNT_NFT, HEALTH_CONTRACT, INCENTIVES, MAX_SLIPPAGE, MAX_UNLOCKING_POSITIONS, ORACLE,

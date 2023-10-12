@@ -31,6 +31,8 @@ cw-vault-standard = { workspace = true }
 mars-liquidation  = { workspace = true }
 mars-owner        = { workspace = true }
 mars-types        = { workspace = true }
+mars-utils        = { workspace = true }
+thiserror         = { workspace = true }
 
 [dev-dependencies]
 anyhow                = { workspace = true }

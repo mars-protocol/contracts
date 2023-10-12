@@ -11,11 +11,11 @@ use mars_red_bank::{
     error::ContractError,
     state::{DEBTS, MARKETS, UNCOLLATERALIZED_LOAN_LIMITS},
 };
-use mars_red_bank_types::{
+use mars_testing::{mock_env, mock_env_at_block_time, MockEnvParams};
+use mars_types::{
     params::{AssetParams, CmSettings, RedBankSettings},
     red_bank::{ExecuteMsg, Market},
 };
-use mars_testing::{mock_env, mock_env_at_block_time, MockEnvParams};
 
 use super::helpers::{
     has_collateral_position, has_debt_position, set_collateral, th_build_interests_updated_event,

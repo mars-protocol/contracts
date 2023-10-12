@@ -1,9 +1,9 @@
 use cosmwasm_std::{coin, coins, Addr, Uint128};
 use cw_utils::PaymentError;
-use mars_red_bank_types::params::AssetParamsUpdate::AddOrUpdate;
-use mars_rover::{
-    error::ContractError,
-    msg::execute::Action::{Borrow, Deposit},
+use mars_credit_manager::error::ContractError;
+use mars_types::{
+    credit_manager::Action::{Borrow, Deposit},
+    params::AssetParamsUpdate::AddOrUpdate,
 };
 
 use crate::helpers::{assert_err, uosmo_info, AccountToFund, MockEnv};

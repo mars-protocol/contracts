@@ -5,7 +5,7 @@ use cosmwasm_std::{
     QuerierWrapper, StdError, StdResult, Storage, Uint128,
 };
 use cw_storage_plus::Bound;
-use mars_red_bank_types::{
+use mars_types::{
     address_provider::{self, MarsAddressType},
     incentives::IncentiveState,
     keys::{UserId, UserIdKey},

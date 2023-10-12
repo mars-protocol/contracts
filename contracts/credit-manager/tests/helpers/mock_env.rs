@@ -9,12 +9,6 @@ use cw_vault_standard::{
     extensions::lockup::{LockupQueryMsg, UnlockingPosition},
     msg::{ExtensionQueryMsg, VaultStandardQueryMsg::VaultExtension},
 };
-use mars_account_nft_types::{
-    msg::{
-        ExecuteMsg as NftExecuteMsg, InstantiateMsg as NftInstantiateMsg, QueryMsg as NftQueryMsg,
-    },
-    nft_config::{NftConfigUpdates, UncheckedNftConfig},
-};
 use mars_mock_oracle::msg::{
     CoinPrice, ExecuteMsg as OracleExecuteMsg, InstantiateMsg as OracleInstantiateMsg,
 };
@@ -22,24 +16,11 @@ use mars_mock_vault::{
     contract::DEFAULT_VAULT_TOKEN_PREFUND, msg::InstantiateMsg as VaultInstantiateMsg,
 };
 use mars_owner::OwnerUpdate;
-use mars_red_bank_types::{
-    address_provider::{self, MarsAddressType},
-    incentives::{ExecuteMsg::BalanceChange, QueryMsg::UserUnclaimedRewards},
-    oracle::ActionKind,
-    params::{
-        AssetParams, AssetParamsUpdate,
-        AssetParamsUpdate::AddOrUpdate,
-        ExecuteMsg::{UpdateAssetParams, UpdateVaultConfig},
-        InstantiateMsg as ParamsInstantiateMsg, QueryMsg as ParamsQueryMsg, VaultConfig,
-        VaultConfigUnchecked, VaultConfigUpdate,
+use mars_types::{
+    account_nft::{
+        ExecuteMsg as NftExecuteMsg, InstantiateMsg as NftInstantiateMsg, NftConfigUpdates,
+        QueryMsg as NftQueryMsg, UncheckedNftConfig,
     },
-    red_bank::{
-        self, InitOrUpdateAssetParams, InterestRateModel,
-        QueryMsg::{UserCollateral, UserDebt},
-        UserCollateralResponse, UserDebtResponse,
-    },
-};
-use mars_rover::{
     adapters::{
         account_nft::AccountNftUnchecked,
         health::HealthContract,
@@ -54,7 +35,8 @@ use mars_rover::{
         vault::{Vault, VaultPosition, VaultPositionValue as VPositionValue, VaultUnchecked},
         zapper::{Zapper, ZapperBase},
     },
-    msg::{
+    address_provider::{self, MarsAddressType},
+    credit_manager::{
         execute::{Action, CallbackMsg},
         instantiate::ConfigUpdates,
         query::{
@@ -64,10 +46,24 @@ use mars_rover::{
         ExecuteMsg, InstantiateMsg, QueryMsg,
         QueryMsg::{EstimateProvideLiquidity, VaultPositionValue},
     },
-};
-use mars_rover_health_types::{
-    AccountKind, ExecuteMsg::UpdateConfig, HealthValuesResponse,
-    InstantiateMsg as HealthInstantiateMsg, QueryMsg::HealthValues,
+    health::{
+        AccountKind, ExecuteMsg::UpdateConfig, HealthValuesResponse,
+        InstantiateMsg as HealthInstantiateMsg, QueryMsg::HealthValues,
+    },
+    incentives::{ExecuteMsg::BalanceChange, QueryMsg::UserUnclaimedRewards},
+    oracle::ActionKind,
+    params::{
+        AssetParams, AssetParamsUpdate,
+        AssetParamsUpdate::AddOrUpdate,
+        ExecuteMsg::{UpdateAssetParams, UpdateVaultConfig},
+        InstantiateMsg as ParamsInstantiateMsg, QueryMsg as ParamsQueryMsg, VaultConfig,
+        VaultConfigUnchecked, VaultConfigUpdate,
+    },
+    red_bank::{
+        self, InitOrUpdateAssetParams, InterestRateModel,
+        QueryMsg::{UserCollateral, UserDebt},
+        UserCollateralResponse, UserDebtResponse,
+    },
 };
 use mars_zapper_mock::msg::{InstantiateMsg as ZapperInstantiateMsg, LpConfig};
 

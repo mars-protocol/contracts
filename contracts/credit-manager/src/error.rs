@@ -1,14 +1,14 @@
 use cosmwasm_std::{
-    CheckedFromRatioError, CheckedMultiplyFractionError, CheckedMultiplyRatioError, Coin, Decimal,
-    DecimalRangeExceeded, OverflowError, StdError, Uint128,
+    CheckedFromRatioError, CheckedMultiplyFractionError, CheckedMultiplyRatioError, Coin, Coins,
+    CoinsError, Decimal, DecimalRangeExceeded, OverflowError, StdError, Uint128,
 };
 use cw2::VersionError;
 use cw_utils::PaymentError;
 use mars_liquidation::error::LiquidationError;
 use mars_owner::OwnerError;
+use mars_types::adapters::{oracle::OracleError, vault::VaultError};
+use mars_utils::error::GuardError;
 use thiserror::Error;
-
-use crate::coins::Coins;
 
 pub type ContractResult<T> = Result<T, ContractError>;
 
@@ -174,4 +174,16 @@ pub enum ContractError {
         slippage: Decimal,
         max_slippage: Decimal,
     },
+
+    #[error(transparent)]
+    Coins(#[from] CoinsError),
+
+    #[error(transparent)]
+    Guard(#[from] GuardError),
+
+    #[error(transparent)]
+    Vault(#[from] VaultError),
+
+    #[error(transparent)]
+    Oracle(#[from] OracleError),
 }

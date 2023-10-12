@@ -1,5 +1,5 @@
 use cosmwasm_std::Coin;
-use mars_rover::msg::query::DebtAmount;
+use mars_types::credit_manager::DebtAmount;
 
 pub fn get_coin(denom: &str, coins: &[Coin]) -> Coin {
     coins.iter().find(|cv| cv.denom == denom).unwrap().clone()

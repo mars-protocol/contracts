@@ -2,17 +2,15 @@ use std::cmp::min;
 
 use cosmwasm_std::{Coin, Decimal, DepsMut, Env, Response, Uint128};
 use cw_vault_standard::VaultInfoResponse;
-use mars_rover::{
-    adapters::vault::{
-        UnlockingChange, UnlockingPositions, UpdateType, Vault, VaultPositionAmount,
-        VaultPositionType, VaultPositionUpdate,
-    },
-    error::{ContractError, ContractResult},
+use mars_types::adapters::vault::{
+    UnlockingChange, UnlockingPositions, UpdateType, Vault, VaultError, VaultPositionAmount,
+    VaultPositionType, VaultPositionUpdate,
 };
 
 use crate::{
-    liquidate::calculate_liquidation, liquidate_deposit::repay_debt, state::VAULT_POSITIONS,
-    utils::update_balance_after_vault_liquidation_msg, vault::update_vault_position,
+    error::ContractResult, liquidate::calculate_liquidation, liquidate_deposit::repay_debt,
+    state::VAULT_POSITIONS, utils::update_balance_after_vault_liquidation_msg,
+    vault::update_vault_position,
 };
 
 pub fn liquidate_vault(
@@ -38,7 +36,7 @@ pub fn liquidate_vault(
                 request_vault,
                 a.total(),
             ),
-            _ => Err(ContractError::MismatchedVaultType),
+            _ => Err(VaultError::MismatchedVaultType.into()),
         },
         VaultPositionAmount::Locking(ref a) => match position_type {
             VaultPositionType::LOCKED => liquidate_locked(
@@ -59,7 +57,7 @@ pub fn liquidate_vault(
                 request_vault,
                 liquidatee_position.unlocking(),
             ),
-            _ => Err(ContractError::MismatchedVaultType),
+            _ => Err(VaultError::MismatchedVaultType.into()),
         },
     }
 }

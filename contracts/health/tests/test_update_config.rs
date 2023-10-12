@@ -1,6 +1,6 @@
 use cosmwasm_std::{Addr, StdError};
 use mars_owner::OwnerError::NotOwner;
-use mars_rover_health_types::{
+use mars_types::health::{
     HealthError,
     HealthError::{Owner, Std},
 };

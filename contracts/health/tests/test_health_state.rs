@@ -1,7 +1,10 @@
 use cosmwasm_std::{Coin, Decimal, Uint128};
-use mars_red_bank_types::{oracle::ActionKind, params::AssetParamsUpdate::AddOrUpdate};
-use mars_rover::msg::query::{DebtAmount, Positions};
-use mars_rover_health_types::{AccountKind, HealthState};
+use mars_types::{
+    credit_manager::{DebtAmount, Positions},
+    health::{AccountKind, HealthState},
+    oracle::ActionKind,
+    params::AssetParamsUpdate::AddOrUpdate,
+};
 
 use crate::helpers::{default_asset_params, MockEnv};
 

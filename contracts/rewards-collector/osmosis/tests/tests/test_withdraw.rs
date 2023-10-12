@@ -1,11 +1,11 @@
 use cosmwasm_std::{testing::mock_env, to_binary, CosmosMsg, Decimal, SubMsg, Uint128, WasmMsg};
-use mars_red_bank_types::rewards_collector::{
-    credit_manager::{self, Action, ActionAmount, ActionCoin},
-    ExecuteMsg,
-};
 use mars_rewards_collector_base::ContractError;
 use mars_rewards_collector_osmosis::entry::execute;
 use mars_testing::mock_info;
+use mars_types::{
+    credit_manager::{self, Action, ActionAmount, ActionCoin},
+    rewards_collector::ExecuteMsg,
+};
 
 use super::helpers;
 
@@ -30,7 +30,7 @@ fn withdrawing_from_red_bank() {
         res.messages[0],
         SubMsg::new(CosmosMsg::Wasm(WasmMsg::Execute {
             contract_addr: "red_bank".to_string(),
-            msg: to_binary(&mars_red_bank_types::red_bank::ExecuteMsg::Withdraw {
+            msg: to_binary(&mars_types::red_bank::ExecuteMsg::Withdraw {
                 denom: "uatom".to_string(),
                 amount: Some(Uint128::new(42069)),
                 recipient: None,
@@ -59,7 +59,6 @@ fn withdrawing_from_cm_if_action_not_allowed() {
                     denom: "uatom".to_string(),
                     amount: ActionAmount::Exact(Uint128::new(100)),
                 }),
-                Action::Unknown {},
                 Action::WithdrawLiquidity {
                     lp_token: ActionCoin {
                         denom: "gamm/pool/1".to_string(),
@@ -67,6 +66,7 @@ fn withdrawing_from_cm_if_action_not_allowed() {
                     },
                     slippage: Decimal::percent(5),
                 },
+                Action::RefundAllCoinBalances {},
             ],
         },
     )

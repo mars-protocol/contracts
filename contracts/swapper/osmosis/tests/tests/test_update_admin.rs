@@ -1,8 +1,8 @@
 use cosmwasm_std::coin;
 use cw_it::osmosis_test_tube::{Account, Module, OsmosisTestApp, Wasm};
 use mars_owner::{OwnerResponse, OwnerUpdate};
-use mars_red_bank_types::swapper::{ExecuteMsg, QueryMsg};
 use mars_swapper_osmosis::route::OsmosisRoute;
+use mars_types::swapper::{ExecuteMsg, QueryMsg};
 
 use super::helpers::instantiate_contract;
 

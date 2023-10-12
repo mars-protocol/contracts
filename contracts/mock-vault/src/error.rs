@@ -1,5 +1,5 @@
 use cosmwasm_std::{CheckedMultiplyRatioError, StdError};
-use mars_rover::error::ContractError as RoverError;
+use mars_types::adapters::oracle::OracleError;
 use thiserror::Error;
 
 pub type ContractResult<T> = Result<T, ContractError>;
@@ -10,7 +10,7 @@ pub enum ContractError {
     Std(#[from] StdError),
 
     #[error("{0}")]
-    RoverError(#[from] RoverError),
+    Oracle(#[from] OracleError),
 
     #[error("{0}")]
     CheckedMultiply(#[from] CheckedMultiplyRatioError),

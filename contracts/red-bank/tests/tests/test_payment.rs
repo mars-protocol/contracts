@@ -5,7 +5,7 @@ use cosmwasm_std::{
 };
 use cw_utils::PaymentError;
 use mars_red_bank::contract;
-use mars_red_bank_types::red_bank::ExecuteMsg;
+use mars_types::red_bank::ExecuteMsg;
 
 use super::helpers::th_setup;
 

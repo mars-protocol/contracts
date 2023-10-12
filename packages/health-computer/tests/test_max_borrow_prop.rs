@@ -1,6 +1,6 @@
 use cosmwasm_std::Addr;
 use helpers::max_borrow_prop_test_runner;
-use mars_rover_health_types::BorrowTarget;
+use mars_types::health::BorrowTarget;
 
 pub mod helpers;
 

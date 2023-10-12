@@ -8,7 +8,7 @@ use mars_oracle_base::{
     ContractError::{self},
     ContractResult, PriceSourceChecked, PriceSourceUnchecked,
 };
-use mars_red_bank_types::oracle::{ActionKind, AstroportTwapSnapshot, Config};
+use mars_types::oracle::{ActionKind, AstroportTwapSnapshot, Config};
 use pyth_sdk_cw::PriceIdentifier;
 
 use crate::{

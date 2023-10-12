@@ -3,7 +3,7 @@ use std::collections::{HashMap, HashSet};
 use cosmwasm_std::{Addr, Deps, Env, Order, StdError, StdResult, Uint128};
 use mars_health::health::{Health, Position as HealthPosition};
 use mars_interest_rate::{get_underlying_debt_amount, get_underlying_liquidity_amount};
-use mars_red_bank_types::{
+use mars_types::{
     keys::{UserId, UserIdKey},
     oracle,
     red_bank::Position,

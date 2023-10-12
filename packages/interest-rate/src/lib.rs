@@ -1,5 +1,5 @@
 use cosmwasm_std::{Decimal, StdError, StdResult, Uint128};
-use mars_red_bank_types::{error::MarsError, red_bank::Market};
+use mars_types::{error::MarsError, red_bank::Market};
 
 /// Scaling factor used to keep more precision during division / multiplication by index.
 pub const SCALING_FACTOR: Uint128 = Uint128::new(1_000_000);

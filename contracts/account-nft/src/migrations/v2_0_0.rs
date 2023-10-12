@@ -3,9 +3,11 @@ use cosmwasm_std::{
 };
 use cw2::set_contract_version;
 use cw721::Cw721Query;
-use mars_account_nft_types::nft_config::NftConfig;
-use mars_red_bank_types::oracle::ActionKind;
-use mars_rover_health_types::{AccountKind, HealthValuesResponse, QueryMsg::HealthValues};
+use mars_types::{
+    account_nft::NftConfig,
+    health::{AccountKind, HealthValuesResponse, QueryMsg::HealthValues},
+    oracle::ActionKind,
+};
 
 use crate::{
     contract::{Parent, CONTRACT_NAME, CONTRACT_VERSION},

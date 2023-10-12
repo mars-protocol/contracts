@@ -2,9 +2,9 @@ use std::ops::Div;
 
 use cosmwasm_std::{Addr, Uint128};
 use mars_mock_vault::contract::STARTING_VAULT_SHARES;
-use mars_rover::{
+use mars_types::{
     adapters::vault::{Vault, VaultAmount, VaultPosition, VaultPositionAmount},
-    msg::execute::Action::{Deposit, EnterVault, RequestVaultUnlock},
+    credit_manager::Action::{Deposit, EnterVault, RequestVaultUnlock},
 };
 
 use crate::helpers::{

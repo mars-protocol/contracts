@@ -1,12 +1,12 @@
 use cosmwasm_std::{
     coin, testing::mock_env, to_binary, CosmosMsg, Decimal, Empty, SubMsg, Uint128, WasmMsg,
 };
-use mars_red_bank_types::{
+use mars_rewards_collector_osmosis::entry::execute;
+use mars_testing::mock_info;
+use mars_types::{
     rewards_collector::{ConfigResponse, ExecuteMsg, QueryMsg},
     swapper,
 };
-use mars_rewards_collector_osmosis::entry::execute;
-use mars_testing::mock_info;
 use osmosis_std::types::osmosis::twap::v1beta1::ArithmeticTwapToNowResponse;
 
 use super::{helpers, helpers::mock_instantiate_msg};

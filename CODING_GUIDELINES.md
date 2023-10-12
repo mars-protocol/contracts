@@ -70,7 +70,7 @@ pub use thing_three::*;
 Later we can import `red-bank` module things with one line:
 
 ```rust
-use mars_red_bank_types::red_bank::*;
+use mars_types::red_bank::*;
 ```
 
 ## API & Design

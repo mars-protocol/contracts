@@ -14,7 +14,7 @@ use cw_it::{
         Wasm,
     },
 };
-use mars_red_bank_types::swapper::InstantiateMsg;
+use mars_types::swapper::InstantiateMsg;
 
 const CONTRACT_NAME: &str = env!("CARGO_PKG_NAME");
 

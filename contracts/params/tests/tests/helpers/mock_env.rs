@@ -4,7 +4,7 @@ use anyhow::Result as AnyResult;
 use cosmwasm_std::{Addr, Decimal};
 use cw_multi_test::{App, AppResponse, BasicApp, Executor};
 use mars_owner::{OwnerResponse, OwnerUpdate};
-use mars_red_bank_types::params::{
+use mars_types::params::{
     AssetParams, AssetParamsUpdate, ConfigResponse, EmergencyUpdate, ExecuteMsg, InstantiateMsg,
     QueryMsg, VaultConfig, VaultConfigUpdate,
 };

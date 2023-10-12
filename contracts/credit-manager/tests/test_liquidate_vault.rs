@@ -1,17 +1,17 @@
 use cosmwasm_std::{
     Addr, Decimal, OverflowError, OverflowOperation::Sub, StdError::NotFound, Uint128,
 };
+use mars_credit_manager::error::ContractError;
 use mars_mock_oracle::msg::CoinPrice;
-use mars_red_bank_types::oracle::ActionKind;
-use mars_rover::{
-    adapters::vault::{VaultBase, VaultPositionType},
-    error::ContractError,
-    msg::execute::{
+use mars_types::{
+    adapters::vault::{VaultBase, VaultError, VaultPositionType},
+    credit_manager::{
         Action::{Borrow, Deposit, EnterVault, Liquidate, RequestVaultUnlock},
         LiquidateRequest,
     },
+    health::AccountKind,
+    oracle::ActionKind,
 };
-use mars_rover_health_types::AccountKind;
 
 use crate::helpers::{
     assert_err, get_coin, get_debt, locked_vault_info, lp_token_info, uatom_info, ujake_info,
@@ -70,7 +70,7 @@ fn liquidatee_must_have_the_request_vault_position() {
     assert_err(
         res,
         ContractError::Std(NotFound {
-            kind: "mars_rover::adapters::vault::amount::VaultPositionAmount".to_string(),
+            kind: "mars_types::adapters::vault::amount::VaultPositionAmount".to_string(),
         }),
     )
 }
@@ -252,7 +252,7 @@ fn wrong_position_type_sent_for_unlocked_vault() {
         &[],
     );
 
-    assert_err(res, ContractError::MismatchedVaultType);
+    assert_err(res, VaultError::MismatchedVaultType.into());
 
     let res = mock.update_credit_account(
         &liquidator_account_id,
@@ -268,7 +268,7 @@ fn wrong_position_type_sent_for_unlocked_vault() {
         &[],
     );
 
-    assert_err(res, ContractError::MismatchedVaultType)
+    assert_err(res, VaultError::MismatchedVaultType.into())
 }
 
 #[test]
@@ -321,7 +321,7 @@ fn wrong_position_type_sent_for_locked_vault() {
         &[],
     );
 
-    assert_err(res, ContractError::MismatchedVaultType)
+    assert_err(res, VaultError::MismatchedVaultType.into())
 }
 
 #[test]

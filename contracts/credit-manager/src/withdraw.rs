@@ -1,10 +1,11 @@
 use cosmwasm_std::{Addr, BankMsg, Coin, CosmosMsg, Deps, DepsMut, Response};
-use mars_rover::{
-    error::{ContractError, ContractResult},
-    msg::execute::{ActionAmount, ActionCoin},
-};
+use mars_types::credit_manager::{ActionAmount, ActionCoin};
 
-use crate::{state::COIN_BALANCES, utils::decrement_coin_balance};
+use crate::{
+    error::{ContractError, ContractResult},
+    state::COIN_BALANCES,
+    utils::decrement_coin_balance,
+};
 
 pub fn withdraw(
     deps: DepsMut,

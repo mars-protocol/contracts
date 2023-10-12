@@ -6,7 +6,8 @@ use mars_red_bank::{
     error::ContractError,
     state::{COLLATERALS, MARKETS},
 };
-use mars_red_bank_types::{
+use mars_testing::{mock_dependencies, mock_env, mock_env_at_block_time, MockEnvParams};
+use mars_types::{
     address_provider::MarsAddressType,
     error::MarsError,
     keys::{UserId, UserIdKey},
@@ -15,7 +16,6 @@ use mars_red_bank_types::{
         InterestRateModel, Market, QueryMsg,
     },
 };
-use mars_testing::{mock_dependencies, mock_env, mock_env_at_block_time, MockEnvParams};
 use mars_utils::error::ValidationError;
 
 use super::helpers::{th_get_expected_indices, th_init_market, th_setup};
