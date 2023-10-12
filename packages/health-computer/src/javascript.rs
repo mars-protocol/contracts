@@ -1,4 +1,4 @@
-use mars_rover_health_types::{BorrowTarget, HealthValuesResponse, SwapKind};
+use mars_types::health::{BorrowTarget, HealthValuesResponse, SwapKind};
 use wasm_bindgen::prelude::*;
 
 use crate::HealthComputer;
