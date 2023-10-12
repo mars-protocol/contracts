@@ -969,7 +969,7 @@ const swapperRoutes = [
 
 // ----------------------------------- Deployment -----------------------------------
 
-export const osmosisMainnet: DeploymentConfig = {
+export const osmosisMainnetConfig: DeploymentConfig = {
   mainnet: true,
   deployerMnemonic: '',
   marsDenom: mars,

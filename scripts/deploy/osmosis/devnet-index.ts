@@ -1,10 +1,10 @@
 import { taskRunner } from '../base'
-import { osmo, osmosisMainnet } from './NEW_mainnetConfig'
+import { osmo, osmosisMainnetConfig } from './mainnet-config'
 
 void (async function () {
   await taskRunner({
     config: {
-      ...osmosisMainnet,
+      ...osmosisMainnetConfig,
       mainnet: false,
       deployerMnemonic: 'TO BE INSERTED AT TIME OF DEPLOYMENT',
       chain: {

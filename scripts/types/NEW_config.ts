@@ -77,10 +77,10 @@ export interface DeploymentConfig {
   maxValueForBurn: string
   maxUnlockingPositions: string
   maxSlippage: string
+  runTests: boolean
   testActions?: TestActions
   zapperContractName: string
   multisigAddr?: string
-  runTests: boolean
   assets: AssetConfig[]
   vaults: VaultConfig[]
   oracleConfigs: OracleConfig[]
@@ -137,7 +137,6 @@ export interface TestActions {
       baseToken: string
     }
   }
-  outpostsDeployerMnemonic: string
   secondaryDenom: string
   startingAmountForTestUser: string
   depositAmount: string
