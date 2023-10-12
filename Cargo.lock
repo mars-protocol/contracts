@@ -2663,6 +2663,8 @@ dependencies = [
  "cosmwasm-schema",
  "cosmwasm-std",
  "cw-storage-plus 1.1.0",
+ "cw721 0.18.0",
+ "cw721-base 0.18.0",
  "mars-owner 2.0.0",
  "mars-utils 2.0.0",
  "serde",

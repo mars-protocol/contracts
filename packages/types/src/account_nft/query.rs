@@ -10,7 +10,7 @@ pub enum QueryMsg {
     //--------------------------------------------------------------------------------------------------
     // Extended messages
     //--------------------------------------------------------------------------------------------------
-    #[returns(crate::nft_config::UncheckedNftConfig)]
+    #[returns(super::UncheckedNftConfig)]
     Config {},
 
     #[returns(String)]

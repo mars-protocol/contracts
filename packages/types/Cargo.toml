@@ -22,6 +22,8 @@ javascript = ["tsify", "wasm-bindgen"]
 [dependencies]
 cosmwasm-schema = { workspace = true }
 cosmwasm-std    = { workspace = true }
+cw721           = { workspace = true }
+cw721-base      = { workspace = true }
 cw-storage-plus = { workspace = true }
 mars-owner      = { workspace = true }
 mars-utils      = { workspace = true }

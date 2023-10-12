@@ -1,3 +1,4 @@
+pub mod account_nft;
 pub mod address_provider;
 pub mod error;
 pub mod incentives;
