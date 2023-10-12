@@ -1,6 +1,6 @@
-# Mars Red Bank
+# Mars Types
 
-Contains messages and types for Red Bank smart contracts.
+Contains messages and types for Mars smart contracts.
 
 ## License
 
