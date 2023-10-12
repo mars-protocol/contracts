@@ -1,5 +1,5 @@
 import { setupDeployer } from './setup-deployer'
-import { DeploymentConfig } from '../../types/NEW_config'
+import { DeploymentConfig } from '../../types/config'
 import { printGreen, printRed } from '../../utils/chalk'
 
 export interface TaskRunnerProps {

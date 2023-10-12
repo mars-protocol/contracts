@@ -1,4 +1,4 @@
-import { DeploymentConfig } from '../../types/NEW_config'
+import { DeploymentConfig } from '../../types/config'
 import { SigningCosmWasmClient } from '@cosmjs/cosmwasm-stargate'
 import { printRed, printYellow } from '../../utils/chalk'
 import { Storage } from './storage'

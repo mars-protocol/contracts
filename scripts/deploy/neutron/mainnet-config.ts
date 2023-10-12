@@ -1,4 +1,4 @@
-import { DeploymentConfig, AssetConfig, OracleConfig } from '../../types/NEW_config'
+import { DeploymentConfig, AssetConfig, OracleConfig } from '../../types/config'
 import { NeutronIbcConfig } from '../../types/generated/mars-rewards-collector-base/MarsRewardsCollectorBase.types'
 
 const axlUsdcDenom = 'ibc/F082B65C88E4B6D5EF1DB243CDA1D331D002759E938A0F5CD3FFDC5D53B3E349'

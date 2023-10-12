@@ -1,6 +1,6 @@
 import { readFile, writeFile } from 'fs/promises'
 import path from 'path'
-import { StorageItems as StorageItems } from '../../types/NEW_storageItems'
+import { StorageItems as StorageItems } from '../../types/storageItems'
 
 export const ARTIFACTS_PATH = '../artifacts/'
 

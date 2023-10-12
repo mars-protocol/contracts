@@ -1,6 +1,6 @@
 import { setupDeployer } from './setup-deployer'
 import { printGreen, printRed, printYellow } from '../../utils/chalk'
-import { DeploymentConfig } from '../../types/NEW_config'
+import { DeploymentConfig } from '../../types/config'
 import { wasmFile } from '../../utils/environment'
 
 export interface TaskRunnerProps {

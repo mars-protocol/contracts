@@ -1,23 +1,43 @@
 export interface StorageItems {
   codeIds: {
-    'red-bank'?: number
-    'rewards-collector'?: number
-    'address-provider'?: number
+    accountNft?: number
+    addressProvider?: number
+    creditManager?: number
+    health?: number
     incentives?: number
+    mockVault?: number
     oracle?: number
-    swapper?: number
     params?: number
+    swapper?: number
+    redBank?: number
+    rewardsCollector?: number
+    zapper?: number
   }
   addresses: {
-    'address-provider'?: string
-    'rewards-collector'?: string
-    'red-bank'?: string
+    accountNft?: string
+    addressProvider?: string
+    creditManager?: string
+    health?: string
     incentives?: string
+    mockVault?: string
     oracle?: string
-    swapper?: string
     params?: string
+    swapper?: string
+    redBank?: string
+    rewardsCollector?: string
+    zapper?: string
   }
-
+  actions: {
+    proposedNewOwner?: boolean
+    acceptedOwnership?: boolean
+    setRoutes?: boolean
+    seedMockVault?: boolean
+    grantedCreditLines?: boolean
+    oraclePricesSet?: boolean
+    redBankMarketsSet?: boolean
+    healthContractConfigUpdate?: boolean
+    creditManagerContractConfigUpdate?: boolean
+  }
   execute: {
     addressProviderUpdated: Record<string, boolean>
     assetsUpdated: string[]
@@ -26,6 +46,5 @@ export interface StorageItems {
     oraclePriceSet?: boolean
     smokeTest?: boolean
   }
-
   owner?: string
 }

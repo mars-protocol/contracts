@@ -1,7 +1,7 @@
 import { SigningCosmWasmClient, SigningCosmWasmClientOptions } from '@cosmjs/cosmwasm-stargate'
 import { DirectSecp256k1HdWallet } from '@cosmjs/proto-signing'
 import { GasPrice } from '@cosmjs/stargate'
-import { DeploymentConfig } from '../../types/NEW_config'
+import { DeploymentConfig } from '../../types/config'
 import { Deployer } from './deployer'
 import { Storage } from './storage'
 import { printGray } from '../../utils/chalk'

@@ -1,5 +1,5 @@
 import { Storage } from './storage'
-import { DeploymentConfig, TestActions, VaultInfo } from '../../types/NEW_config'
+import { DeploymentConfig, TestActions, VaultInfo } from '../../types/config'
 import { difference } from 'lodash'
 import assert from 'assert'
 import { printBlue, printGreen } from '../../utils/chalk'

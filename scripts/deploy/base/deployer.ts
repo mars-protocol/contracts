@@ -7,11 +7,11 @@ import {
   TestActions,
   VaultConfig,
   isAstroportRoute,
-} from '../../types/NEW_config'
+} from '../../types/config'
 import { printBlue, printGray, printGreen, printRed, printYellow } from '../../utils/chalk'
 import { ARTIFACTS_PATH, Storage } from './storage'
 import fs from 'fs'
-import { InstantiateMsgs } from '../../types/NEW_msgs'
+import { InstantiateMsgs } from '../../types/msgs'
 import { InstantiateMsg as NftInstantiateMsg } from '../../types/generated/mars-account-nft/MarsAccountNft.types'
 import { InstantiateMsg as VaultInstantiateMsg } from '../../types/generated/mars-mock-vault/MarsMockVault.types'
 import { InstantiateMsg as HealthInstantiateMsg } from '../../types/generated/mars-rover-health-types/MarsRoverHealthTypes.types'

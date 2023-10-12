@@ -1,4 +1,4 @@
-import { DeploymentConfig, AssetConfig, OracleConfig, VaultConfig } from '../../types/NEW_config'
+import { DeploymentConfig, AssetConfig, OracleConfig, VaultConfig } from '../../types/config'
 
 // Mainnet markets:
 export const osmo = 'uosmo'

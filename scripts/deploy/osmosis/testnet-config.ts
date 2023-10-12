@@ -4,7 +4,7 @@ import {
   OracleConfig,
   VaultConfig,
   VaultType,
-} from '../../types/NEW_config'
+} from '../../types/config'
 
 // assets based off of OSMO-TEST-5: https://docs.osmosis.zone/osmosis-core/asset-info/
 const uosmo = 'uosmo'

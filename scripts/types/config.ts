@@ -7,14 +7,14 @@ import {
 } from './generated/mars-oracle-wasm/MarsOracleWasm.types'
 import {
   CmSettingsForString,
-  Coin,
   Decimal,
-  HlsParamsBaseForString,
   LiquidationBonus,
   RedBankSettings,
+  VaultConfigBaseForString,
 } from './generated/mars-params/MarsParams.types'
 import { NeutronIbcConfig } from './generated/mars-rewards-collector-base/MarsRewardsCollectorBase.types'
 import { Uint128 } from './generated/mars-red-bank/MarsRedBank.types'
+import { Duration, VaultInfoResponse } from './generated/mars-mock-vault/MarsMockVault.types'
 
 type SwapRoute = {
   denom_in: string
@@ -35,40 +35,55 @@ export function isAstroportRoute(route: OsmosisRoute | AstroportRoute): route is
 }
 
 export interface DeploymentConfig {
-  oracleName: string
-  oracleBaseDenom: string
-  rewardsCollectorName: string
-  rewardsCollectorTimeoutSeconds: number
-  rewardsCollectorNeutronIbcConfig?: NeutronIbcConfig | null
-  marsDenom: string
-  baseAssetDenom: string
-  gasPrice: string
-  atomDenom: string
-  chainPrefix: string
-  safetyFundFeeShare: string
-  channelId: string
-  feeCollectorDenom: string
-  safetyFundDenom: string
-  chainId: string
-  rpcEndpoint: string
-  deployerMnemonic: string
-  slippage_tolerance: string
-  base_asset_symbol: string
-  multisigAddr?: string
-  runTests: boolean
   mainnet: boolean
-  swapRoutes: SwapRoute[]
+  deployerMnemonic: string
+  marsDenom: string
+  atomDenom: string
   safetyFundAddr: string
   protocolAdminAddr: string
   feeCollectorAddr: string
-  swapperDexName: string
+  chain: {
+    prefix: string
+    id: string
+    rpcEndpoint: string
+    defaultGasPrice: number
+    baseDenom: string
+  }
+  oracle: {
+    name: string
+    baseDenom: string
+    customInitParams?: WasmOracleCustomInitParams
+  }
+  rewardsCollector: {
+    name: string
+    timeoutSeconds: number
+    neutronIbcConfig?: NeutronIbcConfig | null
+    channelId: string
+    safetyFundFeeShare: string
+    feeCollectorDenom: string
+    safetyFundDenom: string
+    slippageTolerance: string
+  }
+  incentives: {
+    epochDuration: number
+    maxWhitelistedIncentiveDenoms: number
+  }
+  swapper: {
+    name: string
+    routes: SwapRoute[]
+  }
+  targetHealthFactor: string
+  creditLineCoins: { denom: string; creditLine: String }[]
+  maxValueForBurn: string
+  maxUnlockingPositions: string
+  maxSlippage: string
+  runTests: boolean
+  testActions?: TestActions
+  zapperContractName: string
+  multisigAddr?: string
   assets: AssetConfig[]
   vaults: VaultConfig[]
   oracleConfigs: OracleConfig[]
-  oracleCustomInitParams?: WasmOracleCustomInitParams
-  incentiveEpochDuration: number
-  maxWhitelistedIncentiveDenoms: number
-  targetHealthFactor: string
 }
 
 export interface AssetConfig {
@@ -89,17 +104,55 @@ export interface AssetConfig {
     slope_2: string
   }
 }
+
+export enum VaultType {
+  LOCKED,
+  UNLOCKED,
+}
+
+export interface VaultInfo {
+  lockup: { time: number } | undefined
+  tokens: VaultInfoResponse
+}
+
 export interface VaultConfig {
-  addr: string
   symbol: string
-  deposit_cap: Coin
-  hls?: HlsParamsBaseForString | null
-  liquidation_threshold: Decimal
-  max_loan_to_value: Decimal
-  whitelisted: boolean
+  vault: VaultConfigBaseForString
 }
 
 export interface OracleConfig {
   denom: string
   price_source: OsmosisPriceSourceForString | WasmPriceSourceForString
+}
+
+export interface TestActions {
+  vault: {
+    depositAmount: string
+    withdrawAmount: string
+    mock: {
+      type: VaultType
+      config: Omit<VaultConfigBaseForString, 'addr'>
+      vaultTokenDenom: string
+      lockup?: Duration
+      baseToken: string
+    }
+  }
+  secondaryDenom: string
+  startingAmountForTestUser: string
+  depositAmount: string
+  lendAmount: string
+  borrowAmount: string
+  repayAmount: string
+  reclaimAmount: string
+  swap: {
+    amount: string
+    slippage: string
+    route: { token_out_denom: string; pool_id: string }[]
+  }
+  withdrawAmount: string
+  zap: {
+    coinsIn: { amount: string; denom: string }[]
+    denomOut: string
+  }
+  unzapAmount: string
 }
