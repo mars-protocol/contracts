@@ -3,7 +3,8 @@ use cosmwasm_std::{
     to_binary, Addr, Api, Coin, CosmosMsg, QuerierWrapper, QueryRequest, StdResult, Uint128,
     WasmMsg, WasmQuery,
 };
-use mars_red_bank_types::red_bank;
+
+use crate::red_bank;
 
 #[cw_serde]
 pub struct RedBankUnchecked(String);

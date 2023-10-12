@@ -1,5 +1,7 @@
 use cosmwasm_std::{Coin, Decimal};
 
+use crate::credit_manager::ActionCoin;
+
 pub trait Stringify {
     fn to_string(&self) -> String;
 }
@@ -10,8 +12,26 @@ impl Stringify for Option<Decimal> {
     }
 }
 
+impl Stringify for &[Coin] {
+    fn to_string(&self) -> String {
+        self.iter().map(|coin| coin.to_string()).collect::<Vec<String>>().join(",")
+    }
+}
+
 pub trait Denoms {
     fn to_denoms(&self) -> Vec<&str>;
+}
+
+impl Denoms for Vec<Coin> {
+    fn to_denoms(&self) -> Vec<&str> {
+        self.iter().map(|c| c.denom.as_str()).collect()
+    }
+}
+
+impl Denoms for Vec<ActionCoin> {
+    fn to_denoms(&self) -> Vec<&str> {
+        self.iter().map(|c| c.denom.as_str()).collect()
+    }
 }
 
 pub trait Coins {

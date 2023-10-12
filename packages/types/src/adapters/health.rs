@@ -1,7 +1,10 @@
 use cosmwasm_schema::cw_serde;
 use cosmwasm_std::{Addr, Api, QuerierWrapper, StdResult};
-use mars_red_bank_types::oracle::ActionKind;
-use mars_rover_health_types::{AccountKind, HealthState, HealthValuesResponse, QueryMsg};
+
+use crate::{
+    health::{AccountKind, HealthState, HealthValuesResponse, QueryMsg},
+    oracle::ActionKind,
+};
 
 #[cw_serde]
 pub struct HealthContractBase<T>(T);

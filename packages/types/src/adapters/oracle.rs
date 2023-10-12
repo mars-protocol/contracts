@@ -1,8 +1,9 @@
 use cosmwasm_schema::cw_serde;
-use cosmwasm_std::{Addr, Api, Coin, QuerierWrapper, StdResult, Uint128};
-use mars_red_bank_types::oracle::{ActionKind, PriceResponse, QueryMsg};
+use cosmwasm_std::{
+    Addr, Api, CheckedMultiplyFractionError, Coin, QuerierWrapper, StdError, StdResult, Uint128,
+};
 
-use crate::error::ContractResult;
+use crate::oracle::{ActionKind, PriceResponse, QueryMsg};
 
 #[cw_serde]
 pub struct OracleBase<T>(T);
@@ -53,7 +54,7 @@ impl Oracle {
         querier: &QuerierWrapper,
         coin: &Coin,
         action: ActionKind,
-    ) -> ContractResult<Uint128> {
+    ) -> Result<Uint128, OracleError> {
         self.query_total_value(querier, &[coin.clone()], action)
     }
 
@@ -62,15 +63,24 @@ impl Oracle {
         querier: &QuerierWrapper,
         coins: &[Coin],
         action: ActionKind,
-    ) -> ContractResult<Uint128> {
+    ) -> Result<Uint128, OracleError> {
         Ok(coins
             .iter()
             .map(|coin| {
                 let res = self.query_price(querier, &coin.denom, action.clone())?;
                 Ok(coin.amount.checked_mul_floor(res.price)?)
             })
-            .collect::<ContractResult<Vec<_>>>()?
+            .collect::<Result<Vec<_>, OracleError>>()?
             .iter()
             .sum())
     }
+}
+
+#[derive(Debug, PartialEq, thiserror::Error)]
+pub enum OracleError {
+    #[error(transparent)]
+    Std(#[from] StdError),
+
+    #[error(transparent)]
+    CheckedMultiplyFraction(#[from] CheckedMultiplyFractionError),
 }

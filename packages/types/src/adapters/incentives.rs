@@ -1,6 +1,7 @@
 use cosmwasm_schema::cw_serde;
 use cosmwasm_std::{to_binary, Addr, Api, Coin, CosmosMsg, QuerierWrapper, StdResult, WasmMsg};
-use mars_red_bank_types::{incentives, incentives::QueryMsg};
+
+use crate::incentives::{ExecuteMsg, QueryMsg};
 
 #[cw_serde]
 pub struct IncentivesUnchecked(String);
@@ -43,7 +44,7 @@ impl Incentives {
     pub fn claim_rewards_msg(&self, account_id: &str) -> StdResult<CosmosMsg> {
         Ok(CosmosMsg::Wasm(WasmMsg::Execute {
             contract_addr: self.addr.to_string(),
-            msg: to_binary(&incentives::ExecuteMsg::ClaimRewards {
+            msg: to_binary(&ExecuteMsg::ClaimRewards {
                 account_id: Some(account_id.to_string()),
                 start_after_collateral_denom: None,
                 start_after_incentive_denom: None,

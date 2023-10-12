@@ -1,10 +1,7 @@
 use cosmwasm_schema::cw_serde;
-use cosmwasm_std::Uint128;
+use cosmwasm_std::{OverflowError, Uint128};
 
-use crate::{
-    adapters::vault::{UnlockingChange, UpdateType, VaultPositionUpdate, VaultUnlockingPosition},
-    error::{ContractError, ContractResult},
-};
+use super::{UnlockingChange, UpdateType, VaultPositionUpdate, VaultUnlockingPosition};
 
 #[cw_serde]
 pub enum VaultPositionAmount {
@@ -47,14 +44,14 @@ impl VaultPositionAmount {
         }
     }
 
-    pub fn update(&mut self, update: VaultPositionUpdate) -> ContractResult<()> {
+    pub fn update(&mut self, update: VaultPositionUpdate) -> Result<(), VaultError> {
         match self {
             VaultPositionAmount::Unlocked(amount) => match update {
                 VaultPositionUpdate::Unlocked(u) => match u {
                     UpdateType::Increment(a) => amount.increment(a),
                     UpdateType::Decrement(a) => amount.decrement(a),
                 },
-                _ => Err(ContractError::MismatchedVaultType {}),
+                _ => Err(VaultError::MismatchedVaultType),
             },
             VaultPositionAmount::Locking(amount) => match update {
                 VaultPositionUpdate::Locked(u) => match u {
@@ -62,13 +59,16 @@ impl VaultPositionAmount {
                     UpdateType::Decrement(a) => amount.locked.decrement(a),
                 },
                 VaultPositionUpdate::Unlocking(u) => match u {
-                    UnlockingChange::Add(p) => amount.unlocking.add(p),
+                    UnlockingChange::Add(p) => {
+                        amount.unlocking.add(p);
+                        Ok(())
+                    }
                     UnlockingChange::Decrement {
                         id,
                         amount: a,
                     } => amount.unlocking.decrement(id, a),
                 },
-                _ => Err(ContractError::MismatchedVaultType {}),
+                _ => Err(VaultError::MismatchedVaultType),
             },
         }
     }
@@ -86,12 +86,12 @@ impl VaultAmount {
         self.0
     }
 
-    pub fn increment(&mut self, amount: Uint128) -> ContractResult<()> {
+    pub fn increment(&mut self, amount: Uint128) -> Result<(), VaultError> {
         self.0 = self.0.checked_add(amount)?;
         Ok(())
     }
 
-    pub fn decrement(&mut self, amount: Uint128) -> ContractResult<()> {
+    pub fn decrement(&mut self, amount: Uint128) -> Result<(), VaultError> {
         self.0 = self.0.checked_sub(amount)?;
         Ok(())
     }
@@ -123,29 +123,39 @@ impl UnlockingPositions {
         self.0.is_empty()
     }
 
-    pub fn add(&mut self, position: VaultUnlockingPosition) -> ContractResult<()> {
+    pub fn add(&mut self, position: VaultUnlockingPosition) {
         self.0.push(position);
-        Ok(())
     }
 
-    pub fn decrement(&mut self, id: u64, amount: Uint128) -> ContractResult<()> {
+    pub fn decrement(&mut self, id: u64, amount: Uint128) -> Result<(), VaultError> {
         let res = self.0.iter_mut().find(|p| p.id == id);
         match res {
             Some(p) => {
                 let new_amount = p.coin.amount.checked_sub(amount)?;
                 if new_amount.is_zero() {
-                    self.remove(id)?;
+                    self.remove(id);
                 } else {
                     p.coin.amount = new_amount;
                 }
             }
-            None => return Err(ContractError::NoPositionMatch(id.to_string())),
+            None => return Err(VaultError::NoPositionMatch(id.to_string())),
         }
         Ok(())
     }
 
-    pub fn remove(&mut self, id: u64) -> ContractResult<()> {
+    pub fn remove(&mut self, id: u64) {
         self.0.retain(|p| p.id != id);
-        Ok(())
     }
+}
+
+#[derive(Debug, PartialEq, thiserror::Error)]
+pub enum VaultError {
+    #[error(transparent)]
+    Overflow(#[from] OverflowError),
+
+    #[error("Issued incorrect action for vault type")]
+    MismatchedVaultType,
+
+    #[error("Position {0} was not a valid position for this account id in this vault")]
+    NoPositionMatch(String),
 }

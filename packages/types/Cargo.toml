@@ -20,16 +20,19 @@ backtraces = ["cosmwasm-std/backtraces"]
 javascript = ["tsify", "wasm-bindgen"]
 
 [dependencies]
-cosmwasm-schema = { workspace = true }
-cosmwasm-std    = { workspace = true }
-cw721           = { workspace = true }
-cw721-base      = { workspace = true }
-cw-storage-plus = { workspace = true }
-mars-owner      = { workspace = true }
-mars-utils      = { workspace = true }
-serde           = { workspace = true }
-serde-json-wasm = { workspace = true }
-strum           = { workspace = true, features = ["derive"] }
-thiserror       = { workspace = true }
-tsify           = { workspace = true, optional = true }
-wasm-bindgen    = { workspace = true, optional = true }
+cosmwasm-schema   = { workspace = true }
+cosmwasm-std      = { workspace = true }
+cw721             = { workspace = true }
+cw721-base        = { workspace = true }
+cw-storage-plus   = { workspace = true }
+cw-utils          = { workspace = true }
+cw-vault-standard = { workspace = true }
+mars-owner        = { workspace = true }
+mars-utils        = { workspace = true }
+mars-zapper-base  = { workspace = true }
+serde             = { workspace = true }
+serde-json-wasm   = { workspace = true }
+strum             = { workspace = true, features = ["derive"] }
+thiserror         = { workspace = true }
+tsify             = { workspace = true, optional = true }
+wasm-bindgen      = { workspace = true, optional = true }

@@ -1,10 +1,12 @@
 use cosmwasm_schema::cw_serde;
 use cosmwasm_std::{Coin, QuerierWrapper, StdError, StdResult, Uint128};
-use mars_red_bank_types::oracle::ActionKind;
 
-use crate::adapters::{
-    oracle::Oracle,
-    vault::{Vault, VaultPositionAmount},
+use crate::{
+    adapters::{
+        oracle::Oracle,
+        vault::{Vault, VaultPositionAmount},
+    },
+    oracle::ActionKind,
 };
 
 #[cw_serde]

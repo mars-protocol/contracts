@@ -7,13 +7,14 @@ use crate::{
         rewards_collector::RewardsCollector,
         vault::{Vault, VaultPosition, VaultUnchecked},
     },
+    health::AccountKind,
     traits::Coins,
 };
 
 #[cw_serde]
 #[derive(QueryResponses)]
 pub enum QueryMsg {
-    #[returns(mars_rover_health_types::AccountKind)]
+    #[returns(AccountKind)]
     AccountKind {
         account_id: String,
     },
@@ -176,5 +177,5 @@ pub struct ConfigResponse {
 #[cw_serde]
 pub struct Account {
     pub id: String,
-    pub kind: mars_rover_health_types::AccountKind,
+    pub kind: AccountKind,
 }

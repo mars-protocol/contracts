@@ -101,9 +101,6 @@ pub enum ContractError {
         request_coin: Coin,
     },
 
-    #[error("Issued incorrect action for vault type")]
-    MismatchedVaultType,
-
     #[error("No coin amount set for action")]
     NoAmount,
 
@@ -112,9 +109,6 @@ pub enum ContractError {
 
     #[error("Nothing lent to reclaim")]
     NoneLent,
-
-    #[error("Position {0} was not a valid position for this account id in this vault")]
-    NoPositionMatch(String),
 
     #[error(
         "{account_id:?} is not a liquidatable credit account. Health factor: {lqdt_health_factor:?}."

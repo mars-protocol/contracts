@@ -1,7 +1,8 @@
 use cosmwasm_schema::cw_serde;
 use cosmwasm_std::{Addr, Api, QuerierWrapper, StdResult};
 use cw721::TokensResponse;
-use mars_account_nft_types::msg::QueryMsg;
+
+use crate::account_nft::QueryMsg;
 
 #[cw_serde]
 pub struct AccountNftBase<T>(T);

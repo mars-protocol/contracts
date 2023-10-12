@@ -1,6 +1,7 @@
 use cosmwasm_schema::cw_serde;
 use cosmwasm_std::{Addr, Api, Decimal, QuerierWrapper, StdResult};
-use mars_red_bank_types::params::{AssetParams, QueryMsg, TotalDepositResponse, VaultConfig};
+
+use crate::params::{AssetParams, QueryMsg, TotalDepositResponse, VaultConfig};
 
 #[cw_serde]
 pub struct ParamsBase<T>(T);
