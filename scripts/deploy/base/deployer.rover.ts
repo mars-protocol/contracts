@@ -6,7 +6,7 @@ import fs from 'fs'
 import { InstantiateMsgs } from '../../types/instantiateMsgs'
 import { InstantiateMsg as NftInstantiateMsg } from '../../types/generated/mars-account-nft/MarsAccountNft.types'
 import { InstantiateMsg as VaultInstantiateMsg } from '../../types/generated/mars-mock-vault/MarsMockVault.types'
-import { InstantiateMsg as HealthInstantiateMsg } from '../../types/generated/mars-rover-health-types/MarsRoverHealthTypes.types'
+import { InstantiateMsg as HealthInstantiateMsg } from '../../types/generated/mars-rover-health/MarsRoverHealth.types'
 import { InstantiateMsg as ZapperInstantiateMsg } from '../../types/generated/mars-zapper-base/MarsZapperBase.types'
 import {
   ExecuteMsg as CreditManagerExecute,
@@ -26,7 +26,7 @@ import {
   MarsCreditManagerQueryClient,
 } from '../../types/generated/mars-credit-manager/MarsCreditManager.client'
 import { kebabCase } from 'lodash'
-import { MarsRoverHealthTypesClient } from '../../types/generated/mars-rover-health-types/MarsRoverHealthTypes.client'
+import { MarsRoverHealthClient } from '../../types/generated/mars-rover-health/MarsRoverHealth.client'
 
 export class Deployer {
   constructor(
@@ -80,7 +80,7 @@ export class Deployer {
     if (this.storage.actions.healthContractConfigUpdate) {
       printGray('Credit manager address')
     } else {
-      const hExec = new MarsRoverHealthTypesClient(
+      const hExec = new MarsRoverHealthClient(
         this.cwClient,
         this.deployerAddr,
         this.storage.addresses.healthContract!,

@@ -5,7 +5,7 @@ import init, {
   max_withdraw_estimate_js,
   max_borrow_estimate_js,
 } from '../../pkg-web'
-import { HealthValuesResponse } from '../../../types/generated/mars-rover-health-types/MarsRoverHealthTypes.types'
+import { HealthValuesResponse } from '../../../types/generated/mars-rover-health/MarsRoverHealth.types'
 import { DataFetcher } from '../../DataFetcher'
 import { osmosisTestnetConfig } from '../../../deploy/osmosis/testnet-config'
 

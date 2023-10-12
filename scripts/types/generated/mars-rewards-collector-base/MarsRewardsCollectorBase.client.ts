@@ -17,8 +17,11 @@ import {
   OwnerUpdate,
   Action,
   ActionAmount,
+  LiquidateRequestForVaultBaseForString,
+  VaultPositionType,
   UpdateConfig,
   ActionCoin,
+  VaultBaseForString,
   QueryMsg,
   ConfigResponse,
 } from './MarsRewardsCollectorBase.types'

@@ -85,7 +85,73 @@ export type OwnerUpdate =
   | 'clear_emergency_owner'
 export type Action =
   | {
+      deposit: Coin
+    }
+  | {
       withdraw: ActionCoin
+    }
+  | {
+      borrow: Coin
+    }
+  | {
+      lend: ActionCoin
+    }
+  | {
+      reclaim: ActionCoin
+    }
+  | {
+      claim_rewards: {}
+    }
+  | {
+      repay: {
+        coin: ActionCoin
+        recipient_account_id?: string | null
+      }
+    }
+  | {
+      enter_vault: {
+        coin: ActionCoin
+        vault: VaultBaseForString
+      }
+    }
+  | {
+      exit_vault: {
+        amount: Uint128
+        vault: VaultBaseForString
+      }
+    }
+  | {
+      request_vault_unlock: {
+        amount: Uint128
+        vault: VaultBaseForString
+      }
+    }
+  | {
+      exit_vault_unlocked: {
+        id: number
+        vault: VaultBaseForString
+      }
+    }
+  | {
+      liquidate: {
+        debt_coin: Coin
+        liquidatee_account_id: string
+        request: LiquidateRequestForVaultBaseForString
+      }
+    }
+  | {
+      swap_exact_in: {
+        coin_in: ActionCoin
+        denom_out: string
+        slippage: Decimal
+      }
+    }
+  | {
+      provide_liquidity: {
+        coins_in: ActionCoin[]
+        lp_token_out: string
+        slippage: Decimal
+      }
     }
   | {
       withdraw_liquidity: {
@@ -94,13 +160,27 @@ export type Action =
       }
     }
   | {
-      unknown: {}
+      refund_all_coin_balances: {}
     }
 export type ActionAmount =
   | 'account_balance'
   | {
       exact: Uint128
     }
+export type LiquidateRequestForVaultBaseForString =
+  | {
+      deposit: string
+    }
+  | {
+      lend: string
+    }
+  | {
+      vault: {
+        position_type: VaultPositionType
+        request_vault: VaultBaseForString
+      }
+    }
+export type VaultPositionType = 'u_n_l_o_c_k_e_d' | 'l_o_c_k_e_d' | 'u_n_l_o_c_k_i_n_g'
 export interface UpdateConfig {
   address_provider?: string | null
   channel_id?: string | null
@@ -114,6 +194,9 @@ export interface UpdateConfig {
 export interface ActionCoin {
   amount: ActionAmount
   denom: string
+}
+export interface VaultBaseForString {
+  address: string
 }
 export type QueryMsg = {
   config: {}
