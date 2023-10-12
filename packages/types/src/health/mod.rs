@@ -1,5 +1,6 @@
 mod account;
 mod error;
+#[allow(clippy::module_inception)]
 mod health;
 mod msg;
 
