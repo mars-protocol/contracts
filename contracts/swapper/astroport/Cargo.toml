@@ -22,16 +22,16 @@ library           = []
 osmosis-test-tube = ["cw-it/osmosis-test-tube", "mars-testing/osmosis-test-tube"]
 
 [dependencies]
-astroport           = { workspace = true }
-cosmwasm-schema     = { workspace = true }
-cosmwasm-std        = { workspace = true }
-cw2                 = { workspace = true }
-mars-red-bank-types = { workspace = true }
-mars-swapper-base   = { workspace = true }
+astroport         = { workspace = true }
+cosmwasm-schema   = { workspace = true }
+cosmwasm-std      = { workspace = true }
+cw2               = { workspace = true }
+mars-swapper-base = { workspace = true }
+mars-types        = { workspace = true }
 
 [dev-dependencies]
-anyhow            = { workspace = true }
-cw-it             = { workspace = true, features = ["astroport", "astroport-multi-test"] }
-mars-oracle-wasm  = { workspace = true }
-mars-testing      = { workspace = true, features = ["astroport"] }
-test-case         = { workspace = true }
+anyhow           = { workspace = true }
+cw-it            = { workspace = true, features = ["astroport", "astroport-multi-test"] }
+mars-oracle-wasm = { workspace = true }
+mars-testing     = { workspace = true, features = ["astroport"] }
+test-case        = { workspace = true }

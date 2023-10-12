@@ -35,9 +35,9 @@ mars-osmosis                   = { workspace = true }
 mars-owner                     = { workspace = true }
 mars-params                    = { workspace = true }
 mars-red-bank                  = { workspace = true }
-mars-red-bank-types            = { workspace = true }
 mars-rewards-collector-osmosis = { workspace = true }
 mars-swapper-astroport         = { workspace = true }
+mars-types                     = { workspace = true }
 prost                          = { workspace = true }
 pyth-sdk-cw                    = { workspace = true }
 

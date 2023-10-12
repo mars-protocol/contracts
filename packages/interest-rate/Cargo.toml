@@ -19,7 +19,7 @@ doctest = false
 backtraces = ["cosmwasm-std/backtraces"]
 
 [dependencies]
-cosmwasm-schema     = { workspace = true }
-cosmwasm-std        = { workspace = true }
-mars-red-bank-types = { workspace = true }
-mars-utils          = { workspace = true }
+cosmwasm-schema = { workspace = true }
+cosmwasm-std    = { workspace = true }
+mars-utils      = { workspace = true }
+mars-types      = { workspace = true }

@@ -2087,26 +2087,13 @@ dependencies = [
  "cw721 0.18.0",
  "cw721-base 0.16.0",
  "cw721-base 0.18.0",
- "mars-account-nft-types",
  "mars-mock-credit-manager",
  "mars-mock-rover-health",
  "mars-owner 2.0.0",
- "mars-red-bank-types 2.0.0",
- "mars-rover 1.0.0",
- "mars-rover 2.0.0",
- "mars-rover-health-types",
+ "mars-rover",
+ "mars-types",
  "serde_json",
  "thiserror",
-]
-
-[[package]]
-name = "mars-account-nft-types"
-version = "2.0.0"
-dependencies = [
- "cosmwasm-schema",
- "cosmwasm-std",
- "cw721 0.18.0",
- "cw721-base 0.18.0",
 ]
 
 [[package]]
@@ -2119,8 +2106,8 @@ dependencies = [
  "cw-storage-plus 1.1.0",
  "cw2 1.1.1",
  "mars-owner 2.0.0",
- "mars-red-bank-types 2.0.0",
  "mars-testing",
+ "mars-types",
  "serde",
  "thiserror",
 ]
@@ -2142,7 +2129,6 @@ dependencies = [
  "cw721-base 0.18.0",
  "itertools 0.11.0",
  "mars-account-nft",
- "mars-account-nft-types",
  "mars-address-provider",
  "mars-liquidation",
  "mars-mock-incentives",
@@ -2151,11 +2137,9 @@ dependencies = [
  "mars-mock-vault",
  "mars-owner 2.0.0",
  "mars-params",
- "mars-red-bank-types 2.0.0",
- "mars-rover 2.0.0",
  "mars-rover-health",
- "mars-rover-health-types",
  "mars-swapper-mock",
+ "mars-types",
  "mars-zapper-mock",
  "test-case",
 ]
@@ -2175,8 +2159,8 @@ version = "2.0.0"
 dependencies = [
  "cosmwasm-std",
  "mars-params",
- "mars-red-bank-types 2.0.0",
  "mars-testing",
+ "mars-types",
  "thiserror",
 ]
 
@@ -2191,8 +2175,8 @@ dependencies = [
  "mars-owner 2.0.0",
  "mars-red-bank",
  "mars-red-bank-types 1.0.0 (git+https://github.com/mars-protocol/red-bank?tag=v1.0.0)",
- "mars-red-bank-types 2.0.0",
  "mars-testing",
+ "mars-types",
  "mars-utils 2.0.0",
  "osmosis-std 0.19.2",
  "test-case",
@@ -2214,10 +2198,10 @@ dependencies = [
  "mars-osmosis",
  "mars-params",
  "mars-red-bank",
- "mars-red-bank-types 2.0.0",
  "mars-rewards-collector-osmosis",
  "mars-swapper-osmosis",
  "mars-testing",
+ "mars-types",
  "mars-utils 2.0.0",
  "osmosis-std 0.19.2",
  "osmosis-test-tube",
@@ -2230,7 +2214,7 @@ version = "2.0.0"
 dependencies = [
  "cosmwasm-schema",
  "cosmwasm-std",
- "mars-red-bank-types 2.0.0",
+ "mars-types",
  "mars-utils 2.0.0",
 ]
 
@@ -2240,7 +2224,7 @@ version = "1.0.0"
 dependencies = [
  "cosmwasm-std",
  "mars-health 2.0.0",
- "mars-red-bank-types 2.0.0",
+ "mars-types",
  "thiserror",
 ]
 
@@ -2252,8 +2236,7 @@ dependencies = [
  "cosmwasm-std",
  "cw-storage-plus 1.1.0",
  "cw-utils 1.0.2",
- "mars-rover 2.0.0",
- "mars-rover-health-types",
+ "mars-types",
  "thiserror",
 ]
 
@@ -2264,7 +2247,7 @@ dependencies = [
  "cosmwasm-schema",
  "cosmwasm-std",
  "cw-storage-plus 1.1.0",
- "mars-red-bank-types 2.0.0",
+ "mars-types",
 ]
 
 [[package]]
@@ -2274,7 +2257,7 @@ dependencies = [
  "cosmwasm-schema",
  "cosmwasm-std",
  "cw-storage-plus 1.1.0",
- "mars-red-bank-types 2.0.0",
+ "mars-types",
 ]
 
 [[package]]
@@ -2294,7 +2277,7 @@ dependencies = [
  "cosmwasm-std",
  "cw-storage-plus 1.1.0",
  "cw-utils 1.0.2",
- "mars-red-bank-types 2.0.0",
+ "mars-types",
 ]
 
 [[package]]
@@ -2304,7 +2287,7 @@ dependencies = [
  "cosmwasm-schema",
  "cosmwasm-std",
  "cw-storage-plus 1.1.0",
- "mars-rover-health-types",
+ "mars-types",
 ]
 
 [[package]]
@@ -2316,8 +2299,7 @@ dependencies = [
  "cw-storage-plus 1.1.0",
  "cw-utils 1.0.2",
  "cw-vault-standard 0.3.3",
- "mars-red-bank-types 2.0.0",
- "mars-rover 2.0.0",
+ "mars-types",
  "thiserror",
 ]
 
@@ -2329,7 +2311,7 @@ dependencies = [
  "cw-storage-plus 1.1.0",
  "cw2 1.1.1",
  "mars-owner 2.0.0",
- "mars-red-bank-types 2.0.0",
+ "mars-types",
  "mars-utils 2.0.0",
  "pyth-sdk-cw",
  "schemars",
@@ -2349,8 +2331,8 @@ dependencies = [
  "mars-oracle-base",
  "mars-osmosis",
  "mars-owner 2.0.0",
- "mars-red-bank-types 2.0.0",
  "mars-testing",
+ "mars-types",
  "mars-utils 2.0.0",
  "osmosis-std 0.19.2",
  "pyth-sdk-cw",
@@ -2370,8 +2352,8 @@ dependencies = [
  "cw2 1.1.1",
  "mars-oracle-base",
  "mars-owner 2.0.0",
- "mars-red-bank-types 2.0.0",
  "mars-testing",
+ "mars-types",
  "proptest",
  "pyth-sdk-cw",
  "test-case",
@@ -2425,8 +2407,8 @@ dependencies = [
  "cw2 1.1.1",
  "mars-interest-rate",
  "mars-owner 2.0.0",
- "mars-red-bank-types 2.0.0",
  "mars-testing",
+ "mars-types",
  "mars-utils 2.0.0",
  "test-case",
  "thiserror",
@@ -2448,8 +2430,8 @@ dependencies = [
  "mars-liquidation",
  "mars-owner 2.0.0",
  "mars-params",
- "mars-red-bank-types 2.0.0",
  "mars-testing",
+ "mars-types",
  "mars-utils 2.0.0",
  "pyth-sdk-cw",
  "test-case",
@@ -2482,21 +2464,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "mars-red-bank-types"
-version = "2.0.0"
-dependencies = [
- "cosmwasm-schema",
- "cosmwasm-std",
- "cw-storage-plus 1.1.0",
- "mars-owner 2.0.0",
- "mars-utils 2.0.0",
- "serde",
- "serde-json-wasm 1.0.0",
- "strum 0.25.0",
- "thiserror",
-]
-
-[[package]]
 name = "mars-rewards-collector-base"
 version = "2.0.0"
 dependencies = [
@@ -2505,7 +2472,7 @@ dependencies = [
  "cw-storage-plus 1.1.0",
  "cw2 1.1.1",
  "mars-owner 2.0.0",
- "mars-red-bank-types 2.0.0",
+ "mars-types",
  "mars-utils 2.0.0",
  "schemars",
  "serde",
@@ -2518,8 +2485,8 @@ version = "2.0.0"
 dependencies = [
  "cosmwasm-std",
  "cw2 1.1.1",
- "mars-red-bank-types 2.0.0",
  "mars-rewards-collector-base",
+ "mars-types",
  "neutron-sdk",
 ]
 
@@ -2533,9 +2500,9 @@ dependencies = [
  "cw2 1.1.1",
  "mars-osmosis",
  "mars-owner 2.0.0",
- "mars-red-bank-types 2.0.0",
  "mars-rewards-collector-base",
  "mars-testing",
+ "mars-types",
  "mars-utils 2.0.0",
  "osmosis-std 0.19.2",
  "serde",
@@ -2562,30 +2529,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "mars-rover"
-version = "2.0.0"
-dependencies = [
- "cosmwasm-schema",
- "cosmwasm-std",
- "cw-storage-plus 1.1.0",
- "cw-utils 1.0.2",
- "cw-vault-standard 0.3.3",
- "cw2 1.1.1",
- "cw721 0.18.0",
- "cw721-base 0.18.0",
- "mars-account-nft-types",
- "mars-liquidation",
- "mars-owner 2.0.0",
- "mars-params",
- "mars-red-bank-types 2.0.0",
- "mars-rover-health-types",
- "mars-zapper-base",
- "schemars",
- "serde",
- "thiserror",
-]
-
-[[package]]
 name = "mars-rover-health"
 version = "2.0.0"
 dependencies = [
@@ -2602,10 +2545,8 @@ dependencies = [
  "mars-mock-vault",
  "mars-owner 2.0.0",
  "mars-params",
- "mars-red-bank-types 2.0.0",
- "mars-rover 2.0.0",
  "mars-rover-health-computer",
- "mars-rover-health-types",
+ "mars-types",
  "thiserror",
 ]
 
@@ -2617,31 +2558,11 @@ dependencies = [
  "cosmwasm-schema",
  "cosmwasm-std",
  "cw-vault-standard 0.3.3",
- "mars-params",
- "mars-red-bank-types 2.0.0",
- "mars-rover 2.0.0",
- "mars-rover-health-types",
+ "mars-types",
  "proptest",
  "schemars",
  "serde",
  "serde_json",
- "tsify",
- "wasm-bindgen",
-]
-
-[[package]]
-name = "mars-rover-health-types"
-version = "2.0.0"
-dependencies = [
- "cosmwasm-schema",
- "cosmwasm-std",
- "mars-health 2.0.0",
- "mars-owner 2.0.0",
- "mars-red-bank-types 2.0.0",
- "schemars",
- "serde",
- "serde_json",
- "thiserror",
  "tsify",
  "wasm-bindgen",
 ]
@@ -2657,9 +2578,9 @@ dependencies = [
  "cw-it",
  "cw2 1.1.1",
  "mars-oracle-wasm",
- "mars-red-bank-types 2.0.0",
  "mars-swapper-base",
  "mars-testing",
+ "mars-types",
  "test-case",
 ]
 
@@ -2673,7 +2594,7 @@ dependencies = [
  "cw-storage-plus 1.1.0",
  "cw2 1.1.1",
  "mars-owner 2.0.0",
- "mars-red-bank-types 2.0.0",
+ "mars-types",
  "schemars",
  "serde",
  "thiserror",
@@ -2686,7 +2607,7 @@ dependencies = [
  "anyhow",
  "cosmwasm-std",
  "cw-multi-test",
- "mars-red-bank-types 2.0.0",
+ "mars-types",
 ]
 
 [[package]]
@@ -2701,9 +2622,9 @@ dependencies = [
  "cw2 1.1.1",
  "mars-osmosis",
  "mars-owner 2.0.0",
- "mars-red-bank-types 2.0.0",
  "mars-swapper-base",
  "mars-testing",
+ "mars-types",
  "osmosis-std 0.19.2",
 ]
 
@@ -2727,12 +2648,29 @@ dependencies = [
  "mars-owner 2.0.0",
  "mars-params",
  "mars-red-bank",
- "mars-red-bank-types 2.0.0",
  "mars-rewards-collector-osmosis",
  "mars-swapper-astroport",
+ "mars-types",
  "osmosis-std 0.19.2",
  "prost 0.11.9",
  "pyth-sdk-cw",
+]
+
+[[package]]
+name = "mars-types"
+version = "2.0.0"
+dependencies = [
+ "cosmwasm-schema",
+ "cosmwasm-std",
+ "cw-storage-plus 1.1.0",
+ "mars-owner 2.0.0",
+ "mars-utils 2.0.0",
+ "serde",
+ "serde-json-wasm 1.0.0",
+ "strum 0.25.0",
+ "thiserror",
+ "tsify",
+ "wasm-bindgen",
 ]
 
 [[package]]
@@ -2786,8 +2724,7 @@ dependencies = [
  "cosmwasm-std",
  "cw-storage-plus 1.1.0",
  "cw-utils 1.0.2",
- "mars-red-bank-types 2.0.0",
- "mars-rover 2.0.0",
+ "mars-types",
  "mars-zapper-base",
  "thiserror",
 ]

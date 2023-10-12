@@ -24,8 +24,8 @@ cosmwasm-std                = { workspace = true, features = ["stargate"] }
 cw2                         = { workspace = true }
 cw-storage-plus             = { workspace = true }
 mars-owner                  = { workspace = true }
-mars-red-bank-types         = { workspace = true }
 mars-rewards-collector-base = { workspace = true }
+mars-types                  = { workspace = true }
 
 [dev-dependencies]
 mars-osmosis = { workspace = true }
