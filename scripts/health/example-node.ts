@@ -8,7 +8,7 @@ import OsmosisAddresses from '../deploy/addresses/osmo-test-5-testnet-deployer-o
     max_withdraw_estimate_js,
     max_borrow_estimate_js,
     OsmosisAddresses.creditManager,
-    osmosisTestnetConfig.oracle.addr,
+    OsmosisAddresses.oracle.addr,
     osmosisTestnetConfig.params.addr,
     osmosisTestnetConfig.chain.rpcEndpoint,
   )

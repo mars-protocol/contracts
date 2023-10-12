@@ -1,4 +1,4 @@
-import { DeploymentConfig, AssetConfig, OracleConfig } from '../../types/config'
+import { DeploymentConfig, AssetConfig, OracleConfig } from '../../types/NEW_config'
 import { NeutronIbcConfig } from '../../types/generated/mars-rewards-collector-base/MarsRewardsCollectorBase.types'
 
 const axlUsdcDenom = 'ibc/F91EA2C0A23697A1048E08C2F787E3A58AC6F706A1CD2257A504925158CFC0F3'
@@ -8,7 +8,6 @@ const marsDenom = 'ibc/584A4A23736884E0C198FD1EE932455A9357A492A7B94324E4A02B562
 const protocolAdminAddr = 'neutron1ke0vqqzyymlp5esr8gjwuzh94ysnpvj8er5hm7'
 
 const marsNeutronChannelId = 'channel-97'
-const gasPrice = '0.01untrn'
 const chainId = 'pion-1'
 const rpcEndpoint = 'https://testnet-neutron-rpc.marsprotocol.io:443'
 
@@ -315,40 +314,53 @@ export const axlUSDCAsset: AssetConfig = {
 }
 
 export const neutronTestnetConfig: DeploymentConfig = {
-  oracleName: 'wasm',
-  oracleBaseDenom: 'uusd',
-  rewardsCollectorName: 'neutron',
-  rewardsCollectorNeutronIbcConfig: neutronIbcConfig,
-  atomDenom: atomDenom,
-  baseAssetDenom: 'untrn',
-  gasPrice: gasPrice,
-  chainId: chainId,
-  chainPrefix: 'neutron',
-  channelId: marsNeutronChannelId,
-  marsDenom: marsDenom,
-  rewardsCollectorTimeoutSeconds: 600,
-  rpcEndpoint: rpcEndpoint,
-  safetyFundFeeShare: '0.5',
-  deployerMnemonic:
-    'bundle bundle orchard jeans office umbrella bird around taxi arrive infant discover elder they joy misery photo crunch gift fancy pledge attend adult eight',
-  slippage_tolerance: '0.01',
-  base_asset_symbol: 'NTRN',
-  runTests: true,
   mainnet: false,
-  feeCollectorDenom: marsDenom,
-  safetyFundDenom: axlUsdcDenom,
-  swapRoutes: [atomUsdcRoute, atomMarsRoute, ntrnUsdcRoute, ntrnMarsRoute, usdcMarsRoute],
+  deployerMnemonic: 'TO BE INSERTED AT TIME OF DEPLOYMENT',
+  marsDenom: marsDenom,
+  atomDenom: atomDenom,
   safetyFundAddr: safetyFundAddr,
   protocolAdminAddr: protocolAdminAddr,
   feeCollectorAddr: feeCollectorAddr,
-  swapperDexName: 'astroport',
+  chain: {
+    baseDenom: 'untrn',
+    defaultGasPrice: 0.01,
+    id: chainId,
+    prefix: 'neutron',
+    rpcEndpoint: rpcEndpoint,
+  },
+  oracle: {
+    name: 'wasm',
+    baseDenom: 'uusd',
+    customInitParams: {
+      astroport_factory: astroportFactory,
+    },
+  },
+  rewardsCollector: {
+    name: 'neutron',
+    timeoutSeconds: 600,
+    channelId: marsNeutronChannelId,
+    safetyFundFeeShare: '0.5',
+    feeCollectorDenom: marsDenom,
+    safetyFundDenom: axlUsdcDenom,
+    slippageTolerance: '0.01',
+    neutronIbcConfig: neutronIbcConfig,
+  },
+  incentives: {
+    epochDuration: 604800, // 1 week
+    maxWhitelistedIncentiveDenoms: 10,
+  },
+  swapper: {
+    name: 'astroport',
+    routes: [atomUsdcRoute, atomMarsRoute, ntrnUsdcRoute, ntrnMarsRoute, usdcMarsRoute],
+  },
+  targetHealthFactor: '1.05',
+  creditLineCoins: [],
+  maxValueForBurn: '10000',
+  maxUnlockingPositions: '1',
+  maxSlippage: '0.2',
+  zapperContractName: 'mars_zapper_osmosis',
+  runTests: false,
   assets: [ntrnAsset, atomAsset, axlUSDCAsset],
   vaults: [],
   oracleConfigs: [usdOracle, axlUSDCOracle, atomOracle, ntrnOracle],
-  oracleCustomInitParams: {
-    astroport_factory: astroportFactory,
-  },
-  incentiveEpochDuration: 604800, // 1 week
-  maxWhitelistedIncentiveDenoms: 10,
-  targetHealthFactor: '1.2',
 }

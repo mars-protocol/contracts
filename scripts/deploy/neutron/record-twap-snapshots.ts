@@ -1,8 +1,8 @@
-import { setupDeployer } from '../base/setupDeployer'
-import { neutronTestnetConfig } from './config_testnet'
+import { setupDeployer } from '../base/setup-deployer'
+import { neutronTestnetConfig } from './testnet-config'
 
 async function main() {
-  const deployer = await setupDeployer(neutronTestnetConfig)
+  const deployer = await setupDeployer(neutronTestnetConfig, '')
 
   await deployer.recordTwapSnapshots(['untrn'])
 }
