@@ -12,6 +12,7 @@ pub mod red_bank;
 pub mod rewards_collector;
 pub mod swapper;
 pub mod traits;
+pub mod zapper;
 
 use cosmwasm_schema::cw_serde;
 

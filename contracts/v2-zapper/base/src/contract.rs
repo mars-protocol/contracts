@@ -5,8 +5,9 @@ use cosmwasm_std::{
     Response, StdResult, Uint128,
 };
 use cw_utils::one_coin;
+use mars_types::zapper::{CallbackMsg, ExecuteMsg, InstantiateMsg, QueryMsg};
 
-use crate::{CallbackMsg, ContractError, ExecuteMsg, InstantiateMsg, LpPool, QueryMsg};
+use crate::{ContractError, LpPool};
 
 pub struct ZapperBase<P>
 where

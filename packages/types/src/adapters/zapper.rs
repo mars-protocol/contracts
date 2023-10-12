@@ -2,7 +2,8 @@ use cosmwasm_schema::cw_serde;
 use cosmwasm_std::{
     to_binary, Addr, Api, Coin, CosmosMsg, QuerierWrapper, StdResult, Uint128, WasmMsg,
 };
-use mars_zapper_base::{ExecuteMsg, QueryMsg};
+
+use crate::zapper::{ExecuteMsg, QueryMsg};
 
 #[cw_serde]
 pub struct ZapperBase<T>(T);
