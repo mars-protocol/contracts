@@ -2160,7 +2160,6 @@ name = "mars-health"
 version = "2.0.0"
 dependencies = [
  "cosmwasm-std",
- "mars-params",
  "mars-testing",
  "mars-types",
  "thiserror",
@@ -2431,11 +2430,9 @@ dependencies = [
  "mars-interest-rate",
  "mars-liquidation",
  "mars-owner 2.0.0",
- "mars-params",
  "mars-testing",
  "mars-types",
  "mars-utils 2.0.0",
- "pyth-sdk-cw",
  "test-case",
  "thiserror",
 ]
@@ -2732,7 +2729,6 @@ dependencies = [
  "cw-storage-plus 1.1.0",
  "cw-utils 1.0.2",
  "mars-types",
- "mars-zapper-base",
  "thiserror",
 ]
 

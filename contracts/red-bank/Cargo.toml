@@ -29,10 +29,8 @@ mars-health        = { workspace = true }
 mars-interest-rate = { workspace = true }
 mars-liquidation   = { workspace = true }
 mars-owner         = { workspace = true }
-mars-params        = { workspace = true }
 mars-types         = { workspace = true }
 mars-utils         = { workspace = true }
-pyth-sdk-cw        = { workspace = true }
 thiserror          = { workspace = true }
 
 [dev-dependencies]

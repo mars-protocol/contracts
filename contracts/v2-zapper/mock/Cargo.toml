@@ -24,5 +24,4 @@ cosmwasm-std     = { workspace = true }
 cw-storage-plus  = { workspace = true }
 cw-utils         = { workspace = true }
 mars-types       = { workspace = true }
-mars-zapper-base = { workspace = true }
 thiserror        = { workspace = true }
