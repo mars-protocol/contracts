@@ -8,6 +8,6 @@ void (async function () {
       deployerMnemonic: 'TO BE INSERTED AT TIME OF DEPLOYMENT',
       multisigAddr: 'osmo14w4x949nwcrqgfe53pxs3k7x53p0gvlrq34l5n',
     },
-    label: 'mainnet',
+    label: 'multisig-owner',
   })
 })()

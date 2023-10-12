@@ -1,33 +1,38 @@
 import { readFile, writeFile } from 'fs/promises'
 import path from 'path'
-import { StorageItems } from '../../types/storageItems'
+import { StorageItems as StorageItems } from '../../types/NEW_storageItems'
 
 export const ARTIFACTS_PATH = '../artifacts/'
 
 export class Storage implements StorageItems {
   public addresses: StorageItems['addresses']
   public codeIds: StorageItems['codeIds']
+  public actions: StorageItems['actions']
   public execute: StorageItems['execute']
   public owner: StorageItems['owner']
-  private readonly chainId: string
 
-  constructor(chainId: string, items: StorageItems) {
+  constructor(
+    private chainId: string,
+    private label: string,
+    items: StorageItems,
+  ) {
     this.addresses = items.addresses
     this.codeIds = items.codeIds
+    this.actions = items.actions
     this.execute = items.execute
     this.owner = items.owner
-    this.chainId = chainId
   }
 
-  static async load(chainId: string): Promise<Storage> {
+  static async load(chainId: string, label: string): Promise<Storage> {
     try {
-      const data = await readFile(path.join(ARTIFACTS_PATH, `${chainId}.json`), 'utf8')
+      const data = await readFile(path.join(ARTIFACTS_PATH, `${chainId}-${label}.json`), 'utf8')
       const items = JSON.parse(data) as StorageItems
-      return new this(chainId, items)
+      return new this(chainId, label, items)
     } catch (e) {
-      return new this(chainId, {
+      return new this(chainId, label, {
         addresses: {},
         codeIds: {},
+        actions: {},
         execute: {
           assetsUpdated: [],
           marketsUpdated: [],
@@ -40,7 +45,7 @@ export class Storage implements StorageItems {
 
   async save() {
     await writeFile(
-      path.join(ARTIFACTS_PATH, `${this.chainId}.json`),
+      path.join(ARTIFACTS_PATH, `${this.chainId}-${this.label}.json`),
       JSON.stringify(this, null, 2),
     )
   }

@@ -16,6 +16,6 @@ void (async function () {
       },
       runTests: true,
     },
-    label: 'devnet',
+    label: 'deployer-owner',
   })
 })()
