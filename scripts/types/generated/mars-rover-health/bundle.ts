@@ -5,9 +5,9 @@
  * and run the @cosmwasm/ts-codegen generate command to regenerate this file.
  */
 
-import * as _39 from './MarsRoverHealth.types'
-import * as _40 from './MarsRoverHealth.client'
-import * as _41 from './MarsRoverHealth.react-query'
+import * as _30 from './MarsRoverHealth.types'
+import * as _31 from './MarsRoverHealth.client'
+import * as _32 from './MarsRoverHealth.react-query'
 export namespace contracts {
-  export const MarsRoverHealth = { ..._39, ..._40, ..._41 }
+  export const MarsRoverHealth = { ..._30, ..._31, ..._32 }
 }

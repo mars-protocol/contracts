@@ -5,9 +5,9 @@
  * and run the @cosmwasm/ts-codegen generate command to regenerate this file.
  */
 
-import * as _48 from './MarsSwapperBase.types'
-import * as _49 from './MarsSwapperBase.client'
-import * as _50 from './MarsSwapperBase.react-query'
+import * as _39 from './MarsSwapperBase.types'
+import * as _40 from './MarsSwapperBase.client'
+import * as _41 from './MarsSwapperBase.react-query'
 export namespace contracts {
-  export const MarsSwapperBase = { ..._48, ..._49, ..._50 }
+  export const MarsSwapperBase = { ..._39, ..._40, ..._41 }
 }

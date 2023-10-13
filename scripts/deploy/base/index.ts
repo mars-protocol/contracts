@@ -47,11 +47,11 @@ export const taskRunner = async ({ config, label }: TaskRunnerProps) => {
     await deployer.setConfigOnHealthContract()
     await deployer.transferNftContractOwnership()
     await deployer.setConfigOnCreditManagerContract()
-    await deployer.updateAddressProviderWithNewAddrs()
     await deployer.saveDeploymentAddrsToFile(label)
 
+    await deployer.updateAddressProvider()
+
     // setup
-    await deployer.updateAddressProvider() // CreditManager address in address-provider should be set once known
     for (const asset of config.assets) {
       await deployer.updateAssetParams(asset)
       await deployer.initializeMarket(asset)
@@ -59,10 +59,10 @@ export const taskRunner = async ({ config, label }: TaskRunnerProps) => {
     for (const vault of config.vaults) {
       await deployer.updateVaultConfig(vault)
     }
-    await deployer.setRoutes()
     for (const oracleConfig of config.oracleConfigs) {
       await deployer.setOracle(oracleConfig)
     }
+    await deployer.setRoutes()
 
     await deployer.grantCreditLines()
 
@@ -109,6 +109,8 @@ export const taskRunner = async ({ config, label }: TaskRunnerProps) => {
       await deployer.updateCreditManagerOwner()
       await deployer.updateHealthOwner()
       printGreen('It is confirmed that all contracts have transferred ownership to the Multisig')
+    } else {
+      printGreen('Owner remains the deployer address.')
     }
 
     printYellow('COMPLETE')

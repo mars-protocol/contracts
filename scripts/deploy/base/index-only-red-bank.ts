@@ -1,6 +1,6 @@
 import { setupDeployer } from './setup-deployer'
 import { DeploymentConfig } from '../../types/config'
-import { printGreen, printRed } from '../../utils/chalk'
+import { printGreen, printRed, printYellow } from '../../utils/chalk'
 
 export interface TaskRunnerProps {
   config: DeploymentConfig
@@ -11,7 +11,6 @@ export const taskRunner = async ({ config, label }: TaskRunnerProps) => {
   const deployer = await setupDeployer(config, label)
 
   try {
-    await deployer.saveStorage()
     await deployer.assertDeployerBalance()
 
     // Upload contracts
@@ -27,7 +26,6 @@ export const taskRunner = async ({ config, label }: TaskRunnerProps) => {
     await deployer.upload('params', `mars_params.wasm`)
 
     // Instantiate contracts
-    deployer.setOwnerAddr() // TODO can be removed, see index.ts
     await deployer.instantiateAddressProvider()
     await deployer.instantiateRedBank()
     await deployer.instantiateIncentives()
@@ -37,8 +35,9 @@ export const taskRunner = async ({ config, label }: TaskRunnerProps) => {
     await deployer.instantiateParams()
     await deployer.saveDeploymentAddrsToFile(label)
 
+    await deployer.updateAddressProvider()
+
     // setup
-    await deployer.updateAddressProvider() // CreditManager address in address-provider should be set once known
     for (const asset of config.assets) {
       await deployer.updateAssetParams(asset)
       await deployer.initializeMarket(asset)
@@ -46,10 +45,10 @@ export const taskRunner = async ({ config, label }: TaskRunnerProps) => {
     for (const vault of config.vaults) {
       await deployer.updateVaultConfig(vault)
     }
-    await deployer.setRoutes()
     for (const oracleConfig of config.oracleConfigs) {
       await deployer.setOracle(oracleConfig)
     }
+    await deployer.setRoutes()
 
     // run tests
     if (config.runTests) {
@@ -72,6 +71,8 @@ export const taskRunner = async ({ config, label }: TaskRunnerProps) => {
     } else {
       printGreen('Owner remains the deployer address.')
     }
+
+    printYellow('COMPLETE')
   } catch (e) {
     printRed(e)
   } finally {

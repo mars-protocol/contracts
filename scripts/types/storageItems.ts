@@ -13,6 +13,7 @@ export interface StorageItems {
     rewardsCollector?: number
     zapper?: number
   }
+
   addresses: {
     accountNft?: string
     addressProvider?: string
@@ -27,24 +28,19 @@ export interface StorageItems {
     rewardsCollector?: string
     zapper?: string
   }
+
   actions: {
+    addressProviderSet: Record<string, boolean>
     proposedNewOwner?: boolean
     acceptedOwnership?: boolean
-    setRoutes?: boolean
     seedMockVault?: boolean
     grantedCreditLines?: boolean
-    oraclePricesSet?: boolean
-    redBankMarketsSet?: boolean
+    redBankMarketsSet: string[]
+    assetsSet: string[]
+    vaultsSet: string[]
+    oraclePricesSet: string[]
+    routesSet: string[]
     healthContractConfigUpdate?: boolean
     creditManagerContractConfigUpdate?: boolean
   }
-  execute: {
-    addressProviderUpdated: Record<string, boolean>
-    assetsUpdated: string[]
-    marketsUpdated: string[]
-    vaultsUpdated: string[]
-    oraclePriceSet?: boolean
-    smokeTest?: boolean
-  }
-  owner?: string
 }

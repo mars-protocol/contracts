@@ -8,8 +8,6 @@ export class Storage implements StorageItems {
   public addresses: StorageItems['addresses']
   public codeIds: StorageItems['codeIds']
   public actions: StorageItems['actions']
-  public execute: StorageItems['execute']
-  public owner: StorageItems['owner']
 
   constructor(
     private chainId: string,
@@ -19,8 +17,6 @@ export class Storage implements StorageItems {
     this.addresses = items.addresses
     this.codeIds = items.codeIds
     this.actions = items.actions
-    this.execute = items.execute
-    this.owner = items.owner
   }
 
   static async load(chainId: string, label: string): Promise<Storage> {
@@ -32,12 +28,13 @@ export class Storage implements StorageItems {
       return new this(chainId, label, {
         addresses: {},
         codeIds: {},
-        actions: {},
-        execute: {
-          assetsUpdated: [],
-          marketsUpdated: [],
-          vaultsUpdated: [],
-          addressProviderUpdated: {},
+        actions: {
+          addressProviderSet: {},
+          redBankMarketsSet: [],
+          assetsSet: [],
+          vaultsSet: [],
+          oraclePricesSet: [],
+          routesSet: [],
         },
       })
     }

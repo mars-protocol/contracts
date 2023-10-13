@@ -89,15 +89,6 @@ export class Deployer {
     }
   }
 
-  setOwnerAddr() {
-    if (this.config.multisigAddr) {
-      this.storage.owner = this.config.multisigAddr
-    } else {
-      this.storage.owner = this.deployerAddr
-    }
-    printGreen(`Owner is set to: ${this.storage.owner}`)
-  }
-
   async upload(name: keyof Storage['codeIds'], file: string) {
     if (this.storage.codeIds[name]) {
       printGray(`Wasm already uploaded :: ${name} :: ${this.storage.codeIds[name]}`)
@@ -318,21 +309,6 @@ export class Deployer {
     this.storage.actions.grantedCreditLines = true
   }
 
-  async updateAddressProviderWithNewAddrs() {
-    const wallet = await getWallet(this.config.deployerMnemonic, this.config.chain.prefix)
-    const client = await setupClient(this.config, wallet)
-    const addr = await getAddress(wallet)
-
-    const msg = {
-      set_address: {
-        address: this.storage.addresses.creditManager!,
-        address_type: 'credit_manager',
-      },
-    }
-    printBlue('Updating address-provider contract with new CM address')
-    await client.execute(addr, this.storage.addresses.addressProvider!, msg, 'auto')
-  }
-
   async updateCreditManagerOwner() {
     if (!this.config.multisigAddr) throw new Error('No multisig addresses to transfer ownership to')
 
@@ -469,7 +445,7 @@ export class Deployer {
   }
 
   async updateAssetParams(assetConfig: AssetConfig) {
-    if (this.storage.execute.assetsUpdated.includes(assetConfig.denom)) {
+    if (this.storage.actions.assetsSet.includes(assetConfig.denom)) {
       printBlue(`${assetConfig.symbol} already updated in Params contract`)
       return
     }
@@ -501,10 +477,12 @@ export class Deployer {
     await this.cwClient.execute(this.deployerAddr, this.storage.addresses['params']!, msg, 'auto')
 
     printYellow(`${assetConfig.symbol} updated.`)
+
+    this.storage.actions.assetsSet.push(assetConfig.denom)
   }
 
   async initializeMarket(assetConfig: AssetConfig) {
-    if (this.storage.execute.marketsUpdated.includes(assetConfig.denom)) {
+    if (this.storage.actions.redBankMarketsSet.includes(assetConfig.denom)) {
       printBlue(`${assetConfig.symbol} already initialized in red-bank contract`)
       return
     }
@@ -529,11 +507,11 @@ export class Deployer {
 
     printYellow(`${assetConfig.symbol} initialized`)
 
-    this.storage.execute.marketsUpdated.push(assetConfig.denom)
+    this.storage.actions.redBankMarketsSet.push(assetConfig.denom)
   }
 
   async updateVaultConfig(vaultConfig: VaultConfig) {
-    if (this.storage.execute.vaultsUpdated.includes(vaultConfig.vault.addr)) {
+    if (this.storage.actions.vaultsSet.includes(vaultConfig.vault.addr)) {
       printBlue(`${vaultConfig.symbol} already updated in Params contract`)
       return
     }
@@ -550,11 +528,22 @@ export class Deployer {
     await this.cwClient.execute(this.deployerAddr, this.storage.addresses['params']!, msg, 'auto')
 
     printYellow(`${vaultConfig.symbol} updated.`)
+
+    this.storage.actions.vaultsSet.push(vaultConfig.vault.addr)
   }
+
   async setRoutes() {
     printBlue('Setting Swapper Routes')
     for (const route of this.config.swapper.routes) {
-      printBlue(`Setting route: ${route.denom_in} -> ${route.denom_out}`)
+      const routeKey = `${route.denom_in} -> ${route.denom_out}`
+
+      if (this.storage.actions.routesSet.includes(routeKey)) {
+        printBlue(`${routeKey} already set in Swapper contract`)
+        continue
+      }
+
+      printBlue(`Setting route: ${routeKey}`)
+
       if (isAstroportRoute(route.route)) {
         route.route.oracle = this.storage.addresses.oracle!
       }
@@ -567,6 +556,8 @@ export class Deployer {
         } satisfies SwapperExecuteMsg,
         'auto',
       )
+
+      this.storage.actions.routesSet.push(routeKey)
     }
 
     printYellow(`${this.config.chain.id} :: Swapper Routes have been set`)
@@ -611,10 +602,14 @@ export class Deployer {
         address: this.storage.addresses.params!,
         address_type: 'params',
       },
+      {
+        address: this.storage.addresses.creditManager!,
+        address_type: 'credit_manager',
+      },
     ]
 
     for (const addrObj of addressesToSet) {
-      if (this.storage.execute.addressProviderUpdated[addrObj.address_type]) {
+      if (this.storage.actions.addressProviderSet[addrObj.address_type]) {
         printBlue(`Address already updated for ${addrObj.address_type}.`)
         continue
       }
@@ -625,7 +620,7 @@ export class Deployer {
         { set_address: addrObj },
         'auto',
       )
-      this.storage.execute.addressProviderUpdated[addrObj.address_type] = true
+      this.storage.actions.addressProviderSet[addrObj.address_type] = true
     }
     printGreen('Address Provider update completed')
   }
@@ -643,7 +638,13 @@ export class Deployer {
 
     printYellow(`Twap snapshots recorded for denoms: ${denoms.join(',')}.`)
   }
+
   async setOracle(oracleConfig: OracleConfig) {
+    if (this.storage.actions.oraclePricesSet.includes(oracleConfig.denom)) {
+      printBlue(`${oracleConfig.denom} already set in Oracle contract`)
+      return
+    }
+
     printBlue(`Setting oracle price source: ${JSON.stringify(oracleConfig)}`)
 
     const msg = {
@@ -653,7 +654,7 @@ export class Deployer {
 
     printYellow('Oracle Price is set.')
 
-    this.storage.execute.oraclePriceSet = true
+    this.storage.actions.oraclePricesSet.push(oracleConfig.denom)
 
     try {
       const oracleResult = (await this.cwClient.queryContractSmart(this.storage.addresses.oracle!, {
@@ -826,10 +827,12 @@ export class Deployer {
   }
 
   async updateIncentivesContractOwner() {
+    if (!this.config.multisigAddr) throw new Error('No multisig addresses to transfer ownership to')
+
     const msg = {
       update_owner: {
         propose_new_owner: {
-          proposed: this.storage.owner,
+          proposed: this.config.multisigAddr,
         },
       },
     }
@@ -847,10 +850,12 @@ export class Deployer {
   }
 
   async updateRedBankContractOwner() {
+    if (!this.config.multisigAddr) throw new Error('No multisig addresses to transfer ownership to')
+
     const msg = {
       update_owner: {
         propose_new_owner: {
-          proposed: this.storage.owner,
+          proposed: this.config.multisigAddr,
         },
       },
     }
@@ -867,10 +872,12 @@ export class Deployer {
   }
 
   async updateOracleContractOwner() {
+    if (!this.config.multisigAddr) throw new Error('No multisig addresses to transfer ownership to')
+
     const msg = {
       update_owner: {
         propose_new_owner: {
-          proposed: this.storage.owner,
+          proposed: this.config.multisigAddr,
         },
       },
     }
@@ -884,10 +891,12 @@ export class Deployer {
   }
 
   async updateRewardsContractOwner() {
+    if (!this.config.multisigAddr) throw new Error('No multisig addresses to transfer ownership to')
+
     const msg = {
       update_owner: {
         propose_new_owner: {
-          proposed: this.storage.owner,
+          proposed: this.config.multisigAddr,
         },
       },
     }
@@ -909,10 +918,12 @@ export class Deployer {
   }
 
   async updateSwapperContractOwner() {
+    if (!this.config.multisigAddr) throw new Error('No multisig addresses to transfer ownership to')
+
     const msg = {
       update_owner: {
         propose_new_owner: {
-          proposed: this.storage.owner,
+          proposed: this.config.multisigAddr,
         },
       },
     }
@@ -926,10 +937,12 @@ export class Deployer {
   }
 
   async updateParamsContractOwner() {
+    if (!this.config.multisigAddr) throw new Error('No multisig addresses to transfer ownership to')
+
     const msg = {
       update_owner: {
         propose_new_owner: {
-          proposed: this.storage.owner,
+          proposed: this.config.multisigAddr,
         },
       },
     }
@@ -943,10 +956,12 @@ export class Deployer {
   }
 
   async updateAddressProviderContractOwner() {
+    if (!this.config.multisigAddr) throw new Error('No multisig addresses to transfer ownership to')
+
     const msg = {
       update_owner: {
         propose_new_owner: {
-          proposed: this.storage.owner,
+          proposed: this.config.multisigAddr,
         },
       },
     }
