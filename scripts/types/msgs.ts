@@ -11,7 +11,7 @@ import { InstantiateMsg as NftInstantiateMsg } from './generated/mars-account-nf
 import { InstantiateMsg as VaultInstantiateMsg } from './generated/mars-mock-vault/MarsMockVault.types'
 import { InstantiateMsg as RoverInstantiateMsg } from './generated/mars-credit-manager/MarsCreditManager.types'
 import { InstantiateMsg as ZapperInstantiateMsg } from './generated/mars-zapper-base/MarsZapperBase.types'
-import { InstantiateMsg as HealthInstantiateMsg } from './generated/mars-rover-health-types/MarsRoverHealthTypes.types'
+import { InstantiateMsg as HealthInstantiateMsg } from './generated/mars-rover-health/MarsRoverHealth.types'
 
 export type InstantiateMsgs =
   | ParamsInstantiateMsg
