@@ -127,7 +127,7 @@ export class Deployer {
 
   async setConfigOnHealthContract() {
     if (this.storage.actions.healthContractConfigUpdate) {
-      printGray('Credit manager address')
+      printGray('health contract config already updated')
     } else {
       const hExec = new MarsRoverHealthClient(
         this.cwClient,
@@ -135,7 +135,7 @@ export class Deployer {
         this.storage.addresses.health!,
       )
 
-      printBlue('Setting credit manager address & params on health contract config')
+      printBlue('Setting credit manager address on health contract config')
       await hExec.updateConfig({
         creditManager: this.storage.addresses.creditManager!,
       })

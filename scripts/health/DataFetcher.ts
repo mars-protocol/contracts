@@ -10,7 +10,7 @@ import {
   HealthComputer,
   VaultsData,
 } from '../types/generated/mars-rover-health-computer/MarsRoverHealthComputer.types'
-import { MarsMockOracleQueryClient } from '../types/generated/mars-mock-oracle/MarsMockOracle.client'
+import { MarsOracleOsmosisQueryClient } from '../types/generated/mars-oracle-osmosis/MarsOracleOsmosis.client'
 import { MarsMockVaultQueryClient } from '../types/generated/mars-mock-vault/MarsMockVault.client'
 import { MarsParamsQueryClient } from '../types/generated/mars-params/MarsParams.client'
 import {
@@ -57,7 +57,7 @@ export class DataFetcher {
   }
 
   fetchPrices = async (denoms: string[]): Promise<DenomsData['prices']> => {
-    const oQuery = new MarsMockOracleQueryClient(await this.getClient(), this.oracleAddr)
+    const oQuery = new MarsOracleOsmosisQueryClient(await this.getClient(), this.oracleAddr)
     const promises = denoms.map(async (denom) => await oQuery.price({ denom }))
     const responses = await Promise.all(promises)
     return responses.reduce(
