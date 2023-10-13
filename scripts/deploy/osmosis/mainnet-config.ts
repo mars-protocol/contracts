@@ -46,7 +46,7 @@ export const atomOsmoPoolAsset: AssetConfig = {
     borrow_enabled: false,
     deposit_enabled: false,
   },
-  deposit_cap: '10000000000000',
+  deposit_cap: '0',
   reserve_factor: '0.1',
   interest_rate_model: {
     optimal_utilization_rate: '0.6',
@@ -75,7 +75,7 @@ export const usdcOsmoPoolAsset: AssetConfig = {
     borrow_enabled: false,
     deposit_enabled: false,
   },
-  deposit_cap: '10000000000000',
+  deposit_cap: '0',
   reserve_factor: '0.1',
   interest_rate_model: {
     optimal_utilization_rate: '0.6',
@@ -104,7 +104,7 @@ export const wethOsmoPoolAsset: AssetConfig = {
     borrow_enabled: false,
     deposit_enabled: false,
   },
-  deposit_cap: '10000000000000',
+  deposit_cap: '0',
   reserve_factor: '0.1',
   interest_rate_model: {
     optimal_utilization_rate: '0.6',
@@ -133,7 +133,7 @@ export const wbtcOsmoPoolAsset: AssetConfig = {
     borrow_enabled: false,
     deposit_enabled: false,
   },
-  deposit_cap: '10000000000000',
+  deposit_cap: '0',
   reserve_factor: '0.1',
   interest_rate_model: {
     optimal_utilization_rate: '0.6',
@@ -162,7 +162,7 @@ export const atomStAtomPoolAsset: AssetConfig = {
     borrow_enabled: false,
     deposit_enabled: false,
   },
-  deposit_cap: '10000000000000',
+  deposit_cap: '0',
   reserve_factor: '0.1',
   interest_rate_model: {
     optimal_utilization_rate: '0.6',
@@ -278,7 +278,7 @@ export const stAtomAsset: AssetConfig = {
     borrow_enabled: false,
     deposit_enabled: true,
   },
-  deposit_cap: '200000000000',
+  deposit_cap: '350000000000',
   reserve_factor: '0.1',
   interest_rate_model: {
     optimal_utilization_rate: '0.6',
@@ -336,7 +336,7 @@ export const axlUSDCAsset: AssetConfig = {
     borrow_enabled: true,
     deposit_enabled: true,
   },
-  deposit_cap: '3000000000000',
+  deposit_cap: '3500000000000',
   reserve_factor: '0.1',
   interest_rate_model: {
     optimal_utilization_rate: '0.8',
@@ -774,6 +774,14 @@ const swapperRoutes = [
     ],
   },
   {
+    denom_in: axl,
+    denom_out: mars,
+    route: [
+      { pool_id: 812, token_out_denom: osmo },
+      { pool_id: 907, token_out_denom: mars },
+    ],
+  },
+  {
     denom_in: stAtom,
     denom_out: osmo,
     route: [
@@ -860,6 +868,14 @@ const swapperRoutes = [
       { pool_id: 704, token_out_denom: weth },
     ],
   },
+  {
+    denom_in: wbtc,
+    denom_out: mars,
+    route: [
+      { pool_id: 712, token_out_denom: osmo },
+      { pool_id: 907, token_out_denom: mars },
+    ],
+  },
   { denom_in: axlUSDC, denom_out: osmo, route: [{ pool_id: 678, token_out_denom: osmo }] },
   {
     denom_in: axlUSDC,
@@ -942,6 +958,14 @@ const swapperRoutes = [
     route: [
       { pool_id: 704, token_out_denom: osmo },
       { pool_id: 678, token_out_denom: axlUSDC },
+    ],
+  },
+  {
+    denom_in: weth,
+    denom_out: mars,
+    route: [
+      { pool_id: 704, token_out_denom: osmo },
+      { pool_id: 907, token_out_denom: mars },
     ],
   },
   {
