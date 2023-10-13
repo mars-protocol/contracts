@@ -1,8 +1,8 @@
 use cosmwasm_std::{from_binary, Decimal};
 use mars_oracle_base::ContractError;
 use mars_oracle_osmosis::{contract::entry, OsmosisPriceSourceUnchecked};
-use mars_red_bank_types::oracle::{ActionKind, PriceResponse, QueryMsg};
 use mars_testing::mock_env_at_block_time;
+use mars_types::oracle::{ActionKind, PriceResponse, QueryMsg};
 use pyth_sdk_cw::{Price, PriceFeed, PriceFeedResponse, PriceIdentifier};
 
 use super::helpers;

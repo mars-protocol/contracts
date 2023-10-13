@@ -1,6 +1,6 @@
 [package]
-name          = "mars-red-bank-types"
-description   = "Messages and types for Red Bank smart contracts"
+name          = "mars-types"
+description   = "Messages and types for Mars smart contracts"
 version       = { workspace = true }
 authors       = { workspace = true }
 edition       = { workspace = true }
@@ -17,14 +17,21 @@ doctest = false
 # for quicker tests, cargo test --lib
 # for more explicit tests, cargo test --features=backtraces
 backtraces = ["cosmwasm-std/backtraces"]
+javascript = ["tsify", "wasm-bindgen"]
 
 [dependencies]
-cosmwasm-schema = { workspace = true }
-cosmwasm-std    = { workspace = true }
-cw-storage-plus = { workspace = true }
-mars-owner      = { workspace = true }
-mars-utils      = { workspace = true }
-serde           = { workspace = true }
-serde-json-wasm = { workspace = true }
-strum           = { workspace = true, features = ["derive"] }
-thiserror       = { workspace = true }
+cosmwasm-schema   = { workspace = true }
+cosmwasm-std      = { workspace = true }
+cw721             = { workspace = true }
+cw721-base        = { workspace = true }
+cw-storage-plus   = { workspace = true }
+cw-utils          = { workspace = true }
+cw-vault-standard = { workspace = true }
+mars-owner        = { workspace = true }
+mars-utils        = { workspace = true }
+serde             = { workspace = true }
+serde-json-wasm   = { workspace = true }
+strum             = { workspace = true, features = ["derive"] }
+thiserror         = { workspace = true }
+tsify             = { workspace = true, optional = true }
+wasm-bindgen      = { workspace = true, optional = true }

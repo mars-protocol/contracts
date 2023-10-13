@@ -2,12 +2,10 @@ use cosmwasm_std::{
     Addr, BalanceResponse, BankQuery, Coin, Decimal, DepsMut, Env, QuerierWrapper, QueryRequest,
     Response, StdResult,
 };
-use mars_rover::{
-    error::{ContractError::BalanceChange, ContractResult},
-    msg::execute::ChangeExpected,
-};
+use mars_types::credit_manager::ChangeExpected;
 
 use crate::{
+    error::{ContractError::BalanceChange, ContractResult},
     state::REWARDS_COLLECTOR,
     utils::{decrement_coin_balance, increment_coin_balance},
 };

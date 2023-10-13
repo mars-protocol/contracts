@@ -1,14 +1,14 @@
 use cosmwasm_std::{coins, Addr, Decimal, Event, Uint128};
+use mars_credit_manager::error::{ContractError, ContractError::NotLiquidatable};
 use mars_mock_oracle::msg::CoinPrice;
-use mars_red_bank_types::oracle::ActionKind;
-use mars_rover::{
-    error::{ContractError, ContractError::NotLiquidatable},
-    msg::execute::{
+use mars_types::{
+    credit_manager::{
         Action::{Borrow, Deposit, Lend, Liquidate},
         LiquidateRequest,
     },
+    health::AccountKind,
+    oracle::ActionKind,
 };
-use mars_rover_health_types::AccountKind;
 
 use crate::helpers::{
     assert_err, get_coin, get_debt, uatom_info, ujake_info, uosmo_info, AccountToFund, MockEnv,

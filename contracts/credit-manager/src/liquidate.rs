@@ -1,13 +1,9 @@
 use cosmwasm_std::{Coin, DepsMut, QuerierWrapper, Uint128};
 use mars_liquidation::liquidation::calculate_liquidation_amounts;
-use mars_red_bank_types::oracle::ActionKind;
-use mars_rover::{
-    adapters::oracle::Oracle,
-    error::{ContractError, ContractResult},
-    traits::Stringify,
-};
+use mars_types::{adapters::oracle::Oracle, oracle::ActionKind, traits::Stringify};
 
 use crate::{
+    error::{ContractError, ContractResult},
     health::query_health_values,
     repay::current_debt_for_denom,
     state::{ORACLE, PARAMS},

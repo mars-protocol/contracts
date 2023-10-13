@@ -1,11 +1,10 @@
 use cosmwasm_std::Addr;
-use mars_rover::{
-    error::ContractError,
-    msg::execute::{
-        Action::{Deposit, EnterVault},
-        CallbackMsg,
-    },
+use mars_credit_manager::error::ContractError;
+use mars_types::credit_manager::{
+    Action::{Deposit, EnterVault},
+    CallbackMsg,
 };
+use mars_utils::error::GuardError;
 
 use crate::helpers::{assert_err, lp_token_info, unlocked_vault_info, AccountToFund, MockEnv};
 
@@ -46,7 +45,7 @@ fn reentrancy_guard_protects_against_evil_vault() {
         &[lp_token.to_coin(200)],
     );
 
-    assert_err(res, ContractError::ReentrancyGuard("Reentrancy guard is active".to_string()));
+    assert_err(res, GuardError::Active {}.into());
 }
 
 #[test]
@@ -62,8 +61,5 @@ fn only_credit_manager_can_remove_guard() {
 fn removing_while_inactive() {
     let mut mock = MockEnv::new().build().unwrap();
     let res = mock.execute_callback(&mock.rover.clone(), CallbackMsg::RemoveReentrancyGuard {});
-    assert_err(
-        res,
-        ContractError::ReentrancyGuard("Invalid reentrancy guard state transition".to_string()),
-    );
+    assert_err(res, GuardError::InvalidState {}.into());
 }

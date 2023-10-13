@@ -1,6 +1,6 @@
 use cosmwasm_std::{DepsMut, MessageInfo, Response};
 use mars_owner::OwnerUpdate;
-use mars_red_bank_types::red_bank::CreateOrUpdateConfig;
+use mars_types::red_bank::CreateOrUpdateConfig;
 use mars_utils::helpers::option_string_to_addr;
 
 use crate::{

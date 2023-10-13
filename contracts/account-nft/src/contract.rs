@@ -5,10 +5,7 @@ use cosmwasm_std::{
 };
 use cw2::set_contract_version;
 use cw721_base::Cw721Contract;
-use mars_account_nft_types::{
-    msg::{ExecuteMsg, InstantiateMsg, MigrateV1ToV2, QueryMsg},
-    nft_config::NftConfig,
-};
+use mars_types::account_nft::{ExecuteMsg, InstantiateMsg, MigrateV1ToV2, NftConfig, QueryMsg};
 
 use crate::{
     error::ContractError,

@@ -1,18 +1,16 @@
 use std::collections::HashMap;
 
 use cosmwasm_std::{Addr, Coin, Decimal, Uint128};
-use mars_red_bank_types::params::{
-    AssetParams, CmSettings, HlsParams, LiquidationBonus, RedBankSettings, VaultConfig,
-};
-use mars_rover::{
+use mars_rover_health_computer::{DenomsData, HealthComputer, VaultsData};
+use mars_types::{
     adapters::vault::{
         CoinValue, LockingVaultAmount, UnlockingPositions, Vault, VaultAmount, VaultPosition,
         VaultPositionAmount, VaultPositionValue,
     },
-    msg::query::{DebtAmount, Positions},
+    credit_manager::{DebtAmount, Positions},
+    health::AccountKind,
+    params::{AssetParams, CmSettings, HlsParams, LiquidationBonus, RedBankSettings, VaultConfig},
 };
-use mars_rover_health_computer::{DenomsData, HealthComputer, VaultsData};
-use mars_rover_health_types::AccountKind;
 use proptest::{
     collection::vec,
     prelude::{Just, Strategy},
@@ -172,10 +170,7 @@ fn random_param_maps() -> impl Strategy<Value = (DenomsData, VaultsData)> {
     random_denoms_data().prop_flat_map(|denoms_data| {
         vec(random_vault(denoms_data.clone()), 0..=3).prop_map(move |vaults| {
             let mut vault_values = HashMap::new();
-            let mut vault_configs: HashMap<
-                Addr,
-                mars_red_bank_types::params::VaultConfigBase<Addr>,
-            > = HashMap::new();
+            let mut vault_configs: HashMap<Addr, VaultConfig> = HashMap::new();
 
             for (addr, position_val, config) in vaults {
                 let addr = Addr::unchecked(addr.clone());

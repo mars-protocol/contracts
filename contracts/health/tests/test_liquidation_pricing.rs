@@ -1,15 +1,15 @@
 use std::str::FromStr;
 
 use cosmwasm_std::{Coin, Decimal, StdError, Uint128};
-use mars_red_bank_types::{
+use mars_types::{
+    credit_manager::{DebtAmount, Positions},
+    health::AccountKind,
     oracle::ActionKind,
     params::{
         AssetParamsUnchecked, AssetParamsUpdate::AddOrUpdate, CmSettings, HlsParamsUnchecked,
         LiquidationBonus, RedBankSettings,
     },
 };
-use mars_rover::msg::query::{DebtAmount, Positions};
-use mars_rover_health_types::AccountKind;
 
 use crate::helpers::MockEnv;
 

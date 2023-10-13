@@ -4,7 +4,7 @@ use cosmwasm_std::{
     Coin, CosmosMsg, CustomMsg, CustomQuery, Decimal, Empty, Env, IbcMsg, IbcTimeout,
     QuerierWrapper, Uint128,
 };
-use mars_red_bank_types::rewards_collector::Config;
+use mars_types::rewards_collector::Config;
 use schemars::JsonSchema;
 use serde::{de::DeserializeOwned, Serialize};
 

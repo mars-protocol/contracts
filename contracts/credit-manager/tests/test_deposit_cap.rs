@@ -4,10 +4,10 @@ pub mod helpers;
 use std::collections::HashMap;
 
 use cosmwasm_std::{Addr, Coin, Coins, Decimal, StdResult, Uint128};
-use mars_red_bank_types::params::{AssetParams, AssetParamsUpdate};
-use mars_rover::{
-    error::ContractError,
-    msg::execute::{Action, ActionAmount, ActionCoin},
+use mars_credit_manager::error::ContractError;
+use mars_types::{
+    credit_manager::{Action, ActionAmount, ActionCoin},
+    params::{AssetParams, AssetParamsUpdate},
 };
 use test_case::test_case;
 

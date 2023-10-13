@@ -12,11 +12,11 @@ use mars_red_bank::{
     migrations::v2_0_0::v1_state::{self, OwnerSetNoneProposed},
     state::{COLLATERALS, CONFIG, MARKETS, MIGRATION_GUARD, OWNER},
 };
-use mars_red_bank_types::{
+use mars_testing::mock_dependencies;
+use mars_types::{
     keys::{UserId, UserIdKey},
     red_bank::{Collateral, ExecuteMsg, InterestRateModel, Market, MigrateV1ToV2},
 };
-use mars_testing::mock_dependencies;
 use mars_utils::error::GuardError;
 
 #[test]

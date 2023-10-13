@@ -6,8 +6,8 @@ pub mod entry {
         entry_point, Binary, Deps, DepsMut, Empty, Env, MessageInfo, Response, StdResult,
     };
     use cw2::set_contract_version;
-    use mars_red_bank_types::rewards_collector::{ExecuteMsg, InstantiateMsg, QueryMsg};
     use mars_rewards_collector_base::{contract::Collector, ContractError, ContractResult};
+    use mars_types::rewards_collector::{ExecuteMsg, InstantiateMsg, QueryMsg};
 
     use crate::migrations;
 

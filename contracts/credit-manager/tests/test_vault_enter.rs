@@ -1,11 +1,11 @@
 use cosmwasm_std::{
     coin, Addr, Decimal, OverflowError, OverflowOperation::Sub, StdError::NotFound, Uint128,
 };
+use mars_credit_manager::error::ContractError;
 use mars_mock_vault::contract::STARTING_VAULT_SHARES;
-use mars_rover::{
+use mars_types::{
     adapters::vault::VaultBase,
-    error::ContractError,
-    msg::execute::{
+    credit_manager::{
         Action::{Deposit, EnterVault},
         ActionAmount, ActionCoin,
     },

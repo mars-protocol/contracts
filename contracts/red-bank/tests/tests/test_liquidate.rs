@@ -7,7 +7,11 @@ use cosmwasm_std::{
 };
 use cw_utils::PaymentError;
 use mars_red_bank::{contract::execute, error::ContractError};
-use mars_red_bank_types::{
+use mars_testing::{
+    integration::mock_env::{MockEnv, MockEnvBuilder},
+    mock_env_at_block_time,
+};
+use mars_types::{
     address_provider::MarsAddressType,
     incentives,
     params::{AssetParams, CmSettings, LiquidationBonus, RedBankSettings},
@@ -15,10 +19,6 @@ use mars_red_bank_types::{
         ExecuteMsg, InitOrUpdateAssetParams, InterestRateModel, Market, QueryMsg,
         UserCollateralResponse, UserDebtResponse,
     },
-};
-use mars_testing::{
-    integration::mock_env::{MockEnv, MockEnvBuilder},
-    mock_env_at_block_time,
 };
 
 use super::helpers::{

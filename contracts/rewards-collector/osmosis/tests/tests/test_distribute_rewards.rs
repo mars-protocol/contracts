@@ -1,10 +1,10 @@
 use cosmwasm_std::{
     coin, testing::mock_env, CosmosMsg, IbcMsg, IbcTimeout, SubMsg, Timestamp, Uint128,
 };
-use mars_red_bank_types::rewards_collector::ExecuteMsg;
 use mars_rewards_collector_base::ContractError;
 use mars_rewards_collector_osmosis::entry::execute;
 use mars_testing::{mock_env as mock_env_at_height_and_time, mock_info, MockEnvParams};
+use mars_types::rewards_collector::ExecuteMsg;
 
 use super::helpers;
 

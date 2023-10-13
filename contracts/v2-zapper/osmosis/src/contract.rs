@@ -2,7 +2,8 @@ use cosmwasm_std::{
     entry_point, Binary, Deps, DepsMut, Empty, Env, MessageInfo, Response, StdResult,
 };
 use cw2::set_contract_version;
-use mars_zapper_base::{ContractError, ExecuteMsg, InstantiateMsg, QueryMsg, ZapperBase};
+use mars_types::zapper::{ExecuteMsg, InstantiateMsg, QueryMsg};
+use mars_zapper_base::{ContractError, ZapperBase};
 
 use crate::{lp_pool::OsmosisLpPool, migrations};
 

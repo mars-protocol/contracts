@@ -1,10 +1,8 @@
 use cosmwasm_std::{coins, Addr};
-use mars_rover::{
-    error::ContractError,
-    msg::execute::{
-        Action::{Borrow, Deposit, Liquidate},
-        LiquidateRequest,
-    },
+use mars_credit_manager::error::ContractError;
+use mars_types::credit_manager::{
+    Action::{Borrow, Deposit, Liquidate},
+    LiquidateRequest,
 };
 
 use crate::helpers::{assert_err, uatom_info, uosmo_info, AccountToFund, MockEnv};

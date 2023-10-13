@@ -2,13 +2,13 @@ use cosmwasm_std::{
     entry_point, to_binary, Binary, Deps, DepsMut, Env, MessageInfo, Reply, Response,
 };
 use cw2::set_contract_version;
-use mars_rover::{
+use mars_types::{
     adapters::vault::VAULT_REQUEST_REPLY_ID,
-    error::{ContractError, ContractResult},
-    msg::{ExecuteMsg, InstantiateMsg, MigrateMsg, QueryMsg},
+    credit_manager::{ExecuteMsg, InstantiateMsg, MigrateMsg, QueryMsg},
 };
 
 use crate::{
+    error::{ContractError, ContractResult},
     execute::{create_credit_account, dispatch_actions, execute_callback},
     instantiate::store_config,
     migrations,

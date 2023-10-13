@@ -20,20 +20,20 @@ backtraces = ["cosmwasm-std/backtraces"]
 library    = []
 
 [dependencies]
-cosmwasm-schema     = { workspace = true }
-cosmwasm-std        = { workspace = true }
-cw2                 = { workspace = true }
-cw-storage-plus     = { workspace = true }
-ica-oracle          = { workspace = true }
-mars-oracle-base    = { workspace = true }
-mars-osmosis        = { workspace = true }
-mars-owner          = { workspace = true }
-mars-utils          = { workspace = true }
-mars-red-bank-types = { workspace = true }
-osmosis-std         = { workspace = true }
-pyth-sdk-cw         = { workspace = true }
-schemars            = { workspace = true }
-serde               = { workspace = true }
+cosmwasm-schema  = { workspace = true }
+cosmwasm-std     = { workspace = true }
+cw2              = { workspace = true }
+cw-storage-plus  = { workspace = true }
+ica-oracle       = { workspace = true }
+mars-oracle-base = { workspace = true }
+mars-osmosis     = { workspace = true }
+mars-owner       = { workspace = true }
+mars-utils       = { workspace = true }
+mars-types       = { workspace = true }
+osmosis-std      = { workspace = true }
+pyth-sdk-cw      = { workspace = true }
+schemars         = { workspace = true }
+serde            = { workspace = true }
 
 [dev-dependencies]
 cosmwasm-schema = { workspace = true }

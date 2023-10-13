@@ -1,5 +1,5 @@
 use cosmwasm_std::{Addr, DepsMut, MessageInfo, Response, StdResult, Uint128};
-use mars_red_bank_types::red_bank::Debt;
+use mars_types::red_bank::Debt;
 
 use crate::{
     error::ContractError,

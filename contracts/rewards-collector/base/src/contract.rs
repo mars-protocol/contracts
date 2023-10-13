@@ -4,11 +4,11 @@ use cosmwasm_std::{
 };
 use cw_storage_plus::Item;
 use mars_owner::{Owner, OwnerInit::SetInitialOwner, OwnerUpdate};
-use mars_red_bank_types::{
+use mars_types::{
     address_provider::{self, AddressResponseItem, MarsAddressType},
+    credit_manager::{self, Action},
     incentives, red_bank,
     rewards_collector::{
-        credit_manager::{self, Action},
         Config, ConfigResponse, ExecuteMsg, InstantiateMsg, QueryMsg, UpdateConfig,
     },
 };
@@ -280,7 +280,7 @@ where
             .querier
             .query_wasm_smart::<AddressResponseItem>(
                 cfg.address_provider,
-                &mars_red_bank_types::address_provider::QueryMsg::Address(MarsAddressType::Swapper),
+                &mars_types::address_provider::QueryMsg::Address(MarsAddressType::Swapper),
             )?
             .address;
 
@@ -299,7 +299,7 @@ where
             let coin_in_safety_fund = coin(amount_safety_fund.u128(), denom.clone());
             messages.push(WasmMsg::Execute {
                 contract_addr: swapper_addr.clone(),
-                msg: to_binary(&mars_red_bank_types::swapper::ExecuteMsg::<Empty>::SwapExactIn {
+                msg: to_binary(&mars_types::swapper::ExecuteMsg::<Empty>::SwapExactIn {
                     coin_in: coin_in_safety_fund.clone(),
                     denom_out: cfg.safety_fund_denom,
                     slippage: cfg.slippage_tolerance,
@@ -314,7 +314,7 @@ where
             let coin_in_fee_collector = coin(amount_fee_collector.u128(), denom.clone());
             messages.push(WasmMsg::Execute {
                 contract_addr: swapper_addr,
-                msg: to_binary(&mars_red_bank_types::swapper::ExecuteMsg::<Empty>::SwapExactIn {
+                msg: to_binary(&mars_types::swapper::ExecuteMsg::<Empty>::SwapExactIn {
                     coin_in: coin_in_fee_collector.clone(),
                     denom_out: cfg.fee_collector_denom,
                     slippage: cfg.slippage_tolerance,

@@ -7,13 +7,15 @@ use cw721_base::{
     Ownership,
 };
 use cw_multi_test::{App, AppResponse, BasicApp, Executor};
-use mars_account_nft_types::{
-    msg::{ExecuteMsg, ExecuteMsg::UpdateConfig, MigrateV1ToV2, QueryMsg},
-    nft_config::{NftConfigUpdates, UncheckedNftConfig},
-};
 use mars_mock_credit_manager::msg::ExecuteMsg::SetAccountKindResponse;
 use mars_mock_rover_health::msg::ExecuteMsg::SetHealthResponse;
-use mars_rover_health_types::{AccountKind, HealthValuesResponse};
+use mars_types::{
+    account_nft::{
+        ExecuteMsg, ExecuteMsg::UpdateConfig, MigrateV1ToV2, NftConfigUpdates, QueryMsg,
+        UncheckedNftConfig,
+    },
+    health::{AccountKind, HealthValuesResponse},
+};
 
 use crate::helpers::MockEnvBuilder;
 

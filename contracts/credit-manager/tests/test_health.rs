@@ -1,23 +1,17 @@
 use std::ops::{Add, Mul};
 
 use cosmwasm_std::{coin, coins, Addr, Coin, Decimal, Uint128};
-use mars_credit_manager::borrow::DEFAULT_DEBT_SHARES_PER_COIN_BORROWED;
+use mars_credit_manager::{borrow::DEFAULT_DEBT_SHARES_PER_COIN_BORROWED, error::ContractError};
 use mars_mock_oracle::msg::CoinPrice;
-use mars_red_bank_types::{
+use mars_types::{
+    credit_manager::{
+        Action::{Borrow, Deposit, EnterVault, Repay, Withdraw},
+        ActionAmount, ActionCoin, DebtAmount,
+    },
+    health::AccountKind,
     oracle::ActionKind,
     params::{AssetParamsUpdate::AddOrUpdate, LiquidationBonus, VaultConfigUpdate},
 };
-use mars_rover::{
-    error::ContractError,
-    msg::{
-        execute::{
-            Action::{Borrow, Deposit, EnterVault, Repay, Withdraw},
-            ActionAmount, ActionCoin,
-        },
-        query::DebtAmount,
-    },
-};
-use mars_rover_health_types::AccountKind;
 
 use crate::helpers::{
     assert_err, lp_token_info, uatom_info, ujake_info, unlocked_vault_info, uosmo_info,

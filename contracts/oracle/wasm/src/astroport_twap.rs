@@ -1,6 +1,6 @@
 use cosmwasm_std::{attr, Attribute, DepsMut, Env, Response};
 use mars_oracle_base::{ContractError, ContractResult};
-use mars_red_bank_types::oracle::AstroportTwapSnapshot;
+use mars_types::oracle::AstroportTwapSnapshot;
 
 use crate::{
     contract::WasmOracle, helpers::query_astroport_cumulative_price,

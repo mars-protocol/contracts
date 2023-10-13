@@ -330,8 +330,23 @@
     ],
     "definitions": {
       "Action": {
+        "description": "The list of actions that users can perform on their positions",
         "oneOf": [
           {
+            "description": "Deposit coin of specified denom and amount. Verifies if the correct amount is sent with transaction.",
+            "type": "object",
+            "required": [
+              "deposit"
+            ],
+            "properties": {
+              "deposit": {
+                "$ref": "#/definitions/Coin"
+              }
+            },
+            "additionalProperties": false
+          },
+          {
+            "description": "Withdraw coin of specified denom and amount",
             "type": "object",
             "required": [
               "withdraw"
@@ -344,6 +359,298 @@
             "additionalProperties": false
           },
           {
+            "description": "Borrow coin of specified amount from Red Bank",
+            "type": "object",
+            "required": [
+              "borrow"
+            ],
+            "properties": {
+              "borrow": {
+                "$ref": "#/definitions/Coin"
+              }
+            },
+            "additionalProperties": false
+          },
+          {
+            "description": "Lend coin to the Red Bank",
+            "type": "object",
+            "required": [
+              "lend"
+            ],
+            "properties": {
+              "lend": {
+                "$ref": "#/definitions/ActionCoin"
+              }
+            },
+            "additionalProperties": false
+          },
+          {
+            "description": "Reclaim the coins that were lent to the Red Bank.",
+            "type": "object",
+            "required": [
+              "reclaim"
+            ],
+            "properties": {
+              "reclaim": {
+                "$ref": "#/definitions/ActionCoin"
+              }
+            },
+            "additionalProperties": false
+          },
+          {
+            "description": "For assets lent to the Red Bank, some can accumulate incentive rewards. This message claims all of them adds them to account balance.",
+            "type": "object",
+            "required": [
+              "claim_rewards"
+            ],
+            "properties": {
+              "claim_rewards": {
+                "type": "object",
+                "additionalProperties": false
+              }
+            },
+            "additionalProperties": false
+          },
+          {
+            "description": "Repay coin of specified amount back to Red Bank. If `amount: AccountBalance` is passed, the repaid amount will be the minimum between account balance for denom and total owed. The sender will repay on behalf of the recipient account. If 'recipient_account_id: None', the sender repays to its own account.",
+            "type": "object",
+            "required": [
+              "repay"
+            ],
+            "properties": {
+              "repay": {
+                "type": "object",
+                "required": [
+                  "coin"
+                ],
+                "properties": {
+                  "coin": {
+                    "$ref": "#/definitions/ActionCoin"
+                  },
+                  "recipient_account_id": {
+                    "type": [
+                      "string",
+                      "null"
+                    ]
+                  }
+                },
+                "additionalProperties": false
+              }
+            },
+            "additionalProperties": false
+          },
+          {
+            "description": "Deposit coins into vault strategy If `coin.amount: AccountBalance`, Rover attempts to deposit the account's entire balance into the vault",
+            "type": "object",
+            "required": [
+              "enter_vault"
+            ],
+            "properties": {
+              "enter_vault": {
+                "type": "object",
+                "required": [
+                  "coin",
+                  "vault"
+                ],
+                "properties": {
+                  "coin": {
+                    "$ref": "#/definitions/ActionCoin"
+                  },
+                  "vault": {
+                    "$ref": "#/definitions/VaultBase_for_String"
+                  }
+                },
+                "additionalProperties": false
+              }
+            },
+            "additionalProperties": false
+          },
+          {
+            "description": "Withdraw underlying coins from vault",
+            "type": "object",
+            "required": [
+              "exit_vault"
+            ],
+            "properties": {
+              "exit_vault": {
+                "type": "object",
+                "required": [
+                  "amount",
+                  "vault"
+                ],
+                "properties": {
+                  "amount": {
+                    "$ref": "#/definitions/Uint128"
+                  },
+                  "vault": {
+                    "$ref": "#/definitions/VaultBase_for_String"
+                  }
+                },
+                "additionalProperties": false
+              }
+            },
+            "additionalProperties": false
+          },
+          {
+            "description": "Requests unlocking of shares for a vault with a required lock period",
+            "type": "object",
+            "required": [
+              "request_vault_unlock"
+            ],
+            "properties": {
+              "request_vault_unlock": {
+                "type": "object",
+                "required": [
+                  "amount",
+                  "vault"
+                ],
+                "properties": {
+                  "amount": {
+                    "$ref": "#/definitions/Uint128"
+                  },
+                  "vault": {
+                    "$ref": "#/definitions/VaultBase_for_String"
+                  }
+                },
+                "additionalProperties": false
+              }
+            },
+            "additionalProperties": false
+          },
+          {
+            "description": "Withdraws the assets for unlocking position id from vault. Required time must have elapsed.",
+            "type": "object",
+            "required": [
+              "exit_vault_unlocked"
+            ],
+            "properties": {
+              "exit_vault_unlocked": {
+                "type": "object",
+                "required": [
+                  "id",
+                  "vault"
+                ],
+                "properties": {
+                  "id": {
+                    "type": "integer",
+                    "format": "uint64",
+                    "minimum": 0.0
+                  },
+                  "vault": {
+                    "$ref": "#/definitions/VaultBase_for_String"
+                  }
+                },
+                "additionalProperties": false
+              }
+            },
+            "additionalProperties": false
+          },
+          {
+            "description": "Pay back debt of a liquidatable rover account for a via liquidating a specific type of the position.",
+            "type": "object",
+            "required": [
+              "liquidate"
+            ],
+            "properties": {
+              "liquidate": {
+                "type": "object",
+                "required": [
+                  "debt_coin",
+                  "liquidatee_account_id",
+                  "request"
+                ],
+                "properties": {
+                  "debt_coin": {
+                    "description": "The coin they wish to acquire from the liquidatee (amount returned will include the bonus)",
+                    "allOf": [
+                      {
+                        "$ref": "#/definitions/Coin"
+                      }
+                    ]
+                  },
+                  "liquidatee_account_id": {
+                    "description": "The credit account id of the one with a liquidation threshold health factor 1 or below",
+                    "type": "string"
+                  },
+                  "request": {
+                    "description": "Position details to be liquidated",
+                    "allOf": [
+                      {
+                        "$ref": "#/definitions/LiquidateRequest_for_VaultBase_for_String"
+                      }
+                    ]
+                  }
+                },
+                "additionalProperties": false
+              }
+            },
+            "additionalProperties": false
+          },
+          {
+            "description": "Perform a swapper with an exact-in amount. Requires slippage allowance %. If `coin_in.amount: AccountBalance`, the accounts entire balance of `coin_in.denom` will be used.",
+            "type": "object",
+            "required": [
+              "swap_exact_in"
+            ],
+            "properties": {
+              "swap_exact_in": {
+                "type": "object",
+                "required": [
+                  "coin_in",
+                  "denom_out",
+                  "slippage"
+                ],
+                "properties": {
+                  "coin_in": {
+                    "$ref": "#/definitions/ActionCoin"
+                  },
+                  "denom_out": {
+                    "type": "string"
+                  },
+                  "slippage": {
+                    "$ref": "#/definitions/Decimal"
+                  }
+                },
+                "additionalProperties": false
+              }
+            },
+            "additionalProperties": false
+          },
+          {
+            "description": "Add Vec<Coin> to liquidity pool in exchange for LP tokens. Slippage allowance (%) is used to calculate the minimum amount of LP tokens to receive.",
+            "type": "object",
+            "required": [
+              "provide_liquidity"
+            ],
+            "properties": {
+              "provide_liquidity": {
+                "type": "object",
+                "required": [
+                  "coins_in",
+                  "lp_token_out",
+                  "slippage"
+                ],
+                "properties": {
+                  "coins_in": {
+                    "type": "array",
+                    "items": {
+                      "$ref": "#/definitions/ActionCoin"
+                    }
+                  },
+                  "lp_token_out": {
+                    "type": "string"
+                  },
+                  "slippage": {
+                    "$ref": "#/definitions/Decimal"
+                  }
+                },
+                "additionalProperties": false
+              }
+            },
+            "additionalProperties": false
+          },
+          {
+            "description": "Send LP token and withdraw corresponding reserve assets from pool. If `lp_token.amount: AccountBalance`, the account balance of `lp_token.denom` will be used. /// Slippage allowance (%) is used to calculate the minimum amount of reserve assets to receive.",
             "type": "object",
             "required": [
               "withdraw_liquidity"
@@ -369,12 +676,13 @@
             "additionalProperties": false
           },
           {
+            "description": "Refunds all coin balances back to user wallet",
             "type": "object",
             "required": [
-              "unknown"
+              "refund_all_coin_balances"
             ],
             "properties": {
-              "unknown": {
+              "refund_all_coin_balances": {
                 "type": "object",
                 "additionalProperties": false
               }
@@ -439,6 +747,62 @@
       "Decimal": {
         "description": "A fixed-point decimal value with 18 fractional digits, i.e. Decimal(1_000_000_000_000_000_000) == 1.0\n\nThe greatest possible value that can be represented is 340282366920938463463.374607431768211455 (which is (2^128 - 1) / 10^18)",
         "type": "string"
+      },
+      "LiquidateRequest_for_VaultBase_for_String": {
+        "oneOf": [
+          {
+            "description": "Pay back debt of a liquidatable rover account for a bonus. Requires specifying 1) the debt denom/amount of what the liquidator wants to payoff and 2) the request coin denom which the liquidatee should have a balance of. The amount returned to liquidator will be the request coin of the amount that precisely matches the value of the debt + a liquidation bonus. The debt amount will be adjusted down if: - Exceeds liquidatee's total debt for denom - Not enough liquidatee request coin balance to match - The value of the debt repaid exceeds the maximum close factor %\n\nLiquidation should prioritize first the not lent coin and if more needs to be serviced to the liquidator it should reclaim (withdrawn from Red Bank).",
+            "type": "object",
+            "required": [
+              "deposit"
+            ],
+            "properties": {
+              "deposit": {
+                "type": "string"
+              }
+            },
+            "additionalProperties": false
+          },
+          {
+            "description": "Pay back debt of a liquidatable rover account for a via liquidating a Lent position. Lent shares are transfered from the liquidatable to the liquidator.",
+            "type": "object",
+            "required": [
+              "lend"
+            ],
+            "properties": {
+              "lend": {
+                "type": "string"
+              }
+            },
+            "additionalProperties": false
+          },
+          {
+            "description": "Pay back debt of a liquidatable rover account for a via liquidating a vault position. Similar to `Deposit` msg and will make similar adjustments to the request. The vault position will be withdrawn (and force withdrawn if a locked vault position) and the underlying assets will transferred to the liquidator. The `VaultPositionType` will determine which bucket to liquidate from.",
+            "type": "object",
+            "required": [
+              "vault"
+            ],
+            "properties": {
+              "vault": {
+                "type": "object",
+                "required": [
+                  "position_type",
+                  "request_vault"
+                ],
+                "properties": {
+                  "position_type": {
+                    "$ref": "#/definitions/VaultPositionType"
+                  },
+                  "request_vault": {
+                    "$ref": "#/definitions/VaultBase_for_String"
+                  }
+                },
+                "additionalProperties": false
+              }
+            },
+            "additionalProperties": false
+          }
+        ]
       },
       "NeutronIbcConfig": {
         "type": "object",
@@ -621,6 +985,26 @@
           }
         },
         "additionalProperties": false
+      },
+      "VaultBase_for_String": {
+        "type": "object",
+        "required": [
+          "address"
+        ],
+        "properties": {
+          "address": {
+            "type": "string"
+          }
+        },
+        "additionalProperties": false
+      },
+      "VaultPositionType": {
+        "type": "string",
+        "enum": [
+          "u_n_l_o_c_k_e_d",
+          "l_o_c_k_e_d",
+          "u_n_l_o_c_k_i_n_g"
+        ]
       }
     }
   },

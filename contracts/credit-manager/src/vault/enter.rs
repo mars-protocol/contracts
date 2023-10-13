@@ -1,17 +1,14 @@
 use cosmwasm_std::{
     to_binary, Addr, Coin, CosmosMsg, Deps, DepsMut, QuerierWrapper, Response, Uint128, WasmMsg,
 };
-use mars_red_bank_types::oracle::ActionKind;
-use mars_rover::{
+use mars_types::{
     adapters::vault::{UpdateType, Vault, VaultPositionUpdate},
-    error::{ContractError, ContractResult},
-    msg::{
-        execute::{ActionAmount, ActionCoin, CallbackMsg},
-        ExecuteMsg,
-    },
+    credit_manager::{ActionAmount, ActionCoin, CallbackMsg, ExecuteMsg},
+    oracle::ActionKind,
 };
 
 use crate::{
+    error::{ContractError, ContractResult},
     state::{COIN_BALANCES, ORACLE, PARAMS},
     utils::{assert_coin_is_whitelisted, decrement_coin_balance},
     vault::{

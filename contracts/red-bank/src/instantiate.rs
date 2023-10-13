@@ -1,7 +1,7 @@
 use cosmwasm_std::{DepsMut, Response};
 use cw2::set_contract_version;
 use mars_owner::OwnerInit::SetInitialOwner;
-use mars_red_bank_types::{
+use mars_types::{
     error::MarsError,
     red_bank::{Config, CreateOrUpdateConfig, InstantiateMsg},
 };

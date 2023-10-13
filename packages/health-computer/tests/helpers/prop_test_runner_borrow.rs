@@ -1,10 +1,10 @@
 use cosmwasm_std::{Coin, StdResult, Uint128};
-use mars_rover::{
-    adapters::vault::{CoinValue, VaultPositionValue},
-    msg::query::DebtAmount,
-};
 use mars_rover_health_computer::HealthComputer;
-use mars_rover_health_types::BorrowTarget;
+use mars_types::{
+    adapters::vault::{CoinValue, VaultPositionValue},
+    credit_manager::DebtAmount,
+    health::BorrowTarget,
+};
 use proptest::{
     strategy::Strategy,
     test_runner::{Config, TestRunner},

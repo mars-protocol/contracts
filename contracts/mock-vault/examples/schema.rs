@@ -1,6 +1,6 @@
 use cosmwasm_schema::write_api;
 use mars_mock_vault::msg::InstantiateMsg;
-use mars_rover::adapters::vault::{ExecuteMsg, QueryMsg};
+use mars_types::adapters::vault::{ExecuteMsg, QueryMsg};
 
 fn main() {
     write_api! {

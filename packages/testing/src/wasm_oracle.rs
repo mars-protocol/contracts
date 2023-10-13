@@ -14,9 +14,7 @@ use cw_it::{
 };
 use mars_oracle_wasm::WasmPriceSourceUnchecked;
 use mars_owner::OwnerUpdate;
-use mars_red_bank_types::oracle::{
-    InstantiateMsg, WasmOracleCustomExecuteMsg, WasmOracleCustomInitParams,
-};
+use mars_types::oracle::{InstantiateMsg, WasmOracleCustomExecuteMsg, WasmOracleCustomInitParams};
 
 use crate::test_runner::get_test_runner;
 
@@ -116,7 +114,7 @@ impl<'a> WasmOracleTestRobot<'a> {
         price_source: WasmPriceSourceUnchecked,
         signer: &SigningAccount,
     ) -> &Self {
-        let msg = mars_red_bank_types::oracle::msg::ExecuteMsg::<_, Empty>::SetPriceSource {
+        let msg = mars_types::oracle::ExecuteMsg::<_, Empty>::SetPriceSource {
             denom: denom.to_string(),
             price_source,
         };
@@ -136,7 +134,7 @@ impl<'a> WasmOracleTestRobot<'a> {
     }
 
     pub fn remove_price_source(&self, signer: &SigningAccount, denom: &str) -> &Self {
-        let msg = mars_red_bank_types::oracle::msg::ExecuteMsg::<Empty>::RemovePriceSource {
+        let msg = mars_types::oracle::ExecuteMsg::<Empty>::RemovePriceSource {
             denom: denom.to_string(),
         };
         self.wasm().execute(&self.mars_oracle_contract_addr, &msg, &[], signer).unwrap();
@@ -147,8 +145,8 @@ impl<'a> WasmOracleTestRobot<'a> {
         &self,
         start_after: Option<String>,
         limit: Option<u32>,
-    ) -> Vec<mars_red_bank_types::oracle::PriceSourceResponse<WasmPriceSourceUnchecked>> {
-        let msg = &mars_red_bank_types::oracle::msg::QueryMsg::PriceSources {
+    ) -> Vec<mars_types::oracle::PriceSourceResponse<WasmPriceSourceUnchecked>> {
+        let msg = &mars_types::oracle::QueryMsg::PriceSources {
             start_after,
             limit,
         };
@@ -158,15 +156,15 @@ impl<'a> WasmOracleTestRobot<'a> {
     pub fn query_price_source(
         &self,
         denom: &str,
-    ) -> mars_red_bank_types::oracle::PriceSourceResponse<WasmPriceSourceUnchecked> {
-        let msg = &mars_red_bank_types::oracle::msg::QueryMsg::PriceSource {
+    ) -> mars_types::oracle::PriceSourceResponse<WasmPriceSourceUnchecked> {
+        let msg = &mars_types::oracle::QueryMsg::PriceSource {
             denom: denom.to_string(),
         };
         self.wasm().query(&self.mars_oracle_contract_addr, &msg).unwrap()
     }
 
-    pub fn query_price(&self, denom: &str) -> mars_red_bank_types::oracle::PriceResponse {
-        let msg = &mars_red_bank_types::oracle::msg::QueryMsg::Price {
+    pub fn query_price(&self, denom: &str) -> mars_types::oracle::PriceResponse {
+        let msg = &mars_types::oracle::QueryMsg::Price {
             denom: denom.to_string(),
             kind: None,
         };
@@ -177,8 +175,8 @@ impl<'a> WasmOracleTestRobot<'a> {
         &self,
         start_after: Option<String>,
         limit: Option<u32>,
-    ) -> Vec<mars_red_bank_types::oracle::PriceResponse> {
-        let msg = &mars_red_bank_types::oracle::msg::QueryMsg::Prices {
+    ) -> Vec<mars_types::oracle::PriceResponse> {
+        let msg = &mars_types::oracle::QueryMsg::Prices {
             start_after,
             limit,
             kind: None,
@@ -230,7 +228,7 @@ impl<'a> WasmOracleTestRobot<'a> {
     }
 
     pub fn record_twap_snapshots(&self, denoms: &[&str], signer: &SigningAccount) -> &Self {
-        let msg = &mars_red_bank_types::oracle::msg::ExecuteMsg::<Empty, WasmOracleCustomExecuteMsg>::Custom(
+        let msg = &mars_types::oracle::ExecuteMsg::<Empty, WasmOracleCustomExecuteMsg>::Custom(
             WasmOracleCustomExecuteMsg::RecordTwapSnapshots {
                 denoms: denoms.iter().map(|d| d.to_string()).collect(),
             },
@@ -253,13 +251,13 @@ impl<'a> WasmOracleTestRobot<'a> {
     // =====  Owner update methods ======
 
     pub fn owner_update(&self, update_msg: OwnerUpdate, signer: &SigningAccount) -> &Self {
-        let msg = &mars_red_bank_types::oracle::msg::ExecuteMsg::<Empty>::UpdateOwner(update_msg);
+        let msg = &mars_types::oracle::ExecuteMsg::<Empty>::UpdateOwner(update_msg);
         self.wasm().execute(&self.mars_oracle_contract_addr, &msg, &[], signer).unwrap();
         self
     }
 
-    pub fn query_config(&self) -> mars_red_bank_types::oracle::ConfigResponse {
-        let msg = &mars_red_bank_types::oracle::msg::QueryMsg::Config {};
+    pub fn query_config(&self) -> mars_types::oracle::ConfigResponse {
+        let msg = &mars_types::oracle::QueryMsg::Config {};
         self.wasm().query(&self.mars_oracle_contract_addr, &msg).unwrap()
     }
 

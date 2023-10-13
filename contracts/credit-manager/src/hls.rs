@@ -1,9 +1,11 @@
 use cosmwasm_std::{Deps, Response};
-use mars_red_bank_types::params::HlsAssetType;
-use mars_rover::error::{ContractError, ContractResult};
-use mars_rover_health_types::AccountKind;
+use mars_types::{health::AccountKind, params::HlsAssetType};
 
-use crate::{query::query_positions, state::PARAMS};
+use crate::{
+    error::{ContractError, ContractResult},
+    query::query_positions,
+    state::PARAMS,
+};
 
 pub fn assert_hls_rules(deps: Deps, account_id: &str) -> ContractResult<Response> {
     // Rule #1 - There can only be 0 or 1 debt denom in the account

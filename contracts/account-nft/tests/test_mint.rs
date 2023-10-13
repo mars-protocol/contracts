@@ -3,8 +3,10 @@ use cw721::OwnerOfResponse;
 use cw721_base::{ContractError::Ownership, OwnershipError::NotOwner};
 use cw_multi_test::Executor;
 use mars_account_nft::error::{ContractError, ContractError::BaseError};
-use mars_account_nft_types::msg::{ExecuteMsg, QueryMsg::OwnerOf};
-use mars_rover_health_types::AccountKind;
+use mars_types::{
+    account_nft::{ExecuteMsg, QueryMsg::OwnerOf},
+    health::AccountKind,
+};
 
 use crate::helpers::{below_max_for_burn, MockEnv};
 

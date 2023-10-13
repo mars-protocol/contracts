@@ -7,8 +7,8 @@ use mars_incentives::{
     ContractError,
 };
 use mars_owner::OwnerError::NotOwner;
-use mars_red_bank_types::incentives::{ConfigResponse, ExecuteMsg, InstantiateMsg, QueryMsg};
 use mars_testing::mock_dependencies;
+use mars_types::incentives::{ConfigResponse, ExecuteMsg, InstantiateMsg, QueryMsg};
 
 use super::helpers::{th_query, th_setup};
 

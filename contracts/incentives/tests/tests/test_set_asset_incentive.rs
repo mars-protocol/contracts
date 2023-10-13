@@ -8,8 +8,8 @@ use mars_incentives::{
     state::{EMISSIONS, INCENTIVE_STATES},
     ContractError,
 };
-use mars_red_bank_types::{incentives::ExecuteMsg, red_bank::Market};
 use mars_testing::MockEnvParams;
+use mars_types::{incentives::ExecuteMsg, red_bank::Market};
 use mars_utils::error::ValidationError;
 
 use super::helpers::{

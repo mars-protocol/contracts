@@ -22,6 +22,7 @@ library    = []
 cosmwasm-std     = { workspace = true }
 cw2              = { workspace = true }
 cw-dex           = { workspace = true }
+mars-types       = { workspace = true }
 mars-zapper-base = { workspace = true }
 
 [dev-dependencies]

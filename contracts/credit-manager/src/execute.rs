@@ -1,21 +1,20 @@
 use std::collections::BTreeSet;
 
 use cosmwasm_std::{
-    to_binary, Addr, CosmosMsg, DepsMut, Env, MessageInfo, Response, StdResult, WasmMsg,
+    to_binary, Addr, Coins, CosmosMsg, DepsMut, Env, MessageInfo, Response, StdResult, WasmMsg,
 };
-use mars_account_nft_types::msg::ExecuteMsg as NftExecuteMsg;
-use mars_red_bank_types::oracle::ActionKind;
-use mars_rover::{
-    coins::Coins,
-    error::{ContractError, ContractResult},
-    msg::execute::{Action, CallbackMsg, LiquidateRequest},
+use mars_types::{
+    account_nft::ExecuteMsg as NftExecuteMsg,
+    credit_manager::{Action, CallbackMsg, LiquidateRequest},
+    health::AccountKind,
+    oracle::ActionKind,
 };
-use mars_rover_health_types::AccountKind;
 
 use crate::{
     borrow::borrow,
     claim_rewards::{claim_rewards, send_rewards},
     deposit::{assert_deposit_caps, deposit},
+    error::{ContractError, ContractResult},
     health::{assert_max_ltv, query_health_state},
     hls::assert_hls_rules,
     lend::lend,
@@ -466,7 +465,10 @@ pub fn execute_callback(
         CallbackMsg::AssertHlsRules {
             account_id,
         } => assert_hls_rules(deps.as_ref(), &account_id),
-        CallbackMsg::RemoveReentrancyGuard {} => REENTRANCY_GUARD.try_unlock(deps.storage),
+        CallbackMsg::RemoveReentrancyGuard {} => {
+            REENTRANCY_GUARD.try_unlock(deps.storage)?;
+            Ok(Response::new().add_attribute("action", "remove_reentrancy_guard"))
+        }
         CallbackMsg::SendRewardsToAddr {
             account_id,
             previous_balances,

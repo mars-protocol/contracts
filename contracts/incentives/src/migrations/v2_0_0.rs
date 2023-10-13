@@ -4,7 +4,7 @@ use cosmwasm_std::{Addr, DepsMut, Env, MessageInfo, Order, Response, StdResult, 
 use cw2::{assert_contract_version, set_contract_version};
 use cw_storage_plus::Bound;
 use mars_owner::OwnerInit;
-use mars_red_bank_types::{
+use mars_types::{
     address_provider::{helpers, MarsAddressType},
     incentives::{Config, IncentiveState, MigrateMsg, MigrateV1ToV2},
     keys::{UserId, UserIdKey},

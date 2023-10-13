@@ -5,15 +5,10 @@ use cosmwasm_std::{
     WasmMsg,
 };
 use cw_utils::one_coin;
-use mars_rover::{
-    error::{ContractError, ContractResult},
-    msg::{
-        execute::{ActionCoin, CallbackMsg::Repay},
-        ExecuteMsg,
-    },
-};
+use mars_types::credit_manager::{ActionCoin, CallbackMsg::Repay, ExecuteMsg};
 
 use crate::{
+    error::{ContractError, ContractResult},
     state::{DEBT_SHARES, RED_BANK, TOTAL_DEBT_SHARES},
     utils::{debt_shares_to_amount, decrement_coin_balance, increment_coin_balance},
 };

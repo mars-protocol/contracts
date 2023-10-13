@@ -3,10 +3,9 @@ use std::mem::take;
 use anyhow::Result as AnyResult;
 use cosmwasm_std::{Addr, Decimal, Empty};
 use cw_multi_test::{BasicApp, Executor};
-use mars_account_nft_types::msg::InstantiateMsg;
 use mars_mock_credit_manager::msg::InstantiateMsg as CmMockInstantiateMsg;
 use mars_owner::OwnerResponse;
-use mars_rover::msg::query::ConfigResponse;
+use mars_types::{account_nft::InstantiateMsg, credit_manager::ConfigResponse};
 
 use super::mock_credit_manager_contract;
 use crate::helpers::{mock_health_contract, mock_nft_contract, MockEnv, MAX_VALUE_FOR_BURN};

@@ -1,7 +1,7 @@
 use std::collections::HashMap;
 
 use cosmwasm_std::{to_binary, Binary, ContractResult, QuerierResult};
-use mars_red_bank_types::red_bank::{
+use mars_types::red_bank::{
     Market, QueryMsg, UserCollateralResponse, UserDebtResponse, UserPositionResponse,
 };
 

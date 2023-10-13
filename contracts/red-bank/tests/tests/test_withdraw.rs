@@ -14,16 +14,16 @@ use mars_red_bank::{
     error::ContractError,
     state::{COLLATERALS, DEBTS, MARKETS},
 };
-use mars_red_bank_types::{
+use mars_testing::{
+    integration::mock_env::MockEnvBuilder, mock_env_at_block_time, MarsMockQuerier,
+};
+use mars_types::{
     address_provider::MarsAddressType,
     error::MarsError,
     incentives,
     keys::{UserId, UserIdKey},
     params::AssetParams,
     red_bank::{Collateral, Debt, ExecuteMsg, Market},
-};
-use mars_testing::{
-    integration::mock_env::MockEnvBuilder, mock_env_at_block_time, MarsMockQuerier,
 };
 
 use super::helpers::{

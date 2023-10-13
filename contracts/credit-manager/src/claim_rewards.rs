@@ -2,13 +2,16 @@ use cosmwasm_std::{
     to_binary, Addr, BankMsg, Coin, CosmosMsg, DepsMut, Env, QuerierWrapper, Response, StdResult,
     WasmMsg,
 };
-use mars_rover::{
-    error::{ContractError, ContractResult},
-    msg::{execute::CallbackMsg, ExecuteMsg},
+use mars_types::{
+    credit_manager::{CallbackMsg, ExecuteMsg},
     traits::Denoms,
 };
 
-use crate::{state::INCENTIVES, update_coin_balances::query_balance};
+use crate::{
+    error::{ContractError, ContractResult},
+    state::INCENTIVES,
+    update_coin_balances::query_balance,
+};
 
 pub fn claim_rewards(
     deps: DepsMut,

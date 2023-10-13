@@ -16,10 +16,7 @@ pub mod entry {
     use cosmwasm_std::{entry_point, Binary, Deps, DepsMut, Env, MessageInfo, Response};
     use cw2::set_contract_version;
     use mars_oracle_base::ContractResult;
-    use mars_red_bank_types::oracle::{
-        msg::{ExecuteMsg, InstantiateMsg, QueryMsg},
-        MigrateMsg,
-    };
+    use mars_types::oracle::{ExecuteMsg, InstantiateMsg, MigrateMsg, QueryMsg};
 
     use super::*;
     use crate::migrations;

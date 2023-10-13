@@ -1,5 +1,5 @@
 use cosmwasm_schema::cw_serde;
-use mars_rover_health_types::{AccountKind, HealthValuesResponse};
+use mars_types::health::{AccountKind, HealthValuesResponse};
 
 #[cw_serde]
 pub enum ExecuteMsg {

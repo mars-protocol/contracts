@@ -4,7 +4,7 @@ import { CosmWasmClient } from '@cosmjs/cosmwasm-stargate/build/cosmwasmclient'
 import {
   AccountKind,
   HealthValuesResponse,
-} from '../types/generated/mars-rover-health-types/MarsRoverHealthTypes.types'
+} from '../types/generated/mars-rover-health/MarsRoverHealth.types'
 import {
   DenomsData,
   HealthComputer,

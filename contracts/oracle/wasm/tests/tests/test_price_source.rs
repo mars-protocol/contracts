@@ -21,7 +21,7 @@ use mars_oracle_wasm::{
     contract::entry::{self, execute},
     WasmPriceSource, WasmPriceSourceChecked, WasmPriceSourceUnchecked,
 };
-use mars_red_bank_types::oracle::{ExecuteMsg, PriceResponse, QueryMsg};
+use mars_types::oracle::{ExecuteMsg, PriceResponse, QueryMsg};
 use pyth_sdk_cw::PriceIdentifier;
 
 const ONE: Decimal = Decimal::one();
@@ -288,7 +288,7 @@ fn test_query_astroport_twap_price_with_only_one_snapshot() {
 
     let err = robot
         .wasm()
-        .query::<_, mars_red_bank_types::oracle::PriceResponse>(
+        .query::<_, mars_types::oracle::PriceResponse>(
             &robot.mars_oracle_contract_addr,
             &QueryMsg::Price {
                 denom: "uatom".to_string(),
@@ -746,7 +746,7 @@ fn twap_window_size_not_gt_tolerance() {
     };
 
     let wasm = Wasm::new(&runner);
-    let msg = mars_red_bank_types::oracle::msg::ExecuteMsg::<_, Empty>::SetPriceSource {
+    let msg = mars_types::oracle::ExecuteMsg::<_, Empty>::SetPriceSource {
         denom: "uatom".to_string(),
         price_source,
     };

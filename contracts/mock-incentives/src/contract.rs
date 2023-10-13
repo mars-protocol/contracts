@@ -3,7 +3,7 @@ use cosmwasm_std::entry_point;
 use cosmwasm_std::{
     to_binary, Binary, Deps, DepsMut, Empty, Env, MessageInfo, Response, StdResult,
 };
-use mars_red_bank_types::incentives;
+use mars_types::incentives;
 
 use crate::{
     execute::{balance_change, claim_rewards},

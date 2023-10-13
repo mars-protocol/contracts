@@ -11,8 +11,8 @@ use mars_oracle_base::{pyth::scale_pyth_price, ContractError};
 use mars_oracle_osmosis::{
     contract::entry, DowntimeDetector, GeometricTwap, OsmosisPriceSourceUnchecked, RedemptionRate,
 };
-use mars_red_bank_types::oracle::{PriceResponse, QueryMsg};
 use mars_testing::{mock_env_at_block_time, MarsMockQuerier};
+use mars_types::oracle::{PriceResponse, QueryMsg};
 use osmosis_std::types::osmosis::{
     downtimedetector::v1beta1::Downtime,
     poolmanager::v1beta1::SpotPriceResponse,

@@ -2,8 +2,8 @@ use cosmwasm_std::{attr, testing::mock_env};
 use mars_oracle_base::ContractError;
 use mars_oracle_osmosis::{contract::entry, msg::ExecuteMsg};
 use mars_owner::OwnerError::NotOwner;
-use mars_red_bank_types::oracle::{ConfigResponse, InstantiateMsg, QueryMsg};
 use mars_testing::{mock_dependencies, mock_info};
+use mars_types::oracle::{ConfigResponse, InstantiateMsg, QueryMsg};
 use mars_utils::error::ValidationError;
 
 use super::helpers;

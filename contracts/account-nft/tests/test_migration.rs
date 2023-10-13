@@ -11,7 +11,7 @@ use cw721_base_v16::{
 use mars_account_nft::{
     contract::migrate, error::ContractError, migrations::v2_0_0::v1_state, state::CONFIG,
 };
-use mars_account_nft_types::nft_config::NftConfig;
+use mars_types::account_nft::NftConfig;
 
 pub mod helpers;
 

@@ -1,6 +1,6 @@
 use cosmwasm_schema::cw_serde;
 use cw_storage_plus::Item;
-use mars_account_nft_types::nft_config::NftConfig;
+use mars_types::account_nft::NftConfig;
 
 pub const CONFIG: Item<NftConfig> = Item::new("config");
 pub const NEXT_ID: Item<u64> = Item::new("next_id");

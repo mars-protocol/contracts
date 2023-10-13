@@ -1,7 +1,7 @@
 use cosmwasm_std::{Addr, Decimal, Order, StdResult, Storage, Uint128};
 use cw_storage_plus::{Bound, Item, Map, PrefixBound};
 use mars_owner::Owner;
-use mars_red_bank_types::{
+use mars_types::{
     incentives::{Config, IncentiveState},
     keys::{UserId, UserIdKey},
 };

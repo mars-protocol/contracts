@@ -19,7 +19,8 @@ use mars_red_bank::{
     error::ContractError,
     state::{COLLATERALS, DEBTS, MARKETS},
 };
-use mars_red_bank_types::{
+use mars_testing::{mock_dependencies, mock_env, mock_info, MarsMockQuerier, MockEnvParams};
+use mars_types::{
     keys::{UserId, UserIdKey},
     params::{AssetParams, CmSettings, LiquidationBonus, RedBankSettings},
     red_bank::{
@@ -28,7 +29,6 @@ use mars_red_bank_types::{
         UserHealthStatus, UserPositionResponse,
     },
 };
-use mars_testing::{mock_dependencies, mock_env, mock_info, MarsMockQuerier, MockEnvParams};
 
 pub fn set_collateral(
     deps: DepsMut,

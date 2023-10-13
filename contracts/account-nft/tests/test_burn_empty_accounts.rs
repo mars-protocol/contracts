@@ -1,7 +1,9 @@
 use cosmwasm_std::{Addr, StdError};
 use mars_account_nft::error::{ContractError, ContractError::HealthContractNotSet};
-use mars_account_nft_types::msg::QueryMsg::{AllTokens, NumTokens, Tokens};
-use mars_rover_health_types::AccountKind;
+use mars_types::{
+    account_nft::QueryMsg::{AllTokens, NumTokens, Tokens},
+    health::AccountKind,
+};
 
 use crate::helpers::{generate_health_response, MockEnv};
 

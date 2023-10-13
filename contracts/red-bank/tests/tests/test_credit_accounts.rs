@@ -1,7 +1,7 @@
 use cosmwasm_std::{coin, Addr, Decimal, Uint128};
 use mars_red_bank::error::ContractError;
-use mars_red_bank_types::red_bank::UserHealthStatus;
 use mars_testing::integration::mock_env::MockEnvBuilder;
+use mars_types::red_bank::UserHealthStatus;
 
 use super::helpers::assert_err;
 use crate::tests::helpers::{osmo_asset_params, usdc_asset_params};

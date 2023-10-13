@@ -1,8 +1,6 @@
 use cosmwasm_std::{coin, coins, Addr, Coin, OverflowError, OverflowOperation::Sub, Uint128};
-use mars_rover::{
-    error::{ContractError, ContractError::NotTokenOwner},
-    msg::execute::Action,
-};
+use mars_credit_manager::error::{ContractError, ContractError::NotTokenOwner};
+use mars_types::credit_manager::Action;
 
 use crate::helpers::{assert_err, uatom_info, uosmo_info, AccountToFund, MockEnv};
 

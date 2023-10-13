@@ -2,8 +2,10 @@ use cosmwasm_std::{
     to_binary, BankMsg, Coin, CosmosMsg, DepsMut, MessageInfo, Response, StdResult, Uint128,
     WasmMsg,
 };
-use mars_red_bank_types::oracle::ActionKind;
-use mars_rover::msg::{execute::Action::Deposit, ExecuteMsg::UpdateCreditAccount};
+use mars_types::{
+    credit_manager::{Action::Deposit, ExecuteMsg::UpdateCreditAccount},
+    oracle::ActionKind,
+};
 
 use crate::{
     contract::STARTING_VAULT_SHARES,

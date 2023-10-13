@@ -21,14 +21,14 @@ library          = []
 osmosis-test-app = ["cw-it/osmosis-test-tube", "mars-testing/osmosis-test-tube"]
 
 [dependencies]
-astroport               = { workspace = true }
-cosmwasm-schema         = { workspace = true }
-cosmwasm-std            = { workspace = true }
-cw2                     = { workspace = true }
-cw-storage-plus         = { workspace = true }
-mars-oracle-base        = { workspace = true }
-mars-red-bank-types     = { workspace = true }
-pyth-sdk-cw             = { workspace = true }
+astroport        = { workspace = true }
+cosmwasm-schema  = { workspace = true }
+cosmwasm-std     = { workspace = true }
+cw2              = { workspace = true }
+cw-storage-plus  = { workspace = true }
+mars-oracle-base = { workspace = true }
+mars-types       = { workspace = true }
+pyth-sdk-cw      = { workspace = true }
 
 [dev-dependencies]
 cosmwasm-schema  = { workspace = true }

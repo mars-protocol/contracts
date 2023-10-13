@@ -1,13 +1,11 @@
 use cosmwasm_std::{coins, Addr, Decimal, Uint128};
-use mars_red_bank_types::{
+use mars_credit_manager::error::ContractError;
+use mars_types::{
+    credit_manager::Action::{Borrow, Deposit, EnterVault, Lend},
+    health::{AccountKind, HealthValuesResponse},
     oracle::ActionKind,
     params::{AssetParamsUpdate::AddOrUpdate, HlsAssetType},
 };
-use mars_rover::{
-    error::ContractError,
-    msg::execute::Action::{Borrow, Deposit, EnterVault, Lend},
-};
-use mars_rover_health_types::{AccountKind, HealthValuesResponse};
 
 use crate::helpers::{
     assert_err, lp_token_info, uatom_info, ujake_info, unlocked_vault_info, AccountToFund, MockEnv,

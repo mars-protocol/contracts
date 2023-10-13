@@ -1,9 +1,9 @@
 use astroport::{asset::AssetInfo, router::SwapOperation};
 use cosmwasm_std::coin;
 use cw_it::{astroport::robot::AstroportTestRobot, robot::TestRobot, traits::CwItRunner};
-use mars_red_bank_types::swapper::RouteResponse;
 use mars_swapper_astroport::route::AstroportRoute;
 use mars_testing::{astroport_swapper::AstroportSwapperRobot, test_runner::get_test_runner};
+use mars_types::swapper::RouteResponse;
 use test_case::test_case;
 
 fn to_native_swap_operation((denom_in, denom_out): (&str, &str)) -> SwapOperation {
@@ -101,7 +101,7 @@ fn query_non_existing_route() {
         .wasm()
         .query::<_, RouteResponse<AstroportRoute>>(
             &robot.swapper,
-            &mars_red_bank_types::swapper::QueryMsg::Route {
+            &mars_types::swapper::QueryMsg::Route {
                 denom_in: denom_in.into(),
                 denom_out: denom_out.into(),
             },

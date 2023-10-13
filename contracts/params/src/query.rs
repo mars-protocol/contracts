@@ -1,7 +1,7 @@
 use cosmwasm_std::{Addr, Deps, Env, Order, StdResult, Uint128};
 use cw_storage_plus::Bound;
 use mars_interest_rate::get_underlying_liquidity_amount;
-use mars_red_bank_types::{
+use mars_types::{
     address_provider::{self, MarsAddressType},
     params::{AssetParams, ConfigResponse, TotalDepositResponse, VaultConfig},
     red_bank::{self, Market, UserDebtResponse},

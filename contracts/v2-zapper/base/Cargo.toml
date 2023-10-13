@@ -24,6 +24,7 @@ cosmwasm-std    = { workspace = true }
 cw2             = { workspace = true }
 cw-dex          = { workspace = true }
 cw-utils        = { workspace = true }
+mars-types      = { workspace = true }
 schemars        = { workspace = true }
 serde           = { workspace = true }
 thiserror       = { workspace = true }

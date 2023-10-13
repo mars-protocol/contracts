@@ -1,13 +1,14 @@
 use cosmwasm_std::{Addr, Uint128};
 use cw_utils::Duration;
+use mars_credit_manager::error::ContractError;
 use mars_mock_vault::contract::STARTING_VAULT_SHARES;
-use mars_red_bank_types::params::VaultConfigUpdate;
-use mars_rover::{
-    error::ContractError,
-    msg::{
-        execute::Action::{Deposit, EnterVault, ExitVaultUnlocked, RequestVaultUnlock},
-        query::Positions,
+use mars_types::{
+    adapters::vault::VaultError,
+    credit_manager::{
+        Action::{Deposit, EnterVault, ExitVaultUnlocked, RequestVaultUnlock},
+        Positions,
     },
+    params::VaultConfigUpdate,
 };
 
 use crate::helpers::{
@@ -116,7 +117,7 @@ fn not_owner_of_unlocking_position() {
         &[lp_token.to_coin(2)],
     );
 
-    assert_err(res, ContractError::NoPositionMatch(lockup_id.to_string()));
+    assert_err(res, VaultError::NoPositionMatch(lockup_id.to_string()).into());
 }
 
 #[test]

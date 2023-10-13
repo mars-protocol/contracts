@@ -1,10 +1,8 @@
 use cosmwasm_std::{Coin, Deps, DepsMut, Response, Uint128};
-use mars_rover::{
-    error::{ContractError, ContractResult},
-    msg::execute::ActionCoin,
-};
+use mars_types::credit_manager::ActionCoin;
 
 use crate::{
+    error::{ContractError, ContractResult},
     state::{COIN_BALANCES, RED_BANK},
     utils::{assert_coin_is_whitelisted, decrement_coin_balance},
 };

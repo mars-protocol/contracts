@@ -24,14 +24,11 @@ members  = [
   "contracts/mock-vault",
 
   # packages
-  "packages/account-nft-types",
   "packages/chains/*",
   "packages/health",
   "packages/health-computer",
-  "packages/health-types",
   "packages/interest-rate",
   "packages/liquidation",
-  "packages/rover",
   "packages/testing",
   "packages/types",
   "packages/utils",
@@ -97,18 +94,15 @@ proptest          = "1.2.0"
 test-case         = "3.2.1"
 
 # packages
-mars-account-nft-types     = { path = "./packages/account-nft-types" }
 mars-health                = { path = "./packages/health" }
 mars-rover-health-computer = { path = "./packages/health-computer" }
-mars-rover-health-types    = { path = "./packages/health-types" }
 mars-interest-rate         = { path = "./packages/interest-rate" }
 mars-liquidation           = { path = "./packages/liquidation" }
 mars-osmosis               = { path = "./packages/chains/osmosis" }
-mars-red-bank-types        = { path = "./packages/types" }
-mars-rover                 = { path = "./packages/rover" }
 # Old rover types used for migration (https://github.com/mars-protocol/v2-fields-of-mars/releases/tag/v1.0.0)
 mars-rover-old             = { package = "mars-rover", git = "https://github.com/mars-protocol/v2-fields-of-mars", rev = "183e4c5" }
 mars-testing               = { path = "./packages/testing" }
+mars-types                 = { path = "./packages/types" }
 mars-utils                 = { path = "./packages/utils" }
 
 # contracts

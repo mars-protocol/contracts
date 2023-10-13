@@ -6,10 +6,12 @@ use cw721_base::{
     ContractError::Ownership,
     OwnershipError::{NoOwner, NotOwner},
 };
-use mars_account_nft_types::nft_config::NftConfigUpdates;
-use mars_red_bank_types::oracle::ActionKind;
-use mars_rover::msg::QueryMsg;
-use mars_rover_health_types::{HealthValuesResponse, QueryMsg::HealthValues};
+use mars_types::{
+    account_nft::NftConfigUpdates,
+    credit_manager::QueryMsg,
+    health::{AccountKind, HealthValuesResponse, QueryMsg::HealthValues},
+    oracle::ActionKind,
+};
 
 use crate::{
     contract::Parent,
@@ -44,13 +46,12 @@ pub fn burn(
         return Err(CreditManagerContractNotSet);
     };
 
-    let acc_kind: mars_rover_health_types::AccountKind =
-        deps.querier.query(&QueryRequest::Wasm(WasmQuery::Smart {
-            contract_addr: cm_contract_addr.into(),
-            msg: to_binary(&QueryMsg::AccountKind {
-                account_id: token_id.clone(),
-            })?,
-        }))?;
+    let acc_kind: AccountKind = deps.querier.query(&QueryRequest::Wasm(WasmQuery::Smart {
+        contract_addr: cm_contract_addr.into(),
+        msg: to_binary(&QueryMsg::AccountKind {
+            account_id: token_id.clone(),
+        })?,
+    }))?;
 
     let response: HealthValuesResponse =
         deps.querier.query(&QueryRequest::Wasm(WasmQuery::Smart {

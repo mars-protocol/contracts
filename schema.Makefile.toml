@@ -24,7 +24,6 @@ fn main() -> std::io::Result<()> {
         "mars-params",
         "mars-rover-health",
         "mars-rover-health-computer",
-        "mars-rover-health-types",
         "mars-swapper-base",
         "mars-swapper-osmosis",
         "mars-swapper-astroport",

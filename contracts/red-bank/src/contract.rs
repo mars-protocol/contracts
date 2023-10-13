@@ -1,7 +1,7 @@
 use cosmwasm_std::{
     entry_point, to_binary, Binary, Deps, DepsMut, Empty, Env, MessageInfo, Response,
 };
-use mars_red_bank_types::red_bank::{ExecuteMsg, InstantiateMsg, QueryMsg};
+use mars_types::red_bank::{ExecuteMsg, InstantiateMsg, QueryMsg};
 
 use crate::{
     asset, borrow, collateral, config, deposit, error::ContractError, instantiate, liquidate,

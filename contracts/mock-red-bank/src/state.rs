@@ -1,6 +1,6 @@
 use cosmwasm_std::{Addr, Uint128};
 use cw_storage_plus::Map;
-use mars_red_bank_types::red_bank::Market;
+use mars_types::red_bank::Market;
 
 // Map<Denom, Market>
 pub const MARKETS: Map<&str, Market> = Map::new("markets");

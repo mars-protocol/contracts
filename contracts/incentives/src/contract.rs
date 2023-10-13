@@ -7,7 +7,7 @@ use cosmwasm_std::{
 use cw2::set_contract_version;
 use cw_storage_plus::Bound;
 use mars_owner::{OwnerInit::SetInitialOwner, OwnerUpdate};
-use mars_red_bank_types::{
+use mars_types::{
     address_provider::{self, MarsAddressType},
     error::MarsError,
     incentives::{

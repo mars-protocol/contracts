@@ -1,17 +1,17 @@
 use cosmwasm_std::{coins, Addr, Coin, Decimal, OverflowError, OverflowOperation, Uint128};
+use mars_credit_manager::error::{
+    ContractError,
+    ContractError::{AboveMaxLTV, LiquidationNotProfitable, NotLiquidatable},
+};
 use mars_mock_oracle::msg::CoinPrice;
-use mars_red_bank_types::oracle::ActionKind;
-use mars_rover::{
-    error::{
-        ContractError,
-        ContractError::{AboveMaxLTV, LiquidationNotProfitable, NotLiquidatable},
-    },
-    msg::execute::{
+use mars_types::{
+    credit_manager::{
         Action::{Borrow, Deposit, EnterVault, Liquidate, Withdraw},
         LiquidateRequest,
     },
+    health::AccountKind,
+    oracle::ActionKind,
 };
-use mars_rover_health_types::AccountKind;
 
 use crate::helpers::{
     assert_err, get_coin, get_debt, lp_token_info, uatom_info, ujake_info, unlocked_vault_info,

@@ -5,19 +5,19 @@ use cosmwasm_std::{
 use cw2::VersionError;
 use mars_credit_manager::{
     contract::migrate,
+    error::ContractError,
     migrations::v2_0_0::{v1_state, v1_state::OwnerSetNoneProposed},
     state::{
         ACCOUNT_NFT, HEALTH_CONTRACT, INCENTIVES, MAX_SLIPPAGE, OWNER, PARAMS, RED_BANK,
         REWARDS_COLLECTOR, SWAPPER,
     },
 };
-use mars_rover::{
+use mars_types::{
     adapters::{
         health::HealthContractUnchecked, incentives::IncentivesUnchecked, params::ParamsUnchecked,
-        swap::SwapperUnchecked,
+        swapper::SwapperUnchecked,
     },
-    error::ContractError,
-    msg::{migrate::V2Updates, MigrateMsg},
+    credit_manager::{MigrateMsg, V2Updates},
 };
 
 pub mod helpers;

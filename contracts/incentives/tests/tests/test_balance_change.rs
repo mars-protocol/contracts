@@ -8,13 +8,13 @@ use mars_incentives::{
     helpers::{compute_incentive_index, compute_user_accrued_rewards},
     state::{EMISSIONS, INCENTIVE_STATES, USER_ASSET_INDICES, USER_UNCLAIMED_REWARDS},
 };
-use mars_red_bank_types::{
+use mars_testing::MockEnvParams;
+use mars_types::{
     error::MarsError,
     incentives::{ExecuteMsg, IncentiveState},
     keys::{UserId, UserIdKey},
     red_bank::{Market, UserCollateralResponse},
 };
-use mars_testing::MockEnvParams;
 
 use super::helpers::{th_setup, ths_setup_with_epoch_duration};
 

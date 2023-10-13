@@ -3,7 +3,7 @@ use mars_rover_health::{
     contract::instantiate,
     state::{CREDIT_MANAGER, OWNER},
 };
-use mars_rover_health_types::InstantiateMsg;
+use mars_types::health::InstantiateMsg;
 
 pub mod helpers;
 

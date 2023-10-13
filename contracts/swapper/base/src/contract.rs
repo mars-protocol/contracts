@@ -7,7 +7,7 @@ use cosmwasm_std::{
 use cw_paginate::paginate_map;
 use cw_storage_plus::{Bound, Map};
 use mars_owner::{Owner, OwnerInit::SetInitialOwner, OwnerUpdate};
-use mars_red_bank_types::swapper::{
+use mars_types::swapper::{
     EstimateExactInSwapResponse, ExecuteMsg, InstantiateMsg, QueryMsg, RouteResponse,
     RoutesResponse,
 };

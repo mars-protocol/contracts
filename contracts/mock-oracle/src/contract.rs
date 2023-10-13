@@ -1,7 +1,7 @@
 #[cfg(not(feature = "library"))]
 use cosmwasm_std::entry_point;
 use cosmwasm_std::{to_binary, Binary, Deps, DepsMut, Env, MessageInfo, Response, StdResult};
-use mars_red_bank_types::oracle::{ActionKind, PriceResponse};
+use mars_types::oracle::{ActionKind, PriceResponse};
 
 use crate::{
     msg::{CoinPrice, ExecuteMsg, InstantiateMsg, QueryMsg},

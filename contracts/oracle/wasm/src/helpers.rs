@@ -10,7 +10,7 @@ use cosmwasm_std::{
 };
 use cw_storage_plus::Map;
 use mars_oracle_base::{ContractError, ContractResult, PriceSourceChecked};
-use mars_red_bank_types::oracle::{ActionKind, AstroportTwapSnapshot, Config};
+use mars_types::oracle::{ActionKind, AstroportTwapSnapshot, Config};
 
 use crate::WasmPriceSourceChecked;
 

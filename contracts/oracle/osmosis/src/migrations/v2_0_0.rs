@@ -1,7 +1,7 @@
 use cosmwasm_std::{Decimal, DepsMut, Order, Response, StdResult};
 use cw2::{assert_contract_version, set_contract_version};
 use mars_oracle_base::ContractError;
-use mars_red_bank_types::oracle::MigrateMsg;
+use mars_types::oracle::MigrateMsg;
 use osmosis_std::types::osmosis::downtimedetector::v1beta1::Downtime;
 
 use crate::{

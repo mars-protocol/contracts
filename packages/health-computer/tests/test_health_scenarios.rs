@@ -1,16 +1,16 @@
 use std::{collections::HashMap, ops::Add, str::FromStr};
 
 use cosmwasm_std::{coin, Addr, Coin, Decimal, Uint128};
-use mars_red_bank_types::params::VaultConfig;
-use mars_rover::{
+use mars_rover_health_computer::{DenomsData, HealthComputer, VaultsData};
+use mars_types::{
     adapters::vault::{
         CoinValue, LockingVaultAmount, UnlockingPositions, Vault, VaultAmount, VaultPosition,
         VaultPositionAmount, VaultPositionValue, VaultUnlockingPosition,
     },
-    msg::query::{DebtAmount, Positions},
+    credit_manager::{DebtAmount, Positions},
+    health::AccountKind,
+    params::VaultConfig,
 };
-use mars_rover_health_computer::{DenomsData, HealthComputer, VaultsData};
-use mars_rover_health_types::AccountKind;
 
 use crate::helpers::{udai_info, ujuno_info, uluna_info, umars_info, ustars_info};
 

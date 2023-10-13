@@ -3,9 +3,9 @@ use cw_it::{
     osmosis_test_tube::{Account, Bank, Gamm, Module, OsmosisTestApp, Wasm},
     test_tube::FeeSetting,
 };
-use mars_red_bank_types::swapper::ExecuteMsg;
 use mars_swapper_base::ContractError;
 use mars_swapper_osmosis::route::{OsmosisRoute, SwapAmountInRoute};
+use mars_types::swapper::ExecuteMsg;
 
 use super::helpers::{
     assert_err, instantiate_contract, query_balance, swap_to_create_twap_records,
