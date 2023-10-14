@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { creditManager } from '../../../deploy/addresses/osmo-test-4.json'
+import { creditManager } from '../../../deploy/addresses/devnet-deployer-owner.json'
 import { useQuery } from 'react-query'
 import { fetchHealth, fetchPositions } from './utils'
 import ReactJson from 'react-json-view'
