@@ -5,8 +5,6 @@ use mars_types::red_bank::UserHealthStatus;
 
 use crate::helpers::{assert_red_bank_err, default_asset_params};
 
-mod helpers;
-
 #[test]
 fn rover_flow() {
     let owner = Addr::unchecked("owner");

@@ -16,9 +16,6 @@ use crate::{
     },
 };
 
-mod cosmos_bank;
-mod helpers;
-
 const OSMOSIS_ADDR_PROVIDER_CONTRACT_NAME: &str = "mars-address-provider";
 const OSMOSIS_REWARDS_CONTRACT_NAME: &str = "mars-rewards-collector-osmosis";
 const OSMOSIS_SWAPPER_CONTRACT_NAME: &str = "mars-swapper-osmosis";

@@ -161,9 +161,7 @@ pub mod osmosis {
     where
         M: ?Sized + Serialize,
     {
-        let path =
-            "../integration-tests/tests/files/stride-artifacts/151_stride_redemption_rate.wasm"
-                .to_string();
+        let path = "./files/stride-artifacts/151_stride_redemption_rate.wasm".to_string();
         println!("Trying to read wasm file: {}", path);
         let wasm_byte_code = std::fs::read(path).unwrap();
         let code_id = wasm.store_code(&wasm_byte_code, None, owner).unwrap().data.code_id;

@@ -1,7 +1,6 @@
 use std::{str::FromStr, time::SystemTime};
 
 use cosmwasm_std::{coin, to_binary, Coin, Decimal, Empty, Isqrt, Uint128};
-use helpers::osmosis::instantiate_stride_contract;
 use mars_oracle_base::ContractError;
 use mars_oracle_osmosis::{
     msg::PriceSourceResponse, DowntimeDetector, GeometricTwap, OsmosisPriceSourceChecked,
@@ -32,11 +31,9 @@ use osmosis_test_tube::{
 
 use crate::helpers::{
     default_asset_params,
-    osmosis::{assert_err, instantiate_contract},
+    osmosis::{assert_err, instantiate_contract, instantiate_stride_contract},
     swap, swap_to_create_twap_records,
 };
-
-mod helpers;
 
 const OSMOSIS_ORACLE_CONTRACT_NAME: &str = "mars-oracle-osmosis";
 const OSMOSIS_RED_BANK_CONTRACT_NAME: &str = "mars-red-bank";

@@ -3,8 +3,6 @@ use mars_testing::integration::mock_env::MockEnvBuilder;
 
 use crate::helpers::default_asset_params;
 
-mod helpers;
-
 const ONE_WEEK_IN_SEC: u64 = 604800;
 
 // Note: The incentives rewards for an individual is calculated as follows:

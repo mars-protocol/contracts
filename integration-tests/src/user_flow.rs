@@ -7,8 +7,6 @@ use mars_types::params::LiquidationBonus;
 
 use crate::helpers::{assert_red_bank_err, default_asset_params, default_asset_params_with};
 
-mod helpers;
-
 #[test]
 fn user_flow() {
     let owner = Addr::unchecked("owner");
