@@ -1,4 +1,3 @@
-use crate::error::ContractError;
 use cosmwasm_std::{Addr, Uint128};
 use cw_utils::Duration;
 use mars_mock_vault::contract::STARTING_VAULT_SHARES;
@@ -15,6 +14,7 @@ use super::helpers::{
     assert_err, generate_mock_vault, get_coin, locked_vault_info, lp_token_info, AccountToFund,
     MockEnv,
 };
+use crate::error::ContractError;
 
 #[test]
 fn only_owner_can_withdraw_unlocked_for_account() {

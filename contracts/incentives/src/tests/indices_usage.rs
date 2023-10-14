@@ -2,7 +2,6 @@ use cosmwasm_std::{
     testing::MockStorage, Addr, Decimal, OverflowError, OverflowOperation, StdError, Storage,
     Uint128,
 };
-
 use mars_types::incentives::{Config, IncentiveState};
 
 use crate::{
