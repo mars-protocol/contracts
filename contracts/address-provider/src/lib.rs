@@ -4,3 +4,5 @@ mod helpers;
 mod key;
 pub mod migrations;
 pub mod state;
+#[cfg(test)]
+mod tests;

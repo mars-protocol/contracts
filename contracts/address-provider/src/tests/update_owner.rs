@@ -1,9 +1,9 @@
 use cosmwasm_std::testing::{mock_env, mock_info};
-use mars_address_provider::{contract::execute, error::ContractError};
 use mars_owner::{OwnerError::NotOwner, OwnerUpdate};
 use mars_types::address_provider::{ConfigResponse, ExecuteMsg, QueryMsg};
 
 use super::helpers::{th_query, th_setup};
+use crate::{contract::execute, error::ContractError};
 
 #[test]
 fn initialized_state() {

@@ -1,12 +1,13 @@
 use cosmwasm_std::{attr, testing::mock_env, Addr, Empty, Event};
 use cw2::{ContractVersion, VersionError};
-use mars_address_provider::{
+use mars_testing::mock_dependencies;
+
+use crate::{
     contract::migrate,
     error::ContractError,
     migrations::v2_0_0::v1_state::{self, OwnerSetNoneProposed},
     state::OWNER,
 };
-use mars_testing::mock_dependencies;
 
 #[test]
 fn wrong_contract_name() {
