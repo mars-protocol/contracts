@@ -1,4 +1,6 @@
 pub mod migrations;
+#[cfg(test)]
+mod tests;
 
 #[cfg(not(feature = "library"))]
 pub mod entry {

@@ -1,6 +1,5 @@
 use cosmwasm_std::{testing::mock_env, to_binary, CosmosMsg, Decimal, SubMsg, Uint128, WasmMsg};
 use mars_rewards_collector_base::ContractError;
-use mars_rewards_collector_osmosis::entry::execute;
 use mars_testing::mock_info;
 use mars_types::{
     credit_manager::{self, Action, ActionAmount, ActionCoin},
@@ -8,6 +7,7 @@ use mars_types::{
 };
 
 use super::helpers;
+use crate::entry::execute;
 
 #[test]
 fn withdrawing_from_red_bank() {

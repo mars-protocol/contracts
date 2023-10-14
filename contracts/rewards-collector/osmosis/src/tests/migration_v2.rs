@@ -1,11 +1,12 @@
 use cosmwasm_std::{attr, testing::mock_env, Addr, Decimal, Empty, Event};
 use cw2::{ContractVersion, VersionError};
 use mars_rewards_collector_base::ContractError;
-use mars_rewards_collector_osmosis::{
+use mars_testing::mock_dependencies;
+
+use crate::{
     entry::{migrate, OsmosisCollector},
     migrations::v2_0_0::v1_state::{self, OwnerSetNoneProposed},
 };
-use mars_testing::mock_dependencies;
 
 #[test]
 fn wrong_contract_name() {

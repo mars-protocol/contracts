@@ -1,7 +1,6 @@
 use cosmwasm_std::{
     coin, testing::mock_env, to_binary, CosmosMsg, Decimal, Empty, SubMsg, Uint128, WasmMsg,
 };
-use mars_rewards_collector_osmosis::entry::execute;
 use mars_testing::mock_info;
 use mars_types::{
     rewards_collector::{ConfigResponse, ExecuteMsg, QueryMsg},
@@ -10,6 +9,7 @@ use mars_types::{
 use osmosis_std::types::osmosis::twap::v1beta1::ArithmeticTwapToNowResponse;
 
 use super::{helpers, helpers::mock_instantiate_msg};
+use crate::entry::execute;
 
 #[test]
 fn swapping_asset() {

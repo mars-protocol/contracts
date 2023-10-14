@@ -6,10 +6,11 @@ use cosmwasm_std::{
     Coin, Decimal, Deps, OwnedDeps,
 };
 use mars_osmosis::BalancerPool;
-use mars_rewards_collector_osmosis::entry;
 use mars_testing::{mock_info, MarsMockQuerier};
 use mars_types::rewards_collector::{Config, InstantiateMsg, QueryMsg};
 use osmosis_std::types::osmosis::{gamm::v1beta1::PoolAsset, poolmanager::v1beta1::PoolResponse};
+
+use crate::entry;
 
 pub fn mock_instantiate_msg() -> InstantiateMsg {
     InstantiateMsg {
