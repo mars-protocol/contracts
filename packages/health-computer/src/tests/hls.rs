@@ -1,7 +1,6 @@
 use std::{collections::HashMap, str::FromStr};
 
 use cosmwasm_std::{coin, Addr, Coin, Decimal, Uint128};
-use mars_rover_health_computer::{DenomsData, HealthComputer, VaultsData};
 use mars_types::{
     adapters::vault::{
         CoinValue, Vault, VaultAmount, VaultPosition, VaultPositionAmount, VaultPositionValue,
@@ -11,9 +10,8 @@ use mars_types::{
     params::{HlsParams, VaultConfig},
 };
 
-use crate::helpers::{udai_info, ustars_info};
-
-pub mod helpers;
+use super::helpers::{udai_info, ustars_info};
+use crate::{DenomsData, HealthComputer, VaultsData};
 
 #[test]
 fn hls_deposit() {

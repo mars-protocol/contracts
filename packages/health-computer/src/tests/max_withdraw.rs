@@ -1,22 +1,20 @@
 use std::{collections::HashMap, str::FromStr};
 
 use cosmwasm_std::{coin, Addr, Decimal, Uint128};
-use mars_rover_health_computer::{DenomsData, HealthComputer, VaultsData};
 use mars_types::{
     adapters::vault::{
         CoinValue, Vault, VaultAmount, VaultPosition, VaultPositionAmount, VaultPositionValue,
     },
     credit_manager::{DebtAmount, Positions},
-    health::{AccountKind, BorrowTarget, HealthError},
+    health::{AccountKind, HealthError},
     params::{HlsParams, VaultConfig},
 };
 
-use crate::helpers::{udai_info, umars_info, ustars_info};
-
-pub mod helpers;
+use super::helpers::{udai_info, umars_info, ustars_info};
+use crate::{DenomsData, HealthComputer, VaultsData};
 
 #[test]
-fn missing_borrow_denom_price_data() {
+fn missing_price_data() {
     let umars = umars_info();
     let udai = udai_info();
 
@@ -57,13 +55,12 @@ fn missing_borrow_denom_price_data() {
         vaults_data,
     };
 
-    let err: HealthError =
-        h.max_borrow_amount_estimate(&udai.denom, &BorrowTarget::Deposit).unwrap_err();
+    let err: HealthError = h.max_withdraw_amount_estimate(&udai.denom).unwrap_err();
     assert_eq!(err, HealthError::MissingPrice(udai.denom));
 }
 
 #[test]
-fn missing_borrow_denom_params() {
+fn missing_params() {
     let umars = umars_info();
     let udai = udai_info();
 
@@ -104,13 +101,98 @@ fn missing_borrow_denom_params() {
         vaults_data,
     };
 
-    let err: HealthError =
-        h.max_borrow_amount_estimate(&umars.denom, &BorrowTarget::Deposit).unwrap_err();
+    let err: HealthError = h.max_withdraw_amount_estimate(&umars.denom).unwrap_err();
     assert_eq!(err, HealthError::MissingParams(umars.denom));
 }
 
 #[test]
-fn cannot_borrow_when_unhealthy() {
+fn deposit_not_present() {
+    let denoms_data = DenomsData {
+        prices: Default::default(),
+        params: Default::default(),
+    };
+
+    let vaults_data = VaultsData {
+        vault_values: Default::default(),
+        vault_configs: Default::default(),
+    };
+
+    let h = HealthComputer {
+        kind: AccountKind::Default,
+        positions: Positions {
+            account_id: "123".to_string(),
+            deposits: vec![],
+            debts: vec![],
+            lends: vec![],
+            vaults: vec![],
+        },
+        denoms_data,
+        vaults_data,
+    };
+
+    let max_withdraw_amount = h.max_withdraw_amount_estimate("xyz").unwrap();
+    assert_eq!(max_withdraw_amount, Uint128::zero());
+}
+
+#[test]
+fn blacklisted_assets_should_be_able_be_fully_withdrawn() {
+    let mut umars = umars_info();
+    let udai = udai_info();
+
+    umars.params.credit_manager.whitelisted = false;
+
+    let denoms_data = DenomsData {
+        prices: HashMap::from([
+            (umars.denom.clone(), umars.price),
+            (udai.denom.clone(), udai.price),
+        ]),
+        params: HashMap::from([
+            (umars.denom.clone(), umars.params.clone()),
+            (udai.denom.clone(), udai.params.clone()),
+        ]),
+    };
+
+    let vaults_data = VaultsData {
+        vault_values: Default::default(),
+        vault_configs: Default::default(),
+    };
+
+    let total_deposit = Uint128::new(200);
+
+    let h = HealthComputer {
+        kind: AccountKind::Default,
+        positions: Positions {
+            account_id: "123".to_string(),
+            deposits: vec![coin(total_deposit.u128(), &umars.denom), coin(33, &udai.denom)],
+            debts: vec![
+                DebtAmount {
+                    denom: udai.denom,
+                    shares: Default::default(),
+                    amount: Uint128::new(2500),
+                },
+                DebtAmount {
+                    denom: umars.denom.clone(),
+                    shares: Default::default(),
+                    amount: Uint128::new(200),
+                },
+            ],
+            lends: vec![],
+            vaults: vec![],
+        },
+        denoms_data,
+        vaults_data,
+    };
+
+    let health = h.compute_health().unwrap();
+    assert!(health.max_ltv_health_factor < Some(Decimal::one()));
+
+    // Can fully withdraw blacklisted asset even if unhealthy
+    let max_withdraw_amount = h.max_withdraw_amount_estimate(&umars.denom).unwrap();
+    assert_eq!(total_deposit, max_withdraw_amount);
+}
+
+#[test]
+fn zero_when_unhealthy() {
     let umars = umars_info();
     let udai = udai_info();
 
@@ -154,13 +236,90 @@ fn cannot_borrow_when_unhealthy() {
         vaults_data,
     };
 
-    let max_withdraw_amount =
-        h.max_borrow_amount_estimate(&udai.denom, &BorrowTarget::Deposit).unwrap();
+    let health = h.compute_health().unwrap();
+    assert!(health.max_ltv_health_factor < Some(Decimal::one()));
+    let max_withdraw_amount = h.max_withdraw_amount_estimate(&udai.denom).unwrap();
     assert_eq!(Uint128::zero(), max_withdraw_amount);
 }
 
 #[test]
-fn hls_influences_max_borrow() {
+fn no_debts() {
+    let ustars = ustars_info();
+
+    let denoms_data = DenomsData {
+        prices: HashMap::from([(ustars.denom.clone(), ustars.price)]),
+        params: HashMap::from([(ustars.denom.clone(), ustars.params.clone())]),
+    };
+
+    let vaults_data = VaultsData {
+        vault_values: Default::default(),
+        vault_configs: Default::default(),
+    };
+
+    let deposit_amount = Uint128::new(1200);
+    let h = HealthComputer {
+        kind: AccountKind::Default,
+        positions: Positions {
+            account_id: "123".to_string(),
+            deposits: vec![coin(deposit_amount.u128(), &ustars.denom)],
+            debts: vec![],
+            lends: vec![],
+            vaults: vec![],
+        },
+        denoms_data,
+        vaults_data,
+    };
+
+    let max_withdraw_amount = h.max_withdraw_amount_estimate(&ustars.denom).unwrap();
+    assert_eq!(deposit_amount, max_withdraw_amount);
+}
+
+#[test]
+fn should_allow_max_withdraw() {
+    let umars = umars_info();
+    let udai = udai_info();
+
+    let denoms_data = DenomsData {
+        prices: HashMap::from([
+            (umars.denom.clone(), umars.price),
+            (udai.denom.clone(), udai.price),
+        ]),
+        params: HashMap::from([
+            (umars.denom.clone(), umars.params.clone()),
+            (udai.denom.clone(), udai.params.clone()),
+        ]),
+    };
+
+    let vaults_data = VaultsData {
+        vault_values: Default::default(),
+        vault_configs: Default::default(),
+    };
+
+    let deposit_amount = Uint128::new(33);
+    let h = HealthComputer {
+        kind: AccountKind::Default,
+        positions: Positions {
+            account_id: "123".to_string(),
+            deposits: vec![coin(1200, &umars.denom), coin(deposit_amount.u128(), &udai.denom)],
+            debts: vec![DebtAmount {
+                denom: udai.denom.clone(),
+                shares: Default::default(),
+                amount: Uint128::new(5),
+            }],
+            lends: vec![],
+            vaults: vec![],
+        },
+        denoms_data,
+        vaults_data,
+    };
+
+    // Max when debt value is smaller than collateral value - withdraw denom value
+    let max_withdraw_amount = h.max_withdraw_amount_estimate(&udai.denom).unwrap();
+    assert_eq!(deposit_amount, max_withdraw_amount);
+}
+
+#[test]
+fn hls_with_max_withdraw() {
     let ustars = ustars_info();
     let udai = udai_info();
 
@@ -237,8 +396,8 @@ fn hls_influences_max_borrow() {
         vaults_data,
     };
 
-    let max_before = h.max_borrow_amount_estimate(&ustars.denom, &BorrowTarget::Deposit).unwrap();
+    let max_before = h.max_withdraw_amount_estimate(&ustars.denom).unwrap();
     h.kind = AccountKind::HighLeveredStrategy;
-    let max_after = h.max_borrow_amount_estimate(&ustars.denom, &BorrowTarget::Deposit).unwrap();
-    assert!(max_after > max_before);
+    let max_after = h.max_withdraw_amount_estimate(&ustars.denom).unwrap();
+    assert!(max_after > max_before)
 }

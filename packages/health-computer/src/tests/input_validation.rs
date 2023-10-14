@@ -1,7 +1,6 @@
 use std::collections::HashMap;
 
 use cosmwasm_std::{coin, Addr, Uint128};
-use mars_rover_health_computer::{DenomsData, HealthComputer, VaultsData};
 use mars_types::{
     adapters::vault::{
         CoinValue, Vault, VaultAmount, VaultPosition, VaultPositionAmount, VaultPositionValue,
@@ -11,9 +10,8 @@ use mars_types::{
     params::VaultConfig,
 };
 
-use crate::helpers::{udai_info, umars_info};
-
-pub mod helpers;
+use super::helpers::{udai_info, umars_info};
+use crate::{DenomsData, HealthComputer, VaultsData};
 
 #[test]
 fn missing_price_data() {

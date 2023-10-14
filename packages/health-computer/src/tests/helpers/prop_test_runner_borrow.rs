@@ -1,5 +1,4 @@
 use cosmwasm_std::{Coin, StdResult, Uint128};
-use mars_rover_health_computer::HealthComputer;
 use mars_types::{
     adapters::vault::{CoinValue, VaultPositionValue},
     credit_manager::DebtAmount,
@@ -11,6 +10,7 @@ use proptest::{
 };
 
 use super::random_health_computer;
+use crate::HealthComputer;
 
 pub fn max_borrow_prop_test_runner(cases: u32, target: &BorrowTarget) {
     let config = Config::with_cases(cases);

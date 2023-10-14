@@ -1,5 +1,4 @@
 use cosmwasm_std::{Coin, StdResult, Uint128};
-use mars_rover_health_computer::HealthComputer;
 use mars_types::{credit_manager::DebtAmount, health::SwapKind};
 use proptest::{
     strategy::Strategy,
@@ -7,6 +6,7 @@ use proptest::{
 };
 
 use super::random_health_computer;
+use crate::HealthComputer;
 
 pub fn max_swap_prop_test_runner(cases: u32, kind: &SwapKind) {
     let config = Config::with_cases(cases);

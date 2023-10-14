@@ -1,15 +1,13 @@
 use std::collections::HashMap;
 
 use cosmwasm_std::{coin, Uint128};
-use mars_rover_health_computer::{DenomsData, HealthComputer, VaultsData};
 use mars_types::{
     credit_manager::Positions,
     health::{AccountKind, BorrowTarget},
 };
 
-use crate::helpers::{udai_info, umars_info};
-
-pub mod helpers;
+use super::helpers::{udai_info, umars_info};
+use crate::{DenomsData, HealthComputer, VaultsData};
 
 #[test]
 fn max_borrow_deposit_offset_good() {

@@ -1,7 +1,6 @@
 use std::{collections::HashMap, ops::Add, str::FromStr};
 
 use cosmwasm_std::{coin, Addr, Coin, Decimal, Uint128};
-use mars_rover_health_computer::{DenomsData, HealthComputer, VaultsData};
 use mars_types::{
     adapters::vault::{
         CoinValue, LockingVaultAmount, UnlockingPositions, Vault, VaultAmount, VaultPosition,
@@ -12,9 +11,8 @@ use mars_types::{
     params::VaultConfig,
 };
 
-use crate::helpers::{udai_info, ujuno_info, uluna_info, umars_info, ustars_info};
-
-pub mod helpers;
+use super::helpers::{udai_info, ujuno_info, uluna_info, umars_info, ustars_info};
+use crate::{DenomsData, HealthComputer, VaultsData};
 
 /// Action: User deposits 300 mars (1 price)
 /// Health: assets_value: 300

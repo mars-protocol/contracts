@@ -1,7 +1,6 @@
 use std::collections::HashMap;
 
 use cosmwasm_std::{Addr, Coin, Decimal, Uint128};
-use mars_rover_health_computer::{DenomsData, HealthComputer, VaultsData};
 use mars_types::{
     adapters::vault::{
         CoinValue, LockingVaultAmount, UnlockingPositions, Vault, VaultAmount, VaultPosition,
@@ -16,6 +15,8 @@ use proptest::{
     prelude::{Just, Strategy},
     prop_oneof,
 };
+
+use crate::{DenomsData, HealthComputer, VaultsData};
 
 fn random_account_kind() -> impl Strategy<Value = AccountKind> {
     prop_oneof![Just(AccountKind::Default), Just(AccountKind::HighLeveredStrategy)]

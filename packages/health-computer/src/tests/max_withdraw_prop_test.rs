@@ -1,10 +1,8 @@
 use cosmwasm_std::{StdResult, Uint128};
-use mars_rover_health_computer::HealthComputer;
 use proptest::{prelude::ProptestConfig, prop_assume, test_runner::TestRunner};
 
-use crate::helpers::random_health_computer;
-
-pub mod helpers;
+use super::helpers::random_health_computer;
+use crate::HealthComputer;
 
 #[test]
 fn withdraw_amount_renders_healthy_max_ltv() {
