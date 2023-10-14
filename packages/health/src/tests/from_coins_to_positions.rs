@@ -3,14 +3,15 @@ use std::collections::HashMap;
 use cosmwasm_std::{
     coin, coins, testing::MockQuerier, Addr, Decimal, QuerierWrapper, StdError, Uint128,
 };
-use mars_health::{
-    health::{Health, Position},
-    query::MarsQuerier,
-};
 use mars_testing::MarsMockQuerier;
 use mars_types::{
     params::{AssetParams, CmSettings, LiquidationBonus, RedBankSettings},
     red_bank::Market,
+};
+
+use crate::{
+    health::{Health, Position},
+    query::MarsQuerier,
 };
 
 // Test converting a collection of coins (collateral and debts) to a map of `Position`

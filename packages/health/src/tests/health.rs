@@ -1,7 +1,8 @@
 use std::vec;
 
 use cosmwasm_std::{CheckedFromRatioError, CheckedMultiplyRatioError, Decimal, Uint128};
-use mars_health::{
+
+use crate::{
     error::HealthError,
     health::{Health, Position},
 };

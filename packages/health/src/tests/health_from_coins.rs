@@ -4,12 +4,13 @@ use cosmwasm_std::{
     coin, coins, testing::MockQuerier, Addr, CheckedMultiplyRatioError, Decimal, QuerierWrapper,
     Uint128,
 };
-use mars_health::{error::HealthError, health::Health};
 use mars_testing::MarsMockQuerier;
 use mars_types::{
     params::{AssetParams, CmSettings, LiquidationBonus, RedBankSettings},
     red_bank::Market,
 };
+
+use crate::{error::HealthError, health::Health};
 
 #[test]
 fn health_success_from_coins() {
