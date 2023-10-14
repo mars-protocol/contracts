@@ -6,7 +6,15 @@ use cosmwasm_std::{
     Addr, Decimal, Event, Order, StdResult, Timestamp, Uint128,
 };
 use cw2::{ContractVersion, VersionError};
-use mars_incentives::{
+use mars_testing::{mock_dependencies, MockEnvParams};
+use mars_types::{
+    incentives::{Config, ExecuteMsg, IncentiveState, MigrateMsg, MigrateV1ToV2},
+    keys::{UserId, UserIdKey},
+    red_bank::{Market, UserCollateralResponse},
+};
+use mars_utils::error::GuardError;
+
+use crate::{
     contract::{execute, migrate},
     migrations::v2_0_0::v1_state::{self, OwnerSetNoneProposed},
     state::{
@@ -15,13 +23,6 @@ use mars_incentives::{
     },
     ContractError,
 };
-use mars_testing::{mock_dependencies, MockEnvParams};
-use mars_types::{
-    incentives::{Config, ExecuteMsg, IncentiveState, MigrateMsg, MigrateV1ToV2},
-    keys::{UserId, UserIdKey},
-    red_bank::{Market, UserCollateralResponse},
-};
-use mars_utils::error::GuardError;
 
 #[test]
 fn wrong_contract_name() {

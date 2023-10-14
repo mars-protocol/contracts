@@ -1,14 +1,13 @@
-#![allow(dead_code)]
-
 use cosmwasm_schema::serde;
 use cosmwasm_std::{
     from_binary,
     testing::{mock_env, mock_info, MockApi, MockStorage},
     Deps, DepsMut, Env, OwnedDeps, Uint128,
 };
-use mars_incentives::contract::{execute, instantiate, query};
 use mars_testing::{mock_dependencies, MarsMockQuerier};
 use mars_types::incentives::{ExecuteMsg, InstantiateMsg, QueryMsg};
+
+use crate::contract::{execute, instantiate, query};
 
 pub fn th_setup() -> OwnedDeps<MockStorage, MockApi, MarsMockQuerier> {
     th_setup_with_env(mock_env())

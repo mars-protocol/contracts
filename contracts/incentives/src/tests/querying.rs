@@ -1,5 +1,4 @@
 use cosmwasm_std::{Decimal, Timestamp, Uint128};
-use mars_incentives::state::{EMISSIONS, INCENTIVE_STATES};
 use mars_testing::{mock_env, MockEnvParams};
 use mars_types::incentives::{
     ActiveEmission, EmissionResponse, IncentiveState, IncentiveStateResponse, QueryMsg,
@@ -7,6 +6,7 @@ use mars_types::incentives::{
 use test_case::test_case;
 
 use super::helpers::{th_query, th_query_with_env, th_setup};
+use crate::state::{EMISSIONS, INCENTIVE_STATES};
 
 #[test]
 fn query_incentive_state() {

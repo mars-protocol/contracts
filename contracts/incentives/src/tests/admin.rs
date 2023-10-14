@@ -2,15 +2,15 @@ use cosmwasm_std::{
     testing::{mock_env, mock_info},
     Addr, SubMsg,
 };
-use mars_incentives::{
-    contract::{execute, instantiate},
-    ContractError,
-};
 use mars_owner::OwnerError::NotOwner;
 use mars_testing::mock_dependencies;
 use mars_types::incentives::{ConfigResponse, ExecuteMsg, InstantiateMsg, QueryMsg};
 
 use super::helpers::{th_query, th_setup};
+use crate::{
+    contract::{execute, instantiate},
+    ContractError,
+};
 
 #[test]
 fn proper_initialization() {

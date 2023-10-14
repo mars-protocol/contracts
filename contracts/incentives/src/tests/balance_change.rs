@@ -3,11 +3,6 @@ use cosmwasm_std::{
     testing::{mock_env, mock_info},
     Addr, Decimal, Event, Response, Timestamp, Uint128,
 };
-use mars_incentives::{
-    contract::{execute, execute_balance_change, query_user_unclaimed_rewards},
-    helpers::{compute_incentive_index, compute_user_accrued_rewards},
-    state::{EMISSIONS, INCENTIVE_STATES, USER_ASSET_INDICES, USER_UNCLAIMED_REWARDS},
-};
 use mars_testing::MockEnvParams;
 use mars_types::{
     error::MarsError,
@@ -17,6 +12,11 @@ use mars_types::{
 };
 
 use super::helpers::{th_setup, ths_setup_with_epoch_duration};
+use crate::{
+    contract::{execute, execute_balance_change, query_user_unclaimed_rewards},
+    helpers::{compute_incentive_index, compute_user_accrued_rewards},
+    state::{EMISSIONS, INCENTIVE_STATES, USER_ASSET_INDICES, USER_UNCLAIMED_REWARDS},
+};
 
 #[test]
 fn balance_change_unauthorized() {

@@ -3,17 +3,17 @@ use cosmwasm_std::{
     testing::{mock_env, mock_info},
     Decimal, StdResult, Timestamp, Uint128,
 };
-use mars_incentives::{
-    contract::execute,
-    state::{EMISSIONS, INCENTIVE_STATES},
-    ContractError,
-};
 use mars_testing::MockEnvParams;
 use mars_types::{incentives::ExecuteMsg, red_bank::Market};
 use mars_utils::error::ValidationError;
 
 use super::helpers::{
     th_setup, th_setup_with_env, th_whitelist_denom, ths_setup_with_epoch_duration,
+};
+use crate::{
+    contract::execute,
+    state::{EMISSIONS, INCENTIVE_STATES},
+    ContractError,
 };
 
 const ONE_WEEK_IN_SECS: u64 = 604800;
@@ -476,7 +476,7 @@ fn incorrect_denom_deposit() {
 
     assert_eq!(
         err,
-        mars_incentives::ContractError::InvalidFunds {
+        ContractError::InvalidFunds {
             expected: coin(total_emissions, incentive_denom),
         }
     );

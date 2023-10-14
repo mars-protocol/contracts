@@ -2,14 +2,16 @@ use cosmwasm_std::{
     testing::MockStorage, Addr, Decimal, OverflowError, OverflowOperation, StdError, Storage,
     Uint128,
 };
-use mars_incentives::{
+
+use mars_types::incentives::{Config, IncentiveState};
+
+use crate::{
     helpers::{
         compute_incentive_index, compute_user_accrued_rewards, update_incentive_index,
         MaybeMutStorage,
     },
     state::{CONFIG, EMISSIONS, EPOCH_DURATION, INCENTIVE_STATES},
 };
-use mars_types::incentives::{Config, IncentiveState};
 
 fn store_config_with_epoch_duration(storage: &mut dyn Storage, epoch_duration: u64) {
     CONFIG

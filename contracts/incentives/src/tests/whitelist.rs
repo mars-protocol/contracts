@@ -3,11 +3,6 @@ use cosmwasm_std::{
     testing::{mock_env, mock_info},
     Addr, Coin, Timestamp, Uint128,
 };
-use mars_incentives::{
-    contract::{execute, execute_balance_change},
-    state::{EMISSIONS, WHITELIST_COUNT},
-    ContractError,
-};
 use mars_owner::OwnerError::NotOwner;
 use mars_testing::MockEnvParams;
 use mars_types::{
@@ -18,6 +13,11 @@ use mars_utils::error::ValidationError;
 
 use super::helpers::{
     th_query, th_query_with_env, th_setup, th_setup_with_env, ths_setup_with_epoch_duration,
+};
+use crate::{
+    contract::{execute, execute_balance_change},
+    state::{EMISSIONS, WHITELIST_COUNT},
+    ContractError,
 };
 
 #[test]
