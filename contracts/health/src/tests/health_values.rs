@@ -15,9 +15,7 @@ use mars_types::{
     },
 };
 
-use crate::helpers::MockEnv;
-
-pub mod helpers;
+use super::helpers::MockEnv;
 
 #[test]
 fn raises_when_credit_manager_not_set() {

@@ -3,9 +3,9 @@ use cw_multi_test::{Contract, ContractWrapper};
 
 pub fn mock_health_contract() -> Box<dyn Contract<Empty>> {
     let contract = ContractWrapper::new(
-        mars_rover_health::contract::execute,
-        mars_rover_health::contract::instantiate,
-        mars_rover_health::contract::query,
+        crate::contract::execute,
+        crate::contract::instantiate,
+        crate::contract::query,
     );
     Box::new(contract)
 }

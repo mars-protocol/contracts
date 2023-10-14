@@ -5,9 +5,7 @@ use mars_types::health::{
     HealthError::{Owner, Std},
 };
 
-use crate::helpers::MockEnv;
-
-pub mod helpers;
+use super::helpers::MockEnv;
 
 #[test]
 fn only_owner_can_update_config() {

@@ -6,9 +6,7 @@ use mars_types::{
     params::AssetParamsUpdate::AddOrUpdate,
 };
 
-use crate::helpers::{default_asset_params, MockEnv};
-
-pub mod helpers;
+use super::helpers::{default_asset_params, MockEnv};
 
 #[test]
 fn zero_debts_results_in_healthy_state() {

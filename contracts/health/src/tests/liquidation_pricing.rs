@@ -11,9 +11,7 @@ use mars_types::{
     },
 };
 
-use crate::helpers::MockEnv;
-
-pub mod helpers;
+use super::helpers::MockEnv;
 
 #[test]
 fn uses_liquidation_pricing() {

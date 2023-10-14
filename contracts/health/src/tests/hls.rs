@@ -9,9 +9,7 @@ use mars_types::{
     params::AssetParamsUpdate::AddOrUpdate,
 };
 
-use crate::helpers::{default_asset_params, MockEnv};
-
-pub mod helpers;
+use super::helpers::{default_asset_params, MockEnv};
 
 #[test]
 fn hls_account_kind_passed_along() {

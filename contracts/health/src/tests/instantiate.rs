@@ -1,11 +1,10 @@
 use cosmwasm_std::testing::{mock_dependencies, mock_env, mock_info};
-use mars_rover_health::{
+use mars_types::health::InstantiateMsg;
+
+use crate::{
     contract::instantiate,
     state::{CREDIT_MANAGER, OWNER},
 };
-use mars_types::health::InstantiateMsg;
-
-pub mod helpers;
 
 #[test]
 fn instantiate_without_credit_manager() {
