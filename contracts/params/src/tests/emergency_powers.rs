@@ -1,12 +1,12 @@
 use cosmwasm_std::Addr;
 use mars_owner::OwnerError;
-use mars_params::error::ContractError::Owner;
 use mars_types::params::{
     AssetParamsUpdate, CmEmergencyUpdate, EmergencyUpdate, RedBankEmergencyUpdate,
     VaultConfigUpdate,
 };
 
 use super::helpers::{assert_err, default_asset_params, default_vault_config, MockEnv};
+use crate::error::ContractError::Owner;
 
 #[test]
 fn only_owner_can_invoke_emergency_powers() {

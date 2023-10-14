@@ -2,10 +2,10 @@ use std::str::FromStr;
 
 use cosmwasm_std::{Addr, Decimal};
 use mars_owner::OwnerError;
-use mars_params::error::ContractError::{Owner, Validation};
 use mars_utils::error::ValidationError::InvalidParam;
 
 use super::helpers::{assert_err, MockEnv};
+use crate::error::ContractError::{Owner, Validation};
 
 #[test]
 fn thf_set_on_init() {

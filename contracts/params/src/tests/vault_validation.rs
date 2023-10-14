@@ -1,7 +1,6 @@
 use std::str::FromStr;
 
 use cosmwasm_std::{Decimal, StdError::GenericErr};
-use mars_params::error::ContractError;
 use mars_types::{
     error::MarsError::{Std, Validation},
     params::{HlsParamsUnchecked, VaultConfigUpdate},
@@ -9,6 +8,7 @@ use mars_types::{
 use mars_utils::error::ValidationError::InvalidParam;
 
 use super::helpers::{assert_err, default_vault_config, MockEnv};
+use crate::error::ContractError;
 
 #[test]
 fn vault_addr_must_be_valid() {

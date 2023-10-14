@@ -1,8 +1,8 @@
 use cosmwasm_std::Addr;
 use mars_owner::{OwnerError, OwnerUpdate};
-use mars_params::error::ContractError::Owner;
 
 use super::helpers::{assert_err, MockEnv};
+use crate::error::ContractError::Owner;
 
 #[test]
 fn owner_set_on_init() {

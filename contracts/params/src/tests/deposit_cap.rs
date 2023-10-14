@@ -2,10 +2,6 @@ use std::str::FromStr;
 
 use cosmwasm_std::{coins, Addr, Decimal, Uint128};
 use mars_interest_rate::get_underlying_liquidity_amount;
-use mars_params::{
-    query::query_total_deposit,
-    state::{ADDRESS_PROVIDER, ASSET_PARAMS},
-};
 use mars_testing::{mock_dependencies, mock_env_at_block_time};
 use mars_types::{
     params::TotalDepositResponse,
@@ -14,6 +10,10 @@ use mars_types::{
 use test_case::test_case;
 
 use super::helpers::default_asset_params;
+use crate::{
+    query::query_total_deposit,
+    state::{ADDRESS_PROVIDER, ASSET_PARAMS},
+};
 
 const CREDIT_MANAGER: &str = "credit_manager";
 const MOCK_DENOM: &str = "utoken";

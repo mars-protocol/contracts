@@ -1,7 +1,6 @@
 use std::str::FromStr;
 
 use cosmwasm_std::Decimal;
-use mars_params::error::ContractError;
 use mars_types::{
     error::MarsError::Validation,
     params::{AssetParamsUpdate, HlsAssetType, HlsParamsUnchecked},
@@ -9,6 +8,7 @@ use mars_types::{
 use mars_utils::error::ValidationError::{InvalidDenom, InvalidParam};
 
 use super::helpers::{assert_err, default_asset_params, MockEnv};
+use crate::error::ContractError;
 
 #[test]
 fn denom_must_be_native() {
