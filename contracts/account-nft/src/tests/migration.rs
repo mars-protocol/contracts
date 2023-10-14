@@ -8,12 +8,9 @@ use cw721_base::{Cw721Contract, Ownership, QueryMsg};
 use cw721_base_v16::{
     msg::InstantiateMsg as Cw721v16InstantiateMsg, Cw721Contract as Cw721ContractV16,
 };
-use mars_account_nft::{
-    contract::migrate, error::ContractError, migrations::v2_0_0::v1_state, state::CONFIG,
-};
 use mars_types::account_nft::NftConfig;
 
-pub mod helpers;
+use crate::{contract::migrate, error::ContractError, migrations::v2_0_0::v1_state, state::CONFIG};
 
 #[test]
 fn invalid_contract_name() {

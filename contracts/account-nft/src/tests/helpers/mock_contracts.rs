@@ -3,9 +3,9 @@ use cw_multi_test::{Contract, ContractWrapper};
 
 pub fn mock_nft_contract() -> Box<dyn Contract<Empty>> {
     let contract = ContractWrapper::new(
-        mars_account_nft::contract::execute,
-        mars_account_nft::contract::instantiate,
-        mars_account_nft::contract::query,
+        crate::contract::execute,
+        crate::contract::instantiate,
+        crate::contract::query,
     );
     Box::new(contract)
 }

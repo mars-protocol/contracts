@@ -1,6 +1,4 @@
-use crate::helpers::{MockEnv, MAX_VALUE_FOR_BURN};
-
-pub mod helpers;
+use super::helpers::{MockEnv, MAX_VALUE_FOR_BURN};
 
 #[test]
 fn instantiated_storage_vars() {

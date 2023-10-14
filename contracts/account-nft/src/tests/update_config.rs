@@ -1,9 +1,7 @@
 use cosmwasm_std::{Addr, Uint128};
 use mars_types::account_nft::NftConfigUpdates;
 
-use crate::helpers::MockEnv;
-
-pub mod helpers;
+use super::helpers::MockEnv;
 
 #[test]
 fn only_minter_can_update_config() {

@@ -1,13 +1,11 @@
 use cosmwasm_std::{Addr, StdError};
-use mars_account_nft::error::{ContractError, ContractError::HealthContractNotSet};
 use mars_types::{
     account_nft::QueryMsg::{AllTokens, NumTokens, Tokens},
     health::AccountKind,
 };
 
-use crate::helpers::{generate_health_response, MockEnv};
-
-pub mod helpers;
+use super::helpers::{generate_health_response, MockEnv};
+use crate::error::{ContractError, ContractError::HealthContractNotSet};
 
 #[test]
 fn burning_empty_accounts_not_allowed_if_no_health_contract_set() {

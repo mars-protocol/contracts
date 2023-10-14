@@ -3,15 +3,13 @@ use std::ops::Add;
 use cosmwasm_std::{Addr, Empty, StdResult, Uint128};
 use cw721::NftInfoResponse;
 use cw721_base::{ContractError::Ownership, OwnershipError::NotOwner};
-use mars_account_nft::error::{
+use mars_types::{account_nft::QueryMsg::NftInfo, health::AccountKind};
+
+use super::helpers::{below_max_for_burn, generate_health_response, MockEnv, MAX_VALUE_FOR_BURN};
+use crate::error::{
     ContractError,
     ContractError::{BaseError, BurnNotAllowed, HealthContractNotSet},
 };
-use mars_types::{account_nft::QueryMsg::NftInfo, health::AccountKind};
-
-use crate::helpers::{below_max_for_burn, generate_health_response, MockEnv, MAX_VALUE_FOR_BURN};
-
-pub mod helpers;
 
 #[test]
 fn only_token_owner_can_burn() {

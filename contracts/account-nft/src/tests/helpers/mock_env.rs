@@ -17,7 +17,7 @@ use mars_types::{
     health::{AccountKind, HealthValuesResponse},
 };
 
-use crate::helpers::MockEnvBuilder;
+use super::MockEnvBuilder;
 
 pub struct MockEnv {
     pub app: BasicApp,
