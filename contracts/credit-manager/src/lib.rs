@@ -18,6 +18,8 @@ pub mod refund;
 pub mod repay;
 pub mod state;
 pub mod swap;
+#[cfg(test)]
+mod tests;
 pub mod update_coin_balances;
 pub mod update_config;
 pub mod utils;
