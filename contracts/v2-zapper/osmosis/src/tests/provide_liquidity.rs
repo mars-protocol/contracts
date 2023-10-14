@@ -3,9 +3,7 @@ use cw_dex::CwDexError;
 use mars_types::zapper::{ExecuteMsg, QueryMsg};
 use osmosis_test_tube::{Account, Bank, FeeSetting, Gamm, Module, OsmosisTestApp, Wasm};
 
-use crate::helpers::{assert_err, instantiate_contract, query_balance};
-
-pub mod helpers;
+use super::helpers::{assert_err, instantiate_contract, query_balance};
 
 #[test]
 fn provide_liquidity_with_invalid_lp_token() {

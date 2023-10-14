@@ -5,9 +5,8 @@ use cosmwasm_std::{
 };
 use cw2::{get_contract_version, set_contract_version, ContractVersion, VersionError};
 use mars_zapper_base::ContractError;
-use mars_zapper_osmosis::contract::migrate;
 
-pub mod helpers;
+use crate::contract::migrate;
 
 #[test]
 fn invalid_contract_name() {
