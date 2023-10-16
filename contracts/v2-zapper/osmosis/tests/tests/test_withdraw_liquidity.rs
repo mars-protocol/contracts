@@ -5,9 +5,7 @@ use mars_types::zapper::{ExecuteMsg, QueryMsg};
 use mars_zapper_base::ContractError;
 use osmosis_test_tube::{Account, Bank, Gamm, Module, OsmosisTestApp, Wasm};
 
-use crate::helpers::{assert_err, instantiate_contract, query_balance};
-
-pub mod helpers;
+use super::helpers::{assert_err, instantiate_contract, query_balance};
 
 #[test]
 fn withdraw_liquidity_without_funds() {

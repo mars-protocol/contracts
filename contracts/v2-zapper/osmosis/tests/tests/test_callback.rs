@@ -3,9 +3,7 @@ use mars_types::zapper::{CallbackMsg, ExecuteMsg};
 use mars_zapper_base::ContractError;
 use osmosis_test_tube::{Account, Module, OsmosisTestApp, Wasm};
 
-use crate::helpers::{assert_err, instantiate_contract};
-
-pub mod helpers;
+use super::helpers::{assert_err, instantiate_contract};
 
 #[test]
 fn only_contract_itself_can_callback() {

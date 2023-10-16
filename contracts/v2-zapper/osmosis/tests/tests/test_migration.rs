@@ -7,8 +7,6 @@ use cw2::{get_contract_version, set_contract_version, ContractVersion, VersionEr
 use mars_zapper_base::ContractError;
 use mars_zapper_osmosis::contract::migrate;
 
-pub mod helpers;
-
 #[test]
 fn invalid_contract_name() {
     let mut deps = mock_dependencies();

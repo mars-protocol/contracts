@@ -5,9 +5,7 @@ use cw_dex::CwDexError;
 use mars_types::zapper::QueryMsg;
 use osmosis_test_tube::{Gamm, Module, OsmosisTestApp, Wasm};
 
-use crate::helpers::{assert_err, instantiate_contract};
-
-pub mod helpers;
+use super::helpers::{assert_err, instantiate_contract};
 
 #[test]
 fn estimate_provide_liquidity_with_invalid_lp_token() {
