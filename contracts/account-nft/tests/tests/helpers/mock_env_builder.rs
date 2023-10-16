@@ -7,8 +7,10 @@ use mars_mock_credit_manager::msg::InstantiateMsg as CmMockInstantiateMsg;
 use mars_owner::OwnerResponse;
 use mars_types::{account_nft::InstantiateMsg, credit_manager::ConfigResponse};
 
-use super::mock_credit_manager_contract;
-use crate::helpers::{mock_health_contract, mock_nft_contract, MockEnv, MAX_VALUE_FOR_BURN};
+use super::{
+    mock_credit_manager_contract, mock_health_contract, mock_nft_contract, MockEnv,
+    MAX_VALUE_FOR_BURN,
+};
 
 pub struct MockEnvBuilder {
     pub app: BasicApp,

@@ -5,9 +5,7 @@ use mars_types::{
     health::AccountKind,
 };
 
-use crate::helpers::{generate_health_response, MockEnv};
-
-pub mod helpers;
+use super::helpers::{generate_health_response, MockEnv};
 
 #[test]
 fn burning_empty_accounts_not_allowed_if_no_health_contract_set() {

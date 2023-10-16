@@ -8,9 +8,7 @@ use mars_types::{
     health::AccountKind,
 };
 
-use crate::helpers::{below_max_for_burn, MockEnv};
-
-pub mod helpers;
+use super::helpers::{below_max_for_burn, MockEnv};
 
 #[test]
 fn id_incrementer() {

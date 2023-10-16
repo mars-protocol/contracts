@@ -13,8 +13,6 @@ use mars_account_nft::{
 };
 use mars_types::account_nft::NftConfig;
 
-pub mod helpers;
-
 #[test]
 fn invalid_contract_name() {
     let mut deps = mock_dependencies();

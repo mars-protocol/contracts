@@ -2,9 +2,7 @@ use cosmwasm_std::Addr;
 use cw721_base::MinterResponse;
 use mars_types::account_nft::QueryMsg;
 
-use crate::helpers::MockEnv;
-
-pub mod helpers;
+use super::helpers::MockEnv;
 
 #[test]
 fn only_minter_can_propose_new_minter() {

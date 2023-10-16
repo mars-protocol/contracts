@@ -9,9 +9,7 @@ use mars_account_nft::error::{
 };
 use mars_types::{account_nft::QueryMsg::NftInfo, health::AccountKind};
 
-use crate::helpers::{below_max_for_burn, generate_health_response, MockEnv, MAX_VALUE_FOR_BURN};
-
-pub mod helpers;
+use super::helpers::{below_max_for_burn, generate_health_response, MockEnv, MAX_VALUE_FOR_BURN};
 
 #[test]
 fn only_token_owner_can_burn() {
