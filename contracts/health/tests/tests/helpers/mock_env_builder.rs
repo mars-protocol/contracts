@@ -18,7 +18,7 @@ use mars_types::{
     },
 };
 
-use crate::helpers::{
+use super::{
     mock_credit_manager_contract, mock_health_contract, mock_oracle_contract, mock_params_contract,
     mock_vault_contract, MockEnv,
 };

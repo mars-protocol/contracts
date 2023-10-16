@@ -5,8 +5,6 @@ use mars_rover_health::{
 };
 use mars_types::health::InstantiateMsg;
 
-pub mod helpers;
-
 #[test]
 fn instantiate_without_credit_manager() {
     let mut deps = mock_dependencies();
