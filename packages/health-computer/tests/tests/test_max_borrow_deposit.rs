@@ -7,14 +7,11 @@ use mars_types::{
     health::{AccountKind, BorrowTarget},
 };
 
-use crate::helpers::{osmo_atom_1_config, udai_info, umars_info};
-
-pub mod helpers;
+use super::helpers::{udai_info, umars_info};
 
 #[test]
-fn max_borrow_vault_offset_good() {
+fn max_borrow_deposit_offset_good() {
     let udai = udai_info();
-    let osmo_atom_1_config = osmo_atom_1_config();
 
     let denoms_data = DenomsData {
         prices: HashMap::from([(udai.denom.clone(), udai.price)]),
@@ -23,10 +20,7 @@ fn max_borrow_vault_offset_good() {
 
     let vaults_data = VaultsData {
         vault_values: Default::default(),
-        vault_configs: HashMap::from([(
-            osmo_atom_1_config.addr.clone(),
-            osmo_atom_1_config.clone(),
-        )]),
+        vault_configs: Default::default(),
     };
 
     let h = HealthComputer {
@@ -42,22 +36,14 @@ fn max_borrow_vault_offset_good() {
         vaults_data,
     };
 
-    let max_borrow_amount = h
-        .max_borrow_amount_estimate(
-            &udai.denom,
-            &BorrowTarget::Vault {
-                address: osmo_atom_1_config.addr,
-            },
-        )
-        .unwrap();
-
-    assert_eq!(Uint128::new(3381), max_borrow_amount);
+    let max_borrow_amount =
+        h.max_borrow_amount_estimate(&udai.denom, &BorrowTarget::Deposit).unwrap();
+    assert_eq!(Uint128::new(6763), max_borrow_amount);
 }
 
 #[test]
-fn max_borrow_vault_offset_margin_of_error() {
+fn max_borrow_deposit_offset_margin_of_error() {
     let umars = umars_info();
-    let osmo_atom_1_config = osmo_atom_1_config();
 
     let denoms_data = DenomsData {
         prices: HashMap::from([(umars.denom.clone(), umars.price)]),
@@ -66,10 +52,7 @@ fn max_borrow_vault_offset_margin_of_error() {
 
     let vaults_data = VaultsData {
         vault_values: Default::default(),
-        vault_configs: HashMap::from([(
-            osmo_atom_1_config.addr.clone(),
-            osmo_atom_1_config.clone(),
-        )]),
+        vault_configs: Default::default(),
     };
 
     let h = HealthComputer {
@@ -85,15 +68,9 @@ fn max_borrow_vault_offset_margin_of_error() {
         vaults_data,
     };
 
-    let max_borrow_amount = h
-        .max_borrow_amount_estimate(
-            &umars.denom,
-            &BorrowTarget::Vault {
-                address: osmo_atom_1_config.addr,
-            },
-        )
-        .unwrap();
+    let max_borrow_amount =
+        h.max_borrow_amount_estimate(&umars.denom, &BorrowTarget::Deposit).unwrap();
 
-    // Normally could be 3200, but conservative offset rounding has a margin of error
-    assert_eq!(Uint128::new(3196), max_borrow_amount);
+    // Normally could be 4800, but conservative offset rounding has a margin of error
+    assert_eq!(Uint128::new(4795), max_borrow_amount);
 }

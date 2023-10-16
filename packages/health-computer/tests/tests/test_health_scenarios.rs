@@ -12,9 +12,7 @@ use mars_types::{
     params::VaultConfig,
 };
 
-use crate::helpers::{udai_info, ujuno_info, uluna_info, umars_info, ustars_info};
-
-pub mod helpers;
+use super::helpers::{udai_info, ujuno_info, uluna_info, umars_info, ustars_info};
 
 /// Action: User deposits 300 mars (1 price)
 /// Health: assets_value: 300

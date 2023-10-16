@@ -4,27 +4,18 @@ use cosmwasm_std::{coin, Uint128};
 use mars_rover_health_computer::{DenomsData, HealthComputer, VaultsData};
 use mars_types::{
     credit_manager::Positions,
-    health::{AccountKind, SwapKind},
+    health::{AccountKind, BorrowTarget},
 };
 
-use crate::helpers::{udai_info, umars_info};
-
-pub mod helpers;
+use super::helpers::{udai_info, umars_info};
 
 #[test]
-fn max_swap_default() {
+fn max_borrow_wallet_offset_good() {
     let udai = udai_info();
-    let umars = umars_info();
 
     let denoms_data = DenomsData {
-        prices: HashMap::from([
-            (udai.denom.clone(), udai.price),
-            (umars.denom.clone(), umars.price),
-        ]),
-        params: HashMap::from([
-            (udai.denom.clone(), udai.params.clone()),
-            (umars.denom.clone(), umars.params.clone()),
-        ]),
+        prices: HashMap::from([(udai.denom.clone(), udai.price)]),
+        params: HashMap::from([(udai.denom.clone(), udai.params.clone())]),
     };
 
     let vaults_data = VaultsData {
@@ -46,24 +37,17 @@ fn max_swap_default() {
     };
 
     let max_borrow_amount =
-        h.max_swap_amount_estimate(&udai.denom, &umars.denom, &SwapKind::Default).unwrap();
-    assert_eq!(Uint128::new(1200), max_borrow_amount);
+        h.max_borrow_amount_estimate(&udai.denom, &BorrowTarget::Wallet).unwrap();
+    assert_eq!(Uint128::new(1014), max_borrow_amount);
 }
 
 #[test]
-fn max_swap_margin() {
-    let udai = udai_info();
+fn max_borrow_wallet_offset_margin_of_error() {
     let umars = umars_info();
 
     let denoms_data = DenomsData {
-        prices: HashMap::from([
-            (udai.denom.clone(), udai.price),
-            (umars.denom.clone(), umars.price),
-        ]),
-        params: HashMap::from([
-            (udai.denom.clone(), udai.params.clone()),
-            (umars.denom.clone(), umars.params.clone()),
-        ]),
+        prices: HashMap::from([(umars.denom.clone(), umars.price)]),
+        params: HashMap::from([(umars.denom.clone(), umars.params.clone())]),
     };
 
     let vaults_data = VaultsData {
@@ -75,7 +59,7 @@ fn max_swap_margin() {
         kind: AccountKind::Default,
         positions: Positions {
             account_id: "123".to_string(),
-            deposits: vec![coin(5000, &udai.denom), coin(500, &umars.denom)],
+            deposits: vec![coin(1200, &umars.denom)],
             debts: vec![],
             lends: vec![],
             vaults: vec![],
@@ -85,6 +69,8 @@ fn max_swap_margin() {
     };
 
     let max_borrow_amount =
-        h.max_swap_amount_estimate(&udai.denom, &umars.denom, &SwapKind::Margin).unwrap();
-    assert_eq!(Uint128::new(31351), max_borrow_amount);
+        h.max_borrow_amount_estimate(&umars.denom, &BorrowTarget::Wallet).unwrap();
+
+    // Normally could be 960, but conservative offset rounding has a margin of error
+    assert_eq!(Uint128::new(959), max_borrow_amount);
 }

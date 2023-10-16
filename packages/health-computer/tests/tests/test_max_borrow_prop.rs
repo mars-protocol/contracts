@@ -1,8 +1,7 @@
 use cosmwasm_std::Addr;
-use helpers::max_borrow_prop_test_runner;
 use mars_types::health::BorrowTarget;
 
-pub mod helpers;
+use super::helpers::max_borrow_prop_test_runner;
 
 #[test]
 fn max_borrow_amount_deposit_renders_healthy_max_ltv() {

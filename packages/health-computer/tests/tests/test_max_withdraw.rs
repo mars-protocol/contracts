@@ -7,13 +7,11 @@ use mars_types::{
         CoinValue, Vault, VaultAmount, VaultPosition, VaultPositionAmount, VaultPositionValue,
     },
     credit_manager::{DebtAmount, Positions},
-    health::{AccountKind, HealthError, SwapKind},
+    health::{AccountKind, HealthError},
     params::{HlsParams, VaultConfig},
 };
 
-use crate::helpers::{uatom_info, udai_info, umars_info, ustars_info};
-
-pub mod helpers;
+use super::helpers::{udai_info, umars_info, ustars_info};
 
 #[test]
 fn missing_price_data() {
@@ -45,7 +43,7 @@ fn missing_price_data() {
                     amount: Uint128::new(3100),
                 },
                 DebtAmount {
-                    denom: umars.denom.clone(),
+                    denom: umars.denom,
                     shares: Default::default(),
                     amount: Uint128::new(200),
                 },
@@ -57,8 +55,7 @@ fn missing_price_data() {
         vaults_data,
     };
 
-    let err: HealthError =
-        h.max_swap_amount_estimate(&udai.denom, &umars.denom, &SwapKind::Default).unwrap_err();
+    let err: HealthError = h.max_withdraw_amount_estimate(&udai.denom).unwrap_err();
     assert_eq!(err, HealthError::MissingPrice(udai.denom));
 }
 
@@ -87,7 +84,7 @@ fn missing_params() {
             deposits: vec![coin(1200, &umars.denom), coin(33, &udai.denom)],
             debts: vec![
                 DebtAmount {
-                    denom: udai.denom.clone(),
+                    denom: udai.denom,
                     shares: Default::default(),
                     amount: Uint128::new(3100),
                 },
@@ -104,15 +101,12 @@ fn missing_params() {
         vaults_data,
     };
 
-    let err: HealthError =
-        h.max_swap_amount_estimate(&umars.denom, &udai.denom, &SwapKind::Default).unwrap_err();
+    let err: HealthError = h.max_withdraw_amount_estimate(&umars.denom).unwrap_err();
     assert_eq!(err, HealthError::MissingParams(umars.denom));
 }
 
 #[test]
 fn deposit_not_present() {
-    let udai = udai_info();
-
     let denoms_data = DenomsData {
         prices: Default::default(),
         params: Default::default(),
@@ -136,9 +130,65 @@ fn deposit_not_present() {
         vaults_data,
     };
 
-    let max_withdraw_amount =
-        h.max_swap_amount_estimate("xyz", &udai.denom, &SwapKind::Default).unwrap();
+    let max_withdraw_amount = h.max_withdraw_amount_estimate("xyz").unwrap();
     assert_eq!(max_withdraw_amount, Uint128::zero());
+}
+
+#[test]
+fn blacklisted_assets_should_be_able_be_fully_withdrawn() {
+    let mut umars = umars_info();
+    let udai = udai_info();
+
+    umars.params.credit_manager.whitelisted = false;
+
+    let denoms_data = DenomsData {
+        prices: HashMap::from([
+            (umars.denom.clone(), umars.price),
+            (udai.denom.clone(), udai.price),
+        ]),
+        params: HashMap::from([
+            (umars.denom.clone(), umars.params.clone()),
+            (udai.denom.clone(), udai.params.clone()),
+        ]),
+    };
+
+    let vaults_data = VaultsData {
+        vault_values: Default::default(),
+        vault_configs: Default::default(),
+    };
+
+    let total_deposit = Uint128::new(200);
+
+    let h = HealthComputer {
+        kind: AccountKind::Default,
+        positions: Positions {
+            account_id: "123".to_string(),
+            deposits: vec![coin(total_deposit.u128(), &umars.denom), coin(33, &udai.denom)],
+            debts: vec![
+                DebtAmount {
+                    denom: udai.denom,
+                    shares: Default::default(),
+                    amount: Uint128::new(2500),
+                },
+                DebtAmount {
+                    denom: umars.denom.clone(),
+                    shares: Default::default(),
+                    amount: Uint128::new(200),
+                },
+            ],
+            lends: vec![],
+            vaults: vec![],
+        },
+        denoms_data,
+        vaults_data,
+    };
+
+    let health = h.compute_health().unwrap();
+    assert!(health.max_ltv_health_factor < Some(Decimal::one()));
+
+    // Can fully withdraw blacklisted asset even if unhealthy
+    let max_withdraw_amount = h.max_withdraw_amount_estimate(&umars.denom).unwrap();
+    assert_eq!(total_deposit, max_withdraw_amount);
 }
 
 #[test]
@@ -174,7 +224,7 @@ fn zero_when_unhealthy() {
                     amount: Uint128::new(2500),
                 },
                 DebtAmount {
-                    denom: umars.denom.clone(),
+                    denom: umars.denom,
                     shares: Default::default(),
                     amount: Uint128::new(200),
                 },
@@ -188,25 +238,17 @@ fn zero_when_unhealthy() {
 
     let health = h.compute_health().unwrap();
     assert!(health.max_ltv_health_factor < Some(Decimal::one()));
-    let max_swap_amount =
-        h.max_swap_amount_estimate(&udai.denom, &umars.denom, &SwapKind::Default).unwrap();
-    assert_eq!(Uint128::zero(), max_swap_amount);
+    let max_withdraw_amount = h.max_withdraw_amount_estimate(&udai.denom).unwrap();
+    assert_eq!(Uint128::zero(), max_withdraw_amount);
 }
 
 #[test]
 fn no_debts() {
     let ustars = ustars_info();
-    let umars = umars_info();
 
     let denoms_data = DenomsData {
-        prices: HashMap::from([
-            (ustars.denom.clone(), ustars.price),
-            (umars.denom.clone(), umars.price),
-        ]),
-        params: HashMap::from([
-            (ustars.denom.clone(), ustars.params.clone()),
-            (umars.denom.clone(), umars.params.clone()),
-        ]),
+        prices: HashMap::from([(ustars.denom.clone(), ustars.price)]),
+        params: HashMap::from([(ustars.denom.clone(), ustars.params.clone())]),
     };
 
     let vaults_data = VaultsData {
@@ -228,13 +270,12 @@ fn no_debts() {
         vaults_data,
     };
 
-    let max_swap_amount =
-        h.max_swap_amount_estimate(&ustars.denom, &umars.denom, &SwapKind::Default).unwrap();
-    assert_eq!(deposit_amount, max_swap_amount);
+    let max_withdraw_amount = h.max_withdraw_amount_estimate(&ustars.denom).unwrap();
+    assert_eq!(deposit_amount, max_withdraw_amount);
 }
 
 #[test]
-fn should_allow_max_swap() {
+fn should_allow_max_withdraw() {
     let umars = umars_info();
     let udai = udai_info();
 
@@ -273,24 +314,23 @@ fn should_allow_max_swap() {
     };
 
     // Max when debt value is smaller than collateral value - withdraw denom value
-    let max_swap_amount =
-        h.max_swap_amount_estimate(&udai.denom, &umars.denom, &SwapKind::Default).unwrap();
-    assert_eq!(deposit_amount, max_swap_amount);
+    let max_withdraw_amount = h.max_withdraw_amount_estimate(&udai.denom).unwrap();
+    assert_eq!(deposit_amount, max_withdraw_amount);
 }
 
 #[test]
 fn hls_with_max_withdraw() {
     let ustars = ustars_info();
-    let uatom = uatom_info();
+    let udai = udai_info();
 
     let denoms_data = DenomsData {
         prices: HashMap::from([
             (ustars.denom.clone(), ustars.price),
-            (uatom.denom.clone(), uatom.price),
+            (udai.denom.clone(), udai.price),
         ]),
         params: HashMap::from([
             (ustars.denom.clone(), ustars.params.clone()),
-            (uatom.denom.clone(), uatom.params.clone()),
+            (udai.denom.clone(), udai.params.clone()),
         ]),
     };
 
@@ -336,7 +376,7 @@ fn hls_with_max_withdraw() {
             deposits: vec![coin(1200, &ustars.denom)],
             debts: vec![
                 DebtAmount {
-                    denom: uatom.denom.clone(),
+                    denom: udai.denom,
                     shares: Default::default(),
                     amount: Uint128::new(3100),
                 },
@@ -356,10 +396,8 @@ fn hls_with_max_withdraw() {
         vaults_data,
     };
 
-    let max_before =
-        h.max_swap_amount_estimate(&ustars.denom, &uatom.denom, &SwapKind::Default).unwrap();
+    let max_before = h.max_withdraw_amount_estimate(&ustars.denom).unwrap();
     h.kind = AccountKind::HighLeveredStrategy;
-    let max_after =
-        h.max_swap_amount_estimate(&ustars.denom, &uatom.denom, &SwapKind::Default).unwrap();
+    let max_after = h.max_withdraw_amount_estimate(&ustars.denom).unwrap();
     assert!(max_after > max_before)
 }

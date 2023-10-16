@@ -11,9 +11,7 @@ use mars_types::{
     params::VaultConfig,
 };
 
-use crate::helpers::{udai_info, umars_info};
-
-pub mod helpers;
+use super::helpers::{udai_info, umars_info};
 
 #[test]
 fn missing_price_data() {

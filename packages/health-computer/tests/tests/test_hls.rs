@@ -11,9 +11,7 @@ use mars_types::{
     params::{HlsParams, VaultConfig},
 };
 
-use crate::helpers::{udai_info, ustars_info};
-
-pub mod helpers;
+use super::helpers::{udai_info, ustars_info};
 
 #[test]
 fn hls_deposit() {
