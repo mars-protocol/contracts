@@ -1,10 +1,10 @@
-# Mars Protocol: Red Bank
+# Smart contracts for Mars Outposts
 
-This repository contains the source code for the core smart contracts of Mars Red Bank. Smart contracts are meant to be compiled to `.wasm` files and uploaded to the Cosmos chains.
+This repository contains the source code for the core smart contracts of Mars Protocol. Smart contracts are meant to be compiled to `.wasm` files and uploaded to the Cosmos chains.
 
 ## Audits
 
-See reports [here][1].
+See reports for red-bank and rover [here][1].
 
 ## Bug bounty
 
@@ -19,7 +19,7 @@ A bug bounty is currently open for these contracts. See details [here][2].
 2. Get the wasm binary executable on your local machine.
 
    ```bash
-   git clone https://github.com/mars-protocol/red-bank.git
+   git clone https://github.com/mars-protocol/contracts.git
    git checkout <commit-id>
    cargo make rust-optimizer
    ```
@@ -94,7 +94,7 @@ This compiles and optimizes all contracts, storing them in `/artifacts` director
 
 ## Deployment
 
-When the deployment scripts run for the first time, it will upload code IDs for each contract, instantiate each contract, initialize assets, and set oracles. If you want to redeploy, you must locally delete the `osmo-test-4.json` file in the artifacts directory.
+When the deployment scripts run for the first time, it will upload code IDs for each contract, instantiate each contract, initialize assets, and set oracles. If you want to redeploy, you must locally delete the file with `.json` extension (e.g. `devnet-deployer-owner.json`) in the artifacts directory.
 
 Everything related to deployment must be ran from the `scripts` directory.
 
@@ -105,11 +105,8 @@ For Osmosis:
 ```bash
 cd scripts
 
-# for testnet deployment with deployerAddr set as owner & admin:
-yarn deploy:osmosis-testnet
-
-# for testnet deployment with multisigAddr set as owner & admin:
-yarn deploy:osmosis-testnet-multisig
+# for devnet deployment with deployerAddr set as owner & admin:
+yarn deploy:osmosis-devnet
 
 # for mainnet deployment:
 yarn deploy:osmosis-mainnet
@@ -166,55 +163,67 @@ cargo make test
 | Contract               | Address                                                                 |
 | ---------------------- | ----------------------------------------------------------------------- |
 | mars-address-provider  | [`osmo1g677w7mfvn78eeudzwylxzlyz69fsgumqrscj6tekhdvs8fye3asufmvxr`][11] |
-| mars-incentives        | [`osmo1nkahswfr8shg8rlxqwup0vgahp0dk4x8w6tkv3rra8rratnut36sk22vrm`][12] |
-| mars-oracle            | [`osmo1mhznfr60vjdp2gejhyv2gax9nvyyzhd3z0qcwseyetkfustjauzqycsy2g`][13] |
-| mars-red-bank          | [`osmo1c3ljch9dfw5kf52nfwpxd2zmj2ese7agnx0p9tenkrryasrle5sqf3ftpg`][14] |
-| mars-rewards-collector | [`osmo1urvqe5mw00ws25yqdd4c4hlh8kdyf567mpcml7cdve9w08z0ydcqvsrgdy`][15] |
+| mars-account-nft       | [`osmo1450hrg6dv2l58c0rvdwx8ec2a0r6dd50hn4frk370tpvqjhy8khqw7sw09`][12] |
+| mars-credit-manager    | [`osmo1f2m24wktq0sw3c0lexlg7fv4kngwyttvzws3a3r3al9ld2s2pvds87jqvf`][13] |
+| mars-health            | [`osmo1pdc49qlyhpkzx4j24uuw97kk6hv7e9xvrdjlww8qj6al53gmu49sge4g79`][14] |
+| mars-incentives        | [`osmo1nkahswfr8shg8rlxqwup0vgahp0dk4x8w6tkv3rra8rratnut36sk22vrm`][15] |
+| mars-oracle            | [`osmo1mhznfr60vjdp2gejhyv2gax9nvyyzhd3z0qcwseyetkfustjauzqycsy2g`][16] |
+| mars-params            | [`osmo1nlmdxt9ctql2jr47qd4fpgzg84cjswxyw6q99u4y4u4q6c2f5ksq7ysent`][17] |
+| mars-red-bank          | [`osmo1c3ljch9dfw5kf52nfwpxd2zmj2ese7agnx0p9tenkrryasrle5sqf3ftpg`][18] |
+| mars-rewards-collector | [`osmo1urvqe5mw00ws25yqdd4c4hlh8kdyf567mpcml7cdve9w08z0ydcqvsrgdy`][19] |
+| mars-swapper           | [`osmo1wee0z8c7tcawyl647eapqs4a88q8jpa7ddy6nn2nrs7t47p2zhxswetwla`][20] |
+| mars-zapper            | [`osmo17qwvc70pzc9mudr8t02t3pl74hhqsgwnskl734p4hug3s8mkerdqzduf7c`][21] |
 
-### osmo-test-5
+### devnet (Osmosis)
 
 | Contract               | Address                                                                 |
 | ---------------------- | ----------------------------------------------------------------------- |
-| mars-address-provider  | [`osmo1wlm6dc0vnncu2v5z26rv97plmlkmalm84uwqatrlftc4gmp8ahgqs6r4py`][16] |
-| mars-incentives        | [`osmo1zyz57xf82963mcsgqu3hq5y0h9mrltm4ttq2qe5mjth9ezp3375qe0sm7d`][17] |
-| mars-oracle            | [`osmo1khe29uw3t85nmmp3mtr8dls7v2qwsfk3tndu5h4w5g2r5tzlz5qqarq2e2`][18] |
-| mars-red-bank          | [`osmo1dl4rylasnd7mtfzlkdqn2gr0ss4gvyykpvr6d7t5ylzf6z535n9s5jjt8u`][19] |
-| mars-rewards-collector | [`osmo1u5pcjue4grmg8lh7xrz2nvpy79xlzknwqkczfkyeyx9zzzj76tpq4tgrcs`][20] |
+| mars-address-provider  | [`osmo1g677w7mfvn78eeudzwylxzlyz69fsgumqrscj6tekhdvs8fye3asufmvxr`][11] |
+| mars-account-nft       | [`osmo1450hrg6dv2l58c0rvdwx8ec2a0r6dd50hn4frk370tpvqjhy8khqw7sw09`][12] |
+| mars-credit-manager    | [`osmo1f2m24wktq0sw3c0lexlg7fv4kngwyttvzws3a3r3al9ld2s2pvds87jqvf`][13] |
+| mars-health            | [`osmo1kqzkuyh23chjwemve7p9t7sl63v0sxtjh84e95w4fdz3htg8gmgspua7q4`][22] |
+| mars-incentives        | [`osmo1nkahswfr8shg8rlxqwup0vgahp0dk4x8w6tkv3rra8rratnut36sk22vrm`][15] |
+| mars-oracle            | [`osmo1mhznfr60vjdp2gejhyv2gax9nvyyzhd3z0qcwseyetkfustjauzqycsy2g`][16] |
+| mars-params            | [`osmo1aye5qcer5n52crrkaf35jprsad2807q6kg3eeeu7k79h4slxfausfqhc9y`][23] |
+| mars-red-bank          | [`osmo1c3ljch9dfw5kf52nfwpxd2zmj2ese7agnx0p9tenkrryasrle5sqf3ftpg`][18] |
+| mars-rewards-collector | [`osmo1urvqe5mw00ws25yqdd4c4hlh8kdyf567mpcml7cdve9w08z0ydcqvsrgdy`][19] |
+| mars-swapper           | [`osmo1wee0z8c7tcawyl647eapqs4a88q8jpa7ddy6nn2nrs7t47p2zhxswetwla`][20] |
+| mars-zapper            | [`osmo17qwvc70pzc9mudr8t02t3pl74hhqsgwnskl734p4hug3s8mkerdqzduf7c`][21] |
 
 ### neutron-1
 
 | Contract                  | Address                                                                    |
 | ------------------------- | -------------------------------------------------------------------------- |
-| mars-address-provider     | [`neutron17yehp4x7n79zq9dlw4g7xmnrvwdjjj2yecq26844sg8yu74knlxqfx5vqv`][21] |
-| mars-incentives           | [`neutron1aszpdh35zsaz0yj80mz7f5dtl9zq5jfl8hgm094y0j0vsychfekqxhzd39`][22] |
-| mars-oracle               | [`neutron1dwp6m7pdrz6rnhdyrx5ha0acsduydqcpzkylvfgspsz60pj2agxqaqrr7g`][23] |
-| mars-red-bank             | [`neutron1n97wnm7q6d2hrcna3rqlnyqw2we6k0l8uqvmyqq6gsml92epdu7quugyph`][24] |
-| mars-rewards-collector    | [`neutron1h4l6rvylzcuxwdw3gzkkdzfjdxf4mv2ypfdgvnvag0dtz6x07gps6fl2vm`][25] |
-| mars-swapper              | [`neutron1udr9fc3kd743dezrj38v2ac74pxxr6qsx4xt4nfpcfczgw52rvyqyjp5au`][26] |
+| mars-address-provider     | [`neutron17yehp4x7n79zq9dlw4g7xmnrvwdjjj2yecq26844sg8yu74knlxqfx5vqv`][24] |
+| mars-incentives           | [`neutron1aszpdh35zsaz0yj80mz7f5dtl9zq5jfl8hgm094y0j0vsychfekqxhzd39`][25] |
+| mars-oracle               | [`neutron1dwp6m7pdrz6rnhdyrx5ha0acsduydqcpzkylvfgspsz60pj2agxqaqrr7g`][26] |
+| mars-red-bank             | [`neutron1n97wnm7q6d2hrcna3rqlnyqw2we6k0l8uqvmyqq6gsml92epdu7quugyph`][27] |
+| mars-rewards-collector    | [`neutron1h4l6rvylzcuxwdw3gzkkdzfjdxf4mv2ypfdgvnvag0dtz6x07gps6fl2vm`][28] |
+| mars-swapper              | [`neutron1udr9fc3kd743dezrj38v2ac74pxxr6qsx4xt4nfpcfczgw52rvyqyjp5au`][29] |
 
-### pion-1
+### pion-1 (Neutron)
 
 | Contract                  | Address                                                                    |
 | ------------------------- | -------------------------------------------------------------------------- |
-| mars-address-provider     | [`neutron187fjlesys2c0z7xzhu43we4rx7tc4twnr5m6r2u7u5hpm03wvjqs0gk2lp`][27] |
-| mars-incentives           | [`neutron187hw8pqfhmxt4tk9star7tkjhu438k566jtgjskz4889pndp2vysh73ezh`][28] |
-| mars-oracle               | [`neutron1g4samkydfdyjec424ccucvjcuuls0ql8mfp2glf739mg0uqr74yqhdx9kn`][29] |
-| mars-red-bank             | [`neutron15dn9w9vcdkpp2kfjuz4suqh2w8ajyqsgujlykm9x58hsjss5ff7qpmhlln`][30] |
-| mars-rewards-collector    | [`neutron1re4v85k6kr8r7f3j4s4vrk3dvlyefc3xeg7jetv2jlpskahs5xrs8d6vw5`][31] |
-| mars-swapper              | [`neutron16xdh5w4dynfjrvnfuhv9h2znks94fyt4gp448jhtmjs3xd6smjvqumh9x2`][32] |
+| mars-address-provider     | [`neutron187fjlesys2c0z7xzhu43we4rx7tc4twnr5m6r2u7u5hpm03wvjqs0gk2lp`][30] |
+| mars-incentives           | [`neutron187hw8pqfhmxt4tk9star7tkjhu438k566jtgjskz4889pndp2vysh73ezh`][31] |
+| mars-oracle               | [`neutron1g4samkydfdyjec424ccucvjcuuls0ql8mfp2glf739mg0uqr74yqhdx9kn`][32] |
+| mars-red-bank             | [`neutron15dn9w9vcdkpp2kfjuz4suqh2w8ajyqsgujlykm9x58hsjss5ff7qpmhlln`][33] |
+| mars-rewards-collector    | [`neutron1re4v85k6kr8r7f3j4s4vrk3dvlyefc3xeg7jetv2jlpskahs5xrs8d6vw5`][34] |
+| mars-swapper              | [`neutron16xdh5w4dynfjrvnfuhv9h2znks94fyt4gp448jhtmjs3xd6smjvqumh9x2`][35] |
 
 ### mars-1
 
 | Module Account  | Address                                             |
 | --------------- | --------------------------------------------------- |
-| `fee_collector` | [`mars17xpfvakm2amg962yls6f84z3kell8c5ldy6e7x`][33] |
-| `safety`        | [`mars1s4hgh56can3e33e0zqpnjxh0t5wdf7u3pze575`][34] |
+| `fee_collector` | [`mars17xpfvakm2amg962yls6f84z3kell8c5ldy6e7x`][36] |
+| `safety`        | [`mars1s4hgh56can3e33e0zqpnjxh0t5wdf7u3pze575`][37] |
 
 ## License
 
 Contents of this repository are open source under [GNU General Public License v3](./LICENSE) or later.
 
-[1]: https://github.com/mars-protocol/mars-audits/tree/main/red-bank
+[1]: https://github.com/mars-protocol/mars-audits
 [2]: https://immunefi.com/bounty/mars/
 [3]: https://docs.osmosis.zone/osmosis-core/osmosisd/
 [4]: https://rustup.rs/
@@ -225,26 +234,29 @@ Contents of this repository are open source under [GNU General Public License v3
 [9]: https://github.com/CosmWasm/rust-optimizer
 [10]: https://github.com/CosmWasm/cosmwasm/tree/main/packages/schema
 [11]: https://osmosis.celat.one/osmosis-1/contracts/osmo1g677w7mfvn78eeudzwylxzlyz69fsgumqrscj6tekhdvs8fye3asufmvxr
-[12]: https://osmosis.celat.one/osmosis-1/contracts/osmo1nkahswfr8shg8rlxqwup0vgahp0dk4x8w6tkv3rra8rratnut36sk22vrm
-[13]: https://osmosis.celat.one/osmosis-1/contracts/osmo1mhznfr60vjdp2gejhyv2gax9nvyyzhd3z0qcwseyetkfustjauzqycsy2g
-[14]: https://osmosis.celat.one/osmosis-1/contracts/osmo1c3ljch9dfw5kf52nfwpxd2zmj2ese7agnx0p9tenkrryasrle5sqf3ftpg
-[15]: https://osmosis.celat.one/osmosis-1/contracts/osmo1urvqe5mw00ws25yqdd4c4hlh8kdyf567mpcml7cdve9w08z0ydcqvsrgdy
-[16]: https://osmosis.celat.one/osmo-test-5/contracts/osmo1wlm6dc0vnncu2v5z26rv97plmlkmalm84uwqatrlftc4gmp8ahgqs6r4py
-[17]: https://osmosis.celat.one/osmo-test-5/contracts/osmo1zyz57xf82963mcsgqu3hq5y0h9mrltm4ttq2qe5mjth9ezp3375qe0sm7d
-[18]: https://osmosis.celat.one/osmo-test-5/contracts/osmo1khe29uw3t85nmmp3mtr8dls7v2qwsfk3tndu5h4w5g2r5tzlz5qqarq2e2
-[19]: https://osmosis.celat.one/osmo-test-5/contracts/osmo1dl4rylasnd7mtfzlkdqn2gr0ss4gvyykpvr6d7t5ylzf6z535n9s5jjt8u
-[20]: https://osmosis.celat.one/osmo-test-5/contracts/osmo1u5pcjue4grmg8lh7xrz2nvpy79xlzknwqkczfkyeyx9zzzj76tpq4tgrcs
-[21]: https://neutron.celat.one/neutron-1/contracts/neutron17yehp4x7n79zq9dlw4g7xmnrvwdjjj2yecq26844sg8yu74knlxqfx5vqv
-[22]: https://neutron.celat.one/neutron-1/contracts/neutron1aszpdh35zsaz0yj80mz7f5dtl9zq5jfl8hgm094y0j0vsychfekqxhzd39
-[23]: https://neutron.celat.one/neutron-1/contracts/neutron1dwp6m7pdrz6rnhdyrx5ha0acsduydqcpzkylvfgspsz60pj2agxqaqrr7g
-[24]: https://neutron.celat.one/neutron-1/contracts/neutron1n97wnm7q6d2hrcna3rqlnyqw2we6k0l8uqvmyqq6gsml92epdu7quugyph
-[25]: https://neutron.celat.one/neutron-1/contracts/neutron1h4l6rvylzcuxwdw3gzkkdzfjdxf4mv2ypfdgvnvag0dtz6x07gps6fl2vm
-[26]: https://neutron.celat.one/neutron-1/contracts/neutron1udr9fc3kd743dezrj38v2ac74pxxr6qsx4xt4nfpcfczgw52rvyqyjp5au
-[27]: https://neutron.celat.one/pion-1/contracts/neutron187fjlesys2c0z7xzhu43we4rx7tc4twnr5m6r2u7u5hpm03wvjqs0gk2lp
-[28]: https://neutron.celat.one/pion-1/contracts/neutron187hw8pqfhmxt4tk9star7tkjhu438k566jtgjskz4889pndp2vysh73ezh
-[29]: https://neutron.celat.one/pion-1/contracts/neutron1g4samkydfdyjec424ccucvjcuuls0ql8mfp2glf739mg0uqr74yqhdx9kn
-[30]: https://neutron.celat.one/pion-1/contracts/neutron15dn9w9vcdkpp2kfjuz4suqh2w8ajyqsgujlykm9x58hsjss5ff7qpmhlln
-[31]: https://neutron.celat.one/pion-1/contracts/neutron1re4v85k6kr8r7f3j4s4vrk3dvlyefc3xeg7jetv2jlpskahs5xrs8d6vw5
-[32]: https://neutron.celat.one/pion-1/contracts/neutron16xdh5w4dynfjrvnfuhv9h2znks94fyt4gp448jhtmjs3xd6smjvqumh9x2
-[33]: https://www.mintscan.io/mars-protocol/accounts/mars17xpfvakm2amg962yls6f84z3kell8c5ldy6e7x
-[34]: https://www.mintscan.io/mars-protocol/accounts/mars1s4hgh56can3e33e0zqpnjxh0t5wdf7u3pze575
+[12]: https://osmosis.celat.one/osmosis-1/contracts/osmo1450hrg6dv2l58c0rvdwx8ec2a0r6dd50hn4frk370tpvqjhy8khqw7sw09
+[13]: https://osmosis.celat.one/osmosis-1/contracts/osmo1f2m24wktq0sw3c0lexlg7fv4kngwyttvzws3a3r3al9ld2s2pvds87jqvf
+[14]: https://osmosis.celat.one/osmosis-1/contracts/osmo1pdc49qlyhpkzx4j24uuw97kk6hv7e9xvrdjlww8qj6al53gmu49sge4g79
+[15]: https://osmosis.celat.one/osmosis-1/contracts/osmo1nkahswfr8shg8rlxqwup0vgahp0dk4x8w6tkv3rra8rratnut36sk22vrm
+[16]: https://osmosis.celat.one/osmosis-1/contracts/osmo1mhznfr60vjdp2gejhyv2gax9nvyyzhd3z0qcwseyetkfustjauzqycsy2g
+[17]: https://osmosis.celat.one/osmosis-1/contracts/osmo1nlmdxt9ctql2jr47qd4fpgzg84cjswxyw6q99u4y4u4q6c2f5ksq7ysent
+[18]: https://osmosis.celat.one/osmosis-1/contracts/osmo1c3ljch9dfw5kf52nfwpxd2zmj2ese7agnx0p9tenkrryasrle5sqf3ftpg
+[19]: https://osmosis.celat.one/osmosis-1/contracts/osmo1urvqe5mw00ws25yqdd4c4hlh8kdyf567mpcml7cdve9w08z0ydcqvsrgdy
+[20]: https://osmosis.celat.one/osmosis-1/contracts/osmo1wee0z8c7tcawyl647eapqs4a88q8jpa7ddy6nn2nrs7t47p2zhxswetwla
+[21]: https://osmosis.celat.one/osmosis-1/contracts/osmo17qwvc70pzc9mudr8t02t3pl74hhqsgwnskl734p4hug3s8mkerdqzduf7c
+[22]: https://osmosis.celat.one/osmosis-1/contracts/osmo1kqzkuyh23chjwemve7p9t7sl63v0sxtjh84e95w4fdz3htg8gmgspua7q4
+[23]: https://osmosis.celat.one/osmosis-1/contracts/osmo1aye5qcer5n52crrkaf35jprsad2807q6kg3eeeu7k79h4slxfausfqhc9y
+[24]: https://neutron.celat.one/neutron-1/contracts/neutron17yehp4x7n79zq9dlw4g7xmnrvwdjjj2yecq26844sg8yu74knlxqfx5vqv
+[25]: https://neutron.celat.one/neutron-1/contracts/neutron1aszpdh35zsaz0yj80mz7f5dtl9zq5jfl8hgm094y0j0vsychfekqxhzd39
+[26]: https://neutron.celat.one/neutron-1/contracts/neutron1dwp6m7pdrz6rnhdyrx5ha0acsduydqcpzkylvfgspsz60pj2agxqaqrr7g
+[27]: https://neutron.celat.one/neutron-1/contracts/neutron1n97wnm7q6d2hrcna3rqlnyqw2we6k0l8uqvmyqq6gsml92epdu7quugyph
+[28]: https://neutron.celat.one/neutron-1/contracts/neutron1h4l6rvylzcuxwdw3gzkkdzfjdxf4mv2ypfdgvnvag0dtz6x07gps6fl2vm
+[29]: https://neutron.celat.one/neutron-1/contracts/neutron1udr9fc3kd743dezrj38v2ac74pxxr6qsx4xt4nfpcfczgw52rvyqyjp5au
+[30]: https://neutron.celat.one/pion-1/contracts/neutron187fjlesys2c0z7xzhu43we4rx7tc4twnr5m6r2u7u5hpm03wvjqs0gk2lp
+[31]: https://neutron.celat.one/pion-1/contracts/neutron187hw8pqfhmxt4tk9star7tkjhu438k566jtgjskz4889pndp2vysh73ezh
+[32]: https://neutron.celat.one/pion-1/contracts/neutron1g4samkydfdyjec424ccucvjcuuls0ql8mfp2glf739mg0uqr74yqhdx9kn
+[33]: https://neutron.celat.one/pion-1/contracts/neutron15dn9w9vcdkpp2kfjuz4suqh2w8ajyqsgujlykm9x58hsjss5ff7qpmhlln
+[34]: https://neutron.celat.one/pion-1/contracts/neutron1re4v85k6kr8r7f3j4s4vrk3dvlyefc3xeg7jetv2jlpskahs5xrs8d6vw5
+[35]: https://neutron.celat.one/pion-1/contracts/neutron16xdh5w4dynfjrvnfuhv9h2znks94fyt4gp448jhtmjs3xd6smjvqumh9x2
+[36]: https://www.mintscan.io/mars-protocol/accounts/mars17xpfvakm2amg962yls6f84z3kell8c5ldy6e7x
+[37]: https://www.mintscan.io/mars-protocol/accounts/mars1s4hgh56can3e33e0zqpnjxh0t5wdf7u3pze575
