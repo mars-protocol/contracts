@@ -27,7 +27,9 @@ jobs:
 
       # Artifacts used by tests
       - name: Compile workspace
-        run: cargo make build
+        run: |
+          cargo make build
+          find target/wasm32-unknown-unknown/release -type f ! -name '*.wasm' -delete
 
       - name: Run test coverage
         run: cargo make coverage-lcov
