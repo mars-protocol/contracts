@@ -113,7 +113,13 @@ pub struct PriceResponse {
 }
 
 #[cw_serde]
-pub struct MigrateMsg {
+pub enum MigrateMsg {
+    V1_1_0ToV2_0_0(V2Updates),
+    V2_0_0ToV2_0_1 {},
+}
+
+#[cw_serde]
+pub struct V2Updates {
     /// The maximum confidence deviation allowed for an oracle price.
     /// The confidence is measured as the percent of the confidence interval
     /// value provided by the oracle as compared to the weighted average value
