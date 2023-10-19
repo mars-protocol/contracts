@@ -14,6 +14,7 @@ use mars_types::oracle::QueryMsg;
 use mars_utils::error::ValidationError;
 use osmosis_std::types::osmosis::downtimedetector::v1beta1::Downtime;
 use pyth_sdk_cw::PriceIdentifier;
+use test_case::test_case;
 
 use super::helpers;
 
@@ -898,8 +899,33 @@ fn setting_price_source_lsd_with_invalid_params() {
     );
 }
 
-#[test]
-fn setting_price_source_lsd_with_arithmetic_twap_successfully() {
+#[test_case(
+    TwapKind::ArithmeticTwap {},
+    Some(DowntimeDetector {
+        downtime: Downtime::Duration30m,
+        recovery: 360,
+    });
+    "set LSD price source with arithmetic TWAP and downtime detector"
+)]
+#[test_case(
+    TwapKind::ArithmeticTwap {},
+    None;
+    "set LSD price source with arithmetic TWAP and without downtime detector"
+)]
+#[test_case(
+    TwapKind::GeometricTwap {},
+    Some(DowntimeDetector {
+        downtime: Downtime::Duration30m,
+        recovery: 360,
+    });
+    "set LSD price source with geometric TWAP and downtime detector"
+)]
+#[test_case(
+    TwapKind::GeometricTwap {},
+    None;
+    "set LSD price source with geometric TWAP and without downtime detector"
+)]
+fn asserting_lsd_price_source(twap_kind: TwapKind, downtime_detector: Option<DowntimeDetector>) {
     let mut deps = helpers::setup_test_with_pools();
 
     // properly set twap price source
@@ -908,46 +934,8 @@ fn setting_price_source_lsd_with_arithmetic_twap_successfully() {
         twap: Twap {
             pool_id: 803,
             window_size: 86400,
-            downtime_detector: None,
-            kind: TwapKind::ArithmeticTwap {},
-        },
-        redemption_rate: RedemptionRate {
-            contract_addr: "dummy_addr".to_string(),
-            max_staleness: 100,
-        },
-    };
-    let res = execute(
-        deps.as_mut(),
-        mock_env(),
-        mock_info("owner"),
-        ExecuteMsg::SetPriceSource {
-            denom: "ustatom".to_string(),
-            price_source: unchecked_lsd_ps.clone(),
-        },
-    )
-    .unwrap();
-    assert_eq!(res.messages.len(), 0);
-
-    let res: PriceSourceResponse = helpers::query(
-        deps.as_ref(),
-        QueryMsg::PriceSource {
-            denom: "ustatom".to_string(),
-        },
-    );
-    let checked_lsd_ps = unchecked_to_checked_lsd(unchecked_lsd_ps);
-    assert_eq!(res.price_source, checked_lsd_ps);
-
-    // properly set twap price source with downtime detector
-    let unchecked_lsd_ps = OsmosisPriceSourceUnchecked::Lsd {
-        transitive_denom: "uatom".to_string(),
-        twap: Twap {
-            pool_id: 803,
-            window_size: 86400,
-            downtime_detector: Some(DowntimeDetector {
-                downtime: Downtime::Duration30m,
-                recovery: 360u64,
-            }),
-            kind: TwapKind::ArithmeticTwap {},
+            downtime_detector,
+            kind: twap_kind,
         },
         redemption_rate: RedemptionRate {
             contract_addr: "dummy_addr".to_string(),
@@ -994,84 +982,6 @@ fn unchecked_to_checked_lsd(ps: OsmosisPriceSourceUnchecked) -> OsmosisPriceSour
     } else {
         panic!("invalid price source type")
     }
-}
-
-#[test]
-fn setting_price_source_lsd_with_geometric_twap_successfully() {
-    let mut deps = helpers::setup_test_with_pools();
-
-    // properly set twap price source
-    let unchecked_lsd_ps = OsmosisPriceSourceUnchecked::Lsd {
-        transitive_denom: "uatom".to_string(),
-        twap: Twap {
-            pool_id: 803,
-            window_size: 86400,
-            downtime_detector: None,
-            kind: TwapKind::GeometricTwap {},
-        },
-        redemption_rate: RedemptionRate {
-            contract_addr: "dummy_addr".to_string(),
-            max_staleness: 100,
-        },
-    };
-    let res = execute(
-        deps.as_mut(),
-        mock_env(),
-        mock_info("owner"),
-        ExecuteMsg::SetPriceSource {
-            denom: "ustatom".to_string(),
-            price_source: unchecked_lsd_ps.clone(),
-        },
-    )
-    .unwrap();
-    assert_eq!(res.messages.len(), 0);
-
-    let res: PriceSourceResponse = helpers::query(
-        deps.as_ref(),
-        QueryMsg::PriceSource {
-            denom: "ustatom".to_string(),
-        },
-    );
-    let checked_lsd_ps = unchecked_to_checked_lsd(unchecked_lsd_ps);
-    assert_eq!(res.price_source, checked_lsd_ps);
-
-    // properly set twap price source with downtime detector
-    let unchecked_lsd_ps = OsmosisPriceSourceUnchecked::Lsd {
-        transitive_denom: "uatom".to_string(),
-        twap: Twap {
-            pool_id: 803,
-            window_size: 86400,
-            downtime_detector: Some(DowntimeDetector {
-                downtime: Downtime::Duration30m,
-                recovery: 360u64,
-            }),
-            kind: TwapKind::GeometricTwap {},
-        },
-        redemption_rate: RedemptionRate {
-            contract_addr: "dummy_addr".to_string(),
-            max_staleness: 100,
-        },
-    };
-    let res = execute(
-        deps.as_mut(),
-        mock_env(),
-        mock_info("owner"),
-        ExecuteMsg::SetPriceSource {
-            denom: "ustatom".to_string(),
-            price_source: unchecked_lsd_ps.clone(),
-        },
-    )
-    .unwrap();
-    assert_eq!(res.messages.len(), 0);
-
-    let res: PriceSourceResponse = helpers::query(
-        deps.as_ref(),
-        QueryMsg::PriceSource {
-            denom: "ustatom".to_string(),
-        },
-    );
-    let checked_lsd_ps = unchecked_to_checked_lsd(unchecked_lsd_ps);
-    assert_eq!(res.price_source, checked_lsd_ps);
 }
 
 #[test]

@@ -206,6 +206,15 @@ pub enum TwapKind {
     GeometricTwap {},
 }
 
+impl fmt::Display for TwapKind {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        match self {
+            TwapKind::ArithmeticTwap {} => write!(f, "arithmetic_twap"),
+            TwapKind::GeometricTwap {} => write!(f, "geometric_twap"),
+        }
+    }
+}
+
 impl Twap {
     fn query_price(
         &self,
@@ -306,15 +315,11 @@ impl fmt::Display for OsmosisPriceSourceChecked {
                     kind,
                 } = twap;
                 let dd_fmt = DowntimeDetector::fmt(downtime_detector);
-                let kind_fmt = match kind {
-                    TwapKind::ArithmeticTwap {} => "arithmetic_twap",
-                    TwapKind::GeometricTwap {} => "geometric_twap",
-                };
                 let RedemptionRate {
                     contract_addr,
                     max_staleness,
                 } = redemption_rate;
-                format!("lsd:{transitive_denom}:{pool_id}:{window_size}:{dd_fmt}:{kind_fmt}:{contract_addr}:{max_staleness}")
+                format!("lsd:{transitive_denom}:{pool_id}:{window_size}:{dd_fmt}:{kind}:{contract_addr}:{max_staleness}")
             }
         };
         write!(f, "{label}")

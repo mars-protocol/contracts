@@ -2339,6 +2339,7 @@ dependencies = [
  "pyth-sdk-cw",
  "schemars",
  "serde",
+ "test-case",
 ]
 
 [[package]]
