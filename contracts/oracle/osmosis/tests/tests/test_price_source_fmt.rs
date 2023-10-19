@@ -1,6 +1,6 @@
 use cosmwasm_std::{Addr, Decimal};
 use mars_oracle_osmosis::{
-    DowntimeDetector, GeometricTwap, OsmosisPriceSourceChecked, RedemptionRate,
+    DowntimeDetector, OsmosisPriceSourceChecked, RedemptionRate, Twap, TwapKind,
 };
 use osmosis_std::types::osmosis::downtimedetector::v1beta1::Downtime;
 use pyth_sdk_cw::PriceIdentifier;
@@ -123,10 +123,11 @@ fn display_pyth_price_source() {
 fn display_lsd_price_source() {
     let ps = OsmosisPriceSourceChecked::Lsd {
         transitive_denom: "transitive".to_string(),
-        geometric_twap: GeometricTwap {
+        twap: Twap {
             pool_id: 456,
             window_size: 380,
             downtime_detector: None,
+            kind: TwapKind::ArithmeticTwap {},
         },
         redemption_rate: RedemptionRate {
             contract_addr: Addr::unchecked(
@@ -135,17 +136,35 @@ fn display_lsd_price_source() {
             max_staleness: 1234,
         },
     };
-    assert_eq!(ps.to_string(), "lsd:transitive:456:380:None:osmo1zw4fxj4pt0pu0jdd7cs6gecdj3pvfxhhtgkm4w2y44jp60hywzvssud6uc:1234");
+    assert_eq!(ps.to_string(), "lsd:transitive:456:380:None:arithmetic_twap:osmo1zw4fxj4pt0pu0jdd7cs6gecdj3pvfxhhtgkm4w2y44jp60hywzvssud6uc:1234");
 
     let ps = OsmosisPriceSourceChecked::Lsd {
         transitive_denom: "transitive".to_string(),
-        geometric_twap: GeometricTwap {
+        twap: Twap {
+            pool_id: 456,
+            window_size: 380,
+            downtime_detector: None,
+            kind: TwapKind::GeometricTwap {},
+        },
+        redemption_rate: RedemptionRate {
+            contract_addr: Addr::unchecked(
+                "osmo1zw4fxj4pt0pu0jdd7cs6gecdj3pvfxhhtgkm4w2y44jp60hywzvssud6uc",
+            ),
+            max_staleness: 1234,
+        },
+    };
+    assert_eq!(ps.to_string(), "lsd:transitive:456:380:None:geometric_twap:osmo1zw4fxj4pt0pu0jdd7cs6gecdj3pvfxhhtgkm4w2y44jp60hywzvssud6uc:1234");
+
+    let ps = OsmosisPriceSourceChecked::Lsd {
+        transitive_denom: "transitive".to_string(),
+        twap: Twap {
             pool_id: 456,
             window_size: 380,
             downtime_detector: Some(DowntimeDetector {
                 downtime: Downtime::Duration30m,
                 recovery: 552,
             }),
+            kind: TwapKind::GeometricTwap {},
         },
         redemption_rate: RedemptionRate {
             contract_addr: Addr::unchecked(
@@ -154,5 +173,5 @@ fn display_lsd_price_source() {
             max_staleness: 1234,
         },
     };
-    assert_eq!(ps.to_string(), "lsd:transitive:456:380:Some(Duration30m:552):osmo1zw4fxj4pt0pu0jdd7cs6gecdj3pvfxhhtgkm4w2y44jp60hywzvssud6uc:1234");
+    assert_eq!(ps.to_string(), "lsd:transitive:456:380:Some(Duration30m:552):geometric_twap:osmo1zw4fxj4pt0pu0jdd7cs6gecdj3pvfxhhtgkm4w2y44jp60hywzvssud6uc:1234");
 }

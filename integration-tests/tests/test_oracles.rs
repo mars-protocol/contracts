@@ -4,8 +4,8 @@ use cosmwasm_std::{coin, to_binary, Coin, Decimal, Empty, Isqrt, Uint128};
 use helpers::osmosis::instantiate_stride_contract;
 use mars_oracle_base::ContractError;
 use mars_oracle_osmosis::{
-    msg::PriceSourceResponse, DowntimeDetector, GeometricTwap, OsmosisPriceSourceChecked,
-    OsmosisPriceSourceUnchecked, RedemptionRate,
+    msg::PriceSourceResponse, DowntimeDetector, OsmosisPriceSourceChecked,
+    OsmosisPriceSourceUnchecked, RedemptionRate, Twap, TwapKind,
 };
 use mars_types::{
     address_provider::{
@@ -1039,10 +1039,11 @@ fn query_lsd_price() {
             denom: ibc_stuosmo.to_string(),
             price_source: OsmosisPriceSourceUnchecked::Lsd {
                 transitive_denom: "uosmo".to_string(),
-                geometric_twap: GeometricTwap {
+                twap: Twap {
                     pool_id,
                     window_size: 10,
                     downtime_detector: None,
+                    kind: TwapKind::ArithmeticTwap {},
                 },
                 redemption_rate: RedemptionRate {
                     contract_addr: stride_addr.clone(),
