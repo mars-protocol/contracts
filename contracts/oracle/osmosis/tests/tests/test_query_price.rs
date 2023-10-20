@@ -9,7 +9,7 @@ use helpers::prepare_query_balancer_pool_response;
 use ica_oracle::msg::RedemptionRateResponse;
 use mars_oracle_base::{pyth::scale_pyth_price, ContractError};
 use mars_oracle_osmosis::{
-    contract::entry, DowntimeDetector, GeometricTwap, OsmosisPriceSourceUnchecked, RedemptionRate,
+    contract::entry, DowntimeDetector, OsmosisPriceSourceUnchecked, RedemptionRate, Twap, TwapKind,
 };
 use mars_testing::{mock_env_at_block_time, MarsMockQuerier};
 use mars_types::oracle::{PriceResponse, QueryMsg};
@@ -448,14 +448,14 @@ fn querying_lsd_price() {
     );
 
     let publish_time = 1677157333u64;
-    let (pyth_price, ustatom_uatom_price) =
-        setup_pyth_and_geometric_twap_for_lsd(&mut deps, publish_time);
+    let (pyth_price, _arithmetic_price, ustatom_uatom_geometric_price) =
+        setup_pyth_and_twap_for_lsd(&mut deps, publish_time);
 
     // setup redemption rate: stAtom/Atom
     deps.querier.set_redemption_rate(
         "ustatom",
         RedemptionRateResponse {
-            redemption_rate: ustatom_uatom_price + Decimal::one(), // geometric TWAP < redemption rate
+            redemption_rate: ustatom_uatom_geometric_price + Decimal::one(), // geometric TWAP < redemption rate
             update_time: publish_time,
         },
     );
@@ -466,10 +466,11 @@ fn querying_lsd_price() {
         "ustatom",
         OsmosisPriceSourceUnchecked::Lsd {
             transitive_denom: "uatom".to_string(),
-            geometric_twap: GeometricTwap {
+            twap: Twap {
                 pool_id: 803,
                 window_size: 86400,
                 downtime_detector: None,
+                kind: TwapKind::GeometricTwap {},
             },
             redemption_rate: RedemptionRate {
                 contract_addr: "dummy_addr".to_string(),
@@ -487,11 +488,11 @@ fn querying_lsd_price() {
     )
     .unwrap();
     let res: PriceResponse = from_binary(&res).unwrap();
-    let expected_price = ustatom_uatom_price * pyth_price;
+    let expected_price = ustatom_uatom_geometric_price * pyth_price;
     assert_eq!(res.price, expected_price);
 
     // setup redemption rate: stAtom/Atom
-    let ustatom_uatom_redemption_rate = ustatom_uatom_price - Decimal::one(); // geometric TWAP > redemption rate
+    let ustatom_uatom_redemption_rate = ustatom_uatom_geometric_price - Decimal::one(); // geometric TWAP > redemption rate
     deps.querier.set_redemption_rate(
         "ustatom",
         RedemptionRateResponse {
@@ -506,10 +507,11 @@ fn querying_lsd_price() {
         "ustatom",
         OsmosisPriceSourceUnchecked::Lsd {
             transitive_denom: "uatom".to_string(),
-            geometric_twap: GeometricTwap {
+            twap: Twap {
                 pool_id: 803,
                 window_size: 86400,
                 downtime_detector: None,
+                kind: TwapKind::GeometricTwap {},
             },
             redemption_rate: RedemptionRate {
                 contract_addr: "dummy_addr".to_string(),
@@ -531,10 +533,10 @@ fn querying_lsd_price() {
     assert_eq!(res.price, expected_price);
 }
 
-fn setup_pyth_and_geometric_twap_for_lsd(
+fn setup_pyth_and_twap_for_lsd(
     deps: &mut OwnedDeps<MockStorage, MockApi, MarsMockQuerier>,
     publish_time: u64,
-) -> (Decimal, Decimal) {
+) -> (Decimal, Decimal, Decimal) {
     // setup pyth price: Atom/Usd
     let price_id = PriceIdentifier::from_hex(
         "61226d39beea19d334f17c2febce27e12646d84675924ebb02b9cdaea68727e3",
@@ -575,17 +577,29 @@ fn setup_pyth_and_geometric_twap_for_lsd(
         },
     );
 
+    // setup arithmetic TWAP: stAtom/Atom
+    let ustatom_uatom_arithmetic_price = Decimal::from_ratio(1050u128, 1000u128);
+    deps.querier.set_arithmetic_twap_price(
+        803,
+        "ustatom",
+        "uatom",
+        ArithmeticTwapToNowResponse {
+            arithmetic_twap: ustatom_uatom_arithmetic_price.to_string(),
+        },
+    );
+
     // setup geometric TWAP: stAtom/Atom
-    let ustatom_uatom_price = Decimal::from_ratio(1054u128, 1000u128);
+    let ustatom_uatom_geometric_price = Decimal::from_ratio(1054u128, 1000u128);
     deps.querier.set_geometric_twap_price(
         803,
         "ustatom",
         "uatom",
         GeometricTwapToNowResponse {
-            geometric_twap: ustatom_uatom_price.to_string(),
+            geometric_twap: ustatom_uatom_geometric_price.to_string(),
         },
     );
-    (pyth_price, ustatom_uatom_price)
+
+    (pyth_price, ustatom_uatom_arithmetic_price, ustatom_uatom_geometric_price)
 }
 
 #[test]
@@ -619,10 +633,11 @@ fn querying_lsd_price_if_no_transitive_denom_price_source() {
         "ustatom",
         OsmosisPriceSourceUnchecked::Lsd {
             transitive_denom: "uatom".to_string(),
-            geometric_twap: GeometricTwap {
+            twap: Twap {
                 pool_id: 803,
                 window_size: 86400,
                 downtime_detector: None,
+                kind: TwapKind::GeometricTwap {},
             },
             redemption_rate: RedemptionRate {
                 contract_addr: "dummy_addr".to_string(),
@@ -664,14 +679,14 @@ fn querying_lsd_price_if_redemption_rate_too_old() {
     let max_staleness = 21600u64;
 
     let publish_time = 1677157333u64;
-    let (_pyth_price, ustatom_uatom_price) =
-        setup_pyth_and_geometric_twap_for_lsd(&mut deps, publish_time);
+    let (_pyth_price, _arithmetic_price, ustatom_uatom_geometric_price) =
+        setup_pyth_and_twap_for_lsd(&mut deps, publish_time);
 
     // setup redemption rate: stAtom/Atom
     deps.querier.set_redemption_rate(
         "ustatom",
         RedemptionRateResponse {
-            redemption_rate: ustatom_uatom_price + Decimal::one(), // geometric TWAP < redemption rate
+            redemption_rate: ustatom_uatom_geometric_price + Decimal::one(), // geometric TWAP < redemption rate
             update_time: publish_time - max_staleness - 1,
         },
     );
@@ -682,10 +697,11 @@ fn querying_lsd_price_if_redemption_rate_too_old() {
         "ustatom",
         OsmosisPriceSourceUnchecked::Lsd {
             transitive_denom: "uatom".to_string(),
-            geometric_twap: GeometricTwap {
+            twap: Twap {
                 pool_id: 803,
                 window_size: 86400,
                 downtime_detector: None,
+                kind: TwapKind::GeometricTwap {},
             },
             redemption_rate: RedemptionRate {
                 contract_addr: "dummy_addr".to_string(),
@@ -712,7 +728,7 @@ fn querying_lsd_price_if_redemption_rate_too_old() {
 }
 
 #[test]
-fn querying_lsd_price_with_downtime_detector() {
+fn querying_lsd_price_with_arithmetic_twap_and_downtime_detector() {
     let mut deps = helpers::setup_test_with_pools();
 
     // price source used to convert USD to base_denom
@@ -725,14 +741,14 @@ fn querying_lsd_price_with_downtime_detector() {
     );
 
     let publish_time = 1677157333u64;
-    let (pyth_price, ustatom_uatom_price) =
-        setup_pyth_and_geometric_twap_for_lsd(&mut deps, publish_time);
+    let (pyth_price, ustatom_uatom_arithmetic_price, _geometric_price) =
+        setup_pyth_and_twap_for_lsd(&mut deps, publish_time);
 
     // setup redemption rate: stAtom/Atom
     deps.querier.set_redemption_rate(
         "ustatom",
         RedemptionRateResponse {
-            redemption_rate: ustatom_uatom_price + Decimal::one(), // geometric TWAP < redemption rate
+            redemption_rate: ustatom_uatom_arithmetic_price + Decimal::one(), // geometric TWAP < redemption rate
             update_time: publish_time,
         },
     );
@@ -748,10 +764,11 @@ fn querying_lsd_price_with_downtime_detector() {
         "ustatom",
         OsmosisPriceSourceUnchecked::Lsd {
             transitive_denom: "uatom".to_string(),
-            geometric_twap: GeometricTwap {
+            twap: Twap {
                 pool_id: 803,
                 window_size: 86400,
                 downtime_detector: Some(dd.clone()),
+                kind: TwapKind::ArithmeticTwap {},
             },
             redemption_rate: RedemptionRate {
                 contract_addr: "dummy_addr".to_string(),
@@ -788,7 +805,89 @@ fn querying_lsd_price_with_downtime_detector() {
     )
     .unwrap();
     let res: PriceResponse = from_binary(&res).unwrap();
-    let expected_price = ustatom_uatom_price * pyth_price;
+    let expected_price = ustatom_uatom_arithmetic_price * pyth_price;
+    assert_eq!(res.price, expected_price);
+}
+
+#[test]
+fn querying_lsd_price_with_geometric_twap_and_downtime_detector() {
+    let mut deps = helpers::setup_test_with_pools();
+
+    // price source used to convert USD to base_denom
+    helpers::set_price_source(
+        deps.as_mut(),
+        "usd",
+        OsmosisPriceSourceUnchecked::Fixed {
+            price: Decimal::from_str("1000000").unwrap(),
+        },
+    );
+
+    let publish_time = 1677157333u64;
+    let (pyth_price, _arithmetic_price, ustatom_uatom_geometric_price) =
+        setup_pyth_and_twap_for_lsd(&mut deps, publish_time);
+
+    // setup redemption rate: stAtom/Atom
+    deps.querier.set_redemption_rate(
+        "ustatom",
+        RedemptionRateResponse {
+            redemption_rate: ustatom_uatom_geometric_price + Decimal::one(), // geometric TWAP < redemption rate
+            update_time: publish_time,
+        },
+    );
+
+    let dd = DowntimeDetector {
+        downtime: Downtime::Duration10m,
+        recovery: 360,
+    };
+
+    // query price if geometric TWAP < redemption rate
+    helpers::set_price_source(
+        deps.as_mut(),
+        "ustatom",
+        OsmosisPriceSourceUnchecked::Lsd {
+            transitive_denom: "uatom".to_string(),
+            twap: Twap {
+                pool_id: 803,
+                window_size: 86400,
+                downtime_detector: Some(dd.clone()),
+                kind: TwapKind::GeometricTwap {},
+            },
+            redemption_rate: RedemptionRate {
+                contract_addr: "dummy_addr".to_string(),
+                max_staleness: 21600,
+            },
+        },
+    );
+
+    deps.querier.set_downtime_detector(dd.clone(), false);
+    let res_err = entry::query(
+        deps.as_ref(),
+        mock_env_at_block_time(publish_time),
+        QueryMsg::Price {
+            denom: "ustatom".to_string(),
+            kind: None,
+        },
+    )
+    .unwrap_err();
+    assert_eq!(
+        res_err,
+        ContractError::InvalidPrice {
+            reason: "chain is recovering from downtime".to_string()
+        }
+    );
+
+    deps.querier.set_downtime_detector(dd, true);
+    let res = entry::query(
+        deps.as_ref(),
+        mock_env_at_block_time(publish_time),
+        QueryMsg::Price {
+            denom: "ustatom".to_string(),
+            kind: None,
+        },
+    )
+    .unwrap();
+    let res: PriceResponse = from_binary(&res).unwrap();
+    let expected_price = ustatom_uatom_geometric_price * pyth_price;
     assert_eq!(res.price, expected_price);
 }
 

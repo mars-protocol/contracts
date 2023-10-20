@@ -1,7 +1,7 @@
 [package]
 name          = "mars-oracle-osmosis"
 description   = "A smart contract that provides prices denominated in `uosmo` for assets used in the protocol"
-version       = { workspace = true }
+version       = "2.0.1"
 authors       = { workspace = true }
 edition       = { workspace = true }
 license       = { workspace = true }
@@ -40,3 +40,4 @@ cosmwasm-schema = { workspace = true }
 mars-owner      = { workspace = true }
 mars-testing    = { workspace = true }
 mars-utils      = { workspace = true }
+test-case       = { workspace = true }

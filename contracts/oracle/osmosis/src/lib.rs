@@ -5,6 +5,6 @@ pub mod msg;
 mod price_source;
 
 pub use price_source::{
-    DowntimeDetector, GeometricTwap, OsmosisPriceSourceChecked, OsmosisPriceSourceUnchecked,
-    RedemptionRate,
+    DowntimeDetector, OsmosisPriceSourceChecked, OsmosisPriceSourceUnchecked, RedemptionRate, Twap,
+    TwapKind,
 };

@@ -1,7 +1,7 @@
 use cosmwasm_std::{Decimal, DepsMut, Order, Response, StdResult};
 use cw2::{assert_contract_version, set_contract_version};
 use mars_oracle_base::ContractError;
-use mars_types::oracle::MigrateMsg;
+use mars_types::oracle::V2Updates;
 use osmosis_std::types::osmosis::downtimedetector::v1beta1::Downtime;
 
 use crate::{
@@ -69,7 +69,7 @@ pub mod v1_state {
     pub type OsmosisPriceSourceChecked = OsmosisPriceSource<Addr>;
 }
 
-pub fn migrate(deps: DepsMut, msg: MigrateMsg) -> Result<Response, ContractError> {
+pub fn migrate(deps: DepsMut, msg: V2Updates) -> Result<Response, ContractError> {
     // make sure we're migrating the correct contract and from the correct version
     assert_contract_version(deps.storage, &format!("crates.io:{CONTRACT_NAME}"), FROM_VERSION)?;
 

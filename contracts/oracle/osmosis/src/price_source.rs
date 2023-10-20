@@ -1,7 +1,9 @@
 use std::{cmp::min, fmt};
 
 use cosmwasm_schema::cw_serde;
-use cosmwasm_std::{Addr, Decimal, Decimal256, Deps, Empty, Env, Isqrt, Uint128, Uint256};
+use cosmwasm_std::{
+    Addr, Decimal, Decimal256, Deps, Empty, Env, Isqrt, QuerierWrapper, StdResult, Uint128, Uint256,
+};
 use cw_storage_plus::Map;
 use ica_oracle::msg::RedemptionRateResponse;
 use mars_oracle_base::{
@@ -174,8 +176,8 @@ pub enum OsmosisPriceSource<T> {
         /// stAsset/USD = stAsset/Asset * Asset/USD
         transitive_denom: String,
 
-        /// Params to query geometric TWAP price
-        geometric_twap: GeometricTwap,
+        /// Params to query TWAP price
+        twap: Twap,
 
         /// Params to query redemption rate
         redemption_rate: RedemptionRate<T>,
@@ -183,7 +185,7 @@ pub enum OsmosisPriceSource<T> {
 }
 
 #[cw_serde]
-pub struct GeometricTwap {
+pub struct Twap {
     /// Pool id for stAsset/Asset pool
     pub pool_id: u64,
 
@@ -193,6 +195,52 @@ pub struct GeometricTwap {
 
     /// Detect when the chain is recovering from downtime
     pub downtime_detector: Option<DowntimeDetector>,
+
+    /// Kind of TWAP
+    pub kind: TwapKind,
+}
+
+#[cw_serde]
+pub enum TwapKind {
+    ArithmeticTwap {},
+    GeometricTwap {},
+}
+
+impl fmt::Display for TwapKind {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        match self {
+            TwapKind::ArithmeticTwap {} => write!(f, "arithmetic_twap"),
+            TwapKind::GeometricTwap {} => write!(f, "geometric_twap"),
+        }
+    }
+}
+
+impl Twap {
+    fn query_price(
+        &self,
+        querier: &QuerierWrapper,
+        current_time: u64,
+        base_denom: &str,
+        quote_denom: &str,
+    ) -> StdResult<Decimal> {
+        let start_time = current_time - self.window_size;
+        match self.kind {
+            TwapKind::ArithmeticTwap {} => query_arithmetic_twap_price(
+                querier,
+                self.pool_id,
+                base_denom,
+                quote_denom,
+                start_time,
+            ),
+            TwapKind::GeometricTwap {} => query_geometric_twap_price(
+                querier,
+                self.pool_id,
+                base_denom,
+                quote_denom,
+                start_time,
+            ),
+        }
+    }
 }
 
 #[cw_serde]
@@ -257,20 +305,21 @@ impl fmt::Display for OsmosisPriceSourceChecked {
             }
             OsmosisPriceSource::Lsd {
                 transitive_denom,
-                geometric_twap,
+                twap,
                 redemption_rate,
             } => {
-                let GeometricTwap {
+                let Twap {
                     pool_id,
                     window_size,
                     downtime_detector,
-                } = geometric_twap;
+                    kind,
+                } = twap;
                 let dd_fmt = DowntimeDetector::fmt(downtime_detector);
                 let RedemptionRate {
                     contract_addr,
                     max_staleness,
                 } = redemption_rate;
-                format!("lsd:{transitive_denom}:{pool_id}:{window_size}:{dd_fmt}:{contract_addr}:{max_staleness}")
+                format!("lsd:{transitive_denom}:{pool_id}:{window_size}:{dd_fmt}:{kind}:{contract_addr}:{max_staleness}")
             }
         };
         write!(f, "{label}")
@@ -381,21 +430,18 @@ impl PriceSourceUnchecked<OsmosisPriceSourceChecked, Empty> for OsmosisPriceSour
             }
             OsmosisPriceSourceUnchecked::Lsd {
                 transitive_denom,
-                geometric_twap,
+                twap,
                 redemption_rate,
             } => {
                 validate_native_denom(transitive_denom)?;
 
-                let pool = query_pool(&deps.querier, geometric_twap.pool_id)?;
+                let pool = query_pool(&deps.querier, twap.pool_id)?;
                 helpers::assert_osmosis_pool_assets(&pool, denom, transitive_denom)?;
-                helpers::assert_osmosis_twap(
-                    geometric_twap.window_size,
-                    &geometric_twap.downtime_detector,
-                )?;
+                helpers::assert_osmosis_twap(twap.window_size, &twap.downtime_detector)?;
 
                 Ok(OsmosisPriceSourceChecked::Lsd {
                     transitive_denom: transitive_denom.to_string(),
-                    geometric_twap: geometric_twap.clone(),
+                    twap: twap.clone(),
                     redemption_rate: RedemptionRate {
                         contract_addr: deps.api.addr_validate(&redemption_rate.contract_addr)?,
                         max_staleness: redemption_rate.max_staleness,
@@ -510,18 +556,18 @@ impl PriceSourceChecked<Empty> for OsmosisPriceSourceChecked {
             )?),
             OsmosisPriceSourceChecked::Lsd {
                 transitive_denom,
-                geometric_twap,
+                twap,
                 redemption_rate,
             } => {
-                Self::chain_recovered(deps, &geometric_twap.downtime_detector)?;
+                Self::chain_recovered(deps, &twap.downtime_detector)?;
 
                 Self::query_lsd_price(
                     deps,
                     env,
                     denom,
                     transitive_denom,
-                    geometric_twap.clone(),
-                    redemption_rate.clone(),
+                    twap,
+                    redemption_rate,
                     config,
                     price_sources,
                     kind,
@@ -656,28 +702,22 @@ impl OsmosisPriceSourceChecked {
     ///
     /// stAsset/USD = stAsset/Asset * Asset/USD
     /// where:
-    /// stAsset/Asset = min(stAsset/Asset Geometric TWAP, stAsset/Asset Redemption Rate)
+    /// stAsset/Asset = min(stAsset/Asset TWAP, stAsset/Asset Redemption Rate)
     #[allow(clippy::too_many_arguments)]
     fn query_lsd_price(
         deps: &Deps,
         env: &Env,
         denom: &str,
         transitive_denom: &str,
-        geometric_twap: GeometricTwap,
-        redemption_rate: RedemptionRate<Addr>,
+        twap: &Twap,
+        redemption_rate: &RedemptionRate<Addr>,
         config: &Config,
         price_sources: &Map<&str, OsmosisPriceSourceChecked>,
         kind: ActionKind,
     ) -> ContractResult<Decimal> {
         let current_time = env.block.time.seconds();
-        let start_time = current_time - geometric_twap.window_size;
-        let staked_price = query_geometric_twap_price(
-            &deps.querier,
-            geometric_twap.pool_id,
-            denom,
-            transitive_denom,
-            start_time,
-        )?;
+        let staked_price =
+            twap.query_price(&deps.querier, current_time, denom, transitive_denom)?;
 
         // query redemption rate
         let rr = query_redemption_rate(
@@ -687,7 +727,7 @@ impl OsmosisPriceSourceChecked {
         )?;
 
         // Check if the redemption rate is not too old
-        assert_rr_not_too_old(current_time, &rr, &redemption_rate)?;
+        assert_rr_not_too_old(current_time, &rr, redemption_rate)?;
 
         // min from geometric TWAP and exchange rate
         let min_price = min(staked_price, rr.redemption_rate);

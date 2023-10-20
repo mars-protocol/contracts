@@ -86,9 +86,9 @@ export type OsmosisPriceSourceForString =
     }
   | {
       lsd: {
-        geometric_twap: GeometricTwap
         redemption_rate: RedemptionRateForString
         transitive_denom: string
+        twap: Twap
       }
     }
 export type Decimal = string
@@ -119,6 +119,13 @@ export type Downtime =
   | 'Duration36h'
   | 'Duration48h'
 export type Identifier = string
+export type TwapKind =
+  | {
+      arithmetic_twap: {}
+    }
+  | {
+      geometric_twap: {}
+    }
 export type OwnerUpdate =
   | {
       propose_new_owner: {
@@ -138,14 +145,15 @@ export interface DowntimeDetector {
   downtime: Downtime
   recovery: number
 }
-export interface GeometricTwap {
-  downtime_detector?: DowntimeDetector | null
-  pool_id: number
-  window_size: number
-}
 export interface RedemptionRateForString {
   contract_addr: string
   max_staleness: number
+}
+export interface Twap {
+  downtime_detector?: DowntimeDetector | null
+  kind: TwapKind
+  pool_id: number
+  window_size: number
 }
 export type QueryMsg =
   | {

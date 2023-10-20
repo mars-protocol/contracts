@@ -9,7 +9,7 @@ use mars_oracle_osmosis::{
     DowntimeDetector, OsmosisPriceSourceChecked,
 };
 use mars_testing::mock_dependencies;
-use mars_types::oracle::MigrateMsg;
+use mars_types::oracle::{MigrateMsg, V2Updates};
 use osmosis_std::types::osmosis::downtimedetector::v1beta1::Downtime;
 use pyth_sdk_cw::PriceIdentifier;
 
@@ -21,13 +21,21 @@ fn wrong_contract_name() {
     let err = migrate(
         deps.as_mut(),
         mock_env(),
-        MigrateMsg {
+        MigrateMsg::V1_1_0ToV2_0_0(V2Updates {
             max_confidence: Decimal::percent(5),
             max_deviation: Decimal::percent(5),
-        },
+        }),
     )
     .unwrap_err();
+    assert_eq!(
+        err,
+        ContractError::Version(VersionError::WrongContract {
+            expected: "crates.io:mars-oracle-osmosis".to_string(),
+            found: "contract_xyz".to_string()
+        })
+    );
 
+    let err = migrate(deps.as_mut(), mock_env(), MigrateMsg::V2_0_0ToV2_0_1 {}).unwrap_err();
     assert_eq!(
         err,
         ContractError::Version(VersionError::WrongContract {
@@ -46,13 +54,12 @@ fn wrong_contract_version() {
     let err = migrate(
         deps.as_mut(),
         mock_env(),
-        MigrateMsg {
+        MigrateMsg::V1_1_0ToV2_0_0(V2Updates {
             max_confidence: Decimal::percent(5),
             max_deviation: Decimal::percent(5),
-        },
+        }),
     )
     .unwrap_err();
-
     assert_eq!(
         err,
         ContractError::Version(VersionError::WrongVersion {
@@ -60,10 +67,19 @@ fn wrong_contract_version() {
             found: "4.1.0".to_string()
         })
     );
+
+    let err = migrate(deps.as_mut(), mock_env(), MigrateMsg::V2_0_0ToV2_0_1 {}).unwrap_err();
+    assert_eq!(
+        err,
+        ContractError::Version(VersionError::WrongVersion {
+            expected: "2.0.0".to_string(),
+            found: "4.1.0".to_string()
+        })
+    );
 }
 
 #[test]
-fn successful_migration() {
+fn successful_migration_to_v2_0_0() {
     let mut deps = mock_dependencies(&[]);
     cw2::set_contract_version(deps.as_mut().storage, "crates.io:mars-oracle-osmosis", "1.1.0")
         .unwrap();
@@ -126,10 +142,10 @@ fn successful_migration() {
     let res = migrate(
         deps.as_mut(),
         mock_env(),
-        MigrateMsg {
+        MigrateMsg::V1_1_0ToV2_0_0(V2Updates {
             max_confidence,
             max_deviation,
-        },
+        }),
     )
     .unwrap();
 
@@ -138,12 +154,12 @@ fn successful_migration() {
     assert!(res.data.is_none());
     assert_eq!(
         res.attributes,
-        vec![attr("action", "migrate"), attr("from_version", "1.1.0"), attr("to_version", "2.0.0")]
+        vec![attr("action", "migrate"), attr("from_version", "1.1.0"), attr("to_version", "2.0.1")]
     );
 
     let new_contract_version = ContractVersion {
         contract: "crates.io:mars-oracle-osmosis".to_string(),
-        version: "2.0.0".to_string(),
+        version: "2.0.1".to_string(),
     };
     assert_eq!(cw2::get_contract_version(deps.as_ref().storage).unwrap(), new_contract_version);
 
@@ -200,4 +216,27 @@ fn successful_migration() {
             })
         }
     );
+}
+
+#[test]
+fn successful_migration_to_v2_0_1() {
+    let mut deps = mock_dependencies(&[]);
+    cw2::set_contract_version(deps.as_mut().storage, "crates.io:mars-oracle-osmosis", "2.0.0")
+        .unwrap();
+
+    let res = migrate(deps.as_mut(), mock_env(), MigrateMsg::V2_0_0ToV2_0_1 {}).unwrap();
+
+    assert_eq!(res.messages, vec![]);
+    assert_eq!(res.events, vec![] as Vec<Event>);
+    assert!(res.data.is_none());
+    assert_eq!(
+        res.attributes,
+        vec![attr("action", "migrate"), attr("from_version", "2.0.0"), attr("to_version", "2.0.1")]
+    );
+
+    let new_contract_version = ContractVersion {
+        contract: "crates.io:mars-oracle-osmosis".to_string(),
+        version: "2.0.1".to_string(),
+    };
+    assert_eq!(cw2::get_contract_version(deps.as_ref().storage).unwrap(), new_contract_version);
 }

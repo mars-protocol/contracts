@@ -1,6 +1,6 @@
 {
   "contract_name": "mars-oracle-osmosis",
-  "contract_version": "2.0.0",
+  "contract_version": "2.0.1",
   "idl_version": "1.0.0",
   "instantiate": {
     "$schema": "http://json-schema.org/draft-07/schema#",
@@ -202,39 +202,6 @@
       "Empty": {
         "description": "An empty struct that serves as a placeholder in different places, such as contracts that don't set a custom message.\n\nIt is designed to be expressable in correct JSON and JSON Schema but contains no meaningful data. Previously we used enums without cases, but those cannot represented as valid JSON Schema (https://github.com/CosmWasm/cosmwasm/issues/451)",
         "type": "object"
-      },
-      "GeometricTwap": {
-        "type": "object",
-        "required": [
-          "pool_id",
-          "window_size"
-        ],
-        "properties": {
-          "downtime_detector": {
-            "description": "Detect when the chain is recovering from downtime",
-            "anyOf": [
-              {
-                "$ref": "#/definitions/DowntimeDetector"
-              },
-              {
-                "type": "null"
-              }
-            ]
-          },
-          "pool_id": {
-            "description": "Pool id for stAsset/Asset pool",
-            "type": "integer",
-            "format": "uint64",
-            "minimum": 0.0
-          },
-          "window_size": {
-            "description": "Window size in seconds representing the entire window for which 'geometric' price is calculated. Value should be <= 172800 sec (48 hours).",
-            "type": "integer",
-            "format": "uint64",
-            "minimum": 0.0
-          }
-        },
-        "additionalProperties": false
       },
       "Identifier": {
         "type": "string"
@@ -516,19 +483,11 @@
               "lsd": {
                 "type": "object",
                 "required": [
-                  "geometric_twap",
                   "redemption_rate",
-                  "transitive_denom"
+                  "transitive_denom",
+                  "twap"
                 ],
                 "properties": {
-                  "geometric_twap": {
-                    "description": "Params to query geometric TWAP price",
-                    "allOf": [
-                      {
-                        "$ref": "#/definitions/GeometricTwap"
-                      }
-                    ]
-                  },
                   "redemption_rate": {
                     "description": "Params to query redemption rate",
                     "allOf": [
@@ -540,6 +499,14 @@
                   "transitive_denom": {
                     "description": "Transitive denom for which we query price in USD. It refers to 'Asset' in the equation: stAsset/USD = stAsset/Asset * Asset/USD",
                     "type": "string"
+                  },
+                  "twap": {
+                    "description": "Params to query TWAP price",
+                    "allOf": [
+                      {
+                        "$ref": "#/definitions/Twap"
+                      }
+                    ]
                   }
                 },
                 "additionalProperties": false
@@ -644,6 +611,78 @@
           }
         },
         "additionalProperties": false
+      },
+      "Twap": {
+        "type": "object",
+        "required": [
+          "kind",
+          "pool_id",
+          "window_size"
+        ],
+        "properties": {
+          "downtime_detector": {
+            "description": "Detect when the chain is recovering from downtime",
+            "anyOf": [
+              {
+                "$ref": "#/definitions/DowntimeDetector"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "kind": {
+            "description": "Kind of TWAP",
+            "allOf": [
+              {
+                "$ref": "#/definitions/TwapKind"
+              }
+            ]
+          },
+          "pool_id": {
+            "description": "Pool id for stAsset/Asset pool",
+            "type": "integer",
+            "format": "uint64",
+            "minimum": 0.0
+          },
+          "window_size": {
+            "description": "Window size in seconds representing the entire window for which 'geometric' price is calculated. Value should be <= 172800 sec (48 hours).",
+            "type": "integer",
+            "format": "uint64",
+            "minimum": 0.0
+          }
+        },
+        "additionalProperties": false
+      },
+      "TwapKind": {
+        "oneOf": [
+          {
+            "type": "object",
+            "required": [
+              "arithmetic_twap"
+            ],
+            "properties": {
+              "arithmetic_twap": {
+                "type": "object",
+                "additionalProperties": false
+              }
+            },
+            "additionalProperties": false
+          },
+          {
+            "type": "object",
+            "required": [
+              "geometric_twap"
+            ],
+            "properties": {
+              "geometric_twap": {
+                "type": "object",
+                "additionalProperties": false
+              }
+            },
+            "additionalProperties": false
+          }
+        ]
       }
     }
   },
