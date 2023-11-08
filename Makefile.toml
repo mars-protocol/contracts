@@ -24,6 +24,10 @@ rustup component add clippy --toolchain ${RUST_VERSION}
 rustup component add llvm-tools-preview --toolchain ${RUST_VERSION}
 '''
 
+[tasks.install-stable-for-scripts]
+env = { RUST_VERSION = "1.72.0" }
+run_task = "install-stable"
+
 [tasks.install-nightly]
 script = '''
 curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y --profile minimal --default-toolchain nightly

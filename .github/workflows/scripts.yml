@@ -26,7 +26,7 @@ jobs:
         uses: davidB/rust-cargo-make@v1
 
       - name: Install stable Rust
-        run: cd ../ && cargo make install-stable && cd scripts
+        run: cd ../ && cargo make install-stable-for-scripts && cd scripts
 
       # selecting a toolchain should happen before the plugin, as the cache uses the current rustc version as its cache key
       - name: Cache dependencies
