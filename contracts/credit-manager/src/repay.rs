@@ -88,7 +88,10 @@ pub fn repay_for_recipient(
 ) -> ContractResult<Response> {
     let (debt_amount, _) =
         current_debt_for_denom(deps.as_ref(), recipient_account_id, &coin.denom)?;
-    let amount_to_repay = min(debt_amount, coin.amount.value().unwrap_or(Uint128::MAX));
+    let coin_balance = COIN_BALANCES
+        .may_load(deps.storage, (benefactor_account_id, &coin.denom))?
+        .unwrap_or_default();
+    let amount_to_repay = min(debt_amount, coin.amount.value().unwrap_or(coin_balance));
     let coin_to_repay = &Coin {
         denom: coin.denom,
         amount: amount_to_repay,
