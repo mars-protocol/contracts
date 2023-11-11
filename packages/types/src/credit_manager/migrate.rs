@@ -18,4 +18,5 @@ pub struct V2Updates {
 #[cw_serde]
 pub enum MigrateMsg {
     V1_0_0ToV2_0_0(V2Updates),
+    V2_0_0ToV2_0_1 {},
 }
