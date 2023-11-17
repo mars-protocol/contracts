@@ -1,6 +1,6 @@
 [package]
 name          = "mars-credit-manager"
-version       = { workspace = true }
+version       = "2.0.1"
 authors       = { workspace = true }
 license       = { workspace = true }
 edition       = { workspace = true }

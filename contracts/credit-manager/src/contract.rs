@@ -128,5 +128,6 @@ pub fn query(deps: Deps, env: Env, msg: QueryMsg) -> ContractResult<Binary> {
 pub fn migrate(deps: DepsMut, env: Env, msg: MigrateMsg) -> ContractResult<Response> {
     match msg {
         MigrateMsg::V1_0_0ToV2_0_0(updates) => migrations::v2_0_0::migrate(deps, env, updates),
+        MigrateMsg::V2_0_0ToV2_0_1 {} => migrations::v2_0_1::migrate(deps),
     }
 }

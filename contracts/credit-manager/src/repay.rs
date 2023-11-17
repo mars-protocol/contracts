@@ -9,7 +9,7 @@ use mars_types::credit_manager::{ActionCoin, CallbackMsg::Repay, ExecuteMsg};
 
 use crate::{
     error::{ContractError, ContractResult},
-    state::{DEBT_SHARES, RED_BANK, TOTAL_DEBT_SHARES},
+    state::{COIN_BALANCES, DEBT_SHARES, RED_BANK, TOTAL_DEBT_SHARES},
     utils::{debt_shares_to_amount, decrement_coin_balance, increment_coin_balance},
 };
 
@@ -17,7 +17,9 @@ pub fn repay(deps: DepsMut, account_id: &str, coin: &ActionCoin) -> ContractResu
     // Ensure repayment does not exceed max debt on account
     let (debt_amount, debt_shares) =
         current_debt_for_denom(deps.as_ref(), account_id, &coin.denom)?;
-    let amount_to_repay = min(debt_amount, coin.amount.value().unwrap_or(Uint128::MAX));
+    let coin_balance =
+        COIN_BALANCES.may_load(deps.storage, (account_id, &coin.denom))?.unwrap_or_default();
+    let amount_to_repay = min(debt_amount, coin.amount.value().unwrap_or(coin_balance));
     let coin_to_repay = Coin {
         denom: coin.denom.to_string(),
         amount: amount_to_repay,
@@ -86,7 +88,10 @@ pub fn repay_for_recipient(
 ) -> ContractResult<Response> {
     let (debt_amount, _) =
         current_debt_for_denom(deps.as_ref(), recipient_account_id, &coin.denom)?;
-    let amount_to_repay = min(debt_amount, coin.amount.value().unwrap_or(Uint128::MAX));
+    let coin_balance = COIN_BALANCES
+        .may_load(deps.storage, (benefactor_account_id, &coin.denom))?
+        .unwrap_or_default();
+    let amount_to_repay = min(debt_amount, coin.amount.value().unwrap_or(coin_balance));
     let coin_to_repay = &Coin {
         denom: coin.denom,
         amount: amount_to_repay,

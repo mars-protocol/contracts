@@ -10,6 +10,7 @@ use mars_types::{
 use super::helpers::{
     assert_err, uosmo_info, AccountToFund, CoinInfo, MockEnv, DEFAULT_RED_BANK_COIN_BALANCE,
 };
+use crate::tests::helpers::{get_coin, get_debt, uatom_info};
 
 #[test]
 fn only_token_owner_can_repay() {
@@ -388,4 +389,56 @@ fn amount_none_repays_total_debt() {
     let config = mock.query_config();
     let coin = mock.query_balance(&Addr::unchecked(config.red_bank), &coin_info.denom);
     assert_eq!(coin.amount, DEFAULT_RED_BANK_COIN_BALANCE.add(Uint128::new(1)));
+}
+
+#[test]
+fn amount_none_repays_no_more_than_available_asset() {
+    let uosmo_info = uosmo_info();
+    let uatom_info = uatom_info();
+
+    let user = Addr::unchecked("user");
+
+    let mut mock = MockEnv::new()
+        .set_params(&[uosmo_info.clone(), uatom_info.clone()])
+        .fund_account(AccountToFund {
+            addr: user.clone(),
+            funds: coins(300, uatom_info.denom.clone()),
+        })
+        .build()
+        .unwrap();
+
+    let account_id = mock.create_credit_account(&user).unwrap();
+
+    mock.update_credit_account(
+        &account_id,
+        &user,
+        vec![
+            Deposit(uatom_info.to_coin(300)),
+            Borrow(uosmo_info.to_coin(50)),
+            Withdraw(uosmo_info.to_action_coin(10)),
+            Repay {
+                recipient_account_id: None,
+                coin: uosmo_info.to_action_coin_full_balance(),
+            },
+        ],
+        &[uatom_info.to_coin(300)],
+    )
+    .unwrap();
+
+    let position = mock.query_positions(&account_id);
+    assert_eq!(position.debts.len(), 1);
+    let uosmo_debt = get_debt(&uosmo_info.denom, &position.debts);
+    // debt: 50 uosmo,
+    // account balance: 40 uosmo (50 borrowed - 10 withdrawn)
+    // repaying full balance should repay 40 uosmo
+    assert_eq!(uosmo_debt.amount, Uint128::new(11)); // 10 + 1 interest
+
+    assert_eq!(position.deposits.len(), 1);
+    assert_eq!(get_coin(&uatom_info.denom, &position.deposits), uatom_info.to_coin(300));
+
+    let coin = mock.query_balance(&mock.rover, &uatom_info.denom);
+    assert_eq!(coin.amount, Uint128::new(300));
+
+    let coin = mock.query_balance(&mock.rover, &uosmo_info.denom);
+    assert_eq!(coin.amount, Uint128::zero());
 }
