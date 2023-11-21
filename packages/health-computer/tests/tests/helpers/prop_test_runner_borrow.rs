@@ -38,6 +38,13 @@ pub fn max_borrow_prop_test_runner(cases: u32, target: &BorrowTarget) {
                             address: vault_position.vault.address.clone(),
                         }
                     }
+                    BorrowTarget::Swap {
+                        denom_out,
+                        slippage,
+                    } => BorrowTarget::Swap {
+                        denom_out: denom_out.clone(),
+                        slippage: *slippage,
+                    },
                 };
 
                 let denom_to_borrow = h.denoms_data.params.keys().next().unwrap();
@@ -106,6 +113,20 @@ fn add_borrow(
                     }
                 });
             }
+        }
+        BorrowTarget::Swap {
+            denom_out,
+            slippage: _,
+        } => {
+            // slippage already included in max_borrow_amount_estimate
+            let price_in = new_h.denoms_data.prices.get(denom).unwrap();
+            let price_out = new_h.denoms_data.prices.get(denom_out).unwrap();
+            let value_in = amount.mul_floor(*price_in);
+            let amount_out = value_in.div_floor(*price_out);
+            new_h.positions.deposits.push(Coin {
+                denom: denom_out.to_string(),
+                amount: amount_out,
+            });
         }
     }
     Ok(new_h)

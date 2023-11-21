@@ -255,7 +255,7 @@ impl HealthComputer {
     pub fn max_borrow_amount_estimate(
         &self,
         borrow_denom: &str,
-        target: BorrowTarget,
+        target: &BorrowTarget,
     ) -> HealthResult<Uint128> {
         // Given the formula:
         //      max ltv health factor = max ltv adjusted value / debt value
@@ -340,7 +340,7 @@ impl HealthComputer {
                 } = self
                     .vaults_data
                     .vault_configs
-                    .get(&address)
+                    .get(address)
                     .ok_or(MissingVaultConfig(address.to_string()))?;
 
                 // If vault or base token has been de-listed, drop MaxLTV to zero
@@ -377,9 +377,13 @@ impl HealthComputer {
                 slippage,
                 denom_out,
             } => {
-                let denom_out_ltv = self.get_coin_max_ltv(&denom_out).unwrap();
+                let denom_out_ltv = self.get_coin_max_ltv(denom_out).unwrap();
 
                 // The max borrow for swap can be calculated as:
+                //      1 = (total_max_ltv_adjusted_value + (denom_amount_out * denom_price_out * denom_out_ltv)) / (debt_value + (max_borrow_denom_amount * borrow_denom_price))
+                // denom_amount_out can be replaced by:
+                //      denom_amount_out = slippage * max_borrow_denom_amount * borrow_denom_price / denom_price_out
+                // This results in the following formula:
                 //      1 = (total_max_ltv_adjusted_value + (slippage * max_borrow_denom_amount * borrow_denom_price * denom_out_ltv)) / (debt_value + (max_borrow_denom_amount * borrow_denom_price))
                 // Re-arranging this to isolate borrow denom amount renders:
                 //      max_borrow_denom_amount = (total_max_ltv_adjusted_value - debt_value) / (borrow_denom_price * (1 - slippage * denom_out_ltv))

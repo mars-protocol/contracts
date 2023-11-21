@@ -24,7 +24,7 @@ pub fn max_borrow_estimate_js(
     borrow_denom: String,
     target: BorrowTarget,
 ) -> String {
-    c.max_borrow_amount_estimate(&borrow_denom, target).unwrap().to_string()
+    c.max_borrow_amount_estimate(&borrow_denom, &target).unwrap().to_string()
 }
 
 #[wasm_bindgen]

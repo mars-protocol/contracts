@@ -1,4 +1,4 @@
-use cosmwasm_std::{Coin, StdResult, Uint128};
+use cosmwasm_std::{Coin, Decimal, StdResult, Uint128};
 use mars_rover_health_computer::HealthComputer;
 use mars_types::{credit_manager::DebtAmount, health::SwapKind};
 use proptest::{
@@ -34,7 +34,9 @@ pub fn max_swap_prop_test_runner(cases: u32, kind: &SwapKind) {
                 let from_denom = h.denoms_data.params.keys().next().unwrap();
                 let to_denom = h.denoms_data.params.keys().nth(1).unwrap();
 
-                let max_swap = h.max_swap_amount_estimate(from_denom, to_denom, kind).unwrap();
+                let max_swap = h
+                    .max_swap_amount_estimate(from_denom, to_denom, kind, Decimal::zero())
+                    .unwrap();
 
                 let health_before = h.compute_health().unwrap();
                 if health_before.is_above_max_ltv() {
