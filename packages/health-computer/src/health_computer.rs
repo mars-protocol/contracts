@@ -32,7 +32,7 @@ pub struct HealthComputer {
 }
 
 impl HealthComputer {
-    pub fn compute_health(&self) -> mars_types::health::HealthResult<Health> {
+    pub fn compute_health(&self) -> HealthResult<Health> {
         let CollateralValue {
             total_collateral_value,
             max_ltv_adjusted_collateral,
