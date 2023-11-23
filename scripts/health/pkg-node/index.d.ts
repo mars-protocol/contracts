@@ -37,6 +37,12 @@ export function max_swap_estimate_js(
   kind: SwapKind,
   slippage: Slippage,
 ): string
+/**
+ * @param {HealthComputer} c
+ * @param {string} denom
+ * @returns {string}
+ */
+export function liquidation_price_js(c: HealthComputer, denom: string): string
 export interface HealthComputer {
   kind: AccountKind
   positions: Positions

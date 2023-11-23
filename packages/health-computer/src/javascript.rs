@@ -39,3 +39,9 @@ pub fn max_swap_estimate_js(
         .unwrap()
         .to_string()
 }
+
+#[wasm_bindgen]
+pub fn liquidation_price_js(
+    c: HealthComputer,
+    denom: String,
+) -> String { c.liquidation_price(&denom).unwrap().to_string() }
