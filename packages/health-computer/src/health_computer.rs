@@ -16,6 +16,7 @@ use mars_types::{
 #[cfg(feature = "javascript")]
 use tsify::Tsify;
 use mars_types::health::HealthError::MissingAmount;
+use mars_types::health::LiquidationPriceKind;
 
 use crate::{CollateralValue, DenomsData, VaultsData};
 
@@ -404,33 +405,57 @@ impl HealthComputer {
         Ok(max_borrow_amount)
     }
 
-    pub fn liquidation_price(&self, denom: &str) -> HealthResult<Uint128> {
+    pub fn liquidation_price(&self, denom: &str, kind: &LiquidationPriceKind) -> HealthResult<Uint128> {
         let collateral_ltv_value =
             self.total_collateral_value()?.max_ltv_adjusted_collateral;
-        let debt_value = self.total_debt_value()?;
-        if debt_value.is_zero() {
+        let total_debt_value = self.total_debt_value()?;
+        if total_debt_value.is_zero() {
             return Ok(Uint128::zero());
         }
 
-        let asset_amount = self.positions.deposits.iter().find(|c| c.denom == denom).unwrap_or(&Coin::default()).amount;
-        if asset_amount.is_zero() {
-            return Err(MissingAmount(denom.to_string()))
+         let current_price = self.denoms_data.prices.get(denom).ok_or(MissingPrice(denom.to_string()))?;
+
+        if total_debt_value >= collateral_ltv_value {
+            return Ok(Uint128::one() * *current_price);
         }
 
-        let asset_ltv = self.get_coin_max_ltv(denom)?;
-        let asset_price = self.denoms_data.prices.get(denom).ok_or(MissingPrice(denom.to_string()))?;
-        let asset_ltv_value = asset_amount.checked_mul_floor(asset_price.checked_mul(asset_ltv)?)?;
-        let debt_with_asset_ltv_value = debt_value.checked_add(asset_ltv_value)?;
+        match kind {
+            LiquidationPriceKind::Asset => {
+                let asset_amount = self.get_coin_from_deposits_and_lends(denom)?.amount;
+                if asset_amount.is_zero() {
+                    return Err(MissingAmount(denom.to_string()))
+                }
 
-        if debt_with_asset_ltv_value <= collateral_ltv_value {
-            return Ok(Uint128::zero());
+                let asset_ltv = self.get_coin_max_ltv(denom)?;
+
+                let asset_ltv_value = asset_amount.checked_mul_floor(current_price.checked_mul(asset_ltv)?)?;
+                let debt_with_asset_ltv_value = total_debt_value.checked_add(asset_ltv_value)?;
+
+                if debt_with_asset_ltv_value <= collateral_ltv_value {
+                    return Ok(Uint128::zero());
+                }
+
+                let debt_without = debt_with_asset_ltv_value - collateral_ltv_value;
+
+                // liquidation_price = (debt_value - collateral_ltv_value + asset_ltv_value) / (asset_amount * asset_ltv)
+                Ok(Uint128::one() * Decimal::checked_from_ratio(debt_without, asset_amount)?.checked_mul(Decimal::from_ratio(asset_ltv.denominator(), asset_ltv.numerator()))?)
+            }
+
+            LiquidationPriceKind::Debt => {
+                let debt_amount = self.positions.debts.iter().find(|c| c.denom == denom).ok_or(MissingAmount(denom.to_string()))?.amount;
+                if debt_amount.is_zero() {
+                    return Err(MissingAmount(denom.to_string()))
+                }
+
+                // Liquidation_price = (collateral_ltv_value - total_debt_value + debt_value_asset / asset_amount
+                let debt_value = debt_amount.checked_mul_ceil(*current_price)?;
+                let net_collateral_value_without_debt = collateral_ltv_value.checked_add(debt_value)?.min(total_debt_value);
+
+                Ok(net_collateral_value_without_debt / debt_amount)
+            }
         }
-
-        let debt_without = debt_with_asset_ltv_value - collateral_ltv_value;
-
-        // liquidation_price = (debt_value - collateral_ltv_value + asset_ltv_value) / (asset_amount * asset_ltv)
-        Ok(Uint128::one() * Decimal::checked_from_ratio(debt_without, asset_amount)?.checked_mul(Decimal::from_ratio(asset_ltv.denominator(), asset_ltv.numerator()))?)
     }
+
     fn total_debt_value(&self) -> HealthResult<Uint128> {
         let mut total = Uint128::zero();
         for debt in &self.positions.debts {

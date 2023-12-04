@@ -1,4 +1,4 @@
-use mars_types::health::{BorrowTarget, HealthValuesResponse, Slippage, SwapKind};
+use mars_types::health::{BorrowTarget, HealthValuesResponse, LiquidationPriceKind, Slippage, SwapKind};
 use wasm_bindgen::prelude::*;
 
 use crate::HealthComputer;
@@ -44,4 +44,5 @@ pub fn max_swap_estimate_js(
 pub fn liquidation_price_js(
     c: HealthComputer,
     denom: String,
-) -> String { c.liquidation_price(&denom).unwrap().to_string() }
+    kind: LiquidationPriceKind
+) -> String { c.liquidation_price(&denom, &kind).unwrap().to_string() }
