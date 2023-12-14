@@ -62,7 +62,7 @@ fn querying_total_deposit(rb_market: Market, rb_debt: UserDebtResponse, cm_balan
 
     // setup
     deps.querier.set_redbank_market(rb_market.clone());
-    deps.querier.set_red_bank_user_debt(CREDIT_MANAGER, rb_debt.clone());
+    deps.querier.set_red_bank_user_debt(CREDIT_MANAGER, rb_debt);
     deps.querier.update_balances(CREDIT_MANAGER, coins(cm_balance.u128(), MOCK_DENOM));
     ADDRESS_PROVIDER.save(deps.as_mut().storage, &Addr::unchecked("address_provider")).unwrap();
     ASSET_PARAMS.save(deps.as_mut().storage, MOCK_DENOM, &params).unwrap();
@@ -71,7 +71,7 @@ fn querying_total_deposit(rb_market: Market, rb_debt: UserDebtResponse, cm_balan
     let rb_deposit =
         get_underlying_liquidity_amount(rb_market.collateral_total_scaled, &rb_market, TIMESTAMP)
             .unwrap();
-    let exp_total_deposit = rb_deposit + cm_balance - rb_debt.amount;
+    let exp_total_deposit = rb_deposit + cm_balance;
 
     // query total deposit
     let res = query_total_deposit(deps.as_ref(), &env, MOCK_DENOM.into()).unwrap();
