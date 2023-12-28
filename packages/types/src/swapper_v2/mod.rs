@@ -12,7 +12,7 @@ use self::{
 use crate::swapper::EstimateExactInSwapResponse;
 
 mod astro_route;
-mod error;
+pub mod error;
 mod helpers;
 mod osmo_route;
 mod traits;
