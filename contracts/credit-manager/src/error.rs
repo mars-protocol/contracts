@@ -6,10 +6,7 @@ use cw2::VersionError;
 use cw_utils::PaymentError;
 use mars_liquidation::error::LiquidationError;
 use mars_owner::OwnerError;
-use mars_types::{
-    adapters::{oracle::OracleError, vault::VaultError},
-    swapper_v2::error::SwapperError,
-};
+use mars_types::adapters::{oracle::OracleError, vault::VaultError};
 use mars_utils::error::GuardError;
 use thiserror::Error;
 
@@ -189,7 +186,4 @@ pub enum ContractError {
 
     #[error(transparent)]
     Oracle(#[from] OracleError),
-
-    #[error("{0}")]
-    Swapper(#[from] SwapperError),
 }
