@@ -58,9 +58,15 @@ pub fn borrow(
         &borrow_market,
         env.block.time.seconds(),
     )?;
+    let debt_balance_before = get_underlying_debt_amount(
+        borrow_market.debt_total_scaled,
+        &borrow_market,
+        env.block.time.seconds(),
+    )?;
 
-    // Cannot borrow zero amount or more than available collateral
-    if borrow_amount.is_zero() || borrow_amount > collateral_balance_before {
+    // Cannot borrow zero amount or more than available liquidity
+    let available_liquidity = collateral_balance_before.checked_sub(debt_balance_before)?;
+    if borrow_amount.is_zero() || borrow_amount > available_liquidity {
         return Err(ContractError::InvalidBorrowAmount {
             denom,
         });
