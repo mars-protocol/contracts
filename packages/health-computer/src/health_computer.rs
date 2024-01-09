@@ -463,7 +463,7 @@ impl HealthComputer {
                 // Liquidation_price = (collateral_ltv_value - total_debt_value + debt_value_asset / asset_amount
                 let debt_value = debt_amount.checked_mul_ceil(*current_price)?;
                 let net_collateral_value_without_debt =
-                    collateral_ltv_value.checked_add(debt_value)?.min(total_debt_value);
+                    collateral_ltv_value.checked_add(debt_value)?.checked_sub(total_debt_value)?;
 
                 Ok(net_collateral_value_without_debt / debt_amount)
             }
