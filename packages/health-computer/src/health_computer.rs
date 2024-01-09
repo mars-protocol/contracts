@@ -7,16 +7,15 @@ use mars_types::{
     health::{
         AccountKind, BorrowTarget, Health,
         HealthError::{
-            MissingHLSParams, MissingParams, MissingPrice, MissingVaultConfig, MissingVaultValues,
+            MissingAmount, MissingHLSParams, MissingParams, MissingPrice, MissingVaultConfig,
+            MissingVaultValues,
         },
-        HealthResult, SwapKind,
+        HealthResult, LiquidationPriceKind, SwapKind,
     },
     params::{AssetParams, CmSettings, VaultConfig},
 };
 #[cfg(feature = "javascript")]
 use tsify::Tsify;
-use mars_types::health::HealthError::MissingAmount;
-use mars_types::health::LiquidationPriceKind;
 
 use crate::{CollateralValue, DenomsData, VaultsData};
 
@@ -405,15 +404,19 @@ impl HealthComputer {
         Ok(max_borrow_amount)
     }
 
-    pub fn liquidation_price(&self, denom: &str, kind: &LiquidationPriceKind) -> HealthResult<Uint128> {
-        let collateral_ltv_value =
-            self.total_collateral_value()?.max_ltv_adjusted_collateral;
+    pub fn liquidation_price(
+        &self,
+        denom: &str,
+        kind: &LiquidationPriceKind,
+    ) -> HealthResult<Uint128> {
+        let collateral_ltv_value = self.total_collateral_value()?.max_ltv_adjusted_collateral;
         let total_debt_value = self.total_debt_value()?;
         if total_debt_value.is_zero() {
             return Ok(Uint128::zero());
         }
 
-         let current_price = self.denoms_data.prices.get(denom).ok_or(MissingPrice(denom.to_string()))?;
+        let current_price =
+            self.denoms_data.prices.get(denom).ok_or(MissingPrice(denom.to_string()))?;
 
         if total_debt_value >= collateral_ltv_value {
             return Ok(Uint128::one() * *current_price);
@@ -423,12 +426,13 @@ impl HealthComputer {
             LiquidationPriceKind::Asset => {
                 let asset_amount = self.get_coin_from_deposits_and_lends(denom)?.amount;
                 if asset_amount.is_zero() {
-                    return Err(MissingAmount(denom.to_string()))
+                    return Err(MissingAmount(denom.to_string()));
                 }
 
                 let asset_ltv = self.get_coin_max_ltv(denom)?;
 
-                let asset_ltv_value = asset_amount.checked_mul_floor(current_price.checked_mul(asset_ltv)?)?;
+                let asset_ltv_value =
+                    asset_amount.checked_mul_floor(current_price.checked_mul(asset_ltv)?)?;
                 let debt_with_asset_ltv_value = total_debt_value.checked_add(asset_ltv_value)?;
 
                 if debt_with_asset_ltv_value <= collateral_ltv_value {
@@ -438,18 +442,28 @@ impl HealthComputer {
                 let debt_without = debt_with_asset_ltv_value - collateral_ltv_value;
 
                 // liquidation_price = (debt_value - collateral_ltv_value + asset_ltv_value) / (asset_amount * asset_ltv)
-                Ok(Uint128::one() * Decimal::checked_from_ratio(debt_without, asset_amount)?.checked_mul(Decimal::from_ratio(asset_ltv.denominator(), asset_ltv.numerator()))?)
+                Ok(Uint128::one()
+                    * Decimal::checked_from_ratio(debt_without, asset_amount)?.checked_mul(
+                        Decimal::from_ratio(asset_ltv.denominator(), asset_ltv.numerator()),
+                    )?)
             }
 
             LiquidationPriceKind::Debt => {
-                let debt_amount = self.positions.debts.iter().find(|c| c.denom == denom).ok_or(MissingAmount(denom.to_string()))?.amount;
+                let debt_amount = self
+                    .positions
+                    .debts
+                    .iter()
+                    .find(|c| c.denom == denom)
+                    .ok_or(MissingAmount(denom.to_string()))?
+                    .amount;
                 if debt_amount.is_zero() {
-                    return Err(MissingAmount(denom.to_string()))
+                    return Err(MissingAmount(denom.to_string()));
                 }
 
                 // Liquidation_price = (collateral_ltv_value - total_debt_value + debt_value_asset / asset_amount
                 let debt_value = debt_amount.checked_mul_ceil(*current_price)?;
-                let net_collateral_value_without_debt = collateral_ltv_value.checked_add(debt_value)?.min(total_debt_value);
+                let net_collateral_value_without_debt =
+                    collateral_ltv_value.checked_add(debt_value)?.min(total_debt_value);
 
                 Ok(net_collateral_value_without_debt / debt_amount)
             }
