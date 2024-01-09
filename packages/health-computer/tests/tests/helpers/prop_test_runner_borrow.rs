@@ -1,4 +1,4 @@
-use cosmwasm_std::{Coin, StdResult, Uint128};
+use cosmwasm_std::{Coin, Decimal, StdResult, Uint128};
 use mars_rover_health_computer::HealthComputer;
 use mars_types::{
     adapters::vault::{CoinValue, VaultPositionValue},
@@ -27,6 +27,10 @@ pub fn max_borrow_prop_test_runner(cases: u32, target: &BorrowTarget) {
                 }
             }),
             |h| {
+                let mut keys = h.denoms_data.params.keys();
+                let denom_to_borrow = keys.next().unwrap();
+                let denom_to_swap_to = keys.next().unwrap();
+
                 let updated_target = match target {
                     BorrowTarget::Deposit => BorrowTarget::Deposit,
                     BorrowTarget::Wallet => BorrowTarget::Wallet,
@@ -38,9 +42,15 @@ pub fn max_borrow_prop_test_runner(cases: u32, target: &BorrowTarget) {
                             address: vault_position.vault.address.clone(),
                         }
                     }
+                    BorrowTarget::Swap {
+                        denom_out: _,
+                        slippage,
+                    } => BorrowTarget::Swap {
+                        denom_out: denom_to_swap_to.clone(),
+                        slippage: *slippage,
+                    },
                 };
 
-                let denom_to_borrow = h.denoms_data.params.keys().next().unwrap();
                 let max_borrow =
                     h.max_borrow_amount_estimate(denom_to_borrow, &updated_target).unwrap();
 
@@ -106,6 +116,26 @@ fn add_borrow(
                     }
                 });
             }
+        }
+        BorrowTarget::Swap {
+            denom_out,
+            slippage,
+        } => {
+            let price_in = new_h.denoms_data.prices.get(denom).unwrap();
+            let price_out = new_h.denoms_data.prices.get(denom_out).unwrap();
+
+            // denom_amount_out = (1 - slippage) * max_borrow_denom_amount * borrow_denom_price / denom_price_out
+            // Use ceil math to avoid rounding errors in the test otheriwse we might end up with a health that is
+            // slightly above max_ltv.
+            let slippage = Decimal::one() - slippage;
+            let amount = amount.mul_ceil(slippage);
+            let value_in = amount.mul_ceil(*price_in);
+            let amount_out = value_in.div_ceil(*price_out);
+
+            new_h.positions.deposits.push(Coin {
+                denom: denom_out.to_string(),
+                amount: amount_out,
+            });
         }
     }
     Ok(new_h)

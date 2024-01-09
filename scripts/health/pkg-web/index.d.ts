@@ -27,6 +27,7 @@ export function max_borrow_estimate_js(
  * @param {string} from_denom
  * @param {string} to_denom
  * @param {SwapKind} kind
+ * @param {Slippage} slippage
  * @returns {string}
  */
 export function max_swap_estimate_js(
@@ -34,6 +35,7 @@ export function max_swap_estimate_js(
   from_denom: string,
   to_denom: string,
   kind: SwapKind,
+  slippage: Slippage,
 ): string
 export interface HealthComputer {
   kind: AccountKind
@@ -53,9 +55,15 @@ export interface HealthValuesResponse {
   above_max_ltv: boolean
 }
 
+export type Slippage = Decimal
+
 export type SwapKind = 'default' | 'margin'
 
-export type BorrowTarget = 'deposit' | 'wallet' | { vault: { address: Addr } }
+export type BorrowTarget =
+  | 'deposit'
+  | 'wallet'
+  | { vault: { address: Addr } }
+  | { swap: { denom_out: string; slippage: Decimal } }
 
 export type InitInput = RequestInfo | URL | Response | BufferSource | WebAssembly.Module
 
@@ -72,10 +80,10 @@ export interface InitOutput {
     e: number,
     f: number,
     g: number,
+    h: number,
   ) => void
   readonly allocate: (a: number) => number
   readonly deallocate: (a: number) => void
-  readonly requires_stargate: () => void
   readonly requires_iterator: () => void
   readonly interface_version_8: () => void
   readonly __wbindgen_malloc: (a: number, b: number) => number

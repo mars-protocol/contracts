@@ -75,7 +75,7 @@ fn random_coin_info() -> impl Strategy<Value = AssetParams> {
 }
 
 fn random_denoms_data() -> impl Strategy<Value = DenomsData> {
-    vec((random_coin_info(), random_price()), 1..=5).prop_map(|info| {
+    vec((random_coin_info(), random_price()), 2..=5).prop_map(|info| {
         let mut prices = HashMap::new();
         let mut params = HashMap::new();
 

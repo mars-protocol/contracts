@@ -12,10 +12,10 @@ export function max_swap_estimate_js(
   e: number,
   f: number,
   g: number,
+  h: number,
 ): void
 export function allocate(a: number): number
 export function deallocate(a: number): void
-export function requires_stargate(): void
 export function requires_iterator(): void
 export function interface_version_8(): void
 export function __wbindgen_malloc(a: number, b: number): number

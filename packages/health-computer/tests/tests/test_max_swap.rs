@@ -1,6 +1,6 @@
 use std::collections::HashMap;
 
-use cosmwasm_std::{coin, Uint128};
+use cosmwasm_std::{coin, Decimal, Uint128};
 use mars_rover_health_computer::{DenomsData, HealthComputer, VaultsData};
 use mars_types::{
     credit_manager::Positions,
@@ -43,8 +43,9 @@ fn max_swap_default() {
         vaults_data,
     };
 
-    let max_borrow_amount =
-        h.max_swap_amount_estimate(&udai.denom, &umars.denom, &SwapKind::Default).unwrap();
+    let max_borrow_amount = h
+        .max_swap_amount_estimate(&udai.denom, &umars.denom, &SwapKind::Default, Decimal::zero())
+        .unwrap();
     assert_eq!(Uint128::new(1200), max_borrow_amount);
 }
 
@@ -82,7 +83,8 @@ fn max_swap_margin() {
         vaults_data,
     };
 
-    let max_borrow_amount =
-        h.max_swap_amount_estimate(&udai.denom, &umars.denom, &SwapKind::Margin).unwrap();
+    let max_borrow_amount = h
+        .max_swap_amount_estimate(&udai.denom, &umars.denom, &SwapKind::Margin, Decimal::zero())
+        .unwrap();
     assert_eq!(Uint128::new(31351), max_borrow_amount);
 }

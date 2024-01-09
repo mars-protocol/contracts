@@ -184,9 +184,10 @@ module.exports.max_borrow_estimate_js = function (c, borrow_denom, target) {
  * @param {string} from_denom
  * @param {string} to_denom
  * @param {SwapKind} kind
+ * @param {Slippage} slippage
  * @returns {string}
  */
-module.exports.max_swap_estimate_js = function (c, from_denom, to_denom, kind) {
+module.exports.max_swap_estimate_js = function (c, from_denom, to_denom, kind, slippage) {
   let deferred3_0
   let deferred3_1
   try {
@@ -195,7 +196,16 @@ module.exports.max_swap_estimate_js = function (c, from_denom, to_denom, kind) {
     const len0 = WASM_VECTOR_LEN
     const ptr1 = passStringToWasm0(to_denom, wasm.__wbindgen_malloc, wasm.__wbindgen_realloc)
     const len1 = WASM_VECTOR_LEN
-    wasm.max_swap_estimate_js(retptr, addHeapObject(c), ptr0, len0, ptr1, len1, addHeapObject(kind))
+    wasm.max_swap_estimate_js(
+      retptr,
+      addHeapObject(c),
+      ptr0,
+      len0,
+      ptr1,
+      len1,
+      addHeapObject(kind),
+      addHeapObject(slippage),
+    )
     var r0 = getInt32Memory0()[retptr / 4 + 0]
     var r1 = getInt32Memory0()[retptr / 4 + 1]
     deferred3_0 = r0
