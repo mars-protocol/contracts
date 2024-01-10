@@ -31,6 +31,7 @@ wasm-bindgen      = { workspace = true, optional = true }
 # all the `std::fmt` and `std::panicking` infrastructure, so isn't great for
 # code size when deploying.
 console_error_panic_hook = { version = "0.1.7", optional = true }
+web-sys = "0.3.64"
 
 [dev-dependencies]
 proptest = { workspace = true }

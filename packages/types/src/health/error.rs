@@ -18,6 +18,9 @@ pub enum HealthError {
     #[error("{0} address has not been set in config")]
     ContractNotSet(String),
 
+    #[error("{0} amount was not provided or is 0")]
+    MissingAmount(String),
+
     #[error(
         "Account is an HLS account, but {0} was not provided HLS params to compute health with"
     )]

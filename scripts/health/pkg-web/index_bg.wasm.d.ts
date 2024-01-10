@@ -14,6 +14,7 @@ export function max_swap_estimate_js(
   g: number,
   h: number,
 ): void
+export function liquidation_price_js(a: number, b: number, c: number, d: number, e: number): void
 export function allocate(a: number): number
 export function deallocate(a: number): void
 export function requires_iterator(): void
