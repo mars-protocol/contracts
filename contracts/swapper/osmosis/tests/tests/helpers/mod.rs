@@ -57,7 +57,7 @@ pub fn swap_to_create_twap_records(
     coin_in: Coin,
     denom_out: &str,
 ) {
-    swap_n_times(app, signer, pool_id, coin_in, denom_out, 120u64);
+    swap_n_times(app, signer, pool_id, coin_in, denom_out, 122u64);
 }
 
 pub fn swap_n_times(
