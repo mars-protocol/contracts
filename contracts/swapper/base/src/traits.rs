@@ -7,13 +7,14 @@ use serde::{de::DeserializeOwned, Serialize};
 
 use crate::ContractResult;
 
-pub trait Route<M, Q>:
+pub trait Route<M, Q, C>:
     Serialize + DeserializeOwned + Clone + Debug + Display + PartialEq + JsonSchema
 where
     M: CustomMsg,
     Q: CustomQuery,
+    C: Config,
 {
-    fn from(route: SwapperRoute) -> ContractResult<Self>;
+    fn from(route: SwapperRoute, config: Option<C>) -> ContractResult<Self>;
 
     /// Determine whether the route is valid, given a pair of input and output denoms
     fn validate(
@@ -40,3 +41,5 @@ where
         coin_in: &Coin,
     ) -> ContractResult<EstimateExactInSwapResponse>;
 }
+
+pub trait Config: Serialize + DeserializeOwned + Clone + Debug + PartialEq + JsonSchema {}

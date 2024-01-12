@@ -11,7 +11,7 @@ use cw_it::{
     ContractMap, ContractType, TestRunner,
 };
 use mars_owner::OwnerResponse;
-use mars_swapper_astroport::route::AstroportRoute;
+use mars_swapper_astroport::{config::AstroportConfig, route::AstroportRoute};
 use mars_types::swapper::{
     EstimateExactInSwapResponse, RouteResponse, RoutesResponse, SwapperRoute,
 };
@@ -136,6 +136,20 @@ impl<'a> AstroportSwapperRobot<'a> {
         Self::new(runner, astroport_contracts, swapper_contract, oracle_contract, admin)
     }
 
+    pub fn set_config(&self, config: AstroportConfig, signer: &SigningAccount) -> &Self {
+        self.wasm()
+            .execute(
+                &self.swapper,
+                &mars_types::swapper::ExecuteMsg::<AstroportRoute, AstroportConfig>::UpdateConfig {
+                    config,
+                },
+                &[],
+                signer,
+            )
+            .unwrap();
+        self
+    }
+
     pub fn set_route(
         &self,
         operations: Vec<SwapOperation>,
@@ -146,7 +160,7 @@ impl<'a> AstroportSwapperRobot<'a> {
         self.wasm()
             .execute(
                 &self.swapper,
-                &mars_types::swapper::ExecuteMsg::SetRoute {
+                &mars_types::swapper::ExecuteMsg::<AstroportRoute, AstroportConfig>::SetRoute {
                     route: AstroportRoute {
                         operations,
                         router: self.astroport_contracts().router.address.clone(),
@@ -187,7 +201,7 @@ impl<'a> AstroportSwapperRobot<'a> {
         println!("sending {} to swapper contract", coin_in);
         self.wasm().execute(
             &self.swapper,
-            &mars_types::swapper::ExecuteMsg::<AstroportRoute>::SwapExactIn {
+            &mars_types::swapper::ExecuteMsg::<AstroportRoute, AstroportConfig>::SwapExactIn {
                 coin_in: coin_in.clone(),
                 denom_out: denom_out.into(),
                 slippage,
@@ -196,6 +210,12 @@ impl<'a> AstroportSwapperRobot<'a> {
             &[coin_in],
             signer,
         )
+    }
+
+    pub fn query_config(&self) -> AstroportConfig {
+        self.wasm()
+            .query::<_, AstroportConfig>(&self.swapper, &mars_types::swapper::QueryMsg::Config {})
+            .unwrap()
     }
 
     pub fn query_estimate_exact_in_swap(

@@ -4,6 +4,7 @@ use cw_it::{
     astroport::robot::AstroportTestRobot, robot::TestRobot, test_tube::Account, traits::CwItRunner,
 };
 use mars_oracle_wasm::WasmPriceSourceUnchecked;
+use mars_swapper_astroport::config::AstroportConfig;
 use mars_testing::{astroport_swapper::AstroportSwapperRobot, test_runner::get_test_runner};
 use mars_types::swapper::SwapperRoute;
 use test_case::test_case;
@@ -125,6 +126,15 @@ fn swap(
             &admin,
         );
 
+    robot.set_config(
+        AstroportConfig {
+            router: robot.astroport_contracts().router.address.clone(),
+            factory: robot.astroport_contracts().factory.address.clone(),
+            oracle: robot.oracle_robot.mars_oracle_contract_addr.clone(),
+        },
+        &admin,
+    );
+
     let swaps = if !no_route {
         swaps
     } else {
@@ -133,9 +143,6 @@ fn swap(
 
     let route = SwapperRoute::Astro(mars_types::swapper::AstroRoute {
         swaps,
-        router: robot.astroport_contracts().router.address.clone(),
-        factory: robot.astroport_contracts().factory.address.clone(),
-        oracle: robot.oracle_robot.mars_oracle_contract_addr.clone(),
     });
 
     let estimated_amount = robot.query_estimate_exact_in_swap(&coin_in, denom_out, route.clone());

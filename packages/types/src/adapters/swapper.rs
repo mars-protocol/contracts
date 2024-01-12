@@ -42,7 +42,7 @@ impl Swapper {
     ) -> StdResult<CosmosMsg> {
         Ok(CosmosMsg::Wasm(WasmMsg::Execute {
             contract_addr: self.address().to_string(),
-            msg: to_binary(&ExecuteMsg::<Empty>::SwapExactIn {
+            msg: to_binary(&ExecuteMsg::<Empty, Empty>::SwapExactIn {
                 coin_in: coin_in.clone(),
                 denom_out: denom_out.to_string(),
                 slippage,
@@ -113,7 +113,7 @@ mod tests {
             msg,
             CosmosMsg::Wasm(WasmMsg::Execute {
                 contract_addr: "swapper".to_string(),
-                msg: to_binary(&ExecuteMsg::<Empty>::SwapExactIn {
+                msg: to_binary(&ExecuteMsg::<Empty, Empty>::SwapExactIn {
                     coin_in: coin_in.clone(),
                     denom_out: denom_out.to_string(),
                     slippage,
@@ -135,9 +135,6 @@ mod tests {
                     to: "out".to_string(),
                 },
             ],
-            router: "router".to_string(),
-            factory: "factory".to_string(),
-            oracle: "oracle".to_string(),
         });
         let msg =
             swapper.swap_exact_in_msg(&coin_in, denom_out, slippage, Some(route.clone())).unwrap();
@@ -145,7 +142,7 @@ mod tests {
             msg,
             CosmosMsg::Wasm(WasmMsg::Execute {
                 contract_addr: "swapper".to_string(),
-                msg: to_binary(&ExecuteMsg::<Empty>::SwapExactIn {
+                msg: to_binary(&ExecuteMsg::<Empty, Empty>::SwapExactIn {
                     coin_in: coin_in.clone(),
                     denom_out: denom_out.to_string(),
                     slippage,

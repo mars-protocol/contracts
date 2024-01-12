@@ -8,7 +8,7 @@ use mars_types::swapper::{EstimateExactInSwapResponse, SwapperRoute};
 use osmosis_std::types::osmosis::gamm::v1beta1::MsgSwapExactAmountIn;
 pub use osmosis_std::types::osmosis::poolmanager::v1beta1::SwapAmountInRoute as OsmosisSwapAmountInRoute;
 
-use crate::helpers::hashset;
+use crate::{config::OsmosisConfig, helpers::hashset};
 
 /// 10 min in seconds (Risk Team recommendation)
 const TWAP_WINDOW_SIZE_SECONDS: u64 = 600u64;
@@ -39,8 +39,8 @@ impl fmt::Display for OsmosisRoute {
     }
 }
 
-impl Route<Empty, Empty> for OsmosisRoute {
-    fn from(route: SwapperRoute) -> ContractResult<Self> {
+impl Route<Empty, Empty, OsmosisConfig> for OsmosisRoute {
+    fn from(route: SwapperRoute, _config: Option<OsmosisConfig>) -> ContractResult<Self> {
         match route {
             SwapperRoute::Astro(_) => Err(ContractError::InvalidRoute {
                 reason: "AstroRoute not supported".to_string(),

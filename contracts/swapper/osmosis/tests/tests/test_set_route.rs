@@ -2,7 +2,10 @@ use cosmwasm_std::{coin, StdError};
 use cw_it::osmosis_test_tube::{Gamm, Module, OsmosisTestApp, Wasm};
 use mars_owner::OwnerError;
 use mars_swapper_base::ContractError;
-use mars_swapper_osmosis::route::{OsmosisRoute, SwapAmountInRoute};
+use mars_swapper_osmosis::{
+    config::OsmosisConfig,
+    route::{OsmosisRoute, SwapAmountInRoute},
+};
 use mars_types::swapper::{ExecuteMsg, QueryMsg, RouteResponse};
 
 use super::helpers::{assert_err, instantiate_contract};
@@ -21,7 +24,7 @@ fn only_owner_can_set_routes() {
     let res_err = wasm
         .execute(
             &contract_addr,
-            &ExecuteMsg::SetRoute {
+            &ExecuteMsg::<OsmosisRoute, OsmosisConfig>::SetRoute {
                 denom_in: "mars".to_string(),
                 denom_out: "weth".to_string(),
                 route: OsmosisRoute(vec![
@@ -55,7 +58,7 @@ fn must_pass_at_least_one_step() {
     let res_err = wasm
         .execute(
             &contract_addr,
-            &ExecuteMsg::SetRoute {
+            &ExecuteMsg::<OsmosisRoute, OsmosisConfig>::SetRoute {
                 denom_in: "mars".to_string(),
                 denom_out: "weth".to_string(),
                 route: OsmosisRoute(vec![]),
@@ -85,7 +88,7 @@ fn must_be_available_in_osmosis() {
     let res_err = wasm
         .execute(
             &contract_addr,
-            &ExecuteMsg::SetRoute {
+            &ExecuteMsg::<OsmosisRoute, OsmosisConfig>::SetRoute {
                 denom_in: "mars".to_string(),
                 denom_out: "weth".to_string(),
                 route: OsmosisRoute(vec![SwapAmountInRoute {
@@ -122,7 +125,7 @@ fn step_does_not_contain_input_denom() {
     let res_err = wasm
         .execute(
             &contract_addr,
-            &ExecuteMsg::SetRoute {
+            &ExecuteMsg::<OsmosisRoute, OsmosisConfig>::SetRoute {
                 denom_in: "umars".to_string(),
                 denom_out: "uweth".to_string(),
                 route: OsmosisRoute(vec![SwapAmountInRoute {
@@ -164,7 +167,7 @@ fn step_does_not_contain_output_denom() {
     let res_err = wasm
         .execute(
             &contract_addr,
-            &ExecuteMsg::SetRoute {
+            &ExecuteMsg::<OsmosisRoute, OsmosisConfig>::SetRoute {
                 denom_in: "umars".to_string(),
                 denom_out: "uweth".to_string(),
                 route: OsmosisRoute(vec![SwapAmountInRoute {
@@ -221,7 +224,7 @@ fn steps_do_not_loop() {
     let res_err = wasm
         .execute(
             &contract_addr,
-            &ExecuteMsg::SetRoute {
+            &ExecuteMsg::<OsmosisRoute, OsmosisConfig>::SetRoute {
                 denom_in: "uatom".to_string(),
                 denom_out: "umars".to_string(),
                 route: OsmosisRoute(vec![
@@ -279,7 +282,7 @@ fn step_output_does_not_match() {
     let res_err = wasm
         .execute(
             &contract_addr,
-            &ExecuteMsg::SetRoute {
+            &ExecuteMsg::<OsmosisRoute, OsmosisConfig>::SetRoute {
                 denom_in: "uatom".to_string(),
                 denom_out: "umars".to_string(),
                 route: OsmosisRoute(vec![SwapAmountInRoute {
@@ -330,7 +333,7 @@ fn set_route_success() {
 
     wasm.execute(
         &contract_addr,
-        &ExecuteMsg::SetRoute {
+        &ExecuteMsg::<OsmosisRoute, OsmosisConfig>::SetRoute {
             denom_in: "umars".to_string(),
             denom_out: "uweth".to_string(),
             route: OsmosisRoute(vec![

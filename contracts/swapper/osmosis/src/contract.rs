@@ -3,10 +3,10 @@ use cw2::set_contract_version;
 use mars_swapper_base::{ContractError, ContractResult, SwapBase};
 use mars_types::swapper::{ExecuteMsg, InstantiateMsg, QueryMsg};
 
-use crate::{migrations, route::OsmosisRoute};
+use crate::{config::OsmosisConfig, migrations, route::OsmosisRoute};
 
 /// The Osmosis swapper contract inherits logic from the base swapper contract
-pub type OsmosisSwap<'a> = SwapBase<'a, Empty, Empty, OsmosisRoute>;
+pub type OsmosisSwap<'a> = SwapBase<'a, Empty, Empty, OsmosisRoute, OsmosisConfig>;
 
 pub const CONTRACT_NAME: &str = env!("CARGO_PKG_NAME");
 pub const CONTRACT_VERSION: &str = env!("CARGO_PKG_VERSION");
@@ -27,7 +27,7 @@ pub fn execute(
     deps: DepsMut,
     env: Env,
     info: MessageInfo,
-    msg: ExecuteMsg<OsmosisRoute>,
+    msg: ExecuteMsg<OsmosisRoute, OsmosisConfig>,
 ) -> ContractResult<Response> {
     OsmosisSwap::default().execute(deps, env, info, msg)
 }

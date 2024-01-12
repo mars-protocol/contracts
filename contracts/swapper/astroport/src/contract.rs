@@ -3,10 +3,10 @@ use cw2::set_contract_version;
 use mars_swapper_base::{ContractResult, SwapBase};
 use mars_types::swapper::{ExecuteMsg, InstantiateMsg, QueryMsg};
 
-use crate::route::AstroportRoute;
+use crate::{config::AstroportConfig, route::AstroportRoute};
 
 /// The Astroport swapper contract inherits logic from the base swapper contract
-pub type AstroportSwap<'a> = SwapBase<'a, Empty, Empty, AstroportRoute>;
+pub type AstroportSwap<'a> = SwapBase<'a, Empty, Empty, AstroportRoute, AstroportConfig>;
 
 const CONTRACT_NAME: &str = env!("CARGO_PKG_NAME");
 const CONTRACT_VERSION: &str = env!("CARGO_PKG_VERSION");
@@ -27,7 +27,7 @@ pub fn execute(
     deps: DepsMut,
     env: Env,
     info: MessageInfo,
-    msg: ExecuteMsg<AstroportRoute>,
+    msg: ExecuteMsg<AstroportRoute, AstroportConfig>,
 ) -> ContractResult<Response> {
     AstroportSwap::default().execute(deps, env, info, msg)
 }

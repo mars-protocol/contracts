@@ -12,12 +12,6 @@ pub enum SwapperRoute {
 pub struct AstroRoute {
     /// The swap operations of the route
     pub swaps: Vec<AstroSwap>,
-    /// The astroport router contract address
-    pub router: String,
-    /// The astroport factory contract address
-    pub factory: String,
-    /// The mars wasm oracle contract address
-    pub oracle: String,
 }
 
 #[cw_serde]
@@ -50,7 +44,7 @@ pub struct InstantiateMsg {
 }
 
 #[cw_serde]
-pub enum ExecuteMsg<Route> {
+pub enum ExecuteMsg<Route, C> {
     /// Manges owner role state
     UpdateOwner(OwnerUpdate),
     /// Configure the route for swapping an asset
@@ -74,6 +68,9 @@ pub enum ExecuteMsg<Route> {
         recipient: Addr,
         denom_in: String,
         denom_out: String,
+    },
+    UpdateConfig {
+        config: C,
     },
 }
 
@@ -103,6 +100,9 @@ pub enum QueryMsg {
         denom_out: String,
         route: Option<SwapperRoute>,
     },
+    /// Query contract config
+    #[returns(cosmwasm_std::Empty)]
+    Config {},
 }
 
 #[cw_serde]

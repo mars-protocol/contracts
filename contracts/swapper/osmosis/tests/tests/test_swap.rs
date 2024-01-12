@@ -4,7 +4,7 @@ use cw_it::{
     test_tube::FeeSetting,
 };
 use mars_swapper_base::ContractError;
-use mars_swapper_osmosis::route::OsmosisRoute;
+use mars_swapper_osmosis::{config::OsmosisConfig, route::OsmosisRoute};
 use mars_types::swapper::{ExecuteMsg, OsmoRoute, OsmoSwap, SwapperRoute};
 
 use super::helpers::{
@@ -25,7 +25,7 @@ fn transfer_callback_only_internal() {
     let res_err = wasm
         .execute(
             &contract_addr,
-            &ExecuteMsg::<OsmosisRoute>::TransferResult {
+            &ExecuteMsg::<OsmosisRoute, OsmosisConfig>::TransferResult {
                 recipient: Addr::unchecked(bad_guy.address()),
                 denom_in: "mars".to_string(),
                 denom_out: "osmo".to_string(),
@@ -60,7 +60,7 @@ fn max_slippage_exeeded() {
     let res_err = wasm
         .execute(
             &contract_addr,
-            &ExecuteMsg::<OsmosisRoute>::SwapExactIn {
+            &ExecuteMsg::<OsmosisRoute, OsmosisConfig>::SwapExactIn {
                 coin_in: coin(1_000_000, "umars"),
                 denom_out: "uosmo".to_string(),
                 slippage: Decimal::percent(11),
@@ -117,7 +117,7 @@ fn swap_exact_in_slippage_too_high() {
     let res_err = wasm
         .execute(
             &contract_addr,
-            &ExecuteMsg::<OsmosisRoute>::SwapExactIn {
+            &ExecuteMsg::<OsmosisRoute, OsmosisConfig>::SwapExactIn {
                 coin_in: coin(1_000_000, "umars"),
                 denom_out: "uosmo".to_string(),
                 slippage: Decimal::percent(5),
@@ -179,7 +179,7 @@ fn swap_exact_in_success() {
 
     wasm.execute(
         &contract_addr,
-        &ExecuteMsg::<OsmosisRoute>::SwapExactIn {
+        &ExecuteMsg::<OsmosisRoute, OsmosisConfig>::SwapExactIn {
             coin_in: coin(10_000, "umars"),
             denom_out: "uosmo".to_string(),
             slippage: Decimal::percent(6),

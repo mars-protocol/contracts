@@ -12,7 +12,7 @@ use mars_types::{
     swapper::{EstimateExactInSwapResponse, SwapperRoute},
 };
 
-use crate::helpers::hashset;
+use crate::{config::AstroportConfig, helpers::hashset};
 
 #[cw_serde]
 pub struct AstroportRoute {
@@ -102,8 +102,13 @@ impl AstroportRoute {
     }
 }
 
-impl Route<Empty, Empty> for AstroportRoute {
-    fn from(route: SwapperRoute) -> ContractResult<Self> {
+impl Route<Empty, Empty, AstroportConfig> for AstroportRoute {
+    fn from(route: SwapperRoute, config: Option<AstroportConfig>) -> ContractResult<Self> {
+        let Some(config) = config else {
+            return Err(ContractError::InvalidRoute {
+                reason: "AstroportConfig not set".to_string(),
+            });
+        };
         match route {
             SwapperRoute::Astro(route) => {
                 let operations: Vec<_> = route
@@ -120,9 +125,9 @@ impl Route<Empty, Empty> for AstroportRoute {
                     .collect();
                 Ok(Self {
                     operations,
-                    router: route.router,
-                    factory: route.factory,
-                    oracle: route.oracle,
+                    router: config.router,
+                    factory: config.factory,
+                    oracle: config.oracle,
                 })
             }
             SwapperRoute::Osmo(_) => Err(ContractError::InvalidRoute {

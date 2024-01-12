@@ -23,7 +23,7 @@ pub fn execute(
     deps: DepsMut,
     env: Env,
     info: MessageInfo,
-    msg: ExecuteMsg<Empty>,
+    msg: ExecuteMsg<Empty, Empty>,
 ) -> StdResult<Response> {
     match msg {
         ExecuteMsg::UpdateOwner(_) => unimplemented!("not implemented"),
@@ -39,6 +39,9 @@ pub fn execute(
             slippage,
             route,
         } => swap_exact_in(deps, env, info, coin_in, denom_out, slippage, route),
+        ExecuteMsg::UpdateConfig {
+            ..
+        } => unimplemented!("not implemented"),
     }
 }
 
@@ -57,6 +60,9 @@ pub fn query(_deps: Deps, _env: Env, msg: QueryMsg) -> StdResult<Binary> {
         QueryMsg::EstimateExactInSwap {
             ..
         } => to_binary(&estimate_exact_in_swap()),
+        QueryMsg::Config {
+            ..
+        } => unimplemented!("not implemented"),
     }
 }
 
