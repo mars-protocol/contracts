@@ -4,14 +4,14 @@ use mars_owner::OwnerUpdate;
 
 #[cw_serde]
 pub enum SwapperRoute {
-    Astro(AstroportRoute),
-    Osmo(OsmosisRoute),
+    Astro(AstroRoute),
+    Osmo(OsmoRoute),
 }
 
 #[cw_serde]
-pub struct AstroportRoute {
+pub struct AstroRoute {
     /// The swap operations of the route
-    pub operations: Vec<SwapOperation>,
+    pub swaps: Vec<AstroSwap>,
     /// The astroport router contract address
     pub router: String,
     /// The astroport factory contract address
@@ -21,7 +21,7 @@ pub struct AstroportRoute {
 }
 
 #[cw_serde]
-pub struct SwapOperation {
+pub struct AstroSwap {
     /// Asset to swap from
     pub from: String,
     /// Asset to swap to
@@ -29,12 +29,18 @@ pub struct SwapOperation {
 }
 
 #[cw_serde]
-pub struct OsmosisRoute(pub Vec<SwapAmountInRoute>);
+pub struct OsmoRoute {
+    pub swaps: Vec<OsmoSwap>,
+}
 
+/// Swap operation with pool id and asset to swap to.
+/// "from" is another asset in the pool.
 #[cw_serde]
-pub struct SwapAmountInRoute {
+pub struct OsmoSwap {
+    /// Pool id
     pub pool_id: u64,
-    pub token_out_denom: String,
+    /// Asset to swap to
+    pub to: String,
 }
 
 #[cw_serde]

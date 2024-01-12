@@ -107,7 +107,7 @@ impl Route<Empty, Empty> for AstroportRoute {
         match route {
             SwapperRoute::Astro(route) => {
                 let operations: Vec<_> = route
-                    .operations
+                    .swaps
                     .into_iter()
                     .map(|op| SwapOperation::AstroSwap {
                         offer_asset_info: AssetInfo::NativeToken {

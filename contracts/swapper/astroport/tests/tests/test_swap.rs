@@ -67,7 +67,7 @@ fn swap(
     no_route: bool,
 ) {
     let denom_in = "uosmo";
-    let operations = vec![mars_types::swapper::SwapOperation {
+    let swaps = vec![mars_types::swapper::AstroSwap {
         from: denom_in.to_string(),
         to: denom_out.to_string(),
     }];
@@ -125,14 +125,14 @@ fn swap(
             &admin,
         );
 
-    let operations = if !no_route {
-        operations
+    let swaps = if !no_route {
+        swaps
     } else {
         vec![]
     };
 
-    let route = SwapperRoute::Astro(mars_types::swapper::AstroportRoute {
-        operations,
+    let route = SwapperRoute::Astro(mars_types::swapper::AstroRoute {
+        swaps,
         router: robot.astroport_contracts().router.address.clone(),
         factory: robot.astroport_contracts().factory.address.clone(),
         oracle: robot.oracle_robot.mars_oracle_contract_addr.clone(),

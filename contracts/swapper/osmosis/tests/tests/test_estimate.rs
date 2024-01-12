@@ -1,7 +1,7 @@
 use cosmwasm_std::{coin, Uint128};
 use cw_it::osmosis_test_tube::{Gamm, Module, OsmosisTestApp, RunnerResult, Wasm};
 use mars_types::swapper::{
-    EstimateExactInSwapResponse, OsmosisRoute, QueryMsg, SwapAmountInRoute, SwapperRoute,
+    EstimateExactInSwapResponse, OsmoRoute, OsmoSwap, QueryMsg, SwapperRoute,
 };
 
 use super::helpers::{instantiate_contract, query_price_from_pool, swap_to_create_twap_records};
@@ -19,10 +19,12 @@ fn error_on_route_not_found() {
         &QueryMsg::EstimateExactInSwap {
             coin_in: coin(1000, "jake"),
             denom_out: "mars".to_string(),
-            route: Some(SwapperRoute::Osmo(OsmosisRoute(vec![SwapAmountInRoute {
-                pool_id: 1,
-                token_out_denom: "uosmo".to_string(),
-            }]))),
+            route: Some(SwapperRoute::Osmo(OsmoRoute {
+                swaps: vec![OsmoSwap {
+                    pool_id: 1,
+                    to: "uosmo".to_string(),
+                }],
+            })),
         },
     );
     // If no proper route we get ugly error:
@@ -60,10 +62,12 @@ fn estimate_swap_one_step() {
             &QueryMsg::EstimateExactInSwap {
                 coin_in: coin(coin_in_amount.u128(), "uosmo"),
                 denom_out: "uatom".to_string(),
-                route: Some(SwapperRoute::Osmo(OsmosisRoute(vec![SwapAmountInRoute {
-                    pool_id: pool_atom_osmo,
-                    token_out_denom: "uatom".to_string(),
-                }]))),
+                route: Some(SwapperRoute::Osmo(OsmoRoute {
+                    swaps: vec![OsmoSwap {
+                        pool_id: pool_atom_osmo,
+                        to: "uatom".to_string(),
+                    }],
+                })),
             },
         )
         .unwrap();
@@ -124,16 +128,18 @@ fn estimate_swap_multi_step() {
             &QueryMsg::EstimateExactInSwap {
                 coin_in: coin(coin_in_amount.u128(), "uatom"),
                 denom_out: "uusdc".to_string(),
-                route: Some(SwapperRoute::Osmo(OsmosisRoute(vec![
-                    SwapAmountInRoute {
-                        pool_id: pool_atom_osmo,
-                        token_out_denom: "uosmo".to_string(),
-                    },
-                    SwapAmountInRoute {
-                        pool_id: pool_osmo_usdc,
-                        token_out_denom: "uusdc".to_string(),
-                    },
-                ]))),
+                route: Some(SwapperRoute::Osmo(OsmoRoute {
+                    swaps: vec![
+                        OsmoSwap {
+                            pool_id: pool_atom_osmo,
+                            to: "uosmo".to_string(),
+                        },
+                        OsmoSwap {
+                            pool_id: pool_osmo_usdc,
+                            to: "uusdc".to_string(),
+                        },
+                    ],
+                })),
             },
         )
         .unwrap();

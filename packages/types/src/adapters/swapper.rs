@@ -58,7 +58,7 @@ mod tests {
     use cosmwasm_std::testing::MockApi;
 
     use super::*;
-    use crate::swapper::{AstroportRoute, OsmosisRoute, SwapAmountInRoute, SwapOperation};
+    use crate::swapper::{AstroRoute, AstroSwap, OsmoRoute, OsmoSwap};
 
     #[test]
     fn test_swapper_unchecked_from_swapper() {
@@ -95,16 +95,18 @@ mod tests {
         let denom_out = "out";
         let slippage = Decimal::percent(1);
 
-        let route = SwapperRoute::Osmo(OsmosisRoute(vec![
-            SwapAmountInRoute {
-                pool_id: 101,
-                token_out_denom: "aaa".to_string(),
-            },
-            SwapAmountInRoute {
-                pool_id: 201,
-                token_out_denom: "out".to_string(),
-            },
-        ]));
+        let route = SwapperRoute::Osmo(OsmoRoute {
+            swaps: vec![
+                OsmoSwap {
+                    pool_id: 101,
+                    to: "aaa".to_string(),
+                },
+                OsmoSwap {
+                    pool_id: 201,
+                    to: "out".to_string(),
+                },
+            ],
+        });
         let msg =
             swapper.swap_exact_in_msg(&coin_in, denom_out, slippage, Some(route.clone())).unwrap();
         assert_eq!(
@@ -122,13 +124,13 @@ mod tests {
             })
         );
 
-        let route = SwapperRoute::Astro(AstroportRoute {
-            operations: vec![
-                SwapOperation {
+        let route = SwapperRoute::Astro(AstroRoute {
+            swaps: vec![
+                AstroSwap {
                     from: "aaa".to_string(),
                     to: "bbb".to_string(),
                 },
-                SwapOperation {
+                AstroSwap {
                     from: "bbb".to_string(),
                     to: "out".to_string(),
                 },

@@ -5,7 +5,7 @@ use cw_it::{
 };
 use mars_swapper_base::ContractError;
 use mars_swapper_osmosis::route::OsmosisRoute;
-use mars_types::swapper::{ExecuteMsg, SwapperRoute};
+use mars_types::swapper::{ExecuteMsg, OsmoRoute, OsmoSwap, SwapperRoute};
 
 use super::helpers::{
     assert_err, instantiate_contract, query_balance, swap_to_create_twap_records,
@@ -64,12 +64,12 @@ fn max_slippage_exeeded() {
                 coin_in: coin(1_000_000, "umars"),
                 denom_out: "uosmo".to_string(),
                 slippage: Decimal::percent(11),
-                route: Some(SwapperRoute::Osmo(mars_types::swapper::OsmosisRoute(vec![
-                    mars_types::swapper::SwapAmountInRoute {
+                route: Some(SwapperRoute::Osmo(OsmoRoute {
+                    swaps: vec![OsmoSwap {
                         pool_id: 1,
-                        token_out_denom: "uosmo".to_string(),
-                    },
-                ]))),
+                        to: "uosmo".to_string(),
+                    }],
+                })),
             },
             &[coin(1_000_000, "umars")],
             other_guy,
@@ -121,12 +121,12 @@ fn swap_exact_in_slippage_too_high() {
                 coin_in: coin(1_000_000, "umars"),
                 denom_out: "uosmo".to_string(),
                 slippage: Decimal::percent(5),
-                route: Some(SwapperRoute::Osmo(mars_types::swapper::OsmosisRoute(vec![
-                    mars_types::swapper::SwapAmountInRoute {
+                route: Some(SwapperRoute::Osmo(OsmoRoute {
+                    swaps: vec![OsmoSwap {
                         pool_id: pool_mars_osmo,
-                        token_out_denom: "uosmo".to_string(),
-                    },
-                ]))),
+                        to: "uosmo".to_string(),
+                    }],
+                })),
             },
             &[coin(1_000_000, "umars")],
             &whale,
@@ -183,12 +183,12 @@ fn swap_exact_in_success() {
             coin_in: coin(10_000, "umars"),
             denom_out: "uosmo".to_string(),
             slippage: Decimal::percent(6),
-            route: Some(SwapperRoute::Osmo(mars_types::swapper::OsmosisRoute(vec![
-                mars_types::swapper::SwapAmountInRoute {
+            route: Some(SwapperRoute::Osmo(OsmoRoute {
+                swaps: vec![OsmoSwap {
                     pool_id: pool_mars_osmo,
-                    token_out_denom: "uosmo".to_string(),
-                },
-            ]))),
+                    to: "uosmo".to_string(),
+                }],
+            })),
         },
         &[coin(10_000, "umars")],
         &user,

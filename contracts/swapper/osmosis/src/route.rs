@@ -47,11 +47,11 @@ impl Route<Empty, Empty> for OsmosisRoute {
             }),
             SwapperRoute::Osmo(route) => {
                 let steps: Vec<_> = route
-                    .0
+                    .swaps
                     .into_iter()
                     .map(|step| SwapAmountInRoute {
                         pool_id: step.pool_id,
-                        token_out_denom: step.token_out_denom,
+                        token_out_denom: step.to,
                     })
                     .collect();
                 Ok(Self(steps))

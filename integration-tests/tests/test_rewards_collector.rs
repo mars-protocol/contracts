@@ -4,7 +4,7 @@ use mars_types::{
         ExecuteMsg as ExecuteMsgAddr, InstantiateMsg as InstantiateAddr, MarsAddressType,
     },
     rewards_collector::{ExecuteMsg, InstantiateMsg as InstantiateRewards, UpdateConfig},
-    swapper::{OsmosisRoute, SwapAmountInRoute, SwapperRoute},
+    swapper::{OsmoRoute, OsmoSwap, SwapperRoute},
 };
 use osmosis_test_tube::{Account, Gamm, Module, OsmosisTestApp, Wasm};
 
@@ -159,14 +159,18 @@ fn swapping_rewards() {
         &ExecuteMsg::SwapAsset {
             denom: "uosmo".to_string(),
             amount: None,
-            safety_fund_route: Some(SwapperRoute::Osmo(OsmosisRoute(vec![SwapAmountInRoute {
-                pool_id: pool_usdc_osmo,
-                token_out_denom: safety_fund_denom.to_string(),
-            }]))),
-            fee_collector_route: Some(SwapperRoute::Osmo(OsmosisRoute(vec![SwapAmountInRoute {
-                pool_id: pool_mars_osmo,
-                token_out_denom: fee_collector_denom.to_string(),
-            }]))),
+            safety_fund_route: Some(SwapperRoute::Osmo(OsmoRoute {
+                swaps: vec![OsmoSwap {
+                    pool_id: pool_usdc_osmo,
+                    to: safety_fund_denom.to_string(),
+                }],
+            })),
+            fee_collector_route: Some(SwapperRoute::Osmo(OsmoRoute {
+                swaps: vec![OsmoSwap {
+                    pool_id: pool_mars_osmo,
+                    to: fee_collector_denom.to_string(),
+                }],
+            })),
         },
         &[],
         signer,
@@ -180,26 +184,30 @@ fn swapping_rewards() {
         &ExecuteMsg::SwapAsset {
             denom: "uatom".to_string(),
             amount: None,
-            safety_fund_route: Some(SwapperRoute::Osmo(OsmosisRoute(vec![
-                SwapAmountInRoute {
-                    pool_id: pool_atom_osmo,
-                    token_out_denom: "uosmo".to_string(),
-                },
-                SwapAmountInRoute {
-                    pool_id: pool_usdc_osmo,
-                    token_out_denom: safety_fund_denom.to_string(),
-                },
-            ]))),
-            fee_collector_route: Some(SwapperRoute::Osmo(OsmosisRoute(vec![
-                SwapAmountInRoute {
-                    pool_id: pool_atom_osmo,
-                    token_out_denom: "uosmo".to_string(),
-                },
-                SwapAmountInRoute {
-                    pool_id: pool_mars_osmo,
-                    token_out_denom: fee_collector_denom.to_string(),
-                },
-            ]))),
+            safety_fund_route: Some(SwapperRoute::Osmo(OsmoRoute {
+                swaps: vec![
+                    OsmoSwap {
+                        pool_id: pool_atom_osmo,
+                        to: "uosmo".to_string(),
+                    },
+                    OsmoSwap {
+                        pool_id: pool_usdc_osmo,
+                        to: safety_fund_denom.to_string(),
+                    },
+                ],
+            })),
+            fee_collector_route: Some(SwapperRoute::Osmo(OsmoRoute {
+                swaps: vec![
+                    OsmoSwap {
+                        pool_id: pool_atom_osmo,
+                        to: "uosmo".to_string(),
+                    },
+                    OsmoSwap {
+                        pool_id: pool_mars_osmo,
+                        to: fee_collector_denom.to_string(),
+                    },
+                ],
+            })),
         },
         &[],
         signer,
