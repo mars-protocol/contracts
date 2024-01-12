@@ -16,9 +16,14 @@ import {
   AssetInfo,
   Addr,
   Uint128,
+  SwapperRoute,
+  OsmosisRoute,
   Decimal,
   AstroportRoute,
   Coin,
+  AstroportRoute2,
+  SwapOperation2,
+  SwapAmountInRoute,
   QueryMsg,
   EstimateExactInSwapResponse,
   OwnerResponse,
@@ -73,6 +78,7 @@ export interface MarsSwapperAstroportEstimateExactInSwapQuery<TData>
   args: {
     coinIn: Coin
     denomOut: string
+    route?: SwapperRoute
   }
 }
 export function useMarsSwapperAstroportEstimateExactInSwapQuery<
@@ -85,6 +91,7 @@ export function useMarsSwapperAstroportEstimateExactInSwapQuery<
         ? client.estimateExactInSwap({
             coinIn: args.coinIn,
             denomOut: args.denomOut,
+            route: args.route,
           })
         : Promise.reject(new Error('Invalid client')),
     { ...options, enabled: !!client && (options?.enabled != undefined ? options.enabled : true) },
@@ -180,6 +187,7 @@ export interface MarsSwapperAstroportSwapExactInMutation {
   msg: {
     coinIn: Coin
     denomOut: string
+    route?: SwapperRoute
     slippage: Decimal
   }
   args?: {

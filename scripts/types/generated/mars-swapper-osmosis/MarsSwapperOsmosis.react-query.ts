@@ -14,10 +14,15 @@ import {
   OwnerUpdate,
   OsmosisRoute,
   Uint128,
+  SwapperRoute,
+  OsmosisRoute2,
   Decimal,
   Addr,
   SwapAmountInRoute,
   Coin,
+  AstroportRoute,
+  SwapOperation,
+  SwapAmountInRoute2,
   QueryMsg,
   EstimateExactInSwapResponse,
   OwnerResponse,
@@ -72,6 +77,7 @@ export interface MarsSwapperOsmosisEstimateExactInSwapQuery<TData>
   args: {
     coinIn: Coin
     denomOut: string
+    route?: SwapperRoute
   }
 }
 export function useMarsSwapperOsmosisEstimateExactInSwapQuery<TData = EstimateExactInSwapResponse>({
@@ -86,6 +92,7 @@ export function useMarsSwapperOsmosisEstimateExactInSwapQuery<TData = EstimateEx
         ? client.estimateExactInSwap({
             coinIn: args.coinIn,
             denomOut: args.denomOut,
+            route: args.route,
           })
         : Promise.reject(new Error('Invalid client')),
     { ...options, enabled: !!client && (options?.enabled != undefined ? options.enabled : true) },
@@ -181,6 +188,7 @@ export interface MarsSwapperOsmosisSwapExactInMutation {
   msg: {
     coinIn: Coin
     denomOut: string
+    route?: SwapperRoute
     slippage: Decimal
   }
   args?: {

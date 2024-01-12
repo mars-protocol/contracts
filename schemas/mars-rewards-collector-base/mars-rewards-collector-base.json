@@ -266,7 +266,9 @@
           "swap_asset": {
             "type": "object",
             "required": [
-              "denom"
+              "denom",
+              "fee_collector_route",
+              "safety_fund_route"
             ],
             "properties": {
               "amount": {
@@ -281,6 +283,12 @@
               },
               "denom": {
                 "type": "string"
+              },
+              "fee_collector_route": {
+                "$ref": "#/definitions/SwapperRoute"
+              },
+              "safety_fund_route": {
+                "$ref": "#/definitions/SwapperRoute"
               }
             },
             "additionalProperties": false
@@ -607,6 +615,16 @@
                   "denom_out": {
                     "type": "string"
                   },
+                  "route": {
+                    "anyOf": [
+                      {
+                        "$ref": "#/definitions/SwapperRoute"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  },
                   "slippage": {
                     "$ref": "#/definitions/Decimal"
                   }
@@ -729,6 +747,37 @@
         },
         "additionalProperties": false
       },
+      "AstroportRoute": {
+        "type": "object",
+        "required": [
+          "factory",
+          "operations",
+          "oracle",
+          "router"
+        ],
+        "properties": {
+          "factory": {
+            "description": "The astroport factory contract address",
+            "type": "string"
+          },
+          "operations": {
+            "description": "The swap operations of the route",
+            "type": "array",
+            "items": {
+              "$ref": "#/definitions/SwapOperation"
+            }
+          },
+          "oracle": {
+            "description": "The mars wasm oracle contract address",
+            "type": "string"
+          },
+          "router": {
+            "description": "The astroport router contract address",
+            "type": "string"
+          }
+        },
+        "additionalProperties": false
+      },
       "Coin": {
         "type": "object",
         "required": [
@@ -830,6 +879,12 @@
         },
         "additionalProperties": false
       },
+      "OsmosisRoute": {
+        "type": "array",
+        "items": {
+          "$ref": "#/definitions/SwapAmountInRoute"
+        }
+      },
       "OwnerUpdate": {
         "oneOf": [
           {
@@ -903,6 +958,70 @@
             "enum": [
               "clear_emergency_owner"
             ]
+          }
+        ]
+      },
+      "SwapAmountInRoute": {
+        "type": "object",
+        "required": [
+          "pool_id",
+          "token_out_denom"
+        ],
+        "properties": {
+          "pool_id": {
+            "type": "integer",
+            "format": "uint64",
+            "minimum": 0.0
+          },
+          "token_out_denom": {
+            "type": "string"
+          }
+        },
+        "additionalProperties": false
+      },
+      "SwapOperation": {
+        "type": "object",
+        "required": [
+          "from",
+          "to"
+        ],
+        "properties": {
+          "from": {
+            "description": "Asset to swap from",
+            "type": "string"
+          },
+          "to": {
+            "description": "Asset to swap to",
+            "type": "string"
+          }
+        },
+        "additionalProperties": false
+      },
+      "SwapperRoute": {
+        "oneOf": [
+          {
+            "type": "object",
+            "required": [
+              "astro"
+            ],
+            "properties": {
+              "astro": {
+                "$ref": "#/definitions/AstroportRoute"
+              }
+            },
+            "additionalProperties": false
+          },
+          {
+            "type": "object",
+            "required": [
+              "osmo"
+            ],
+            "properties": {
+              "osmo": {
+                "$ref": "#/definitions/OsmosisRoute"
+              }
+            },
+            "additionalProperties": false
           }
         ]
       },

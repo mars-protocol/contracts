@@ -12,10 +12,15 @@ import {
   ExecuteMsg,
   OwnerUpdate,
   Uint128,
+  SwapperRoute,
+  OsmosisRoute,
   Decimal,
   Addr,
   Empty,
   Coin,
+  AstroportRoute,
+  SwapOperation,
+  SwapAmountInRoute,
   QueryMsg,
   EstimateExactInSwapResponse,
   OwnerResponse,
@@ -42,9 +47,11 @@ export interface MarsSwapperBaseReadOnlyInterface {
   estimateExactInSwap: ({
     coinIn,
     denomOut,
+    route,
   }: {
     coinIn: Coin
     denomOut: string
+    route?: SwapperRoute
   }) => Promise<EstimateExactInSwapResponse>
 }
 export class MarsSwapperBaseQueryClient implements MarsSwapperBaseReadOnlyInterface {
@@ -96,14 +103,17 @@ export class MarsSwapperBaseQueryClient implements MarsSwapperBaseReadOnlyInterf
   estimateExactInSwap = async ({
     coinIn,
     denomOut,
+    route,
   }: {
     coinIn: Coin
     denomOut: string
+    route?: SwapperRoute
   }): Promise<EstimateExactInSwapResponse> => {
     return this.client.queryContractSmart(this.contractAddress, {
       estimate_exact_in_swap: {
         coin_in: coinIn,
         denom_out: denomOut,
+        route,
       },
     })
   }
@@ -135,10 +145,12 @@ export interface MarsSwapperBaseInterface extends MarsSwapperBaseReadOnlyInterfa
     {
       coinIn,
       denomOut,
+      route,
       slippage,
     }: {
       coinIn: Coin
       denomOut: string
+      route?: SwapperRoute
       slippage: Decimal
     },
     fee?: number | StdFee | 'auto',
@@ -229,10 +241,12 @@ export class MarsSwapperBaseClient
     {
       coinIn,
       denomOut,
+      route,
       slippage,
     }: {
       coinIn: Coin
       denomOut: string
+      route?: SwapperRoute
       slippage: Decimal
     },
     fee: number | StdFee | 'auto' = 'auto',
@@ -246,6 +260,7 @@ export class MarsSwapperBaseClient
         swap_exact_in: {
           coin_in: coinIn,
           denom_out: denomOut,
+          route,
           slippage,
         },
       },

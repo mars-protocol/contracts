@@ -119,6 +119,7 @@ export type Action =
       swap_exact_in: {
         coin_in: ActionCoin
         denom_out: string
+        route?: SwapperRoute | null
         slippage: Decimal
       }
     }
@@ -157,6 +158,14 @@ export type LiquidateRequestForVaultBaseForString =
       }
     }
 export type VaultPositionType = 'u_n_l_o_c_k_e_d' | 'l_o_c_k_e_d' | 'u_n_l_o_c_k_i_n_g'
+export type SwapperRoute =
+  | {
+      astro: AstroportRoute
+    }
+  | {
+      osmo: OsmosisRoute
+    }
+export type OsmosisRoute = SwapAmountInRoute[]
 export type AccountNftBaseForString = string
 export type OwnerUpdate =
   | {
@@ -298,6 +307,7 @@ export type CallbackMsg =
         account_id: string
         coin_in: ActionCoin
         denom_out: string
+        route?: SwapperRoute | null
         slippage: Decimal
       }
     }
@@ -383,6 +393,20 @@ export interface ActionCoin {
 }
 export interface VaultBaseForString {
   address: string
+}
+export interface AstroportRoute {
+  factory: string
+  operations: SwapOperation[]
+  oracle: string
+  router: string
+}
+export interface SwapOperation {
+  from: string
+  to: string
+}
+export interface SwapAmountInRoute {
+  pool_id: number
+  token_out_denom: string
 }
 export interface ConfigUpdates {
   account_nft?: AccountNftBaseForString | null
