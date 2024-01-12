@@ -11,7 +11,6 @@ pub mod params;
 pub mod red_bank;
 pub mod rewards_collector;
 pub mod swapper;
-pub mod swapper_v2;
 pub mod traits;
 pub mod zapper;
 
