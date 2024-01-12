@@ -159,14 +159,14 @@ fn swapping_rewards() {
         &ExecuteMsg::SwapAsset {
             denom: "uosmo".to_string(),
             amount: None,
-            safety_fund_route: SwapperRoute::Osmo(OsmosisRoute(vec![SwapAmountInRoute {
+            safety_fund_route: Some(SwapperRoute::Osmo(OsmosisRoute(vec![SwapAmountInRoute {
                 pool_id: pool_usdc_osmo,
                 token_out_denom: safety_fund_denom.to_string(),
-            }])),
-            fee_collector_route: SwapperRoute::Osmo(OsmosisRoute(vec![SwapAmountInRoute {
+            }]))),
+            fee_collector_route: Some(SwapperRoute::Osmo(OsmosisRoute(vec![SwapAmountInRoute {
                 pool_id: pool_mars_osmo,
                 token_out_denom: fee_collector_denom.to_string(),
-            }])),
+            }]))),
         },
         &[],
         signer,
@@ -180,7 +180,7 @@ fn swapping_rewards() {
         &ExecuteMsg::SwapAsset {
             denom: "uatom".to_string(),
             amount: None,
-            safety_fund_route: SwapperRoute::Osmo(OsmosisRoute(vec![
+            safety_fund_route: Some(SwapperRoute::Osmo(OsmosisRoute(vec![
                 SwapAmountInRoute {
                     pool_id: pool_atom_osmo,
                     token_out_denom: "uosmo".to_string(),
@@ -189,8 +189,8 @@ fn swapping_rewards() {
                     pool_id: pool_usdc_osmo,
                     token_out_denom: safety_fund_denom.to_string(),
                 },
-            ])),
-            fee_collector_route: SwapperRoute::Osmo(OsmosisRoute(vec![
+            ]))),
+            fee_collector_route: Some(SwapperRoute::Osmo(OsmosisRoute(vec![
                 SwapAmountInRoute {
                     pool_id: pool_atom_osmo,
                     token_out_denom: "uosmo".to_string(),
@@ -199,7 +199,7 @@ fn swapping_rewards() {
                     pool_id: pool_mars_osmo,
                     token_out_denom: fee_collector_denom.to_string(),
                 },
-            ])),
+            ]))),
         },
         &[],
         signer,

@@ -276,8 +276,8 @@ where
         env: Env,
         denom: String,
         amount: Option<Uint128>,
-        safety_fund_route: SwapperRoute,
-        fee_collector_route: SwapperRoute,
+        safety_fund_route: Option<SwapperRoute>,
+        fee_collector_route: Option<SwapperRoute>,
     ) -> ContractResult<Response<M>> {
         let cfg = self.config.load(deps.storage)?;
 
@@ -308,7 +308,7 @@ where
                     coin_in: coin_in_safety_fund.clone(),
                     denom_out: cfg.safety_fund_denom,
                     slippage: cfg.slippage_tolerance,
-                    route: Some(safety_fund_route),
+                    route: safety_fund_route,
                 })?,
                 funds: vec![coin_in_safety_fund],
             });
@@ -324,7 +324,7 @@ where
                     coin_in: coin_in_fee_collector.clone(),
                     denom_out: cfg.fee_collector_denom,
                     slippage: cfg.slippage_tolerance,
-                    route: Some(fee_collector_route),
+                    route: fee_collector_route,
                 })?,
                 funds: vec![coin_in_fee_collector],
             });

@@ -55,14 +55,14 @@ fn swapping_asset() {
         ExecuteMsg::SwapAsset {
             denom: "uatom".to_string(),
             amount: Some(Uint128::new(42069)),
-            safety_fund_route: SwapperRoute::Osmo(OsmosisRoute(vec![SwapAmountInRoute {
+            safety_fund_route: Some(SwapperRoute::Osmo(OsmosisRoute(vec![SwapAmountInRoute {
                 pool_id: 12,
                 token_out_denom: cfg.safety_fund_denom.to_string(),
-            }])),
-            fee_collector_route: SwapperRoute::Osmo(OsmosisRoute(vec![SwapAmountInRoute {
+            }]))),
+            fee_collector_route: Some(SwapperRoute::Osmo(OsmosisRoute(vec![SwapAmountInRoute {
                 pool_id: 69,
                 token_out_denom: cfg.fee_collector_denom.to_string(),
-            }])),
+            }]))),
         },
     )
     .unwrap();
@@ -150,14 +150,14 @@ fn skipping_swap_if_denom_matches() {
         ExecuteMsg::SwapAsset {
             denom: "uusdc".to_string(),
             amount: None,
-            safety_fund_route: SwapperRoute::Osmo(OsmosisRoute(vec![SwapAmountInRoute {
+            safety_fund_route: Some(SwapperRoute::Osmo(OsmosisRoute(vec![SwapAmountInRoute {
                 pool_id: 12,
                 token_out_denom: "uusdc".to_string(),
-            }])),
-            fee_collector_route: SwapperRoute::Osmo(OsmosisRoute(vec![SwapAmountInRoute {
+            }]))),
+            fee_collector_route: Some(SwapperRoute::Osmo(OsmosisRoute(vec![SwapAmountInRoute {
                 pool_id: 69,
                 token_out_denom: "umars".to_string(),
-            }])),
+            }]))),
         },
     )
     .unwrap();
