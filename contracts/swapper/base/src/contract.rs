@@ -152,10 +152,17 @@ where
         env: Env,
         coin_in: Coin,
         denom_out: String,
-        route: SwapperRoute,
+        route: Option<SwapperRoute>,
     ) -> ContractResult<EstimateExactInSwapResponse> {
-        let route = R::from(route)?;
-        route.validate(&deps.querier, &coin_in.denom, &denom_out)?;
+        // if route is not provided, use the default route from state
+        let route = match route {
+            Some(route) => {
+                let route = R::from(route)?;
+                route.validate(&deps.querier, &coin_in.denom, &denom_out)?;
+                route
+            }
+            None => self.get_route(deps, &coin_in.denom, &denom_out)?,
+        };
         route.estimate_exact_in_swap(&deps.querier, &env, &coin_in)
     }
 
@@ -167,7 +174,7 @@ where
         coin_in: Coin,
         denom_out: String,
         slippage: Decimal,
-        route: SwapperRoute,
+        route: Option<SwapperRoute>,
     ) -> ContractResult<Response<M>> {
         let max_slippage = Decimal::percent(MAX_SLIPPAGE_PERCENTAGE);
         if slippage > max_slippage {
@@ -177,8 +184,22 @@ where
             });
         }
 
-        let route = R::from(route)?;
-        route.validate(&deps.querier, &coin_in.denom, &denom_out)?;
+        // if route is not provided, use the default route from state
+        let route = match route {
+            Some(route) => {
+                let route = R::from(route)?;
+                route.validate(&deps.querier, &coin_in.denom, &denom_out)?;
+                route
+            }
+            None => self
+                .routes
+                .load(deps.storage, (coin_in.denom.clone(), denom_out.clone()))
+                .map_err(|_| ContractError::NoRoute {
+                    from: coin_in.denom.clone(),
+                    to: denom_out.clone(),
+                })?,
+        };
+
         let swap_msg = route.build_exact_in_swap_msg(&deps.querier, &env, &coin_in, slippage)?;
 
         // Check balance of result of swapper and send back result to sender

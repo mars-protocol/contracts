@@ -73,7 +73,7 @@ pub fn swap_exact_in(
     coin_in: Coin,
     denom_out: String,
     _slippage: Decimal,
-    _route: SwapperRoute,
+    _route: Option<SwapperRoute>,
 ) -> StdResult<Response> {
     let denom_in_balance = deps.querier.query_balance(env.contract.address, coin_in.denom)?;
     if denom_in_balance.amount < coin_in.amount {

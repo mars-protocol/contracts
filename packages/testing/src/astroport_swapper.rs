@@ -191,7 +191,7 @@ impl<'a> AstroportSwapperRobot<'a> {
                 coin_in: coin_in.clone(),
                 denom_out: denom_out.into(),
                 slippage,
-                route,
+                route: Some(route),
             },
             &[coin_in],
             signer,
@@ -210,7 +210,7 @@ impl<'a> AstroportSwapperRobot<'a> {
                 &mars_types::swapper::QueryMsg::EstimateExactInSwap {
                     coin_in: coin_in.clone(),
                     denom_out: denom_out.into(),
-                    route,
+                    route: Some(route),
                 },
             )
             .unwrap()

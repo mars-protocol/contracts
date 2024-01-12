@@ -308,7 +308,7 @@ where
                     coin_in: coin_in_safety_fund.clone(),
                     denom_out: cfg.safety_fund_denom,
                     slippage: cfg.slippage_tolerance,
-                    route: safety_fund_route,
+                    route: Some(safety_fund_route),
                 })?,
                 funds: vec![coin_in_safety_fund],
             });
@@ -324,7 +324,7 @@ where
                     coin_in: coin_in_fee_collector.clone(),
                     denom_out: cfg.fee_collector_denom,
                     slippage: cfg.slippage_tolerance,
-                    route: fee_collector_route,
+                    route: Some(fee_collector_route),
                 })?,
                 funds: vec![coin_in_fee_collector],
             });

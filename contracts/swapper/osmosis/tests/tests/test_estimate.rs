@@ -19,10 +19,10 @@ fn error_on_route_not_found() {
         &QueryMsg::EstimateExactInSwap {
             coin_in: coin(1000, "jake"),
             denom_out: "mars".to_string(),
-            route: SwapperRoute::Osmo(OsmosisRoute(vec![SwapAmountInRoute {
+            route: Some(SwapperRoute::Osmo(OsmosisRoute(vec![SwapAmountInRoute {
                 pool_id: 1,
                 token_out_denom: "uosmo".to_string(),
-            }])),
+            }]))),
         },
     );
     // If no proper route we get ugly error:
@@ -60,10 +60,10 @@ fn estimate_swap_one_step() {
             &QueryMsg::EstimateExactInSwap {
                 coin_in: coin(coin_in_amount.u128(), "uosmo"),
                 denom_out: "uatom".to_string(),
-                route: SwapperRoute::Osmo(OsmosisRoute(vec![SwapAmountInRoute {
+                route: Some(SwapperRoute::Osmo(OsmosisRoute(vec![SwapAmountInRoute {
                     pool_id: pool_atom_osmo,
                     token_out_denom: "uatom".to_string(),
-                }])),
+                }]))),
             },
         )
         .unwrap();
@@ -124,7 +124,7 @@ fn estimate_swap_multi_step() {
             &QueryMsg::EstimateExactInSwap {
                 coin_in: coin(coin_in_amount.u128(), "uatom"),
                 denom_out: "uusdc".to_string(),
-                route: SwapperRoute::Osmo(OsmosisRoute(vec![
+                route: Some(SwapperRoute::Osmo(OsmosisRoute(vec![
                     SwapAmountInRoute {
                         pool_id: pool_atom_osmo,
                         token_out_denom: "uosmo".to_string(),
@@ -133,7 +133,7 @@ fn estimate_swap_multi_step() {
                         pool_id: pool_osmo_usdc,
                         token_out_denom: "uusdc".to_string(),
                     },
-                ])),
+                ]))),
             },
         )
         .unwrap();

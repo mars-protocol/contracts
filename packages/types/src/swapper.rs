@@ -61,7 +61,7 @@ pub enum ExecuteMsg<Route> {
         coin_in: Coin,
         denom_out: String,
         slippage: Decimal,
-        route: SwapperRoute,
+        route: Option<SwapperRoute>,
     },
     /// Send swapper results back to swapper. Also refunds extra if sent more than needed. Internal use only.
     TransferResult {
@@ -95,7 +95,7 @@ pub enum QueryMsg {
     EstimateExactInSwap {
         coin_in: Coin,
         denom_out: String,
-        route: SwapperRoute,
+        route: Option<SwapperRoute>,
     },
 }
 

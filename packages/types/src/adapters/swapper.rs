@@ -38,7 +38,7 @@ impl Swapper {
         coin_in: &Coin,
         denom_out: &str,
         slippage: Decimal,
-        route: SwapperRoute,
+        route: Option<SwapperRoute>,
     ) -> StdResult<CosmosMsg> {
         Ok(CosmosMsg::Wasm(WasmMsg::Execute {
             contract_addr: self.address().to_string(),
@@ -105,7 +105,8 @@ mod tests {
                 token_out_denom: "out".to_string(),
             },
         ]));
-        let msg = swapper.swap_exact_in_msg(&coin_in, denom_out, slippage, route.clone()).unwrap();
+        let msg =
+            swapper.swap_exact_in_msg(&coin_in, denom_out, slippage, Some(route.clone())).unwrap();
         assert_eq!(
             msg,
             CosmosMsg::Wasm(WasmMsg::Execute {
@@ -114,7 +115,7 @@ mod tests {
                     coin_in: coin_in.clone(),
                     denom_out: denom_out.to_string(),
                     slippage,
-                    route
+                    route: Some(route)
                 })
                 .unwrap(),
                 funds: vec![coin_in.clone()],
@@ -136,7 +137,8 @@ mod tests {
             factory: "factory".to_string(),
             oracle: "oracle".to_string(),
         });
-        let msg = swapper.swap_exact_in_msg(&coin_in, denom_out, slippage, route.clone()).unwrap();
+        let msg =
+            swapper.swap_exact_in_msg(&coin_in, denom_out, slippage, Some(route.clone())).unwrap();
         assert_eq!(
             msg,
             CosmosMsg::Wasm(WasmMsg::Execute {
@@ -145,7 +147,7 @@ mod tests {
                     coin_in: coin_in.clone(),
                     denom_out: denom_out.to_string(),
                     slippage,
-                    route
+                    route: Some(route)
                 })
                 .unwrap(),
                 funds: vec![coin_in],

@@ -694,7 +694,7 @@ impl MockEnv {
                 &EstimateExactInSwap {
                     coin_in: coin_in.clone(),
                     denom_out: denom_out.to_string(),
-                    route,
+                    route: Some(route),
                 },
             )
             .unwrap()

@@ -19,7 +19,7 @@ pub fn swap_exact_in(
     coin_in: &ActionCoin,
     denom_out: &str,
     slippage: Decimal,
-    route: SwapperRoute,
+    route: Option<SwapperRoute>,
 ) -> ContractResult<Response> {
     assert_slippage(deps.storage, slippage)?;
 
