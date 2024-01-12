@@ -34,6 +34,11 @@ export type ExecuteMsg =
         recipient: Addr
       }
     }
+  | {
+      update_config: {
+        config: AstroportConfig
+      }
+    }
 export type OwnerUpdate =
   | {
       propose_new_owner: {
@@ -49,10 +54,19 @@ export type OwnerUpdate =
       }
     }
   | 'clear_emergency_owner'
-export interface SwapOperation {
-  from: string
-  to: string
-}
+export type SwapOperation =
+  | {
+      native_swap: {
+        ask_denom: string
+        offer_denom: string
+      }
+    }
+  | {
+      astro_swap: {
+        ask_asset_info: AssetInfo
+        offer_asset_info: AssetInfo
+      }
+    }
 export type AssetInfo =
   | {
       token: {
@@ -68,12 +82,11 @@ export type Addr = string
 export type Uint128 = string
 export type SwapperRoute =
   | {
-      astro: AstroportRoute
+      astro: AstroRoute
     }
   | {
-      osmo: OsmosisRoute
+      osmo: OsmoRoute
     }
-export type OsmosisRoute = SwapAmountInRoute[]
 export type Decimal = string
 export interface AstroportRoute {
   factory: string
@@ -86,19 +99,24 @@ export interface Coin {
   denom: string
   [k: string]: unknown
 }
-export interface AstroportRoute2 {
-  factory: string
-  operations: SwapOperation2[]
-  oracle: string
-  router: string
+export interface AstroRoute {
+  swaps: AstroSwap[]
 }
-export interface SwapOperation2 {
+export interface AstroSwap {
   from: string
   to: string
 }
-export interface SwapAmountInRoute {
+export interface OsmoRoute {
+  swaps: OsmoSwap[]
+}
+export interface OsmoSwap {
   pool_id: number
-  token_out_denom: string
+  to: string
+}
+export interface AstroportConfig {
+  factory: string
+  oracle: string
+  router: string
 }
 export type QueryMsg =
   | {
@@ -123,6 +141,12 @@ export type QueryMsg =
         route?: SwapperRoute | null
       }
     }
+  | {
+      config: {}
+    }
+export interface Empty {
+  [k: string]: unknown
+}
 export interface EstimateExactInSwapResponse {
   amount: Uint128
 }
@@ -137,8 +161,5 @@ export interface RouteResponseForEmpty {
   denom_in: string
   denom_out: string
   route: Empty
-}
-export interface Empty {
-  [k: string]: unknown
 }
 export type ArrayOfRouteResponseForEmpty = RouteResponseForEmpty[]

@@ -14,14 +14,14 @@ import {
   OwnerUpdate,
   Uint128,
   SwapperRoute,
-  OsmosisRoute,
   Decimal,
   Addr,
   Empty,
   Coin,
-  AstroportRoute,
-  SwapOperation,
-  SwapAmountInRoute,
+  AstroRoute,
+  AstroSwap,
+  OsmoRoute,
+  OsmoSwap,
   QueryMsg,
   EstimateExactInSwapResponse,
   OwnerResponse,
@@ -51,6 +51,8 @@ export const marsSwapperBaseQueryKeys = {
         args,
       },
     ] as const,
+  config: (contractAddress: string | undefined, args?: Record<string, unknown>) =>
+    [{ ...marsSwapperBaseQueryKeys.address(contractAddress)[0], method: 'config', args }] as const,
 }
 export interface MarsSwapperBaseReactQuery<TResponse, TData = TResponse> {
   client: MarsSwapperBaseQueryClient | undefined
@@ -60,6 +62,18 @@ export interface MarsSwapperBaseReactQuery<TResponse, TData = TResponse> {
   > & {
     initialData?: undefined
   }
+}
+export interface MarsSwapperBaseConfigQuery<TData>
+  extends MarsSwapperBaseReactQuery<Empty, TData> {}
+export function useMarsSwapperBaseConfigQuery<TData = Empty>({
+  client,
+  options,
+}: MarsSwapperBaseConfigQuery<TData>) {
+  return useQuery<Empty, Error, TData>(
+    marsSwapperBaseQueryKeys.config(client?.contractAddress),
+    () => (client ? client.config() : Promise.reject(new Error('Invalid client'))),
+    { ...options, enabled: !!client && (options?.enabled != undefined ? options.enabled : true) },
+  )
 }
 export interface MarsSwapperBaseEstimateExactInSwapQuery<TData>
   extends MarsSwapperBaseReactQuery<EstimateExactInSwapResponse, TData> {
@@ -145,6 +159,29 @@ export function useMarsSwapperBaseOwnerQuery<TData = OwnerResponse>({
     marsSwapperBaseQueryKeys.owner(client?.contractAddress),
     () => (client ? client.owner() : Promise.reject(new Error('Invalid client'))),
     { ...options, enabled: !!client && (options?.enabled != undefined ? options.enabled : true) },
+  )
+}
+export interface MarsSwapperBaseUpdateConfigMutation {
+  client: MarsSwapperBaseClient
+  msg: {
+    config: Empty
+  }
+  args?: {
+    fee?: number | StdFee | 'auto'
+    memo?: string
+    funds?: Coin[]
+  }
+}
+export function useMarsSwapperBaseUpdateConfigMutation(
+  options?: Omit<
+    UseMutationOptions<ExecuteResult, Error, MarsSwapperBaseUpdateConfigMutation>,
+    'mutationFn'
+  >,
+) {
+  return useMutation<ExecuteResult, Error, MarsSwapperBaseUpdateConfigMutation>(
+    ({ client, msg, args: { fee, memo, funds } = {} }) =>
+      client.updateConfig(msg, fee, memo, funds),
+    options,
   )
 }
 export interface MarsSwapperBaseTransferResultMutation {

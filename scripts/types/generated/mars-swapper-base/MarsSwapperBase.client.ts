@@ -13,14 +13,14 @@ import {
   OwnerUpdate,
   Uint128,
   SwapperRoute,
-  OsmosisRoute,
   Decimal,
   Addr,
   Empty,
   Coin,
-  AstroportRoute,
-  SwapOperation,
-  SwapAmountInRoute,
+  AstroRoute,
+  AstroSwap,
+  OsmoRoute,
+  OsmoSwap,
   QueryMsg,
   EstimateExactInSwapResponse,
   OwnerResponse,
@@ -53,6 +53,7 @@ export interface MarsSwapperBaseReadOnlyInterface {
     denomOut: string
     route?: SwapperRoute
   }) => Promise<EstimateExactInSwapResponse>
+  config: () => Promise<Empty>
 }
 export class MarsSwapperBaseQueryClient implements MarsSwapperBaseReadOnlyInterface {
   client: CosmWasmClient
@@ -65,6 +66,7 @@ export class MarsSwapperBaseQueryClient implements MarsSwapperBaseReadOnlyInterf
     this.route = this.route.bind(this)
     this.routes = this.routes.bind(this)
     this.estimateExactInSwap = this.estimateExactInSwap.bind(this)
+    this.config = this.config.bind(this)
   }
 
   owner = async (): Promise<OwnerResponse> => {
@@ -115,6 +117,11 @@ export class MarsSwapperBaseQueryClient implements MarsSwapperBaseReadOnlyInterf
         denom_out: denomOut,
         route,
       },
+    })
+  }
+  config = async (): Promise<Empty> => {
+    return this.client.queryContractSmart(this.contractAddress, {
+      config: {},
     })
   }
 }
@@ -171,6 +178,16 @@ export interface MarsSwapperBaseInterface extends MarsSwapperBaseReadOnlyInterfa
     memo?: string,
     _funds?: Coin[],
   ) => Promise<ExecuteResult>
+  updateConfig: (
+    {
+      config,
+    }: {
+      config: Empty
+    },
+    fee?: number | StdFee | 'auto',
+    memo?: string,
+    _funds?: Coin[],
+  ) => Promise<ExecuteResult>
 }
 export class MarsSwapperBaseClient
   extends MarsSwapperBaseQueryClient
@@ -189,6 +206,7 @@ export class MarsSwapperBaseClient
     this.setRoute = this.setRoute.bind(this)
     this.swapExactIn = this.swapExactIn.bind(this)
     this.transferResult = this.transferResult.bind(this)
+    this.updateConfig = this.updateConfig.bind(this)
   }
 
   updateOwner = async (
@@ -291,6 +309,29 @@ export class MarsSwapperBaseClient
           denom_in: denomIn,
           denom_out: denomOut,
           recipient,
+        },
+      },
+      fee,
+      memo,
+      _funds,
+    )
+  }
+  updateConfig = async (
+    {
+      config,
+    }: {
+      config: Empty
+    },
+    fee: number | StdFee | 'auto' = 'auto',
+    memo?: string,
+    _funds?: Coin[],
+  ): Promise<ExecuteResult> => {
+    return await this.client.execute(
+      this.sender,
+      this.contractAddress,
+      {
+        update_config: {
+          config,
         },
       },
       fee,

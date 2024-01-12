@@ -15,19 +15,20 @@ import {
   OsmosisRoute,
   Uint128,
   SwapperRoute,
-  OsmosisRoute2,
   Decimal,
   Addr,
   SwapAmountInRoute,
   Coin,
-  AstroportRoute,
-  SwapOperation,
-  SwapAmountInRoute2,
+  AstroRoute,
+  AstroSwap,
+  OsmoRoute,
+  OsmoSwap,
+  OsmosisConfig,
   QueryMsg,
+  Empty,
   EstimateExactInSwapResponse,
   OwnerResponse,
   RouteResponseForEmpty,
-  Empty,
   ArrayOfRouteResponseForEmpty,
 } from './MarsSwapperOsmosis.types'
 import {
@@ -62,6 +63,10 @@ export const marsSwapperOsmosisQueryKeys = {
         args,
       },
     ] as const,
+  config: (contractAddress: string | undefined, args?: Record<string, unknown>) =>
+    [
+      { ...marsSwapperOsmosisQueryKeys.address(contractAddress)[0], method: 'config', args },
+    ] as const,
 }
 export interface MarsSwapperOsmosisReactQuery<TResponse, TData = TResponse> {
   client: MarsSwapperOsmosisQueryClient | undefined
@@ -71,6 +76,18 @@ export interface MarsSwapperOsmosisReactQuery<TResponse, TData = TResponse> {
   > & {
     initialData?: undefined
   }
+}
+export interface MarsSwapperOsmosisConfigQuery<TData>
+  extends MarsSwapperOsmosisReactQuery<Empty, TData> {}
+export function useMarsSwapperOsmosisConfigQuery<TData = Empty>({
+  client,
+  options,
+}: MarsSwapperOsmosisConfigQuery<TData>) {
+  return useQuery<Empty, Error, TData>(
+    marsSwapperOsmosisQueryKeys.config(client?.contractAddress),
+    () => (client ? client.config() : Promise.reject(new Error('Invalid client'))),
+    { ...options, enabled: !!client && (options?.enabled != undefined ? options.enabled : true) },
+  )
 }
 export interface MarsSwapperOsmosisEstimateExactInSwapQuery<TData>
   extends MarsSwapperOsmosisReactQuery<EstimateExactInSwapResponse, TData> {
@@ -156,6 +173,29 @@ export function useMarsSwapperOsmosisOwnerQuery<TData = OwnerResponse>({
     marsSwapperOsmosisQueryKeys.owner(client?.contractAddress),
     () => (client ? client.owner() : Promise.reject(new Error('Invalid client'))),
     { ...options, enabled: !!client && (options?.enabled != undefined ? options.enabled : true) },
+  )
+}
+export interface MarsSwapperOsmosisUpdateConfigMutation {
+  client: MarsSwapperOsmosisClient
+  msg: {
+    config: OsmosisConfig
+  }
+  args?: {
+    fee?: number | StdFee | 'auto'
+    memo?: string
+    funds?: Coin[]
+  }
+}
+export function useMarsSwapperOsmosisUpdateConfigMutation(
+  options?: Omit<
+    UseMutationOptions<ExecuteResult, Error, MarsSwapperOsmosisUpdateConfigMutation>,
+    'mutationFn'
+  >,
+) {
+  return useMutation<ExecuteResult, Error, MarsSwapperOsmosisUpdateConfigMutation>(
+    ({ client, msg, args: { fee, memo, funds } = {} }) =>
+      client.updateConfig(msg, fee, memo, funds),
+    options,
   )
 }
 export interface MarsSwapperOsmosisTransferResultMutation {

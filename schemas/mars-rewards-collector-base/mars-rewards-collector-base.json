@@ -266,9 +266,7 @@
           "swap_asset": {
             "type": "object",
             "required": [
-              "denom",
-              "fee_collector_route",
-              "safety_fund_route"
+              "denom"
             ],
             "properties": {
               "amount": {
@@ -285,10 +283,24 @@
                 "type": "string"
               },
               "fee_collector_route": {
-                "$ref": "#/definitions/SwapperRoute"
+                "anyOf": [
+                  {
+                    "$ref": "#/definitions/SwapperRoute"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
               },
               "safety_fund_route": {
-                "$ref": "#/definitions/SwapperRoute"
+                "anyOf": [
+                  {
+                    "$ref": "#/definitions/SwapperRoute"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
               }
             },
             "additionalProperties": false
@@ -747,32 +759,35 @@
         },
         "additionalProperties": false
       },
-      "AstroportRoute": {
+      "AstroRoute": {
         "type": "object",
         "required": [
-          "factory",
-          "operations",
-          "oracle",
-          "router"
+          "swaps"
         ],
         "properties": {
-          "factory": {
-            "description": "The astroport factory contract address",
-            "type": "string"
-          },
-          "operations": {
+          "swaps": {
             "description": "The swap operations of the route",
             "type": "array",
             "items": {
-              "$ref": "#/definitions/SwapOperation"
+              "$ref": "#/definitions/AstroSwap"
             }
-          },
-          "oracle": {
-            "description": "The mars wasm oracle contract address",
+          }
+        },
+        "additionalProperties": false
+      },
+      "AstroSwap": {
+        "type": "object",
+        "required": [
+          "from",
+          "to"
+        ],
+        "properties": {
+          "from": {
+            "description": "Asset to swap from",
             "type": "string"
           },
-          "router": {
-            "description": "The astroport router contract address",
+          "to": {
+            "description": "Asset to swap to",
             "type": "string"
           }
         },
@@ -879,11 +894,41 @@
         },
         "additionalProperties": false
       },
-      "OsmosisRoute": {
-        "type": "array",
-        "items": {
-          "$ref": "#/definitions/SwapAmountInRoute"
-        }
+      "OsmoRoute": {
+        "type": "object",
+        "required": [
+          "swaps"
+        ],
+        "properties": {
+          "swaps": {
+            "type": "array",
+            "items": {
+              "$ref": "#/definitions/OsmoSwap"
+            }
+          }
+        },
+        "additionalProperties": false
+      },
+      "OsmoSwap": {
+        "description": "Swap operation with pool id and asset to swap to. \"from\" is another asset in the pool.",
+        "type": "object",
+        "required": [
+          "pool_id",
+          "to"
+        ],
+        "properties": {
+          "pool_id": {
+            "description": "Pool id",
+            "type": "integer",
+            "format": "uint64",
+            "minimum": 0.0
+          },
+          "to": {
+            "description": "Asset to swap to",
+            "type": "string"
+          }
+        },
+        "additionalProperties": false
       },
       "OwnerUpdate": {
         "oneOf": [
@@ -961,42 +1006,6 @@
           }
         ]
       },
-      "SwapAmountInRoute": {
-        "type": "object",
-        "required": [
-          "pool_id",
-          "token_out_denom"
-        ],
-        "properties": {
-          "pool_id": {
-            "type": "integer",
-            "format": "uint64",
-            "minimum": 0.0
-          },
-          "token_out_denom": {
-            "type": "string"
-          }
-        },
-        "additionalProperties": false
-      },
-      "SwapOperation": {
-        "type": "object",
-        "required": [
-          "from",
-          "to"
-        ],
-        "properties": {
-          "from": {
-            "description": "Asset to swap from",
-            "type": "string"
-          },
-          "to": {
-            "description": "Asset to swap to",
-            "type": "string"
-          }
-        },
-        "additionalProperties": false
-      },
       "SwapperRoute": {
         "oneOf": [
           {
@@ -1006,7 +1015,7 @@
             ],
             "properties": {
               "astro": {
-                "$ref": "#/definitions/AstroportRoute"
+                "$ref": "#/definitions/AstroRoute"
               }
             },
             "additionalProperties": false
@@ -1018,7 +1027,7 @@
             ],
             "properties": {
               "osmo": {
-                "$ref": "#/definitions/OsmosisRoute"
+                "$ref": "#/definitions/OsmoRoute"
               }
             },
             "additionalProperties": false

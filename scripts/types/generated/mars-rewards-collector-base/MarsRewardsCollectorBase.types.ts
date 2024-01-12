@@ -59,8 +59,8 @@ export type ExecuteMsg =
       swap_asset: {
         amount?: Uint128 | null
         denom: string
-        fee_collector_route: SwapperRoute
-        safety_fund_route: SwapperRoute
+        fee_collector_route?: SwapperRoute | null
+        safety_fund_route?: SwapperRoute | null
       }
     }
   | {
@@ -186,12 +186,11 @@ export type LiquidateRequestForVaultBaseForString =
 export type VaultPositionType = 'u_n_l_o_c_k_e_d' | 'l_o_c_k_e_d' | 'u_n_l_o_c_k_i_n_g'
 export type SwapperRoute =
   | {
-      astro: AstroportRoute
+      astro: AstroRoute
     }
   | {
-      osmo: OsmosisRoute
+      osmo: OsmoRoute
     }
-export type OsmosisRoute = SwapAmountInRoute[]
 export interface UpdateConfig {
   address_provider?: string | null
   channel_id?: string | null
@@ -209,19 +208,19 @@ export interface ActionCoin {
 export interface VaultBaseForString {
   address: string
 }
-export interface AstroportRoute {
-  factory: string
-  operations: SwapOperation[]
-  oracle: string
-  router: string
+export interface AstroRoute {
+  swaps: AstroSwap[]
 }
-export interface SwapOperation {
+export interface AstroSwap {
   from: string
   to: string
 }
-export interface SwapAmountInRoute {
+export interface OsmoRoute {
+  swaps: OsmoSwap[]
+}
+export interface OsmoSwap {
   pool_id: number
-  token_out_denom: string
+  to: string
 }
 export type QueryMsg = {
   config: {}

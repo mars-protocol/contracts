@@ -14,19 +14,20 @@ import {
   OsmosisRoute,
   Uint128,
   SwapperRoute,
-  OsmosisRoute2,
   Decimal,
   Addr,
   SwapAmountInRoute,
   Coin,
-  AstroportRoute,
-  SwapOperation,
-  SwapAmountInRoute2,
+  AstroRoute,
+  AstroSwap,
+  OsmoRoute,
+  OsmoSwap,
+  OsmosisConfig,
   QueryMsg,
+  Empty,
   EstimateExactInSwapResponse,
   OwnerResponse,
   RouteResponseForEmpty,
-  Empty,
   ArrayOfRouteResponseForEmpty,
 } from './MarsSwapperOsmosis.types'
 export interface MarsSwapperOsmosisReadOnlyInterface {
@@ -55,6 +56,7 @@ export interface MarsSwapperOsmosisReadOnlyInterface {
     denomOut: string
     route?: SwapperRoute
   }) => Promise<EstimateExactInSwapResponse>
+  config: () => Promise<Empty>
 }
 export class MarsSwapperOsmosisQueryClient implements MarsSwapperOsmosisReadOnlyInterface {
   client: CosmWasmClient
@@ -67,6 +69,7 @@ export class MarsSwapperOsmosisQueryClient implements MarsSwapperOsmosisReadOnly
     this.route = this.route.bind(this)
     this.routes = this.routes.bind(this)
     this.estimateExactInSwap = this.estimateExactInSwap.bind(this)
+    this.config = this.config.bind(this)
   }
 
   owner = async (): Promise<OwnerResponse> => {
@@ -117,6 +120,11 @@ export class MarsSwapperOsmosisQueryClient implements MarsSwapperOsmosisReadOnly
         denom_out: denomOut,
         route,
       },
+    })
+  }
+  config = async (): Promise<Empty> => {
+    return this.client.queryContractSmart(this.contractAddress, {
+      config: {},
     })
   }
 }
@@ -173,6 +181,16 @@ export interface MarsSwapperOsmosisInterface extends MarsSwapperOsmosisReadOnlyI
     memo?: string,
     _funds?: Coin[],
   ) => Promise<ExecuteResult>
+  updateConfig: (
+    {
+      config,
+    }: {
+      config: OsmosisConfig
+    },
+    fee?: number | StdFee | 'auto',
+    memo?: string,
+    _funds?: Coin[],
+  ) => Promise<ExecuteResult>
 }
 export class MarsSwapperOsmosisClient
   extends MarsSwapperOsmosisQueryClient
@@ -191,6 +209,7 @@ export class MarsSwapperOsmosisClient
     this.setRoute = this.setRoute.bind(this)
     this.swapExactIn = this.swapExactIn.bind(this)
     this.transferResult = this.transferResult.bind(this)
+    this.updateConfig = this.updateConfig.bind(this)
   }
 
   updateOwner = async (
@@ -293,6 +312,29 @@ export class MarsSwapperOsmosisClient
           denom_in: denomIn,
           denom_out: denomOut,
           recipient,
+        },
+      },
+      fee,
+      memo,
+      _funds,
+    )
+  }
+  updateConfig = async (
+    {
+      config,
+    }: {
+      config: OsmosisConfig
+    },
+    fee: number | StdFee | 'auto' = 'auto',
+    memo?: string,
+    _funds?: Coin[],
+  ): Promise<ExecuteResult> => {
+    return await this.client.execute(
+      this.sender,
+      this.contractAddress,
+      {
+        update_config: {
+          config,
         },
       },
       fee,

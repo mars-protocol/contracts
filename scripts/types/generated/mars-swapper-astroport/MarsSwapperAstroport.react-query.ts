@@ -17,18 +17,19 @@ import {
   Addr,
   Uint128,
   SwapperRoute,
-  OsmosisRoute,
   Decimal,
   AstroportRoute,
   Coin,
-  AstroportRoute2,
-  SwapOperation2,
-  SwapAmountInRoute,
+  AstroRoute,
+  AstroSwap,
+  OsmoRoute,
+  OsmoSwap,
+  AstroportConfig,
   QueryMsg,
+  Empty,
   EstimateExactInSwapResponse,
   OwnerResponse,
   RouteResponseForEmpty,
-  Empty,
   ArrayOfRouteResponseForEmpty,
 } from './MarsSwapperAstroport.types'
 import {
@@ -63,6 +64,10 @@ export const marsSwapperAstroportQueryKeys = {
         args,
       },
     ] as const,
+  config: (contractAddress: string | undefined, args?: Record<string, unknown>) =>
+    [
+      { ...marsSwapperAstroportQueryKeys.address(contractAddress)[0], method: 'config', args },
+    ] as const,
 }
 export interface MarsSwapperAstroportReactQuery<TResponse, TData = TResponse> {
   client: MarsSwapperAstroportQueryClient | undefined
@@ -72,6 +77,18 @@ export interface MarsSwapperAstroportReactQuery<TResponse, TData = TResponse> {
   > & {
     initialData?: undefined
   }
+}
+export interface MarsSwapperAstroportConfigQuery<TData>
+  extends MarsSwapperAstroportReactQuery<Empty, TData> {}
+export function useMarsSwapperAstroportConfigQuery<TData = Empty>({
+  client,
+  options,
+}: MarsSwapperAstroportConfigQuery<TData>) {
+  return useQuery<Empty, Error, TData>(
+    marsSwapperAstroportQueryKeys.config(client?.contractAddress),
+    () => (client ? client.config() : Promise.reject(new Error('Invalid client'))),
+    { ...options, enabled: !!client && (options?.enabled != undefined ? options.enabled : true) },
+  )
 }
 export interface MarsSwapperAstroportEstimateExactInSwapQuery<TData>
   extends MarsSwapperAstroportReactQuery<EstimateExactInSwapResponse, TData> {
@@ -155,6 +172,29 @@ export function useMarsSwapperAstroportOwnerQuery<TData = OwnerResponse>({
     marsSwapperAstroportQueryKeys.owner(client?.contractAddress),
     () => (client ? client.owner() : Promise.reject(new Error('Invalid client'))),
     { ...options, enabled: !!client && (options?.enabled != undefined ? options.enabled : true) },
+  )
+}
+export interface MarsSwapperAstroportUpdateConfigMutation {
+  client: MarsSwapperAstroportClient
+  msg: {
+    config: AstroportConfig
+  }
+  args?: {
+    fee?: number | StdFee | 'auto'
+    memo?: string
+    funds?: Coin[]
+  }
+}
+export function useMarsSwapperAstroportUpdateConfigMutation(
+  options?: Omit<
+    UseMutationOptions<ExecuteResult, Error, MarsSwapperAstroportUpdateConfigMutation>,
+    'mutationFn'
+  >,
+) {
+  return useMutation<ExecuteResult, Error, MarsSwapperAstroportUpdateConfigMutation>(
+    ({ client, msg, args: { fee, memo, funds } = {} }) =>
+      client.updateConfig(msg, fee, memo, funds),
+    options,
   )
 }
 export interface MarsSwapperAstroportTransferResultMutation {

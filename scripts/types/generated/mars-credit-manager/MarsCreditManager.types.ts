@@ -160,12 +160,11 @@ export type LiquidateRequestForVaultBaseForString =
 export type VaultPositionType = 'u_n_l_o_c_k_e_d' | 'l_o_c_k_e_d' | 'u_n_l_o_c_k_i_n_g'
 export type SwapperRoute =
   | {
-      astro: AstroportRoute
+      astro: AstroRoute
     }
   | {
-      osmo: OsmosisRoute
+      osmo: OsmoRoute
     }
-export type OsmosisRoute = SwapAmountInRoute[]
 export type AccountNftBaseForString = string
 export type OwnerUpdate =
   | {
@@ -394,19 +393,19 @@ export interface ActionCoin {
 export interface VaultBaseForString {
   address: string
 }
-export interface AstroportRoute {
-  factory: string
-  operations: SwapOperation[]
-  oracle: string
-  router: string
+export interface AstroRoute {
+  swaps: AstroSwap[]
 }
-export interface SwapOperation {
+export interface AstroSwap {
   from: string
   to: string
 }
-export interface SwapAmountInRoute {
+export interface OsmoRoute {
+  swaps: OsmoSwap[]
+}
+export interface OsmoSwap {
   pool_id: number
-  token_out_denom: string
+  to: string
 }
 export interface ConfigUpdates {
   account_nft?: AccountNftBaseForString | null

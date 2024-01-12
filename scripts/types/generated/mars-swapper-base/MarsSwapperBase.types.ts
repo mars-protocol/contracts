@@ -34,6 +34,11 @@ export type ExecuteMsg =
         recipient: Addr
       }
     }
+  | {
+      update_config: {
+        config: Empty
+      }
+    }
 export type OwnerUpdate =
   | {
       propose_new_owner: {
@@ -52,12 +57,11 @@ export type OwnerUpdate =
 export type Uint128 = string
 export type SwapperRoute =
   | {
-      astro: AstroportRoute
+      astro: AstroRoute
     }
   | {
-      osmo: OsmosisRoute
+      osmo: OsmoRoute
     }
-export type OsmosisRoute = SwapAmountInRoute[]
 export type Decimal = string
 export type Addr = string
 export interface Empty {
@@ -68,19 +72,19 @@ export interface Coin {
   denom: string
   [k: string]: unknown
 }
-export interface AstroportRoute {
-  factory: string
-  operations: SwapOperation[]
-  oracle: string
-  router: string
+export interface AstroRoute {
+  swaps: AstroSwap[]
 }
-export interface SwapOperation {
+export interface AstroSwap {
   from: string
   to: string
 }
-export interface SwapAmountInRoute {
+export interface OsmoRoute {
+  swaps: OsmoSwap[]
+}
+export interface OsmoSwap {
   pool_id: number
-  token_out_denom: string
+  to: string
 }
 export type QueryMsg =
   | {
@@ -104,6 +108,9 @@ export type QueryMsg =
         denom_out: string
         route?: SwapperRoute | null
       }
+    }
+  | {
+      config: {}
     }
 export interface EstimateExactInSwapResponse {
   amount: Uint128
