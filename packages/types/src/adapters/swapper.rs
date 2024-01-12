@@ -58,6 +58,7 @@ mod tests {
     use cosmwasm_std::testing::MockApi;
 
     use super::*;
+    use crate::swapper::{AstroportRoute, OsmosisRoute, SwapAmountInRoute, SwapOperation};
 
     #[test]
     fn test_swapper_unchecked_from_swapper() {
@@ -94,7 +95,17 @@ mod tests {
         let denom_out = "out";
         let slippage = Decimal::percent(1);
 
-        let msg = swapper.swap_exact_in_msg(&coin_in, denom_out, slippage).unwrap();
+        let route = SwapperRoute::Osmo(OsmosisRoute(vec![
+            SwapAmountInRoute {
+                pool_id: 101,
+                token_out_denom: "aaa".to_string(),
+            },
+            SwapAmountInRoute {
+                pool_id: 201,
+                token_out_denom: "out".to_string(),
+            },
+        ]));
+        let msg = swapper.swap_exact_in_msg(&coin_in, denom_out, slippage, route.clone()).unwrap();
         assert_eq!(
             msg,
             CosmosMsg::Wasm(WasmMsg::Execute {
@@ -103,6 +114,38 @@ mod tests {
                     coin_in: coin_in.clone(),
                     denom_out: denom_out.to_string(),
                     slippage,
+                    route
+                })
+                .unwrap(),
+                funds: vec![coin_in.clone()],
+            })
+        );
+
+        let route = SwapperRoute::Astro(AstroportRoute {
+            operations: vec![
+                SwapOperation {
+                    from: "aaa".to_string(),
+                    to: "bbb".to_string(),
+                },
+                SwapOperation {
+                    from: "bbb".to_string(),
+                    to: "out".to_string(),
+                },
+            ],
+            router: "router".to_string(),
+            factory: "factory".to_string(),
+            oracle: "oracle".to_string(),
+        });
+        let msg = swapper.swap_exact_in_msg(&coin_in, denom_out, slippage, route.clone()).unwrap();
+        assert_eq!(
+            msg,
+            CosmosMsg::Wasm(WasmMsg::Execute {
+                contract_addr: "swapper".to_string(),
+                msg: to_binary(&ExecuteMsg::<Empty>::SwapExactIn {
+                    coin_in: coin_in.clone(),
+                    denom_out: denom_out.to_string(),
+                    slippage,
+                    route
                 })
                 .unwrap(),
                 funds: vec![coin_in],

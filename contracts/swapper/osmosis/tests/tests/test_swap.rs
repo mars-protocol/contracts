@@ -4,8 +4,8 @@ use cw_it::{
     test_tube::FeeSetting,
 };
 use mars_swapper_base::ContractError;
-use mars_swapper_osmosis::route::{OsmosisRoute, SwapAmountInRoute};
-use mars_types::swapper::ExecuteMsg;
+use mars_swapper_osmosis::route::OsmosisRoute;
+use mars_types::swapper::{ExecuteMsg, SwapperRoute};
 
 use super::helpers::{
     assert_err, instantiate_contract, query_balance, swap_to_create_twap_records,
@@ -64,6 +64,12 @@ fn max_slippage_exeeded() {
                 coin_in: coin(1_000_000, "umars"),
                 denom_out: "uosmo".to_string(),
                 slippage: Decimal::percent(11),
+                route: SwapperRoute::Osmo(mars_types::swapper::OsmosisRoute(vec![
+                    mars_types::swapper::SwapAmountInRoute {
+                        pool_id: 1,
+                        token_out_denom: "uosmo".to_string(),
+                    },
+                ])),
             },
             &[coin(1_000_000, "umars")],
             other_guy,
@@ -87,7 +93,14 @@ fn swap_exact_in_slippage_too_high() {
     let signer = app
         .init_account(&[coin(1_000_000_000_000, "uosmo"), coin(1_000_000_000_000, "umars")])
         .unwrap();
-    let whale = app.init_account(&[coin(1_000_000, "umars"), coin(1_000_000, "uosmo")]).unwrap();
+    let tx_fee = 1_000_000u128;
+    let whale = app
+        .init_account(&[coin(1_000_000, "umars"), coin(1_000_000, "uosmo")])
+        .unwrap()
+        .with_fee_setting(FeeSetting::Custom {
+            amount: Coin::new(tx_fee, "uosmo"),
+            gas_limit: tx_fee as u64,
+        });
 
     let contract_addr = instantiate_contract(&wasm, &signer);
 
@@ -100,23 +113,6 @@ fn swap_exact_in_slippage_too_high() {
 
     swap_to_create_twap_records(&app, &signer, pool_mars_osmo, coin(10u128, "umars"), "uosmo");
 
-    let route = OsmosisRoute(vec![SwapAmountInRoute {
-        pool_id: pool_mars_osmo,
-        token_out_denom: "uosmo".to_string(),
-    }]);
-
-    wasm.execute(
-        &contract_addr,
-        &ExecuteMsg::SetRoute {
-            denom_in: "umars".to_string(),
-            denom_out: "uosmo".to_string(),
-            route,
-        },
-        &[],
-        &signer,
-    )
-    .unwrap();
-
     // whale does a huge trade
     let res_err = wasm
         .execute(
@@ -125,6 +121,12 @@ fn swap_exact_in_slippage_too_high() {
                 coin_in: coin(1_000_000, "umars"),
                 denom_out: "uosmo".to_string(),
                 slippage: Decimal::percent(5),
+                route: SwapperRoute::Osmo(mars_types::swapper::OsmosisRoute(vec![
+                    mars_types::swapper::SwapAmountInRoute {
+                        pool_id: pool_mars_osmo,
+                        token_out_denom: "uosmo".to_string(),
+                    },
+                ])),
             },
             &[coin(1_000_000, "umars")],
             &whale,
@@ -169,21 +171,6 @@ fn swap_exact_in_success() {
 
     swap_to_create_twap_records(&app, &signer, pool_mars_osmo, coin(10u128, "umars"), "uosmo");
 
-    wasm.execute(
-        &contract_addr,
-        &ExecuteMsg::SetRoute {
-            denom_in: "umars".to_string(),
-            denom_out: "uosmo".to_string(),
-            route: OsmosisRoute(vec![SwapAmountInRoute {
-                pool_id: pool_mars_osmo,
-                token_out_denom: "uosmo".to_string(),
-            }]),
-        },
-        &[],
-        &signer,
-    )
-    .unwrap();
-
     let bank = Bank::new(&app);
     let osmo_balance = query_balance(&bank, &user.address(), "uosmo");
     let mars_balance = query_balance(&bank, &user.address(), "umars");
@@ -196,6 +183,12 @@ fn swap_exact_in_success() {
             coin_in: coin(10_000, "umars"),
             denom_out: "uosmo".to_string(),
             slippage: Decimal::percent(6),
+            route: SwapperRoute::Osmo(mars_types::swapper::OsmosisRoute(vec![
+                mars_types::swapper::SwapAmountInRoute {
+                    pool_id: pool_mars_osmo,
+                    token_out_denom: "uosmo".to_string(),
+                },
+            ])),
         },
         &[coin(10_000, "umars")],
         &user,

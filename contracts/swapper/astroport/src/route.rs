@@ -109,9 +109,13 @@ impl Route<Empty, Empty> for AstroportRoute {
                 let operations: Vec<_> = route
                     .operations
                     .into_iter()
-                    .map(|op| SwapOperation::NativeSwap {
-                        offer_denom: op.from,
-                        ask_denom: op.to,
+                    .map(|op| SwapOperation::AstroSwap {
+                        offer_asset_info: AssetInfo::NativeToken {
+                            denom: op.from,
+                        },
+                        ask_asset_info: AssetInfo::NativeToken {
+                            denom: op.to,
+                        },
                     })
                     .collect();
                 Ok(Self {

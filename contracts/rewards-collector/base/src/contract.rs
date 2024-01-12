@@ -98,8 +98,9 @@ where
             ExecuteMsg::SwapAsset {
                 denom,
                 amount,
-                route,
-            } => self.swap_asset(deps, env, denom, amount, route),
+                safety_fund_route,
+                fee_collector_route,
+            } => self.swap_asset(deps, env, denom, amount, safety_fund_route, fee_collector_route),
             ExecuteMsg::ClaimIncentiveRewards {
                 start_after_collateral_denom,
                 start_after_incentive_denom,
@@ -275,7 +276,8 @@ where
         env: Env,
         denom: String,
         amount: Option<Uint128>,
-        route: SwapperRoute,
+        safety_fund_route: SwapperRoute,
+        fee_collector_route: SwapperRoute,
     ) -> ContractResult<Response<M>> {
         let cfg = self.config.load(deps.storage)?;
 
@@ -306,7 +308,7 @@ where
                     coin_in: coin_in_safety_fund.clone(),
                     denom_out: cfg.safety_fund_denom,
                     slippage: cfg.slippage_tolerance,
-                    route: route.clone(), // FIXME: different routes for rewards
+                    route: safety_fund_route,
                 })?,
                 funds: vec![coin_in_safety_fund],
             });
@@ -322,7 +324,7 @@ where
                     coin_in: coin_in_fee_collector.clone(),
                     denom_out: cfg.fee_collector_denom,
                     slippage: cfg.slippage_tolerance,
-                    route,
+                    route: fee_collector_route,
                 })?,
                 funds: vec![coin_in_fee_collector],
             });

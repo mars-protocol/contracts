@@ -138,6 +138,7 @@ pub fn assert_err(actual: RunnerError, expected: impl Display) {
         RunnerError::QueryError {
             msg,
         } => {
+            println!("{}", msg);
             assert!(msg.contains(&format!("{expected}")))
         }
         _ => panic!("Unhandled error"),

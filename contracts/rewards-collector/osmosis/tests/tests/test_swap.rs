@@ -5,7 +5,7 @@ use mars_rewards_collector_osmosis::entry::execute;
 use mars_testing::mock_info;
 use mars_types::{
     rewards_collector::{ConfigResponse, ExecuteMsg, QueryMsg},
-    swapper,
+    swapper::{self, OsmosisRoute, SwapAmountInRoute, SwapperRoute},
 };
 use osmosis_std::types::osmosis::twap::v1beta1::ArithmeticTwapToNowResponse;
 
@@ -55,6 +55,14 @@ fn swapping_asset() {
         ExecuteMsg::SwapAsset {
             denom: "uatom".to_string(),
             amount: Some(Uint128::new(42069)),
+            safety_fund_route: SwapperRoute::Osmo(OsmosisRoute(vec![SwapAmountInRoute {
+                pool_id: 12,
+                token_out_denom: cfg.safety_fund_denom.to_string(),
+            }])),
+            fee_collector_route: SwapperRoute::Osmo(OsmosisRoute(vec![SwapAmountInRoute {
+                pool_id: 69,
+                token_out_denom: cfg.fee_collector_denom.to_string(),
+            }])),
         },
     )
     .unwrap();
@@ -67,6 +75,10 @@ fn swapping_asset() {
             coin_in: coin(safety_fund_input.u128(), "uatom"),
             denom_out: cfg.safety_fund_denom.to_string(),
             slippage: cfg.slippage_tolerance,
+            route: SwapperRoute::Osmo(OsmosisRoute(vec![SwapAmountInRoute {
+                pool_id: 12,
+                token_out_denom: cfg.safety_fund_denom.to_string(),
+            }])),
         })
         .unwrap(),
         funds: vec![coin(safety_fund_input.u128(), "uatom")],
@@ -80,6 +92,10 @@ fn swapping_asset() {
             coin_in: coin(fee_collector_input.u128(), "uatom"),
             denom_out: cfg.fee_collector_denom.to_string(),
             slippage: cfg.slippage_tolerance,
+            route: SwapperRoute::Osmo(OsmosisRoute(vec![SwapAmountInRoute {
+                pool_id: 69,
+                token_out_denom: cfg.fee_collector_denom,
+            }])),
         })
         .unwrap(),
         funds: vec![coin(fee_collector_input.u128(), "uatom")],
@@ -134,6 +150,14 @@ fn skipping_swap_if_denom_matches() {
         ExecuteMsg::SwapAsset {
             denom: "uusdc".to_string(),
             amount: None,
+            safety_fund_route: SwapperRoute::Osmo(OsmosisRoute(vec![SwapAmountInRoute {
+                pool_id: 12,
+                token_out_denom: "uusdc".to_string(),
+            }])),
+            fee_collector_route: SwapperRoute::Osmo(OsmosisRoute(vec![SwapAmountInRoute {
+                pool_id: 69,
+                token_out_denom: "umars".to_string(),
+            }])),
         },
     )
     .unwrap();
@@ -159,6 +183,10 @@ fn skipping_swap_if_denom_matches() {
             coin_in: coin(926u128, "uusdc"),
             denom_out: "umars".to_string(),
             slippage: mock_instantiate_msg().slippage_tolerance,
+            route: SwapperRoute::Osmo(OsmosisRoute(vec![SwapAmountInRoute {
+                pool_id: 69,
+                token_out_denom: "umars".to_string(),
+            }])),
         })
         .unwrap(),
         funds: vec![coin(926u128, "uusdc")],

@@ -150,7 +150,8 @@ pub enum ExecuteMsg {
     SwapAsset {
         denom: String,
         amount: Option<Uint128>,
-        route: SwapperRoute,
+        safety_fund_route: SwapperRoute,
+        fee_collector_route: SwapperRoute,
     },
 
     /// Claim rewards in incentives contract.

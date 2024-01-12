@@ -1,11 +1,10 @@
 use cosmwasm_std::{coin, Uint128};
 use cw_it::osmosis_test_tube::{Gamm, Module, OsmosisTestApp, RunnerResult, Wasm};
-use mars_swapper_osmosis::route::{OsmosisRoute, SwapAmountInRoute};
-use mars_types::swapper::{EstimateExactInSwapResponse, ExecuteMsg, QueryMsg};
-
-use super::helpers::{
-    assert_err, instantiate_contract, query_price_from_pool, swap_to_create_twap_records,
+use mars_types::swapper::{
+    EstimateExactInSwapResponse, OsmosisRoute, QueryMsg, SwapAmountInRoute, SwapperRoute,
 };
+
+use super::helpers::{instantiate_contract, query_price_from_pool, swap_to_create_twap_records};
 
 #[test]
 fn error_on_route_not_found() {
@@ -20,11 +19,15 @@ fn error_on_route_not_found() {
         &QueryMsg::EstimateExactInSwap {
             coin_in: coin(1000, "jake"),
             denom_out: "mars".to_string(),
+            route: SwapperRoute::Osmo(OsmosisRoute(vec![SwapAmountInRoute {
+                pool_id: 1,
+                token_out_denom: "uosmo".to_string(),
+            }])),
         },
     );
-    let err = res.unwrap_err();
-
-    assert_err(err, "No route found from jake to mars");
+    // If no proper route we get ugly error:
+    // "Generic error: Querier contract error: codespace: undefined, code: 1: query wasm contract failed"
+    res.unwrap_err();
 }
 
 #[test]
@@ -47,21 +50,6 @@ fn estimate_swap_one_step() {
 
     swap_to_create_twap_records(&app, &signer, pool_atom_osmo, coin(10u128, "uatom"), "uosmo");
 
-    wasm.execute(
-        &contract_addr,
-        &ExecuteMsg::SetRoute {
-            denom_in: "uosmo".to_string(),
-            denom_out: "uatom".to_string(),
-            route: OsmosisRoute(vec![SwapAmountInRoute {
-                pool_id: pool_atom_osmo,
-                token_out_denom: "uatom".to_string(),
-            }]),
-        },
-        &[],
-        &signer,
-    )
-    .unwrap();
-
     let coin_in_amount = Uint128::from(1000u128);
     let uosmo_price = query_price_from_pool(&gamm, pool_atom_osmo, "uosmo");
     let expected_output = coin_in_amount * uosmo_price;
@@ -72,6 +60,10 @@ fn estimate_swap_one_step() {
             &QueryMsg::EstimateExactInSwap {
                 coin_in: coin(coin_in_amount.u128(), "uosmo"),
                 denom_out: "uatom".to_string(),
+                route: SwapperRoute::Osmo(OsmosisRoute(vec![SwapAmountInRoute {
+                    pool_id: pool_atom_osmo,
+                    token_out_denom: "uatom".to_string(),
+                }])),
             },
         )
         .unwrap();
@@ -100,7 +92,7 @@ fn estimate_swap_multi_step() {
         .unwrap()
         .data
         .pool_id;
-    let pool_osmo_mars = gamm
+    let _pool_osmo_mars = gamm
         .create_basic_pool(&[coin(100_000, "uosmo"), coin(1_000_000, "umars")], &signer)
         .unwrap()
         .data
@@ -112,48 +104,6 @@ fn estimate_swap_multi_step() {
         .pool_id;
 
     swap_to_create_twap_records(&app, &signer, pool_atom_osmo, coin(4u128, "uosmo"), "uatom");
-
-    wasm.execute(
-        &contract_addr,
-        &ExecuteMsg::SetRoute {
-            denom_in: "uatom".to_string(),
-            denom_out: "umars".to_string(),
-            route: OsmosisRoute(vec![
-                SwapAmountInRoute {
-                    pool_id: pool_atom_osmo,
-                    token_out_denom: "uosmo".to_string(),
-                },
-                SwapAmountInRoute {
-                    pool_id: pool_osmo_mars,
-                    token_out_denom: "umars".to_string(),
-                },
-            ]),
-        },
-        &[],
-        &signer,
-    )
-    .unwrap();
-
-    wasm.execute(
-        &contract_addr,
-        &ExecuteMsg::SetRoute {
-            denom_in: "uatom".to_string(),
-            denom_out: "uusdc".to_string(),
-            route: OsmosisRoute(vec![
-                SwapAmountInRoute {
-                    pool_id: pool_atom_osmo,
-                    token_out_denom: "uosmo".to_string(),
-                },
-                SwapAmountInRoute {
-                    pool_id: pool_osmo_usdc,
-                    token_out_denom: "uusdc".to_string(),
-                },
-            ]),
-        },
-        &[],
-        &signer,
-    )
-    .unwrap();
 
     let coin_in_amount = Uint128::from(1000u128);
     let uatom_price = query_price_from_pool(&gamm, pool_atom_osmo, "uatom");
@@ -174,6 +124,16 @@ fn estimate_swap_multi_step() {
             &QueryMsg::EstimateExactInSwap {
                 coin_in: coin(coin_in_amount.u128(), "uatom"),
                 denom_out: "uusdc".to_string(),
+                route: SwapperRoute::Osmo(OsmosisRoute(vec![
+                    SwapAmountInRoute {
+                        pool_id: pool_atom_osmo,
+                        token_out_denom: "uosmo".to_string(),
+                    },
+                    SwapAmountInRoute {
+                        pool_id: pool_osmo_usdc,
+                        token_out_denom: "uusdc".to_string(),
+                    },
+                ])),
             },
         )
         .unwrap();
