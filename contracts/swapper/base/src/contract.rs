@@ -9,7 +9,7 @@ use cw_storage_plus::{Bound, Map};
 use mars_owner::{Owner, OwnerInit::SetInitialOwner, OwnerUpdate};
 use mars_types::swapper::{
     EstimateExactInSwapResponse, ExecuteMsg, InstantiateMsg, QueryMsg, RouteResponse,
-    RoutesResponse,
+    RoutesResponse, SwapperRoute,
 };
 
 use crate::{ContractError, ContractResult, Route};
@@ -87,7 +87,8 @@ where
                 coin_in,
                 denom_out,
                 slippage,
-            } => self.swap_exact_in(deps, env, info, coin_in, denom_out, slippage),
+                route,
+            } => self.swap_exact_in(deps, env, info, coin_in, denom_out, slippage, route),
             ExecuteMsg::TransferResult {
                 recipient,
                 denom_in,
@@ -102,7 +103,8 @@ where
             QueryMsg::EstimateExactInSwap {
                 coin_in,
                 denom_out,
-            } => to_binary(&self.estimate_exact_in_swap(deps, env, coin_in, denom_out)?),
+                route,
+            } => to_binary(&self.estimate_exact_in_swap(deps, env, coin_in, denom_out, route)?),
             QueryMsg::Route {
                 denom_in,
                 denom_out,
@@ -150,8 +152,10 @@ where
         env: Env,
         coin_in: Coin,
         denom_out: String,
+        route: SwapperRoute,
     ) -> ContractResult<EstimateExactInSwapResponse> {
-        let route = self.get_route(deps, &coin_in.denom, &denom_out)?;
+        let route = R::from(route)?;
+        route.validate(&deps.querier, &coin_in.denom, &denom_out)?;
         route.estimate_exact_in_swap(&deps.querier, &env, &coin_in)
     }
 
@@ -163,6 +167,7 @@ where
         coin_in: Coin,
         denom_out: String,
         slippage: Decimal,
+        route: SwapperRoute,
     ) -> ContractResult<Response<M>> {
         let max_slippage = Decimal::percent(MAX_SLIPPAGE_PERCENTAGE);
         if slippage > max_slippage {
@@ -172,14 +177,9 @@ where
             });
         }
 
-        let swap_msg = self
-            .routes
-            .load(deps.storage, (coin_in.denom.clone(), denom_out.clone()))
-            .map_err(|_| ContractError::NoRoute {
-                from: coin_in.denom.clone(),
-                to: denom_out.clone(),
-            })?
-            .build_exact_in_swap_msg(&deps.querier, &env, &coin_in, slippage)?;
+        let route = R::from(route)?;
+        route.validate(&deps.querier, &coin_in.denom, &denom_out)?;
+        let swap_msg = route.build_exact_in_swap_msg(&deps.querier, &env, &coin_in, slippage)?;
 
         // Check balance of result of swapper and send back result to sender
         let transfer_msg = CosmosMsg::Wasm(WasmMsg::Execute {

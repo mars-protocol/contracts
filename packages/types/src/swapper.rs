@@ -3,6 +3,41 @@ use cosmwasm_std::{Addr, Coin, Decimal, Uint128};
 use mars_owner::OwnerUpdate;
 
 #[cw_serde]
+pub enum SwapperRoute {
+    Astro(AstroportRoute),
+    Osmo(OsmosisRoute),
+}
+
+#[cw_serde]
+pub struct AstroportRoute {
+    /// The swap operations of the route
+    pub operations: Vec<SwapOperation>,
+    /// The astroport router contract address
+    pub router: String,
+    /// The astroport factory contract address
+    pub factory: String,
+    /// The mars wasm oracle contract address
+    pub oracle: String,
+}
+
+#[cw_serde]
+pub struct SwapOperation {
+    /// Asset to swap from
+    pub from: String,
+    /// Asset to swap to
+    pub to: String,
+}
+
+#[cw_serde]
+pub struct OsmosisRoute(pub Vec<SwapAmountInRoute>);
+
+#[cw_serde]
+pub struct SwapAmountInRoute {
+    pub pool_id: u64,
+    pub token_out_denom: String,
+}
+
+#[cw_serde]
 pub struct InstantiateMsg {
     /// The contract's owner, who can update config
     pub owner: String,
@@ -26,6 +61,7 @@ pub enum ExecuteMsg<Route> {
         coin_in: Coin,
         denom_out: String,
         slippage: Decimal,
+        route: SwapperRoute,
     },
     /// Send swapper results back to swapper. Also refunds extra if sent more than needed. Internal use only.
     TransferResult {
@@ -59,6 +95,7 @@ pub enum QueryMsg {
     EstimateExactInSwap {
         coin_in: Coin,
         denom_out: String,
+        route: SwapperRoute,
     },
 }
 

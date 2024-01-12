@@ -1,7 +1,7 @@
 use cosmwasm_schema::cw_serde;
 use cosmwasm_std::{to_binary, Addr, Api, Coin, CosmosMsg, Decimal, Empty, StdResult, WasmMsg};
 
-use crate::swapper::ExecuteMsg;
+use crate::swapper::{ExecuteMsg, SwapperRoute};
 
 #[cw_serde]
 pub struct SwapperBase<T>(T);
@@ -38,6 +38,7 @@ impl Swapper {
         coin_in: &Coin,
         denom_out: &str,
         slippage: Decimal,
+        route: SwapperRoute,
     ) -> StdResult<CosmosMsg> {
         Ok(CosmosMsg::Wasm(WasmMsg::Execute {
             contract_addr: self.address().to_string(),
@@ -45,6 +46,7 @@ impl Swapper {
                 coin_in: coin_in.clone(),
                 denom_out: denom_out.to_string(),
                 slippage,
+                route,
             })?,
             funds: vec![coin_in.clone()],
         }))

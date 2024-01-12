@@ -7,7 +7,10 @@ use cosmwasm_std::{
     StdResult, Uint128, WasmMsg, WasmQuery,
 };
 use mars_swapper_base::{ContractError, ContractResult, Route};
-use mars_types::{oracle::PriceResponse, swapper::EstimateExactInSwapResponse};
+use mars_types::{
+    oracle::PriceResponse,
+    swapper::{EstimateExactInSwapResponse, SwapperRoute},
+};
 
 use crate::helpers::hashset;
 
@@ -100,6 +103,30 @@ impl AstroportRoute {
 }
 
 impl Route<Empty, Empty> for AstroportRoute {
+    fn from(route: SwapperRoute) -> ContractResult<Self> {
+        match route {
+            SwapperRoute::Astro(route) => {
+                let operations: Vec<_> = route
+                    .operations
+                    .into_iter()
+                    .map(|op| SwapOperation::NativeSwap {
+                        offer_denom: op.from,
+                        ask_denom: op.to,
+                    })
+                    .collect();
+                Ok(Self {
+                    operations,
+                    router: route.router,
+                    factory: route.factory,
+                    oracle: route.oracle,
+                })
+            }
+            SwapperRoute::Osmo(_) => Err(ContractError::InvalidRoute {
+                reason: "OsmosisRoute not supported".to_string(),
+            }),
+        }
+    }
+
     // Perform basic validation of the swap steps
     fn validate(
         &self,

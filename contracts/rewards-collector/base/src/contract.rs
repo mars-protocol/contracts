@@ -11,6 +11,7 @@ use mars_types::{
     rewards_collector::{
         Config, ConfigResponse, ExecuteMsg, InstantiateMsg, QueryMsg, UpdateConfig,
     },
+    swapper::SwapperRoute,
 };
 use mars_utils::helpers::option_string_to_addr;
 
@@ -97,7 +98,8 @@ where
             ExecuteMsg::SwapAsset {
                 denom,
                 amount,
-            } => self.swap_asset(deps, env, denom, amount),
+                route,
+            } => self.swap_asset(deps, env, denom, amount, route),
             ExecuteMsg::ClaimIncentiveRewards {
                 start_after_collateral_denom,
                 start_after_incentive_denom,
@@ -273,6 +275,7 @@ where
         env: Env,
         denom: String,
         amount: Option<Uint128>,
+        route: SwapperRoute,
     ) -> ContractResult<Response<M>> {
         let cfg = self.config.load(deps.storage)?;
 
@@ -303,6 +306,7 @@ where
                     coin_in: coin_in_safety_fund.clone(),
                     denom_out: cfg.safety_fund_denom,
                     slippage: cfg.slippage_tolerance,
+                    route: route.clone(), // FIXME: different routes for rewards
                 })?,
                 funds: vec![coin_in_safety_fund],
             });
@@ -318,6 +322,7 @@ where
                     coin_in: coin_in_fee_collector.clone(),
                     denom_out: cfg.fee_collector_denom,
                     slippage: cfg.slippage_tolerance,
+                    route,
                 })?,
                 funds: vec![coin_in_fee_collector],
             });

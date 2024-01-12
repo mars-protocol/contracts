@@ -1,7 +1,7 @@
 use std::fmt::{Debug, Display};
 
 use cosmwasm_std::{Coin, CosmosMsg, CustomMsg, CustomQuery, Decimal, Env, QuerierWrapper};
-use mars_types::swapper::EstimateExactInSwapResponse;
+use mars_types::swapper::{EstimateExactInSwapResponse, SwapperRoute};
 use schemars::JsonSchema;
 use serde::{de::DeserializeOwned, Serialize};
 
@@ -13,6 +13,8 @@ where
     M: CustomMsg,
     Q: CustomQuery,
 {
+    fn from(route: SwapperRoute) -> ContractResult<Self>;
+
     /// Determine whether the route is valid, given a pair of input and output denoms
     fn validate(
         &self,
