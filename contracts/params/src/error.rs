@@ -1,4 +1,5 @@
 use cosmwasm_std::{DecimalRangeExceeded, StdError};
+use cw2::VersionError;
 use mars_owner::OwnerError;
 use mars_types::error::MarsError;
 use mars_utils::error::ValidationError;
@@ -22,4 +23,7 @@ pub enum ContractError {
 
     #[error("{0}")]
     Mars(#[from] MarsError),
+
+    #[error("{0}")]
+    Version(#[from] VersionError),
 }
