@@ -46,18 +46,16 @@ A bug bounty is currently open for these contracts. See details [here][2].
 
 ## Environment set up
 
-- Install [rustup][4]. Once installed, make sure you have the wasm32 target:
-
-  ```bash
-  rustup default stable
-  rustup update stable
-  rustup target add wasm32-unknown-unknown
-  ```
-
-- Install [cargo-make][5]
+- Install [cargo-make][4]
 
   ```bash
   cargo install --force cargo-make
+  ```
+
+- Install [rust][5]
+
+  ```bash
+  cargo make install-stable
   ```
 
 - Install [Docker][6]
@@ -135,6 +133,8 @@ cargo make clippy
 ```
 
 ## Testing
+
+Install [Go][38]. It is used by [osmosis-test-tube][39] dependency.
 
 Integration tests (task `integration-test` or `test`) use `.wasm` files. They have to be generated with `cargo make build`.
 
@@ -226,8 +226,8 @@ Contents of this repository are open source under [GNU General Public License v3
 [1]: https://github.com/mars-protocol/mars-audits
 [2]: https://immunefi.com/bounty/mars/
 [3]: https://docs.osmosis.zone/osmosis-core/osmosisd/
-[4]: https://rustup.rs/
-[5]: https://github.com/sagiegurari/cargo-make
+[4]: https://github.com/sagiegurari/cargo-make
+[5]: https://rustup.rs/
 [6]: https://docs.docker.com/get-docker/
 [7]: https://github.com/nvm-sh/nvm
 [8]: https://classic.yarnpkg.com/lang/en/docs/install/#mac-stable
@@ -260,3 +260,5 @@ Contents of this repository are open source under [GNU General Public License v3
 [35]: https://neutron.celat.one/pion-1/contracts/neutron16xdh5w4dynfjrvnfuhv9h2znks94fyt4gp448jhtmjs3xd6smjvqumh9x2
 [36]: https://www.mintscan.io/mars-protocol/accounts/mars17xpfvakm2amg962yls6f84z3kell8c5ldy6e7x
 [37]: https://www.mintscan.io/mars-protocol/accounts/mars1s4hgh56can3e33e0zqpnjxh0t5wdf7u3pze575
+[38]: https://go.dev/
+[39]: https://github.com/osmosis-labs/test-tube
