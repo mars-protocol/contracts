@@ -19,8 +19,8 @@ use mars_types::swapper::InstantiateMsg;
 const CONTRACT_NAME: &str = env!("CARGO_PKG_NAME");
 
 pub fn wasm_file() -> String {
-    let artifacts_dir = std::env::var("ARTIFACTS_DIR_PATH")
-        .unwrap_or_else(|_| "target/wasm32-unknown-unknown/release".to_string());
+    let artifacts_dir =
+        std::env::var("ARTIFACTS_DIR_PATH").unwrap_or_else(|_| "artifacts".to_string());
     let snaked_name = CONTRACT_NAME.replace('-', "_");
     format!("../../../{artifacts_dir}/{snaked_name}.wasm")
 }
