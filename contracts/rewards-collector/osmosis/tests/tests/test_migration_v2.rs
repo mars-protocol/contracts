@@ -1,4 +1,4 @@
-use cosmwasm_std::{attr, testing::mock_env, Addr, Decimal, Empty, Event};
+use cosmwasm_std::{attr, testing::mock_env, Addr, Decimal, Event};
 use cw2::{ContractVersion, VersionError};
 use mars_rewards_collector_base::ContractError;
 use mars_rewards_collector_osmosis::{
@@ -6,13 +6,14 @@ use mars_rewards_collector_osmosis::{
     migrations::v2_0_0::v1_state::{self, OwnerSetNoneProposed},
 };
 use mars_testing::mock_dependencies;
+use mars_types::rewards_collector::MigrateMsg;
 
 #[test]
 fn wrong_contract_name() {
     let mut deps = mock_dependencies(&[]);
     cw2::set_contract_version(deps.as_mut().storage, "contract_xyz", "1.0.0").unwrap();
 
-    let err = migrate(deps.as_mut(), mock_env(), Empty {}).unwrap_err();
+    let err = migrate(deps.as_mut(), mock_env(), MigrateMsg::V1_0_0ToV2_0_0 {}).unwrap_err();
 
     assert_eq!(
         err,
@@ -33,7 +34,7 @@ fn wrong_contract_version() {
     )
     .unwrap();
 
-    let err = migrate(deps.as_mut(), mock_env(), Empty {}).unwrap_err();
+    let err = migrate(deps.as_mut(), mock_env(), MigrateMsg::V1_0_0ToV2_0_0 {}).unwrap_err();
 
     assert_eq!(
         err,
@@ -77,19 +78,19 @@ fn successful_migration() {
     };
     v1_state::CONFIG.save(deps.as_mut().storage, &v1_config).unwrap();
 
-    let res = migrate(deps.as_mut(), mock_env(), Empty {}).unwrap();
+    let res = migrate(deps.as_mut(), mock_env(), MigrateMsg::V1_0_0ToV2_0_0 {}).unwrap();
 
     assert_eq!(res.messages, vec![]);
     assert_eq!(res.events, vec![] as Vec<Event>);
     assert!(res.data.is_none());
     assert_eq!(
         res.attributes,
-        vec![attr("action", "migrate"), attr("from_version", "1.0.0"), attr("to_version", "2.0.0")]
+        vec![attr("action", "migrate"), attr("from_version", "1.0.0"), attr("to_version", "2.0.1")] // to_version should be 2.0.0 but because of global current version in Cargo.toml is different
     );
 
     let new_contract_version = ContractVersion {
         contract: "crates.io:mars-rewards-collector-osmosis".to_string(),
-        version: "2.0.0".to_string(),
+        version: "2.0.1".to_string(), // should be 2.0.0 but global current version in Cargo.toml is different
     };
     assert_eq!(cw2::get_contract_version(deps.as_ref().storage).unwrap(), new_contract_version);
 
@@ -110,4 +111,31 @@ fn successful_migration() {
     assert_eq!(v1_config.timeout_seconds, config.timeout_seconds);
     assert_eq!(v1_config.slippage_tolerance, config.slippage_tolerance);
     assert!(config.neutron_ibc_config.is_none());
+}
+
+#[test]
+fn successful_migration_to_v2_0_2() {
+    let mut deps = mock_dependencies(&[]);
+    cw2::set_contract_version(
+        deps.as_mut().storage,
+        "crates.io:mars-rewards-collector-osmosis",
+        "2.0.0",
+    )
+    .unwrap();
+
+    let res = migrate(deps.as_mut(), mock_env(), MigrateMsg::V2_0_0ToV2_0_1 {}).unwrap();
+
+    assert_eq!(res.messages, vec![]);
+    assert_eq!(res.events, vec![] as Vec<Event>);
+    assert!(res.data.is_none());
+    assert_eq!(
+        res.attributes,
+        vec![attr("action", "migrate"), attr("from_version", "2.0.0"), attr("to_version", "2.0.1")]
+    );
+
+    let new_contract_version = ContractVersion {
+        contract: "crates.io:mars-rewards-collector-osmosis".to_string(),
+        version: "2.0.1".to_string(),
+    };
+    assert_eq!(cw2::get_contract_version(deps.as_ref().storage).unwrap(), new_contract_version);
 }

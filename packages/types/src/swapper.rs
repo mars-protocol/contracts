@@ -118,3 +118,9 @@ pub type RoutesResponse<Route> = Vec<RouteResponse<Route>>;
 pub struct EstimateExactInSwapResponse {
     pub amount: Uint128,
 }
+
+#[cw_serde]
+pub enum MigrateMsg {
+    V1_0_0ToV2_0_0 {},
+    V2_0_0ToV2_0_1 {},
+}
