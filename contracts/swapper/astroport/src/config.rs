@@ -1,5 +1,6 @@
 use cosmwasm_schema::cw_serde;
-use mars_swapper_base::Config;
+use cosmwasm_std::Api;
+use mars_swapper_base::{Config, ContractResult};
 
 #[cw_serde]
 pub struct AstroportConfig {
@@ -11,4 +12,12 @@ pub struct AstroportConfig {
     pub oracle: String,
 }
 
-impl Config for AstroportConfig {}
+impl Config for AstroportConfig {
+    fn validate(&self, api: &dyn Api) -> ContractResult<()> {
+        api.addr_validate(&self.router)?;
+        api.addr_validate(&self.factory)?;
+        api.addr_validate(&self.oracle)?;
+
+        Ok(())
+    }
+}

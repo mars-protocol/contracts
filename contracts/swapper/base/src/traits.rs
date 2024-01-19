@@ -1,6 +1,6 @@
 use std::fmt::{Debug, Display};
 
-use cosmwasm_std::{Coin, CosmosMsg, CustomMsg, CustomQuery, Decimal, Env, QuerierWrapper};
+use cosmwasm_std::{Api, Coin, CosmosMsg, CustomMsg, CustomQuery, Decimal, Env, QuerierWrapper};
 use mars_types::swapper::{EstimateExactInSwapResponse, SwapperRoute};
 use schemars::JsonSchema;
 use serde::{de::DeserializeOwned, Serialize};
@@ -42,4 +42,6 @@ where
     ) -> ContractResult<EstimateExactInSwapResponse>;
 }
 
-pub trait Config: Serialize + DeserializeOwned + Clone + Debug + PartialEq + JsonSchema {}
+pub trait Config: Serialize + DeserializeOwned + Clone + Debug + PartialEq + JsonSchema {
+    fn validate(&self, api: &dyn Api) -> ContractResult<()>;
+}

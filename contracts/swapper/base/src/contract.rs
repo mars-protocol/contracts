@@ -323,6 +323,7 @@ where
     ) -> ContractResult<Response<M>> {
         self.owner.assert_owner(deps.storage, &info.sender)?;
 
+        config.validate(deps.api)?;
         self.config.save(deps.storage, &config)?;
 
         Ok(Response::new().add_attribute("action", "rover/base/update_config"))
