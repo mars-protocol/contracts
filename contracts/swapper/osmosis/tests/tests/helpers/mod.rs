@@ -19,8 +19,8 @@ use mars_types::swapper::InstantiateMsg;
 const CONTRACT_NAME: &str = env!("CARGO_PKG_NAME");
 
 pub fn wasm_file() -> String {
-    let artifacts_dir =
-        std::env::var("ARTIFACTS_DIR_PATH").unwrap_or_else(|_| "artifacts".to_string());
+    let artifacts_dir = std::env::var("ARTIFACTS_DIR_PATH")
+        .unwrap_or_else(|_| "target/wasm32-unknown-unknown/release".to_string());
     let snaked_name = CONTRACT_NAME.replace('-', "_");
     format!("../../../{artifacts_dir}/{snaked_name}.wasm")
 }
@@ -49,7 +49,8 @@ pub fn instantiate_contract(wasm: &Wasm<OsmosisTestApp>, owner: &SigningAccount)
 ///
 /// We need to swap n times to pass TWAP_WINDOW_SIZE_SECONDS (10 min). Every swap moves block 5 sec so
 /// n = TWAP_WINDOW_SIZE_SECONDS / 5 sec = 600 sec / 5 sec = 120.
-/// We need to swap at least 120 times to create historical index for TWAP.
+/// We need to swap at least 120 times to create historical index for TWAP. We set to 122 to be sure that no
+/// errors will occur.
 pub fn swap_to_create_twap_records(
     app: &OsmosisTestApp,
     signer: &SigningAccount,
@@ -138,7 +139,6 @@ pub fn assert_err(actual: RunnerError, expected: impl Display) {
         RunnerError::QueryError {
             msg,
         } => {
-            println!("{}", msg);
             assert!(msg.contains(&format!("{expected}")))
         }
         _ => panic!("Unhandled error"),
