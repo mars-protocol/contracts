@@ -2,7 +2,7 @@ use std::{cmp::Ordering, fmt};
 
 use astroport::{factory::PairType, pair::TWAP_PRECISION, querier::simulate};
 use cosmwasm_schema::cw_serde;
-use cosmwasm_std::{Addr, Decimal, Deps, Empty, Env, Uint128};
+use cosmwasm_std::{Addr, Decimal, Decimal256, Deps, Empty, Env, Uint128};
 use cw_storage_plus::Map;
 use mars_oracle_base::{
     ContractError::{self},
@@ -20,6 +20,10 @@ use crate::{
     },
     state::{ASTROPORT_FACTORY, ASTROPORT_TWAP_SNAPSHOTS},
 };
+
+/// TWAP constant for external oracle prices (copied from https://github.com/astroport-fi/astroport-core/blob/v2.9.5/contracts/pair_concentrated/src/consts.rs#L28)
+// pub const TWAP_PRECISION_DEC: Decimal256 = Decimal256::raw((1e6 * 1e18) as u128);
+pub const TWAP_PRECISION_UINT: Uint128 = Uint128::new((1e6 * 1e18) as u128);
 
 #[cw_serde]
 pub enum WasmPriceSource<A> {
@@ -413,6 +417,26 @@ fn query_astroport_twap_price(
             let offer_simulation_amount = Uint128::from(10_u128.pow(offer_decimals.into()));
 
             Decimal::from_ratio(price_delta, offer_simulation_amount.checked_mul(period.into())?)
+        }
+        PairType::Custom(ref custom) if custom == "concentrated" => {
+            // TODO: why not use TWAP_PRECISION_UINT here?
+            // Decimal::from_ratio(price_delta, TWAP_PRECISION_UINT.checked_mul(period.into())?)
+
+            // Get the number of decimals of offer and ask denoms
+            let pair_denoms = get_astroport_pair_denoms(&pair_info)?;
+            let other_pair_denom = get_other_astroport_pair_denom(&pair_denoms, denom)?;
+            let astroport_factory = ASTROPORT_FACTORY.load(deps.storage)?;
+            let offer_decimals = query_token_precision(&deps.querier, &astroport_factory, denom)?;
+            let ask_decimals =
+                query_token_precision(&deps.querier, &astroport_factory, &other_pair_denom)?;
+            let decimals_precision = Decimal::from_ratio(
+                Uint128::from(10_u128.pow(ask_decimals.into())),
+                Uint128::from(10_u128.pow(offer_decimals.into())),
+            );
+
+            let price_precision = Uint128::from(10_u128.pow(TWAP_PRECISION.into()));
+            Decimal::from_ratio(price_delta, price_precision.checked_mul(period.into())?)
+                .checked_mul(decimals_precision)?
         }
         PairType::Custom(_) => return Err(ContractError::InvalidPairType {}),
     };

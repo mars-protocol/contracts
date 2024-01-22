@@ -88,7 +88,7 @@ wasm-bindgen       = "0.2.87"
 
 # dev-dependencies
 cw-multi-test     = "0.17.0"
-cw-it             = "0.2.1"
+cw-it             = "0.2.3"
 osmosis-test-tube = "19.2.0"
 proptest          = "1.2.0"
 test-case         = "3.2.1"
