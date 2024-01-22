@@ -1,8 +1,8 @@
 use std::{cmp::Ordering, fmt};
 
-use astroport::{factory::PairType, pair::TWAP_PRECISION, querier::simulate};
+use astroport::{asset::PairInfo, factory::PairType, pair::TWAP_PRECISION, querier::simulate};
 use cosmwasm_schema::cw_serde;
-use cosmwasm_std::{Addr, Decimal, Decimal256, Deps, Empty, Env, Uint128};
+use cosmwasm_std::{Addr, Decimal, Deps, Empty, Env, Uint128};
 use cw_storage_plus::Map;
 use mars_oracle_base::{
     ContractError::{self},
@@ -21,9 +21,7 @@ use crate::{
     state::{ASTROPORT_FACTORY, ASTROPORT_TWAP_SNAPSHOTS},
 };
 
-/// TWAP constant for external oracle prices (copied from https://github.com/astroport-fi/astroport-core/blob/v2.9.5/contracts/pair_concentrated/src/consts.rs#L28)
-// pub const TWAP_PRECISION_DEC: Decimal256 = Decimal256::raw((1e6 * 1e18) as u128);
-pub const TWAP_PRECISION_UINT: Uint128 = Uint128::new((1e6 * 1e18) as u128);
+pub const PRICE_PRECISION: Uint128 = Uint128::new(10_u128.pow(TWAP_PRECISION as u32));
 
 #[cw_serde]
 pub enum WasmPriceSource<A> {
@@ -374,9 +372,7 @@ fn query_astroport_twap_price(
         // For XYK we just need to divide by the TWAP_PRECISION as the number of decimals for each asset
         // is disregarded in the calculations.
         PairType::Xyk {} => {
-            let price_precision = Uint128::from(10_u128.pow(TWAP_PRECISION.into()));
-
-            Decimal::from_ratio(price_delta, price_precision.checked_mul(period.into())?)
+            Decimal::from_ratio(price_delta, PRICE_PRECISION.checked_mul(period.into())?)
         }
         // For StableSwap, the cumulative price is stored as a simulated swap of one unit of the
         // offer asset into the ask asset and then adjusted by the TWAP_PRECISION. So we need to
@@ -402,12 +398,7 @@ fn query_astroport_twap_price(
         // final price of 10^3 uosmo/uatom.
         PairType::Stable {} => {
             // Get the number of decimals of offer and ask denoms
-            let pair_denoms = get_astroport_pair_denoms(&pair_info)?;
-            let other_pair_denom = get_other_astroport_pair_denom(&pair_denoms, denom)?;
-            let astroport_factory = ASTROPORT_FACTORY.load(deps.storage)?;
-            let offer_decimals = query_token_precision(&deps.querier, &astroport_factory, denom)?;
-            let ask_decimals =
-                query_token_precision(&deps.querier, &astroport_factory, &other_pair_denom)?;
+            let (offer_decimals, ask_decimals) = get_precisions(deps, &pair_info, denom)?;
 
             // Adjust the precision of the price delta from TWAP_PRECISION to ask_decimals
             let price_delta = adjust_precision(price_delta, TWAP_PRECISION, ask_decimals)?;
@@ -419,29 +410,34 @@ fn query_astroport_twap_price(
             Decimal::from_ratio(price_delta, offer_simulation_amount.checked_mul(period.into())?)
         }
         PairType::Custom(ref custom) if custom == "concentrated" => {
-            // TODO: why not use TWAP_PRECISION_UINT here?
-            // Decimal::from_ratio(price_delta, TWAP_PRECISION_UINT.checked_mul(period.into())?)
-
             // Get the number of decimals of offer and ask denoms
-            let pair_denoms = get_astroport_pair_denoms(&pair_info)?;
-            let other_pair_denom = get_other_astroport_pair_denom(&pair_denoms, denom)?;
-            let astroport_factory = ASTROPORT_FACTORY.load(deps.storage)?;
-            let offer_decimals = query_token_precision(&deps.querier, &astroport_factory, denom)?;
-            let ask_decimals =
-                query_token_precision(&deps.querier, &astroport_factory, &other_pair_denom)?;
+            let (offer_decimals, ask_decimals) = get_precisions(deps, &pair_info, denom)?;
             let decimals_precision = Decimal::from_ratio(
                 Uint128::from(10_u128.pow(ask_decimals.into())),
                 Uint128::from(10_u128.pow(offer_decimals.into())),
             );
 
-            let price_precision = Uint128::from(10_u128.pow(TWAP_PRECISION.into()));
-            Decimal::from_ratio(price_delta, price_precision.checked_mul(period.into())?)
+            // price = (price_delta / period) * (10^ask_decimals / (10^TWAP_PRECISION * 10^offer_decimals))
+            Decimal::from_ratio(price_delta, PRICE_PRECISION.checked_mul(period.into())?)
                 .checked_mul(decimals_precision)?
         }
         PairType::Custom(_) => return Err(ContractError::InvalidPairType {}),
     };
 
     normalize_price(deps, env, config, price_sources, &pair_info, denom, price, kind)
+}
+
+fn get_precisions(
+    deps: &Deps,
+    pair_info: &PairInfo,
+    denom: &str,
+) -> Result<(u8, u8), ContractError> {
+    let pair_denoms = get_astroport_pair_denoms(pair_info)?;
+    let other_pair_denom = get_other_astroport_pair_denom(&pair_denoms, denom)?;
+    let astroport_factory = ASTROPORT_FACTORY.load(deps.storage)?;
+    let offer_decimals = query_token_precision(&deps.querier, &astroport_factory, denom)?;
+    let ask_decimals = query_token_precision(&deps.querier, &astroport_factory, &other_pair_denom)?;
+    Ok((offer_decimals, ask_decimals))
 }
 
 #[cfg(test)]
