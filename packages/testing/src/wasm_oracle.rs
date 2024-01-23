@@ -1,4 +1,8 @@
-use astroport::{factory::PairType, pair::StablePoolParams};
+use std::str::FromStr;
+
+use astroport::{
+    factory::PairType, pair::StablePoolParams, pair_concentrated::ConcentratedPoolParams,
+};
 use cosmwasm_std::{to_binary, Binary, Decimal, Empty, Uint128};
 #[cfg(feature = "osmosis-test-tube")]
 use cw_it::Artifact;
@@ -344,6 +348,22 @@ pub fn astro_init_params(pair_type: &PairType) -> Option<Binary> {
             })
             .unwrap(),
         ),
+        PairType::Custom(custom) if custom == "concentrated" => Some(
+            // {"amp":"500","gamma":"0.00000001","mid_fee":"0.0003","out_fee":"0.0045","fee_gamma":"0.3","repeg_profit_threshold":"0.00000001","min_price_scale_delta":"0.0000055","price_scale":"1.198144288063828944","ma_half_time":600,"track_asset_balances":false}
+            to_binary(&ConcentratedPoolParams {
+                amp: Decimal::from_atomics(500u128, 0).unwrap(),
+                gamma: Decimal::from_atomics(1u128, 8).unwrap(),
+                mid_fee: Decimal::from_atomics(3u128, 4).unwrap(),
+                out_fee: Decimal::from_atomics(45u128, 4).unwrap(),
+                fee_gamma: Decimal::from_atomics(3u128, 1).unwrap(),
+                repeg_profit_threshold: Decimal::from_atomics(1u128, 8).unwrap(),
+                min_price_scale_delta: Decimal::from_atomics(55u128, 7).unwrap(),
+                price_scale: Decimal::from_str("1.198144288063828944").unwrap(),
+                ma_half_time: 600u64,
+                track_asset_balances: Some(false),
+            })
+            .unwrap(),
+        ),
         _ => panic!("Unsupported pair type"),
     }
 }
@@ -374,7 +394,8 @@ pub fn validate_and_query_astroport_spot_price_source(
     register_second_price: bool,
     decimals: &[u8; 2],
 ) {
-    let runner = get_test_runner();
+    let owned_runner = get_test_runner();
+    let runner = owned_runner.as_ref();
     let admin = &runner.init_default_account().unwrap();
     let robot = WasmOracleTestRobot::new(&runner, get_contracts(&runner), admin, Some(base_denom));
 
@@ -430,7 +451,8 @@ pub fn validate_and_query_astroport_twap_price_source(
     initial_liq: &[u128; 2],
     decimals: &[u8; 2],
 ) {
-    let runner = get_test_runner();
+    let owned_runner = get_test_runner();
+    let runner = owned_runner.as_ref();
     let admin = &runner.init_default_account().unwrap();
     let robot = WasmOracleTestRobot::new(&runner, get_contracts(&runner), admin, Some(base_denom));
 

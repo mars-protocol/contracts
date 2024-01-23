@@ -43,7 +43,8 @@ mod helpers;
 
 #[test]
 fn test_contract_initialization() {
-    let runner = get_test_runner();
+    let owned_runner = get_test_runner();
+    let runner = owned_runner.as_ref();
     let admin = &runner.init_default_account().unwrap();
     let contract_map = get_contracts(&runner);
     let robot = setup_test(&runner, contract_map, admin, Some("USD"));
@@ -113,7 +114,8 @@ fn validate_fixed_price_source() {
 
 #[test]
 fn test_set_price_source_fixed() {
-    let runner = get_test_runner();
+    let owned_runner = get_test_runner();
+    let runner = owned_runner.as_ref();
     let admin = &runner.init_default_account().unwrap();
     let contract_map = get_contracts(&runner);
     let robot = setup_test(&runner, contract_map, admin, None);
@@ -131,7 +133,8 @@ fn test_set_price_source_fixed() {
 
 #[test]
 fn remove_price_source() {
-    let runner = get_test_runner();
+    let owned_runner = get_test_runner();
+    let runner = owned_runner.as_ref();
     let admin = &runner.init_default_account().unwrap();
     let robot = WasmOracleTestRobot::new(&runner, get_contracts(&runner), admin, None);
     let denom = "uusd";
@@ -148,7 +151,8 @@ fn remove_price_source() {
 
 #[test]
 fn test_query_fixed_price() {
-    let runner = get_test_runner();
+    let owned_runner = get_test_runner();
+    let runner = owned_runner.as_ref();
     let admin = &runner.init_default_account().unwrap();
     let robot = WasmOracleTestRobot::new(&runner, get_contracts(&runner), admin, None);
     let denom = "uusd";
@@ -164,7 +168,8 @@ fn test_query_fixed_price() {
 #[should_panic(expected = "cannot set price source for base denom")]
 /// base_denom is set in instantiate of the contract. You should not be able to change it.
 fn cannot_set_base_denom_price_source() {
-    let runner = get_test_runner();
+    let owned_runner = get_test_runner();
+    let runner = owned_runner.as_ref();
     let admin = &runner.init_default_account().unwrap();
     let robot = WasmOracleTestRobot::new(&runner, get_contracts(&runner), admin, Some("uusd"));
     let denom = "uusd";
@@ -222,6 +227,10 @@ pub fn test_validate_and_query_astroport_spot_price_source(
 #[test_case(PairType::Stable {}, &["uatom","uosmo"], "uosmo", None, false, 5, 213378, [100000000000000000000, 1000000000000000000], &[7,5]; "Stable, base_denom in pair, 6:4 decimals, adjusted 1:1 price")]
 #[test_case(PairType::Stable {}, &["uatom","uosmo"], "uosmo", None, false, 5, 1000, [1000000000000000000u128, 1000000000000000000000u128], &[5,9]; "Stable, base_denom in pair, 5:9 decimals, adjusted 1:1 price")]
 #[test_case(PairType::Stable {}, &["uatom","uosmo"], "uosmo", None, false, 5, 1000, [10000000000000000000000u128, 100000000000000000u128], &[10,5]; "Stable, base_denom in pair, 10:5 decimals, adjusted 1:1 price")]
+#[test_case(PairType::Custom("concentrated".to_string()), &["uatom","uosmo"], "uosmo", None, false, 5, 100, [145692686804, 175998046105], &[6,6]; "Concentrated, base_denom in pair")]
+#[test_case(PairType::Custom("concentrated".to_string()), &["uatom","uion"], "uosmo", Some(TWO), true, 5, 100, [145692686804, 175998046105], &[6,6]; "Concentrated, non-base asset in pair")]
+#[test_case(PairType::Custom("concentrated".to_string()), &["uatom","uosmo"], "USD", None, false, 5, 100, [145692686804, 175998046105], &[6,6] => panics "pair does not contain base denom and no price source is configured for the other denom"; "Concentrated, base_denom not in pair, no source for other asset")]
+#[test_case(PairType::Custom("concentrated".to_string()), &["uatom","uosmo"], "uosmo", None, false, 5, 100, [145692686804, 175998046105], &[6,8]; "Concentrated, base_denom in pair, 6:8 decimals")]
 fn test_validate_and_query_astroport_twap_price(
     pair_type: PairType,
     pair_denoms: &[&str; 2],
@@ -249,7 +258,8 @@ fn test_validate_and_query_astroport_twap_price(
 #[test]
 fn test_query_astroport_twap_price_with_only_one_snapshot() {
     let base_denom = "uosmo";
-    let runner = get_test_runner();
+    let owned_runner = get_test_runner();
+    let runner = owned_runner.as_ref();
     let admin = &runner.init_default_account().unwrap();
     let robot = WasmOracleTestRobot::new(&runner, get_contracts(&runner), admin, Some(base_denom));
 
@@ -295,7 +305,8 @@ fn test_query_astroport_twap_price_with_only_one_snapshot() {
 #[test]
 #[should_panic]
 fn record_twap_snapshots_errors_on_non_twap_price_source() {
-    let runner = get_test_runner();
+    let owned_runner = get_test_runner();
+    let runner = owned_runner.as_ref();
     let admin = &runner.init_default_account().unwrap();
     let robot = WasmOracleTestRobot::new(&runner, get_contracts(&runner), admin, None);
 
@@ -306,7 +317,8 @@ fn record_twap_snapshots_errors_on_non_twap_price_source() {
 
 #[test]
 fn record_twap_snapshot_does_not_save_when_less_than_tolerance_ago() {
-    let runner = get_test_runner();
+    let owned_runner = get_test_runner();
+    let runner = owned_runner.as_ref();
     let admin = &runner.init_default_account().unwrap();
     let robot = WasmOracleTestRobot::new(&runner, get_contracts(&runner), admin, Some("uosmo"));
 
@@ -340,10 +352,11 @@ fn record_twap_snapshot_does_not_save_when_less_than_tolerance_ago() {
 
 #[test]
 fn querying_pyth_price_if_publish_price_too_old() {
-    let runner = get_test_runner();
+    let owned_runner = get_test_runner();
+    let runner = owned_runner.as_ref();
     let robot = WasmOracleTestRobot::new(
         &runner,
-        get_contracts(&get_test_runner()),
+        get_contracts(&runner),
         &get_test_runner().init_default_account().unwrap(),
         None,
     );
@@ -419,10 +432,11 @@ fn querying_pyth_price_if_publish_price_too_old() {
 
 #[test]
 fn querying_pyth_price_if_signed() {
-    let runner = get_test_runner();
+    let owned_runner = get_test_runner();
+    let runner = owned_runner.as_ref();
     let robot = WasmOracleTestRobot::new(
         &runner,
-        get_contracts(&get_test_runner()),
+        get_contracts(&runner),
         &get_test_runner().init_default_account().unwrap(),
         None,
     );
@@ -495,10 +509,11 @@ fn querying_pyth_price_if_signed() {
 
 #[test]
 fn querying_pyth_price_successfully() {
-    let runner = get_test_runner();
+    let owned_runner = get_test_runner();
+    let runner = owned_runner.as_ref();
     let robot = WasmOracleTestRobot::new(
         &runner,
-        get_contracts(&get_test_runner()),
+        get_contracts(&runner),
         &get_test_runner().init_default_account().unwrap(),
         None,
     );
@@ -602,10 +617,11 @@ fn querying_pyth_price_successfully() {
 
 #[test]
 fn setting_price_source_pyth_if_missing_usd() {
-    let runner = get_test_runner();
+    let owned_runner = get_test_runner();
+    let runner = owned_runner.as_ref();
     let robot = WasmOracleTestRobot::new(
         &runner,
-        get_contracts(&get_test_runner()),
+        get_contracts(&runner),
         &get_test_runner().init_default_accounts().unwrap()[0],
         None,
     );
@@ -642,9 +658,10 @@ fn setting_price_source_pyth_if_missing_usd() {
 
 #[test]
 fn twap_window_size_not_gt_tolerance() {
-    let runner = get_test_runner();
+    let owned_runner = get_test_runner();
+    let runner = owned_runner.as_ref();
     let admin = &runner.init_default_accounts().unwrap()[0];
-    let robot = WasmOracleTestRobot::new(&runner, get_contracts(&get_test_runner()), admin, None);
+    let robot = WasmOracleTestRobot::new(&runner, get_contracts(&runner), admin, None);
 
     let (pair_address, _) = robot.create_default_astro_pair(admin);
 

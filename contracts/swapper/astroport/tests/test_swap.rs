@@ -76,7 +76,8 @@ fn swap(
     }];
     let coin_in = coin(1000000, denom_in);
 
-    let runner = get_test_runner();
+    let owned_runner = get_test_runner();
+    let runner = owned_runner.as_ref();
     let initial_balance = Uint128::from(10000000000000000000000000u128);
     let admin = runner
         .init_account(&[
