@@ -25,23 +25,17 @@ jobs:
       - name: Install stable Rust
         run: cargo make install-stable
 
-      # selecting a toolchain should happen before the plugin, as the cache uses the current rustc version as its cache key
-      # - name: Cache dependencies
-      #   uses: Swatinem/rust-cache@v2
-
       # Artifacts used by tests
       - name: Compile workspace
-        run: cargo make build
+        run: |
+          cargo make build
+          find target/wasm32-unknown-unknown/release -type f ! -name '*.wasm' -delete
 
-      - name: Run test
-        run: cargo make test
+      - name: Run test coverage
+        run: cargo make coverage-lcov
 
-      # disabled because of "no space left" error.
-      # - name: Run test coverage
-      #   run: cargo make coverage-lcov
-
-      # - name: Upload coverage to Codecov
-      #   uses: codecov/codecov-action@v3
-      #   with:
-      #     token: ${{ secrets.CODECOV_TOKEN }}
-      #     files: target/coverage/lcov.info
+      - name: Upload coverage to Codecov
+        uses: codecov/codecov-action@v3
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+          files: target/coverage/lcov.info

@@ -46,12 +46,12 @@ cw2               = "1.1.0"
 cw-storage-plus   = "1.0.1"
 cw-utils          = "1.0.1"
 mars-owner        = { version = "1.2.0", features = ["emergency-owner"] }
-osmosis-std       = "0.16.1"
+osmosis-std       = "=0.19.2"
 prost             = { version = "0.11.5", default-features = false, features = ["prost-derive"] }
 schemars          = "0.8.12"
 serde             = { version = "1.0.163", default-features = false, features = ["derive"] }
 thiserror         = "1.0.40"
-pyth-sdk-cw        = "1.2.0"
+pyth-sdk-cw       = "1.2.0"
 cw-paginate       = "0.2.1"
 astroport         = "2.8.0"
 strum             = "0.24.1"
@@ -60,7 +60,7 @@ neutron-sdk       = "0.6.0"
 # dev-dependencies
 cw-multi-test     = "0.16.5"
 cw-it             = "0.2.3"
-osmosis-test-tube = "16.0.0"
+osmosis-test-tube = "=19.2.0"
 test-case         = "3.0.0"
 proptest          = "1.1.0"
 
