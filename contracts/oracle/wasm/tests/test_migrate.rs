@@ -1,6 +1,6 @@
 use std::collections::HashMap;
 
-use cosmwasm_std::{to_binary, CosmosMsg, Empty, WasmMsg};
+use cosmwasm_std::{to_json_binary, CosmosMsg, Empty, WasmMsg};
 use cw_it::{
     osmosis_std::types::cosmwasm::wasm::v1::MsgMigrateContractResponse, test_tube::Runner,
     traits::CwItRunner,
@@ -28,7 +28,7 @@ fn test_migrate_wasm_oracle() {
             &[CosmosMsg::Wasm(WasmMsg::Migrate {
                 contract_addr: robot.mars_oracle_contract_addr,
                 new_code_id,
-                msg: to_binary(&Empty {}).unwrap(),
+                msg: to_json_binary(&Empty {}).unwrap(),
             })],
             admin,
         )

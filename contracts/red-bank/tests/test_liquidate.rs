@@ -3,7 +3,7 @@ use std::cmp::min;
 use cosmwasm_std::{
     attr, coin, coins,
     testing::{mock_info, MockApi, MockStorage},
-    to_binary, Addr, BankMsg, Coin, CosmosMsg, Decimal, Deps, OwnedDeps, StdError, StdResult,
+    to_json_binary, Addr, BankMsg, Coin, CosmosMsg, Decimal, Deps, OwnedDeps, StdError, StdResult,
     SubMsg, Uint128, WasmMsg,
 };
 use cw_utils::PaymentError;
@@ -243,7 +243,7 @@ fn expected_messages(
     vec![
         SubMsg::new(WasmMsg::Execute {
             contract_addr: MarsAddressType::Incentives.to_string(),
-            msg: to_binary(&incentives::ExecuteMsg::BalanceChange {
+            msg: to_json_binary(&incentives::ExecuteMsg::BalanceChange {
                 user_addr: user_addr.clone(),
                 denom: collateral_market.denom.clone(),
                 user_amount_scaled_before: user_collateral_scaled,
@@ -254,7 +254,7 @@ fn expected_messages(
         }),
         SubMsg::new(WasmMsg::Execute {
             contract_addr: MarsAddressType::Incentives.to_string(),
-            msg: to_binary(&incentives::ExecuteMsg::BalanceChange {
+            msg: to_json_binary(&incentives::ExecuteMsg::BalanceChange {
                 user_addr: recipient_addr.clone(),
                 denom: collateral_market.denom.clone(),
                 user_amount_scaled_before: recipient_collateral_scaled,
@@ -265,7 +265,7 @@ fn expected_messages(
         }),
         SubMsg::new(WasmMsg::Execute {
             contract_addr: MarsAddressType::Incentives.to_string(),
-            msg: to_binary(&incentives::ExecuteMsg::BalanceChange {
+            msg: to_json_binary(&incentives::ExecuteMsg::BalanceChange {
                 user_addr: Addr::unchecked(MarsAddressType::RewardsCollector.to_string()),
                 denom: debt_market.denom.clone(),
                 user_amount_scaled_before: Uint128::zero(),

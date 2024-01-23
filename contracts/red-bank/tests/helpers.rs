@@ -2,7 +2,7 @@
 
 use cosmwasm_schema::serde;
 use cosmwasm_std::{
-    from_binary,
+    from_json,
     testing::{MockApi, MockStorage},
     Addr, Coin, Decimal, Deps, DepsMut, Event, OwnedDeps, Uint128,
 };
@@ -90,7 +90,7 @@ pub fn th_setup(contract_balances: &[Coin]) -> OwnedDeps<MockStorage, MockApi, M
 }
 
 pub fn th_query<T: serde::de::DeserializeOwned>(deps: Deps, msg: QueryMsg) -> T {
-    from_binary(&query(deps, mock_env(MockEnvParams::default()), msg).unwrap()).unwrap()
+    from_json(query(deps, mock_env(MockEnvParams::default()), msg).unwrap()).unwrap()
 }
 
 pub fn th_init_market(deps: DepsMut, denom: &str, market: &Market) -> Market {

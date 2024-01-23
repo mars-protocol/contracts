@@ -1,5 +1,5 @@
 use cosmwasm_std::{
-    coin, testing::mock_env, to_binary, CosmosMsg, Decimal, Empty, SubMsg, Uint128, WasmMsg,
+    coin, testing::mock_env, to_json_binary, CosmosMsg, Decimal, Empty, SubMsg, Uint128, WasmMsg,
 };
 use mars_red_bank_types::{
     rewards_collector::{ConfigResponse, ExecuteMsg, QueryMsg},
@@ -65,7 +65,7 @@ fn swapping_asset() {
 
     let swap_msg: CosmosMsg = WasmMsg::Execute {
         contract_addr: "swapper".to_string(),
-        msg: to_binary(&swapper::ExecuteMsg::<Empty>::SwapExactIn {
+        msg: to_json_binary(&swapper::ExecuteMsg::<Empty>::SwapExactIn {
             coin_in: coin(safety_fund_input.u128(), "uatom"),
             denom_out: cfg.safety_fund_denom.to_string(),
             slippage: cfg.slippage_tolerance,
@@ -78,7 +78,7 @@ fn swapping_asset() {
 
     let swap_msg: CosmosMsg = WasmMsg::Execute {
         contract_addr: "swapper".to_string(),
-        msg: to_binary(&swapper::ExecuteMsg::<Empty>::SwapExactIn {
+        msg: to_json_binary(&swapper::ExecuteMsg::<Empty>::SwapExactIn {
             coin_in: coin(fee_collector_input.u128(), "uatom"),
             denom_out: cfg.fee_collector_denom.to_string(),
             slippage: cfg.slippage_tolerance,
@@ -157,7 +157,7 @@ fn skipping_swap_if_denom_matches() {
     // min out amount: 926 * 0.1 * 0.5 * (1 - 0.03) = 44
     let swap_msg: CosmosMsg = WasmMsg::Execute {
         contract_addr: "swapper".to_string(),
-        msg: to_binary(&swapper::ExecuteMsg::<Empty>::SwapExactIn {
+        msg: to_json_binary(&swapper::ExecuteMsg::<Empty>::SwapExactIn {
             coin_in: coin(926u128, "uusdc"),
             denom_out: "umars".to_string(),
             slippage: mock_instantiate_msg().slippage_tolerance,

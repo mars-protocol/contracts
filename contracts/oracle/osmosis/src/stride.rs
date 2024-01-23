@@ -1,4 +1,6 @@
-use cosmwasm_std::{to_binary, Addr, Decimal, QuerierWrapper, QueryRequest, StdResult, WasmQuery};
+use cosmwasm_std::{
+    to_json_binary, Addr, Decimal, QuerierWrapper, QueryRequest, StdResult, WasmQuery,
+};
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
@@ -33,7 +35,7 @@ pub fn query_redemption_rate(
 ) -> StdResult<RedemptionRateResponse> {
     let redemption_rate_response = querier.query(&QueryRequest::Wasm(WasmQuery::Smart {
         contract_addr: contract_addr.into_string(),
-        msg: to_binary(&RedemptionRateRequest {
+        msg: to_json_binary(&RedemptionRateRequest {
             price: Price {
                 denom,
                 base_denom,

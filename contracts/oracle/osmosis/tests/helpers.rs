@@ -3,7 +3,7 @@
 use std::marker::PhantomData;
 
 use cosmwasm_std::{
-    coin, from_binary,
+    coin, from_json,
     testing::{mock_env, MockApi, MockQuerier, MockStorage},
     Coin, Deps, DepsMut, OwnedDeps,
 };
@@ -167,7 +167,7 @@ pub fn set_price_source(deps: DepsMut, denom: &str, price_source: OsmosisPriceSo
 }
 
 pub fn query<T: serde::de::DeserializeOwned>(deps: Deps, msg: QueryMsg) -> T {
-    from_binary(&entry::query(deps, mock_env(), msg).unwrap()).unwrap()
+    from_json(entry::query(deps, mock_env(), msg).unwrap()).unwrap()
 }
 
 pub fn query_err(deps: Deps, msg: QueryMsg) -> ContractError {
