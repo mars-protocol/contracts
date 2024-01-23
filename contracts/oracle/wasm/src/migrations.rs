@@ -9,10 +9,18 @@ pub mod v1_2_0 {
 
     pub fn migrate(deps: DepsMut) -> ContractResult<Response> {
         // make sure we're migrating the correct contract and from the correct version
-        cw2::assert_contract_version(deps.as_ref().storage, CONTRACT_NAME, FROM_VERSION)?;
+        cw2::assert_contract_version(
+            deps.storage,
+            &format!("crates.io:{CONTRACT_NAME}"),
+            FROM_VERSION,
+        )?;
 
         // update contract version
-        cw2::set_contract_version(deps.storage, CONTRACT_NAME, CONTRACT_VERSION)?;
+        cw2::set_contract_version(
+            deps.storage,
+            format!("crates.io:{CONTRACT_NAME}"),
+            CONTRACT_VERSION,
+        )?;
 
         Ok(Response::new()
             .add_attribute("action", "migrate")
@@ -30,7 +38,12 @@ pub mod v1_2_0 {
         fn migration_with_success() {
             let mut deps = mock_dependencies();
 
-            cw2::set_contract_version(deps.as_mut().storage, CONTRACT_NAME, FROM_VERSION).unwrap();
+            cw2::set_contract_version(
+                deps.as_mut().storage,
+                format!("crates.io:{CONTRACT_NAME}"),
+                FROM_VERSION,
+            )
+            .unwrap();
 
             let res = migrate(deps.as_mut()).unwrap();
             assert_eq!(res.messages, vec![]);
