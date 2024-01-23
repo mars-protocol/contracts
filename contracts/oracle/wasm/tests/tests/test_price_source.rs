@@ -228,6 +228,10 @@ pub fn test_validate_and_query_astroport_spot_price_source(
 #[test_case(PairType::Stable {}, &["uatom","uosmo"], "uosmo", None, false, 5, 213378, [100000000000000000000, 1000000000000000000], &[7,5]; "Stable, base_denom in pair, 6:4 decimals, adjusted 1:1 price")]
 #[test_case(PairType::Stable {}, &["uatom","uosmo"], "uosmo", None, false, 5, 1000, [1000000000000000000u128, 1000000000000000000000u128], &[5,9]; "Stable, base_denom in pair, 5:9 decimals, adjusted 1:1 price")]
 #[test_case(PairType::Stable {}, &["uatom","uosmo"], "uosmo", None, false, 5, 1000, [10000000000000000000000u128, 100000000000000000u128], &[10,5]; "Stable, base_denom in pair, 10:5 decimals, adjusted 1:1 price")]
+#[test_case(PairType::Custom("concentrated".to_string()), &["uatom","uosmo"], "uosmo", None, false, 5, 100, [145692686804, 175998046105], &[6,6]; "Concentrated, base_denom in pair")]
+#[test_case(PairType::Custom("concentrated".to_string()), &["uatom","uion"], "uosmo", Some(TWO), true, 5, 100, [145692686804, 175998046105], &[6,6]; "Concentrated, non-base asset in pair")]
+#[test_case(PairType::Custom("concentrated".to_string()), &["uatom","uosmo"], "USD", None, false, 5, 100, [145692686804, 175998046105], &[6,6] => panics "pair does not contain base denom and no price source is configured for the other denom"; "Concentrated, base_denom not in pair, no source for other asset")]
+#[test_case(PairType::Custom("concentrated".to_string()), &["uatom","uosmo"], "uosmo", None, false, 5, 100, [145692686804, 175998046105], &[6,8]; "Concentrated, base_denom in pair, 6:8 decimals")]
 fn test_validate_and_query_astroport_twap_price(
     pair_type: PairType,
     pair_denoms: &[&str; 2],
