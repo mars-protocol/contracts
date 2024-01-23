@@ -4,7 +4,7 @@ use mars_interest_rate::get_underlying_liquidity_amount;
 use mars_types::{
     address_provider::{self, MarsAddressType},
     params::{AssetParams, ConfigResponse, TotalDepositResponse, VaultConfig},
-    red_bank::{self, Market, UserDebtResponse},
+    red_bank::{self, Market},
 };
 
 use crate::state::{ADDRESS_PROVIDER, ASSET_PARAMS, VAULT_CONFIGS};
@@ -115,26 +115,13 @@ pub fn query_total_deposit(
         .transpose()?
         .unwrap_or_else(Uint128::zero);
 
-    // amount of debt in this asset the Credit Manager owes to Red Bank
-    // this query returns zero if no debt is owed
-    let cm_debt = deps
-        .querier
-        .query_wasm_smart::<UserDebtResponse>(
-            red_bank_addr,
-            &red_bank::QueryMsg::UserDebt {
-                user: credit_manager_addr.into(),
-                denom: denom.clone(),
-            },
-        )?
-        .amount;
-
     // amount of this asset deposited into Credit Manager
     // this is simply the coin balance of the CM contract
     // note that this way, we don't include LP tokens or vault positions
     let cm_deposit = deps.querier.query_balance(credit_manager_addr, &denom)?.amount;
 
     // total deposited amount
-    let amount = rb_deposit.checked_add(cm_deposit)?.checked_sub(cm_debt)?;
+    let amount = rb_deposit.checked_add(cm_deposit)?;
 
     // additionally, we include the deposit cap in the response
     let asset_params = ASSET_PARAMS.load(deps.storage, &denom)?;

@@ -46,18 +46,16 @@ A bug bounty is currently open for these contracts. See details [here][2].
 
 ## Environment set up
 
-- Install [rustup][4]. Once installed, make sure you have the wasm32 target:
-
-  ```bash
-  rustup default stable
-  rustup update stable
-  rustup target add wasm32-unknown-unknown
-  ```
-
-- Install [cargo-make][5]
+- Install [cargo-make][4]
 
   ```bash
   cargo install --force cargo-make
+  ```
+
+- Install [rust][5]
+
+  ```bash
+  cargo make install-stable
   ```
 
 - Install [Docker][6]
@@ -136,6 +134,8 @@ cargo make clippy
 
 ## Testing
 
+Install [Go][38]. It is used by [osmosis-test-tube][39] dependency.
+
 Integration tests (task `integration-test` or `test`) use `.wasm` files. They have to be generated with `cargo make build`.
 
 Run unit tests:
@@ -160,19 +160,19 @@ cargo make test
 
 ### osmosis-1
 
-| Contract               | Address                                                                 |
-| ---------------------- | ----------------------------------------------------------------------- |
-| mars-address-provider  | [`osmo1g677w7mfvn78eeudzwylxzlyz69fsgumqrscj6tekhdvs8fye3asufmvxr`][11] |
-| mars-account-nft       | [`osmo1450hrg6dv2l58c0rvdwx8ec2a0r6dd50hn4frk370tpvqjhy8khqw7sw09`][12] |
-| mars-credit-manager    | [`osmo1f2m24wktq0sw3c0lexlg7fv4kngwyttvzws3a3r3al9ld2s2pvds87jqvf`][13] |
-| mars-health            | [`osmo1pdc49qlyhpkzx4j24uuw97kk6hv7e9xvrdjlww8qj6al53gmu49sge4g79`][14] |
-| mars-incentives        | [`osmo1nkahswfr8shg8rlxqwup0vgahp0dk4x8w6tkv3rra8rratnut36sk22vrm`][15] |
-| mars-oracle            | [`osmo1mhznfr60vjdp2gejhyv2gax9nvyyzhd3z0qcwseyetkfustjauzqycsy2g`][16] |
-| mars-params            | [`osmo1nlmdxt9ctql2jr47qd4fpgzg84cjswxyw6q99u4y4u4q6c2f5ksq7ysent`][17] |
-| mars-red-bank          | [`osmo1c3ljch9dfw5kf52nfwpxd2zmj2ese7agnx0p9tenkrryasrle5sqf3ftpg`][18] |
-| mars-rewards-collector | [`osmo1urvqe5mw00ws25yqdd4c4hlh8kdyf567mpcml7cdve9w08z0ydcqvsrgdy`][19] |
-| mars-swapper           | [`osmo1wee0z8c7tcawyl647eapqs4a88q8jpa7ddy6nn2nrs7t47p2zhxswetwla`][20] |
-| mars-zapper            | [`osmo17qwvc70pzc9mudr8t02t3pl74hhqsgwnskl734p4hug3s8mkerdqzduf7c`][21] |
+| Contract               | Address                                                                 | Tag
+| ---------------------- | ----------------------------------------------------------------------- | --------------
+| mars-address-provider  | [`osmo1g677w7mfvn78eeudzwylxzlyz69fsgumqrscj6tekhdvs8fye3asufmvxr`][11] | [`v2.0.0`][40] |
+| mars-account-nft       | [`osmo1450hrg6dv2l58c0rvdwx8ec2a0r6dd50hn4frk370tpvqjhy8khqw7sw09`][12] | [`v2.0.0`][43] |
+| mars-credit-manager    | [`osmo1f2m24wktq0sw3c0lexlg7fv4kngwyttvzws3a3r3al9ld2s2pvds87jqvf`][13] | [`v2.0.2`][42] |
+| mars-health            | [`osmo1pdc49qlyhpkzx4j24uuw97kk6hv7e9xvrdjlww8qj6al53gmu49sge4g79`][14] | [`v2.0.0`][43] |
+| mars-incentives        | [`osmo1nkahswfr8shg8rlxqwup0vgahp0dk4x8w6tkv3rra8rratnut36sk22vrm`][15] | [`v2.0.0`][40] |
+| mars-oracle            | [`osmo1mhznfr60vjdp2gejhyv2gax9nvyyzhd3z0qcwseyetkfustjauzqycsy2g`][16] | [`v2.0.1`][41] |
+| mars-params            | [`osmo1nlmdxt9ctql2jr47qd4fpgzg84cjswxyw6q99u4y4u4q6c2f5ksq7ysent`][17] | [`v2.0.0`][40] |
+| mars-red-bank          | [`osmo1c3ljch9dfw5kf52nfwpxd2zmj2ese7agnx0p9tenkrryasrle5sqf3ftpg`][18] | [`v2.0.0`][40] |
+| mars-rewards-collector | [`osmo1urvqe5mw00ws25yqdd4c4hlh8kdyf567mpcml7cdve9w08z0ydcqvsrgdy`][19] | [`v2.0.0`][40] |
+| mars-swapper           | [`osmo1wee0z8c7tcawyl647eapqs4a88q8jpa7ddy6nn2nrs7t47p2zhxswetwla`][20] | [`v2.0.0`][40] |
+| mars-zapper            | [`osmo17qwvc70pzc9mudr8t02t3pl74hhqsgwnskl734p4hug3s8mkerdqzduf7c`][21] | [`v2.0.0`][43] |
 
 ### devnet (Osmosis)
 
@@ -192,14 +192,14 @@ cargo make test
 
 ### neutron-1
 
-| Contract                  | Address                                                                    |
-| ------------------------- | -------------------------------------------------------------------------- |
-| mars-address-provider     | [`neutron17yehp4x7n79zq9dlw4g7xmnrvwdjjj2yecq26844sg8yu74knlxqfx5vqv`][24] |
-| mars-incentives           | [`neutron1aszpdh35zsaz0yj80mz7f5dtl9zq5jfl8hgm094y0j0vsychfekqxhzd39`][25] |
-| mars-oracle               | [`neutron1dwp6m7pdrz6rnhdyrx5ha0acsduydqcpzkylvfgspsz60pj2agxqaqrr7g`][26] |
-| mars-red-bank             | [`neutron1n97wnm7q6d2hrcna3rqlnyqw2we6k0l8uqvmyqq6gsml92epdu7quugyph`][27] |
-| mars-rewards-collector    | [`neutron1h4l6rvylzcuxwdw3gzkkdzfjdxf4mv2ypfdgvnvag0dtz6x07gps6fl2vm`][28] |
-| mars-swapper              | [`neutron1udr9fc3kd743dezrj38v2ac74pxxr6qsx4xt4nfpcfczgw52rvyqyjp5au`][29] |
+| Contract                  | Address                                                                    | Tag
+| ------------------------- | -------------------------------------------------------------------------- | --------------
+| mars-address-provider     | [`neutron17yehp4x7n79zq9dlw4g7xmnrvwdjjj2yecq26844sg8yu74knlxqfx5vqv`][24] | [`v1.2.0`][44] |
+| mars-incentives           | [`neutron1aszpdh35zsaz0yj80mz7f5dtl9zq5jfl8hgm094y0j0vsychfekqxhzd39`][25] | [`v1.2.0`][44] |
+| mars-oracle               | [`neutron1dwp6m7pdrz6rnhdyrx5ha0acsduydqcpzkylvfgspsz60pj2agxqaqrr7g`][26] | [`v1.2.0`][44] |
+| mars-red-bank             | [`neutron1n97wnm7q6d2hrcna3rqlnyqw2we6k0l8uqvmyqq6gsml92epdu7quugyph`][27] | [`v1.2.0`][44] |
+| mars-rewards-collector    | [`neutron1h4l6rvylzcuxwdw3gzkkdzfjdxf4mv2ypfdgvnvag0dtz6x07gps6fl2vm`][28] | [`v1.2.0`][44] |
+| mars-swapper              | [`neutron1udr9fc3kd743dezrj38v2ac74pxxr6qsx4xt4nfpcfczgw52rvyqyjp5au`][29] | [`v1.2.0`][44] |
 
 ### pion-1 (Neutron)
 
@@ -226,8 +226,8 @@ Contents of this repository are open source under [GNU General Public License v3
 [1]: https://github.com/mars-protocol/mars-audits
 [2]: https://immunefi.com/bounty/mars/
 [3]: https://docs.osmosis.zone/osmosis-core/osmosisd/
-[4]: https://rustup.rs/
-[5]: https://github.com/sagiegurari/cargo-make
+[4]: https://github.com/sagiegurari/cargo-make
+[5]: https://rustup.rs/
 [6]: https://docs.docker.com/get-docker/
 [7]: https://github.com/nvm-sh/nvm
 [8]: https://classic.yarnpkg.com/lang/en/docs/install/#mac-stable
@@ -260,3 +260,10 @@ Contents of this repository are open source under [GNU General Public License v3
 [35]: https://neutron.celat.one/pion-1/contracts/neutron16xdh5w4dynfjrvnfuhv9h2znks94fyt4gp448jhtmjs3xd6smjvqumh9x2
 [36]: https://www.mintscan.io/mars-protocol/accounts/mars17xpfvakm2amg962yls6f84z3kell8c5ldy6e7x
 [37]: https://www.mintscan.io/mars-protocol/accounts/mars1s4hgh56can3e33e0zqpnjxh0t5wdf7u3pze575
+[38]: https://go.dev/
+[39]: https://github.com/osmosis-labs/test-tube
+[40]: https://github.com/mars-protocol/contracts/releases/tag/v2.0.0
+[41]: https://github.com/mars-protocol/contracts/releases/tag/v2.0.1
+[42]: https://github.com/mars-protocol/contracts/releases/tag/v2.0.2
+[43]: https://github.com/mars-protocol/rover/releases/tag/v2.0.0
+[44]: https://github.com/mars-protocol/contracts/releases/tag/v1.2.0

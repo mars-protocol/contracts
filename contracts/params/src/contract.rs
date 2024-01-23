@@ -1,6 +1,6 @@
 #[cfg(not(feature = "library"))]
 use cosmwasm_std::entry_point;
-use cosmwasm_std::{to_binary, Binary, Deps, DepsMut, Env, MessageInfo, Response};
+use cosmwasm_std::{to_binary, Binary, Deps, DepsMut, Empty, Env, MessageInfo, Response};
 use cw2::set_contract_version;
 use mars_owner::OwnerInit::SetInitialOwner;
 use mars_types::params::{
@@ -15,6 +15,7 @@ use crate::{
         assert_thf, update_asset_params, update_config, update_target_health_factor,
         update_vault_config,
     },
+    migrations,
     query::{
         query_all_asset_params, query_all_vault_configs, query_config, query_total_deposit,
         query_vault_config,
@@ -22,8 +23,8 @@ use crate::{
     state::{ADDRESS_PROVIDER, ASSET_PARAMS, OWNER, TARGET_HEALTH_FACTOR},
 };
 
-const CONTRACT_NAME: &str = env!("CARGO_PKG_NAME");
-const CONTRACT_VERSION: &str = env!("CARGO_PKG_VERSION");
+pub const CONTRACT_NAME: &str = env!("CARGO_PKG_NAME");
+pub const CONTRACT_VERSION: &str = env!("CARGO_PKG_VERSION");
 
 #[cfg_attr(not(feature = "library"), entry_point)]
 pub fn instantiate(
@@ -108,4 +109,9 @@ pub fn query(deps: Deps, env: Env, msg: QueryMsg) -> ContractResult<Binary> {
         } => to_binary(&query_total_deposit(deps, &env, denom)?),
     };
     res.map_err(Into::into)
+}
+
+#[cfg_attr(not(feature = "library"), entry_point)]
+pub fn migrate(deps: DepsMut, _env: Env, _msg: Empty) -> ContractResult<Response> {
+    migrations::v2_0_1::migrate(deps)
 }
