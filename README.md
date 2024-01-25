@@ -196,7 +196,7 @@ cargo make test
 | ------------------------- | -------------------------------------------------------------------------- | --------------
 | mars-address-provider     | [`neutron17yehp4x7n79zq9dlw4g7xmnrvwdjjj2yecq26844sg8yu74knlxqfx5vqv`][24] | [`v1.2.0`][44] |
 | mars-incentives           | [`neutron1aszpdh35zsaz0yj80mz7f5dtl9zq5jfl8hgm094y0j0vsychfekqxhzd39`][25] | [`v1.2.0`][44] |
-| mars-oracle               | [`neutron1dwp6m7pdrz6rnhdyrx5ha0acsduydqcpzkylvfgspsz60pj2agxqaqrr7g`][26] | [`v1.2.0`][44] |
+| mars-oracle               | [`neutron1dwp6m7pdrz6rnhdyrx5ha0acsduydqcpzkylvfgspsz60pj2agxqaqrr7g`][26] | [`v1.2.1`][45] |
 | mars-red-bank             | [`neutron1n97wnm7q6d2hrcna3rqlnyqw2we6k0l8uqvmyqq6gsml92epdu7quugyph`][27] | [`v1.2.0`][44] |
 | mars-rewards-collector    | [`neutron1h4l6rvylzcuxwdw3gzkkdzfjdxf4mv2ypfdgvnvag0dtz6x07gps6fl2vm`][28] | [`v1.2.0`][44] |
 | mars-swapper              | [`neutron1udr9fc3kd743dezrj38v2ac74pxxr6qsx4xt4nfpcfczgw52rvyqyjp5au`][29] | [`v1.2.0`][44] |
@@ -267,3 +267,4 @@ Contents of this repository are open source under [GNU General Public License v3
 [42]: https://github.com/mars-protocol/contracts/releases/tag/v2.0.2
 [43]: https://github.com/mars-protocol/rover/releases/tag/v2.0.0
 [44]: https://github.com/mars-protocol/contracts/releases/tag/v1.2.0
+[45]: https://github.com/mars-protocol/contracts/releases/tag/v1.2.1
