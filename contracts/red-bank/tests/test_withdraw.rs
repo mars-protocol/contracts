@@ -1,7 +1,7 @@
 use cosmwasm_std::{
     attr, coin, coins,
     testing::{mock_env, mock_info, MockApi, MockStorage},
-    to_binary, Addr, BankMsg, CosmosMsg, Decimal, OwnedDeps, SubMsg, Uint128, WasmMsg,
+    to_json_binary, Addr, BankMsg, CosmosMsg, Decimal, OwnedDeps, SubMsg, Uint128, WasmMsg,
 };
 use helpers::{
     has_collateral_position, set_collateral, th_build_interests_updated_event,
@@ -176,7 +176,7 @@ fn withdrawing_partially() {
         vec![
             SubMsg::new(WasmMsg::Execute {
                 contract_addr: MarsAddressType::Incentives.to_string(),
-                msg: to_binary(&incentives::ExecuteMsg::BalanceChange {
+                msg: to_json_binary(&incentives::ExecuteMsg::BalanceChange {
                     user_addr: Addr::unchecked(MarsAddressType::RewardsCollector.to_string()),
                     denom: denom.to_string(),
                     user_amount_scaled_before: Uint128::zero(),
@@ -187,7 +187,7 @@ fn withdrawing_partially() {
             }),
             SubMsg::new(WasmMsg::Execute {
                 contract_addr: MarsAddressType::Incentives.to_string(),
-                msg: to_binary(&incentives::ExecuteMsg::BalanceChange {
+                msg: to_json_binary(&incentives::ExecuteMsg::BalanceChange {
                     user_addr: withdrawer_addr.clone(),
                     denom: denom.to_string(),
                     user_amount_scaled_before: initial_deposit_amount_scaled,
@@ -292,7 +292,7 @@ fn withdrawing_completely() {
         vec![
             SubMsg::new(WasmMsg::Execute {
                 contract_addr: MarsAddressType::Incentives.to_string(),
-                msg: to_binary(&incentives::ExecuteMsg::BalanceChange {
+                msg: to_json_binary(&incentives::ExecuteMsg::BalanceChange {
                     user_addr: Addr::unchecked(MarsAddressType::RewardsCollector.to_string()),
                     denom: denom.to_string(),
                     user_amount_scaled_before: Uint128::zero(),
@@ -303,7 +303,7 @@ fn withdrawing_completely() {
             }),
             SubMsg::new(WasmMsg::Execute {
                 contract_addr: MarsAddressType::Incentives.to_string(),
-                msg: to_binary(&incentives::ExecuteMsg::BalanceChange {
+                msg: to_json_binary(&incentives::ExecuteMsg::BalanceChange {
                     user_addr: withdrawer_addr.clone(),
                     denom: denom.to_string(),
                     user_amount_scaled_before: withdrawer_balance_scaled,
@@ -400,7 +400,7 @@ fn withdrawing_to_another_user() {
         vec![
             SubMsg::new(WasmMsg::Execute {
                 contract_addr: MarsAddressType::Incentives.to_string(),
-                msg: to_binary(&incentives::ExecuteMsg::BalanceChange {
+                msg: to_json_binary(&incentives::ExecuteMsg::BalanceChange {
                     user_addr: Addr::unchecked(MarsAddressType::RewardsCollector.to_string()),
                     denom: denom.to_string(),
                     user_amount_scaled_before: Uint128::zero(),
@@ -411,7 +411,7 @@ fn withdrawing_to_another_user() {
             }),
             SubMsg::new(WasmMsg::Execute {
                 contract_addr: MarsAddressType::Incentives.to_string(),
-                msg: to_binary(&incentives::ExecuteMsg::BalanceChange {
+                msg: to_json_binary(&incentives::ExecuteMsg::BalanceChange {
                     user_addr: withdrawer_addr.clone(),
                     denom: denom.to_string(),
                     user_amount_scaled_before: withdrawer_balance_scaled,
@@ -686,7 +686,7 @@ fn withdrawing_if_health_factor_met() {
         vec![
             SubMsg::new(WasmMsg::Execute {
                 contract_addr: MarsAddressType::Incentives.to_string(),
-                msg: to_binary(&incentives::ExecuteMsg::BalanceChange {
+                msg: to_json_binary(&incentives::ExecuteMsg::BalanceChange {
                     user_addr: withdrawer_addr.clone(),
                     denom: denoms[2].to_string(),
                     user_amount_scaled_before: collaterals[2].amount_scaled,

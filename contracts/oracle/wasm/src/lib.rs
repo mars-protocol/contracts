@@ -1,6 +1,7 @@
 mod astroport_twap;
 pub mod contract;
 mod helpers;
+mod migrations;
 mod price_source;
 mod state;
 

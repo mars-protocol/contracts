@@ -1,7 +1,7 @@
 use std::str::FromStr;
 
 use cosmwasm_std::{
-    coin, from_binary,
+    coin, from_json,
     testing::{mock_env, MockApi, MockStorage},
     Decimal, OwnedDeps, StdError,
 };
@@ -473,7 +473,7 @@ fn querying_lsd_price() {
         },
     )
     .unwrap();
-    let res: PriceResponse = from_binary(&res).unwrap();
+    let res: PriceResponse = from_json(res).unwrap();
     let expected_price = ustatom_uatom_price * pyth_price;
     assert_eq!(res.price, expected_price);
 
@@ -513,7 +513,7 @@ fn querying_lsd_price() {
         },
     )
     .unwrap();
-    let res: PriceResponse = from_binary(&res).unwrap();
+    let res: PriceResponse = from_json(res).unwrap();
     let expected_price = ustatom_uatom_redemption_rate * pyth_price;
     assert_eq!(res.price, expected_price);
 }
@@ -771,7 +771,7 @@ fn querying_lsd_price_with_downtime_detector() {
         },
     )
     .unwrap();
-    let res: PriceResponse = from_binary(&res).unwrap();
+    let res: PriceResponse = from_json(res).unwrap();
     let expected_price = ustatom_uatom_price * pyth_price;
     assert_eq!(res.price, expected_price);
 }
@@ -1090,7 +1090,7 @@ fn querying_pyth_price_successfully() {
         },
     )
     .unwrap();
-    let res: PriceResponse = from_binary(&res).unwrap();
+    let res: PriceResponse = from_json(res).unwrap();
     assert_eq!(res.price, Decimal::from_ratio(1021000u128, 10000u128));
 
     // exp > 0
@@ -1123,7 +1123,7 @@ fn querying_pyth_price_successfully() {
         },
     )
     .unwrap();
-    let res: PriceResponse = from_binary(&res).unwrap();
+    let res: PriceResponse = from_json(res).unwrap();
     assert_eq!(res.price, Decimal::from_ratio(102000u128, 1u128));
 }
 

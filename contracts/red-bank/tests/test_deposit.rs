@@ -3,7 +3,7 @@ use std::any::type_name;
 use cosmwasm_std::{
     attr, coin, coins,
     testing::{mock_env, mock_info, MockApi, MockStorage},
-    to_binary, Addr, Decimal, OwnedDeps, StdError, StdResult, SubMsg, Uint128, WasmMsg,
+    to_json_binary, Addr, Decimal, OwnedDeps, StdError, StdResult, SubMsg, Uint128, WasmMsg,
 };
 use cw_utils::PaymentError;
 use helpers::{
@@ -249,7 +249,7 @@ fn depositing_without_existing_position() {
         res.messages,
         vec![SubMsg::new(WasmMsg::Execute {
             contract_addr: MarsAddressType::Incentives.to_string(),
-            msg: to_binary(&incentives::ExecuteMsg::BalanceChange {
+            msg: to_json_binary(&incentives::ExecuteMsg::BalanceChange {
                 user_addr: depositor_addr.clone(),
                 denom: initial_market.denom.clone(),
                 user_amount_scaled_before: Uint128::zero(),
@@ -339,7 +339,7 @@ fn depositing_with_existing_position() {
         res.messages,
         vec![SubMsg::new(WasmMsg::Execute {
             contract_addr: MarsAddressType::Incentives.to_string(),
-            msg: to_binary(&incentives::ExecuteMsg::BalanceChange {
+            msg: to_json_binary(&incentives::ExecuteMsg::BalanceChange {
                 user_addr: depositor_addr.clone(),
                 denom: initial_market.denom.clone(),
                 user_amount_scaled_before: collateral_amount_scaled,
@@ -410,7 +410,7 @@ fn depositing_on_behalf_of() {
         vec![
             SubMsg::new(WasmMsg::Execute {
                 contract_addr: MarsAddressType::Incentives.to_string(),
-                msg: to_binary(&incentives::ExecuteMsg::BalanceChange {
+                msg: to_json_binary(&incentives::ExecuteMsg::BalanceChange {
                     user_addr: Addr::unchecked(MarsAddressType::RewardsCollector.to_string()),
                     denom: initial_market.denom.clone(),
                     user_amount_scaled_before: Uint128::zero(),
@@ -421,7 +421,7 @@ fn depositing_on_behalf_of() {
             }),
             SubMsg::new(WasmMsg::Execute {
                 contract_addr: MarsAddressType::Incentives.to_string(),
-                msg: to_binary(&incentives::ExecuteMsg::BalanceChange {
+                msg: to_json_binary(&incentives::ExecuteMsg::BalanceChange {
                     user_addr: on_behalf_of_addr.clone(),
                     denom: initial_market.denom.clone(),
                     user_amount_scaled_before: Uint128::zero(),

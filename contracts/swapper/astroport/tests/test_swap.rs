@@ -1,7 +1,7 @@
 use astroport::{
     asset::AssetInfo, factory::PairType, pair::StablePoolParams, router::SwapOperation,
 };
-use cosmwasm_std::{coin, to_binary, Binary, Decimal, Uint128};
+use cosmwasm_std::{coin, to_json_binary, Binary, Decimal, Uint128};
 use cw_it::{
     astroport::robot::AstroportTestRobot, robot::TestRobot, test_tube::Account, traits::CwItRunner,
 };
@@ -35,7 +35,7 @@ impl PoolType {
             PoolType::Stable {
                 amp,
             } => Some(
-                to_binary(&StablePoolParams {
+                to_json_binary(&StablePoolParams {
                     amp: *amp,
                     owner: None,
                 })
@@ -76,7 +76,8 @@ fn swap(
     }];
     let coin_in = coin(1000000, denom_in);
 
-    let runner = get_test_runner();
+    let owned_runner = get_test_runner();
+    let runner = owned_runner.as_ref();
     let initial_balance = Uint128::from(10000000000000000000000000u128);
     let admin = runner
         .init_account(&[
