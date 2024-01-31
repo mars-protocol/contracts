@@ -168,7 +168,7 @@ cargo make test
 | mars-health            | [`osmo1pdc49qlyhpkzx4j24uuw97kk6hv7e9xvrdjlww8qj6al53gmu49sge4g79`][14] | [`v2.0.0`][43] |
 | mars-incentives        | [`osmo1nkahswfr8shg8rlxqwup0vgahp0dk4x8w6tkv3rra8rratnut36sk22vrm`][15] | [`v2.0.0`][40] |
 | mars-oracle            | [`osmo1mhznfr60vjdp2gejhyv2gax9nvyyzhd3z0qcwseyetkfustjauzqycsy2g`][16] | [`v2.0.1`][41] |
-| mars-params            | [`osmo1nlmdxt9ctql2jr47qd4fpgzg84cjswxyw6q99u4y4u4q6c2f5ksq7ysent`][17] | [`v2.0.0`][40] |
+| mars-params            | [`osmo1nlmdxt9ctql2jr47qd4fpgzg84cjswxyw6q99u4y4u4q6c2f5ksq7ysent`][17] | [`v2.0.3`][46] |
 | mars-red-bank          | [`osmo1c3ljch9dfw5kf52nfwpxd2zmj2ese7agnx0p9tenkrryasrle5sqf3ftpg`][18] | [`v2.0.0`][40] |
 | mars-rewards-collector | [`osmo1urvqe5mw00ws25yqdd4c4hlh8kdyf567mpcml7cdve9w08z0ydcqvsrgdy`][19] | [`v2.0.0`][40] |
 | mars-swapper           | [`osmo1wee0z8c7tcawyl647eapqs4a88q8jpa7ddy6nn2nrs7t47p2zhxswetwla`][20] | [`v2.0.0`][40] |
@@ -268,3 +268,4 @@ Contents of this repository are open source under [GNU General Public License v3
 [43]: https://github.com/mars-protocol/rover/releases/tag/v2.0.0
 [44]: https://github.com/mars-protocol/contracts/releases/tag/v1.2.0
 [45]: https://github.com/mars-protocol/contracts/releases/tag/v1.2.1
+[46]: https://github.com/mars-protocol/contracts/releases/tag/v2.0.3
