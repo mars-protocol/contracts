@@ -4,11 +4,11 @@ use cosmwasm_schema::cw_serde;
 use cosmwasm_std::{BlockInfo, CosmosMsg, Decimal, Empty, Env, Fraction, QuerierWrapper, Uint128};
 use mars_osmosis::helpers::{query_arithmetic_twap_price, query_pool, CommonPoolData};
 use mars_swapper_base::{ContractError, ContractResult, Route};
-use mars_types::swapper::EstimateExactInSwapResponse;
+use mars_types::swapper::{EstimateExactInSwapResponse, SwapperRoute};
 use osmosis_std::types::osmosis::gamm::v1beta1::MsgSwapExactAmountIn;
 pub use osmosis_std::types::osmosis::poolmanager::v1beta1::SwapAmountInRoute as OsmosisSwapAmountInRoute;
 
-use crate::helpers::hashset;
+use crate::{config::OsmosisConfig, helpers::hashset};
 
 /// 10 min in seconds (Risk Team recommendation)
 const TWAP_WINDOW_SIZE_SECONDS: u64 = 600u64;
@@ -39,7 +39,26 @@ impl fmt::Display for OsmosisRoute {
     }
 }
 
-impl Route<Empty, Empty> for OsmosisRoute {
+impl Route<Empty, Empty, OsmosisConfig> for OsmosisRoute {
+    fn from(route: SwapperRoute, _config: Option<OsmosisConfig>) -> ContractResult<Self> {
+        match route {
+            SwapperRoute::Astro(_) => Err(ContractError::InvalidRoute {
+                reason: "AstroRoute not supported".to_string(),
+            }),
+            SwapperRoute::Osmo(route) => {
+                let steps: Vec<_> = route
+                    .swaps
+                    .into_iter()
+                    .map(|step| SwapAmountInRoute {
+                        pool_id: step.pool_id,
+                        token_out_denom: step.to,
+                    })
+                    .collect();
+                Ok(Self(steps))
+            }
+        }
+    }
+
     // Perform basic validation of the swap steps
     fn validate(
         &self,

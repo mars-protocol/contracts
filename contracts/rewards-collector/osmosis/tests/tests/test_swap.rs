@@ -5,7 +5,7 @@ use mars_rewards_collector_osmosis::entry::execute;
 use mars_testing::mock_info;
 use mars_types::{
     rewards_collector::{ConfigResponse, ExecuteMsg, QueryMsg},
-    swapper,
+    swapper::{self, OsmoRoute, OsmoSwap, SwapperRoute},
 };
 use osmosis_std::types::osmosis::twap::v1beta1::ArithmeticTwapToNowResponse;
 
@@ -55,6 +55,18 @@ fn swapping_asset() {
         ExecuteMsg::SwapAsset {
             denom: "uatom".to_string(),
             amount: Some(Uint128::new(42069)),
+            safety_fund_route: Some(SwapperRoute::Osmo(OsmoRoute {
+                swaps: vec![OsmoSwap {
+                    pool_id: 12,
+                    to: cfg.safety_fund_denom.to_string(),
+                }],
+            })),
+            fee_collector_route: Some(SwapperRoute::Osmo(OsmoRoute {
+                swaps: vec![OsmoSwap {
+                    pool_id: 69,
+                    to: cfg.fee_collector_denom.to_string(),
+                }],
+            })),
         },
     )
     .unwrap();
@@ -63,10 +75,16 @@ fn swapping_asset() {
 
     let swap_msg: CosmosMsg = WasmMsg::Execute {
         contract_addr: "swapper".to_string(),
-        msg: to_binary(&swapper::ExecuteMsg::<Empty>::SwapExactIn {
+        msg: to_binary(&swapper::ExecuteMsg::<Empty, Empty>::SwapExactIn {
             coin_in: coin(safety_fund_input.u128(), "uatom"),
             denom_out: cfg.safety_fund_denom.to_string(),
             slippage: cfg.slippage_tolerance,
+            route: Some(SwapperRoute::Osmo(OsmoRoute {
+                swaps: vec![OsmoSwap {
+                    pool_id: 12,
+                    to: cfg.safety_fund_denom.to_string(),
+                }],
+            })),
         })
         .unwrap(),
         funds: vec![coin(safety_fund_input.u128(), "uatom")],
@@ -76,10 +94,16 @@ fn swapping_asset() {
 
     let swap_msg: CosmosMsg = WasmMsg::Execute {
         contract_addr: "swapper".to_string(),
-        msg: to_binary(&swapper::ExecuteMsg::<Empty>::SwapExactIn {
+        msg: to_binary(&swapper::ExecuteMsg::<Empty, Empty>::SwapExactIn {
             coin_in: coin(fee_collector_input.u128(), "uatom"),
             denom_out: cfg.fee_collector_denom.to_string(),
             slippage: cfg.slippage_tolerance,
+            route: Some(SwapperRoute::Osmo(OsmoRoute {
+                swaps: vec![OsmoSwap {
+                    pool_id: 69,
+                    to: cfg.fee_collector_denom,
+                }],
+            })),
         })
         .unwrap(),
         funds: vec![coin(fee_collector_input.u128(), "uatom")],
@@ -134,6 +158,18 @@ fn skipping_swap_if_denom_matches() {
         ExecuteMsg::SwapAsset {
             denom: "uusdc".to_string(),
             amount: None,
+            safety_fund_route: Some(SwapperRoute::Osmo(OsmoRoute {
+                swaps: vec![OsmoSwap {
+                    pool_id: 12,
+                    to: "uusdc".to_string(),
+                }],
+            })),
+            fee_collector_route: Some(SwapperRoute::Osmo(OsmoRoute {
+                swaps: vec![OsmoSwap {
+                    pool_id: 69,
+                    to: "umars".to_string(),
+                }],
+            })),
         },
     )
     .unwrap();
@@ -155,10 +191,16 @@ fn skipping_swap_if_denom_matches() {
     // min out amount: 926 * 0.1 * 0.5 * (1 - 0.03) = 44
     let swap_msg: CosmosMsg = WasmMsg::Execute {
         contract_addr: "swapper".to_string(),
-        msg: to_binary(&swapper::ExecuteMsg::<Empty>::SwapExactIn {
+        msg: to_binary(&swapper::ExecuteMsg::<Empty, Empty>::SwapExactIn {
             coin_in: coin(926u128, "uusdc"),
             denom_out: "umars".to_string(),
             slippage: mock_instantiate_msg().slippage_tolerance,
+            route: Some(SwapperRoute::Osmo(OsmoRoute {
+                swaps: vec![OsmoSwap {
+                    pool_id: 69,
+                    to: "umars".to_string(),
+                }],
+            })),
         })
         .unwrap(),
         funds: vec![coin(926u128, "uusdc")],

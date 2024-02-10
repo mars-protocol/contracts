@@ -11,8 +11,10 @@ use cw_it::{
     ContractMap, ContractType, TestRunner,
 };
 use mars_owner::OwnerResponse;
-use mars_swapper_astroport::route::AstroportRoute;
-use mars_types::swapper::{EstimateExactInSwapResponse, RouteResponse, RoutesResponse};
+use mars_swapper_astroport::{config::AstroportConfig, route::AstroportRoute};
+use mars_types::swapper::{
+    EstimateExactInSwapResponse, RouteResponse, RoutesResponse, SwapperRoute,
+};
 
 use crate::wasm_oracle::{get_wasm_oracle_contract, WasmOracleTestRobot};
 
@@ -134,6 +136,20 @@ impl<'a> AstroportSwapperRobot<'a> {
         Self::new(runner, astroport_contracts, swapper_contract, oracle_contract, admin)
     }
 
+    pub fn set_config(&self, config: AstroportConfig, signer: &SigningAccount) -> &Self {
+        self.wasm()
+            .execute(
+                &self.swapper,
+                &mars_types::swapper::ExecuteMsg::<AstroportRoute, AstroportConfig>::UpdateConfig {
+                    config,
+                },
+                &[],
+                signer,
+            )
+            .unwrap();
+        self
+    }
+
     pub fn set_route(
         &self,
         operations: Vec<SwapOperation>,
@@ -144,7 +160,7 @@ impl<'a> AstroportSwapperRobot<'a> {
         self.wasm()
             .execute(
                 &self.swapper,
-                &mars_types::swapper::ExecuteMsg::SetRoute {
+                &mars_types::swapper::ExecuteMsg::<AstroportRoute, AstroportConfig>::SetRoute {
                     route: AstroportRoute {
                         operations,
                         router: self.astroport_contracts().router.address.clone(),
@@ -167,9 +183,10 @@ impl<'a> AstroportSwapperRobot<'a> {
         denom_out: impl Into<String>,
         slippage: Decimal,
         signer: &SigningAccount,
+        route: SwapperRoute,
     ) -> &Self {
         println!("swapping {}", coin_in);
-        self.swap_res(coin_in, denom_out, slippage, signer).unwrap();
+        self.swap_res(coin_in, denom_out, slippage, signer, route).unwrap();
         self
     }
 
@@ -179,24 +196,33 @@ impl<'a> AstroportSwapperRobot<'a> {
         denom_out: impl Into<String>,
         slippage: Decimal,
         signer: &SigningAccount,
+        route: SwapperRoute,
     ) -> RunnerExecuteResult<MsgExecuteContractResponse> {
         println!("sending {} to swapper contract", coin_in);
         self.wasm().execute(
             &self.swapper,
-            &mars_types::swapper::ExecuteMsg::<AstroportRoute>::SwapExactIn {
+            &mars_types::swapper::ExecuteMsg::<AstroportRoute, AstroportConfig>::SwapExactIn {
                 coin_in: coin_in.clone(),
                 denom_out: denom_out.into(),
                 slippage,
+                route: Some(route),
             },
             &[coin_in],
             signer,
         )
     }
 
+    pub fn query_config(&self) -> AstroportConfig {
+        self.wasm()
+            .query::<_, AstroportConfig>(&self.swapper, &mars_types::swapper::QueryMsg::Config {})
+            .unwrap()
+    }
+
     pub fn query_estimate_exact_in_swap(
         &self,
         coin_in: &Coin,
         denom_out: impl Into<String>,
+        route: SwapperRoute,
     ) -> Uint128 {
         self.wasm()
             .query::<_, EstimateExactInSwapResponse>(
@@ -204,6 +230,7 @@ impl<'a> AstroportSwapperRobot<'a> {
                 &mars_types::swapper::QueryMsg::EstimateExactInSwap {
                     coin_in: coin_in.clone(),
                     denom_out: denom_out.into(),
+                    route: Some(route),
                 },
             )
             .unwrap()

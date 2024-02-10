@@ -7,7 +7,7 @@ pub mod entry {
     };
     use cw2::set_contract_version;
     use mars_rewards_collector_base::{contract::Collector, ContractError, ContractResult};
-    use mars_types::rewards_collector::{ExecuteMsg, InstantiateMsg, QueryMsg};
+    use mars_types::rewards_collector::{ExecuteMsg, InstantiateMsg, MigrateMsg, QueryMsg};
 
     use crate::migrations;
 
@@ -46,7 +46,10 @@ pub mod entry {
     }
 
     #[entry_point]
-    pub fn migrate(deps: DepsMut, _env: Env, _msg: Empty) -> Result<Response, ContractError> {
-        migrations::v2_0_0::migrate(deps)
+    pub fn migrate(deps: DepsMut, _env: Env, msg: MigrateMsg) -> Result<Response, ContractError> {
+        match msg {
+            MigrateMsg::V1_0_0ToV2_0_0 {} => migrations::v2_0_0::migrate(deps),
+            MigrateMsg::V2_0_0ToV2_0_1 {} => migrations::v2_0_1::migrate(deps),
+        }
     }
 }

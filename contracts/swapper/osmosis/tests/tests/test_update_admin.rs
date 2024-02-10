@@ -1,7 +1,7 @@
 use cosmwasm_std::coin;
 use cw_it::osmosis_test_tube::{Account, Module, OsmosisTestApp, Wasm};
 use mars_owner::{OwnerResponse, OwnerUpdate};
-use mars_swapper_osmosis::route::OsmosisRoute;
+use mars_swapper_osmosis::{config::OsmosisConfig, route::OsmosisRoute};
 use mars_types::swapper::{ExecuteMsg, QueryMsg};
 
 use super::helpers::instantiate_contract;
@@ -34,7 +34,7 @@ fn only_owner_can_propose() {
 
     wasm.execute(
         &contract_addr,
-        &ExecuteMsg::<OsmosisRoute>::UpdateOwner(OwnerUpdate::ProposeNewOwner {
+        &ExecuteMsg::<OsmosisRoute, OsmosisConfig>::UpdateOwner(OwnerUpdate::ProposeNewOwner {
             proposed: bad_guy.address(),
         }),
         &[],
@@ -56,7 +56,7 @@ fn propose_new_owner() {
 
     wasm.execute(
         &contract_addr,
-        &ExecuteMsg::<OsmosisRoute>::UpdateOwner(OwnerUpdate::ProposeNewOwner {
+        &ExecuteMsg::<OsmosisRoute, OsmosisConfig>::UpdateOwner(OwnerUpdate::ProposeNewOwner {
             proposed: new_owner.address(),
         }),
         &[],
@@ -83,7 +83,7 @@ fn only_owner_can_clear_proposed() {
 
     wasm.execute(
         &contract_addr,
-        &ExecuteMsg::<OsmosisRoute>::UpdateOwner(OwnerUpdate::ProposeNewOwner {
+        &ExecuteMsg::<OsmosisRoute, OsmosisConfig>::UpdateOwner(OwnerUpdate::ProposeNewOwner {
             proposed: new_owner.address(),
         }),
         &[],
@@ -93,7 +93,7 @@ fn only_owner_can_clear_proposed() {
 
     wasm.execute(
         &contract_addr,
-        &ExecuteMsg::<OsmosisRoute>::UpdateOwner(OwnerUpdate::ClearProposed),
+        &ExecuteMsg::<OsmosisRoute, OsmosisConfig>::UpdateOwner(OwnerUpdate::ClearProposed),
         &[],
         bad_guy,
     )
@@ -113,7 +113,7 @@ fn clear_proposed() {
 
     wasm.execute(
         &contract_addr,
-        &ExecuteMsg::<OsmosisRoute>::UpdateOwner(OwnerUpdate::ProposeNewOwner {
+        &ExecuteMsg::<OsmosisRoute, OsmosisConfig>::UpdateOwner(OwnerUpdate::ProposeNewOwner {
             proposed: new_owner.address(),
         }),
         &[],
@@ -123,7 +123,7 @@ fn clear_proposed() {
 
     wasm.execute(
         &contract_addr,
-        &ExecuteMsg::<OsmosisRoute>::UpdateOwner(OwnerUpdate::ClearProposed),
+        &ExecuteMsg::<OsmosisRoute, OsmosisConfig>::UpdateOwner(OwnerUpdate::ClearProposed),
         &[],
         owner,
     )
@@ -147,7 +147,7 @@ fn only_proposed_owner_can_accept_role() {
 
     wasm.execute(
         &contract_addr,
-        &ExecuteMsg::<OsmosisRoute>::UpdateOwner(OwnerUpdate::ProposeNewOwner {
+        &ExecuteMsg::<OsmosisRoute, OsmosisConfig>::UpdateOwner(OwnerUpdate::ProposeNewOwner {
             proposed: new_owner.address(),
         }),
         &[],
@@ -157,7 +157,7 @@ fn only_proposed_owner_can_accept_role() {
 
     wasm.execute(
         &contract_addr,
-        &ExecuteMsg::<OsmosisRoute>::UpdateOwner(OwnerUpdate::AcceptProposed),
+        &ExecuteMsg::<OsmosisRoute, OsmosisConfig>::UpdateOwner(OwnerUpdate::AcceptProposed),
         &[],
         owner,
     )
@@ -177,7 +177,7 @@ fn accept_owner_role() {
 
     wasm.execute(
         &contract_addr,
-        &ExecuteMsg::<OsmosisRoute>::UpdateOwner(OwnerUpdate::ProposeNewOwner {
+        &ExecuteMsg::<OsmosisRoute, OsmosisConfig>::UpdateOwner(OwnerUpdate::ProposeNewOwner {
             proposed: new_owner.address(),
         }),
         &[],
@@ -187,7 +187,7 @@ fn accept_owner_role() {
 
     wasm.execute(
         &contract_addr,
-        &ExecuteMsg::<OsmosisRoute>::UpdateOwner(OwnerUpdate::AcceptProposed),
+        &ExecuteMsg::<OsmosisRoute, OsmosisConfig>::UpdateOwner(OwnerUpdate::AcceptProposed),
         &[],
         new_owner,
     )

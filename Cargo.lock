@@ -2215,7 +2215,7 @@ dependencies = [
 
 [[package]]
 name = "mars-credit-manager"
-version = "2.0.1"
+version = "2.0.2"
 dependencies = [
  "anyhow",
  "cosmwasm-schema",
@@ -2593,7 +2593,7 @@ dependencies = [
 
 [[package]]
 name = "mars-rewards-collector-osmosis"
-version = "2.0.0"
+version = "2.0.1"
 dependencies = [
  "cosmwasm-schema",
  "cosmwasm-std",
@@ -2714,7 +2714,7 @@ dependencies = [
 
 [[package]]
 name = "mars-swapper-osmosis"
-version = "2.0.0"
+version = "2.0.1"
 dependencies = [
  "anyhow",
  "cosmwasm-schema",
@@ -2762,6 +2762,7 @@ dependencies = [
 name = "mars-types"
 version = "2.0.0"
 dependencies = [
+ "astroport",
  "cosmwasm-schema",
  "cosmwasm-std",
  "cw-storage-plus 1.1.0",
@@ -2769,8 +2770,11 @@ dependencies = [
  "cw-vault-standard 0.3.3",
  "cw721 0.18.0",
  "cw721-base 0.18.0",
+ "mars-osmosis",
  "mars-owner 2.0.0",
  "mars-utils 2.0.0",
+ "osmosis-std 0.19.2",
+ "schemars",
  "serde",
  "serde-json-wasm 1.0.0",
  "strum 0.25.0",

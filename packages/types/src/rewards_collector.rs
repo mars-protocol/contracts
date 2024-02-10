@@ -6,7 +6,7 @@ use mars_utils::{
     helpers::{decimal_param_le_one, integer_param_gt_zero, validate_native_denom},
 };
 
-use crate::credit_manager::Action;
+use crate::{credit_manager::Action, swapper::SwapperRoute};
 
 const MAX_SLIPPAGE_TOLERANCE_PERCENTAGE: u64 = 50;
 
@@ -150,6 +150,8 @@ pub enum ExecuteMsg {
     SwapAsset {
         denom: String,
         amount: Option<Uint128>,
+        safety_fund_route: Option<SwapperRoute>,
+        fee_collector_route: Option<SwapperRoute>,
     },
 
     /// Claim rewards in incentives contract.
@@ -198,4 +200,10 @@ pub enum QueryMsg {
     /// Get config parameters
     #[returns(ConfigResponse)]
     Config {},
+}
+
+#[cw_serde]
+pub enum MigrateMsg {
+    V1_0_0ToV2_0_0 {},
+    V2_0_0ToV2_0_1 {},
 }

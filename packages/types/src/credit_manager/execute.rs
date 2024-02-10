@@ -9,6 +9,7 @@ use crate::{
     account_nft::NftConfigUpdates,
     adapters::vault::{Vault, VaultPositionType, VaultUnchecked},
     health::{AccountKind, HealthState},
+    swapper::SwapperRoute,
 };
 
 #[cw_serde]
@@ -171,6 +172,7 @@ pub enum Action {
         coin_in: ActionCoin,
         denom_out: String,
         slippage: Decimal,
+        route: Option<SwapperRoute>,
     },
     /// Add Vec<Coin> to liquidity pool in exchange for LP tokens.
     /// Slippage allowance (%) is used to calculate the minimum amount of LP tokens to receive.
@@ -299,6 +301,7 @@ pub enum CallbackMsg {
         coin_in: ActionCoin,
         denom_out: String,
         slippage: Decimal,
+        route: Option<SwapperRoute>,
     },
     /// Used to update the coin balance of account after an async action
     UpdateCoinBalance {

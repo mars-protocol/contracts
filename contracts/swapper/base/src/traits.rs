@@ -1,18 +1,21 @@
 use std::fmt::{Debug, Display};
 
-use cosmwasm_std::{Coin, CosmosMsg, CustomMsg, CustomQuery, Decimal, Env, QuerierWrapper};
-use mars_types::swapper::EstimateExactInSwapResponse;
+use cosmwasm_std::{Api, Coin, CosmosMsg, CustomMsg, CustomQuery, Decimal, Env, QuerierWrapper};
+use mars_types::swapper::{EstimateExactInSwapResponse, SwapperRoute};
 use schemars::JsonSchema;
 use serde::{de::DeserializeOwned, Serialize};
 
 use crate::ContractResult;
 
-pub trait Route<M, Q>:
+pub trait Route<M, Q, C>:
     Serialize + DeserializeOwned + Clone + Debug + Display + PartialEq + JsonSchema
 where
     M: CustomMsg,
     Q: CustomQuery,
+    C: Config,
 {
+    fn from(route: SwapperRoute, config: Option<C>) -> ContractResult<Self>;
+
     /// Determine whether the route is valid, given a pair of input and output denoms
     fn validate(
         &self,
@@ -37,4 +40,8 @@ where
         env: &Env,
         coin_in: &Coin,
     ) -> ContractResult<EstimateExactInSwapResponse>;
+}
+
+pub trait Config: Serialize + DeserializeOwned + Clone + Debug + PartialEq + JsonSchema {
+    fn validate(&self, api: &dyn Api) -> ContractResult<()>;
 }

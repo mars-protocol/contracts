@@ -7,9 +7,12 @@ use cosmwasm_std::{
     StdResult, Uint128, WasmMsg, WasmQuery,
 };
 use mars_swapper_base::{ContractError, ContractResult, Route};
-use mars_types::{oracle::PriceResponse, swapper::EstimateExactInSwapResponse};
+use mars_types::{
+    oracle::PriceResponse,
+    swapper::{EstimateExactInSwapResponse, SwapperRoute},
+};
 
-use crate::helpers::hashset;
+use crate::{config::AstroportConfig, helpers::hashset};
 
 #[cw_serde]
 pub struct AstroportRoute {
@@ -99,7 +102,40 @@ impl AstroportRoute {
     }
 }
 
-impl Route<Empty, Empty> for AstroportRoute {
+impl Route<Empty, Empty, AstroportConfig> for AstroportRoute {
+    fn from(route: SwapperRoute, config: Option<AstroportConfig>) -> ContractResult<Self> {
+        let Some(config) = config else {
+            return Err(ContractError::InvalidRoute {
+                reason: "AstroportConfig not set".to_string(),
+            });
+        };
+        match route {
+            SwapperRoute::Astro(route) => {
+                let operations: Vec<_> = route
+                    .swaps
+                    .into_iter()
+                    .map(|op| SwapOperation::AstroSwap {
+                        offer_asset_info: AssetInfo::NativeToken {
+                            denom: op.from,
+                        },
+                        ask_asset_info: AssetInfo::NativeToken {
+                            denom: op.to,
+                        },
+                    })
+                    .collect();
+                Ok(Self {
+                    operations,
+                    router: config.router,
+                    factory: config.factory,
+                    oracle: config.oracle,
+                })
+            }
+            SwapperRoute::Osmo(_) => Err(ContractError::InvalidRoute {
+                reason: "OsmosisRoute not supported".to_string(),
+            }),
+        }
+    }
+
     // Perform basic validation of the swap steps
     fn validate(
         &self,

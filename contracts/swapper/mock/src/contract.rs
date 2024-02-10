@@ -2,7 +2,9 @@ use cosmwasm_std::{
     coins, to_binary, BankMsg, Binary, Coin, CosmosMsg, Decimal, Deps, DepsMut, Empty, Env,
     MessageInfo, Response, StdError, StdResult, Uint128,
 };
-use mars_types::swapper::{EstimateExactInSwapResponse, ExecuteMsg, InstantiateMsg, QueryMsg};
+use mars_types::swapper::{
+    EstimateExactInSwapResponse, ExecuteMsg, InstantiateMsg, QueryMsg, SwapperRoute,
+};
 
 pub const MOCK_SWAP_RESULT: Uint128 = Uint128::new(1337);
 
@@ -21,7 +23,7 @@ pub fn execute(
     deps: DepsMut,
     env: Env,
     info: MessageInfo,
-    msg: ExecuteMsg<Empty>,
+    msg: ExecuteMsg<Empty, Empty>,
 ) -> StdResult<Response> {
     match msg {
         ExecuteMsg::UpdateOwner(_) => unimplemented!("not implemented"),
@@ -35,7 +37,11 @@ pub fn execute(
             coin_in,
             denom_out,
             slippage,
-        } => swap_exact_in(deps, env, info, coin_in, denom_out, slippage),
+            route,
+        } => swap_exact_in(deps, env, info, coin_in, denom_out, slippage, route),
+        ExecuteMsg::UpdateConfig {
+            ..
+        } => unimplemented!("not implemented"),
     }
 }
 
@@ -54,6 +60,9 @@ pub fn query(_deps: Deps, _env: Env, msg: QueryMsg) -> StdResult<Binary> {
         QueryMsg::EstimateExactInSwap {
             ..
         } => to_binary(&estimate_exact_in_swap()),
+        QueryMsg::Config {
+            ..
+        } => unimplemented!("not implemented"),
     }
 }
 
@@ -70,6 +79,7 @@ pub fn swap_exact_in(
     coin_in: Coin,
     denom_out: String,
     _slippage: Decimal,
+    _route: Option<SwapperRoute>,
 ) -> StdResult<Response> {
     let denom_in_balance = deps.querier.query_balance(env.contract.address, coin_in.denom)?;
     if denom_in_balance.amount < coin_in.amount {

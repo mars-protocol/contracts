@@ -1,7 +1,7 @@
 use cosmwasm_schema::cw_serde;
 use cosmwasm_std::{to_binary, Addr, Api, Coin, CosmosMsg, Decimal, Empty, StdResult, WasmMsg};
 
-use crate::swapper::ExecuteMsg;
+use crate::swapper::{ExecuteMsg, SwapperRoute};
 
 #[cw_serde]
 pub struct SwapperBase<T>(T);
@@ -38,13 +38,15 @@ impl Swapper {
         coin_in: &Coin,
         denom_out: &str,
         slippage: Decimal,
+        route: Option<SwapperRoute>,
     ) -> StdResult<CosmosMsg> {
         Ok(CosmosMsg::Wasm(WasmMsg::Execute {
             contract_addr: self.address().to_string(),
-            msg: to_binary(&ExecuteMsg::<Empty>::SwapExactIn {
+            msg: to_binary(&ExecuteMsg::<Empty, Empty>::SwapExactIn {
                 coin_in: coin_in.clone(),
                 denom_out: denom_out.to_string(),
                 slippage,
+                route,
             })?,
             funds: vec![coin_in.clone()],
         }))
@@ -56,6 +58,7 @@ mod tests {
     use cosmwasm_std::testing::MockApi;
 
     use super::*;
+    use crate::swapper::{AstroRoute, AstroSwap, OsmoRoute, OsmoSwap};
 
     #[test]
     fn test_swapper_unchecked_from_swapper() {
@@ -92,15 +95,58 @@ mod tests {
         let denom_out = "out";
         let slippage = Decimal::percent(1);
 
-        let msg = swapper.swap_exact_in_msg(&coin_in, denom_out, slippage).unwrap();
+        let route = SwapperRoute::Osmo(OsmoRoute {
+            swaps: vec![
+                OsmoSwap {
+                    pool_id: 101,
+                    to: "aaa".to_string(),
+                },
+                OsmoSwap {
+                    pool_id: 201,
+                    to: "out".to_string(),
+                },
+            ],
+        });
+        let msg =
+            swapper.swap_exact_in_msg(&coin_in, denom_out, slippage, Some(route.clone())).unwrap();
         assert_eq!(
             msg,
             CosmosMsg::Wasm(WasmMsg::Execute {
                 contract_addr: "swapper".to_string(),
-                msg: to_binary(&ExecuteMsg::<Empty>::SwapExactIn {
+                msg: to_binary(&ExecuteMsg::<Empty, Empty>::SwapExactIn {
                     coin_in: coin_in.clone(),
                     denom_out: denom_out.to_string(),
                     slippage,
+                    route: Some(route)
+                })
+                .unwrap(),
+                funds: vec![coin_in.clone()],
+            })
+        );
+
+        let route = SwapperRoute::Astro(AstroRoute {
+            swaps: vec![
+                AstroSwap {
+                    from: "aaa".to_string(),
+                    to: "bbb".to_string(),
+                },
+                AstroSwap {
+                    from: "bbb".to_string(),
+                    to: "out".to_string(),
+                },
+            ],
+        });
+        let msg =
+            swapper.swap_exact_in_msg(&coin_in, denom_out, slippage, Some(route.clone())).unwrap();
+        assert_eq!(
+            msg,
+            CosmosMsg::Wasm(WasmMsg::Execute {
+                contract_addr: "swapper".to_string(),
+                msg: to_binary(&ExecuteMsg::<Empty, Empty>::SwapExactIn {
+                    coin_in: coin_in.clone(),
+                    denom_out: denom_out.to_string(),
+                    slippage,
+                    route: Some(route)
                 })
                 .unwrap(),
                 funds: vec![coin_in],

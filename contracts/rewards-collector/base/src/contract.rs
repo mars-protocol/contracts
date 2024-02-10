@@ -11,6 +11,7 @@ use mars_types::{
     rewards_collector::{
         Config, ConfigResponse, ExecuteMsg, InstantiateMsg, QueryMsg, UpdateConfig,
     },
+    swapper::SwapperRoute,
 };
 use mars_utils::helpers::option_string_to_addr;
 
@@ -97,7 +98,9 @@ where
             ExecuteMsg::SwapAsset {
                 denom,
                 amount,
-            } => self.swap_asset(deps, env, denom, amount),
+                safety_fund_route,
+                fee_collector_route,
+            } => self.swap_asset(deps, env, denom, amount, safety_fund_route, fee_collector_route),
             ExecuteMsg::ClaimIncentiveRewards {
                 start_after_collateral_denom,
                 start_after_incentive_denom,
@@ -273,6 +276,8 @@ where
         env: Env,
         denom: String,
         amount: Option<Uint128>,
+        safety_fund_route: Option<SwapperRoute>,
+        fee_collector_route: Option<SwapperRoute>,
     ) -> ContractResult<Response<M>> {
         let cfg = self.config.load(deps.storage)?;
 
@@ -299,10 +304,11 @@ where
             let coin_in_safety_fund = coin(amount_safety_fund.u128(), denom.clone());
             messages.push(WasmMsg::Execute {
                 contract_addr: swapper_addr.clone(),
-                msg: to_binary(&mars_types::swapper::ExecuteMsg::<Empty>::SwapExactIn {
+                msg: to_binary(&mars_types::swapper::ExecuteMsg::<Empty, Empty>::SwapExactIn {
                     coin_in: coin_in_safety_fund.clone(),
                     denom_out: cfg.safety_fund_denom,
                     slippage: cfg.slippage_tolerance,
+                    route: safety_fund_route,
                 })?,
                 funds: vec![coin_in_safety_fund],
             });
@@ -314,10 +320,11 @@ where
             let coin_in_fee_collector = coin(amount_fee_collector.u128(), denom.clone());
             messages.push(WasmMsg::Execute {
                 contract_addr: swapper_addr,
-                msg: to_binary(&mars_types::swapper::ExecuteMsg::<Empty>::SwapExactIn {
+                msg: to_binary(&mars_types::swapper::ExecuteMsg::<Empty, Empty>::SwapExactIn {
                     coin_in: coin_in_fee_collector.clone(),
                     denom_out: cfg.fee_collector_denom,
                     slippage: cfg.slippage_tolerance,
+                    route: fee_collector_route,
                 })?,
                 funds: vec![coin_in_fee_collector],
             });

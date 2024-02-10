@@ -4,7 +4,10 @@ use std::collections::HashMap;
 
 use cosmwasm_std::coin;
 use cw_it::osmosis_test_tube::{Gamm, Module, OsmosisTestApp, SigningAccount, Wasm};
-use mars_swapper_osmosis::route::{OsmosisRoute, SwapAmountInRoute};
+use mars_swapper_osmosis::{
+    config::OsmosisConfig,
+    route::{OsmosisRoute, SwapAmountInRoute},
+};
 use mars_types::swapper::{ExecuteMsg, QueryMsg, RouteResponse};
 
 use super::helpers::instantiate_contract;
@@ -28,7 +31,7 @@ fn enumerating_routes() {
 
     wasm.execute(
         &contract_addr,
-        &ExecuteMsg::SetRoute {
+        &ExecuteMsg::<OsmosisRoute, OsmosisConfig>::SetRoute {
             denom_in: "uatom".to_string(),
             denom_out: "umars".to_string(),
             route: routes.get(&("uatom", "umars")).unwrap().clone(),
@@ -40,7 +43,7 @@ fn enumerating_routes() {
 
     wasm.execute(
         &contract_addr,
-        &ExecuteMsg::SetRoute {
+        &ExecuteMsg::<OsmosisRoute, OsmosisConfig>::SetRoute {
             denom_in: "uatom".to_string(),
             denom_out: "uusdc".to_string(),
             route: routes.get(&("uatom", "uusdc")).unwrap().clone(),
@@ -52,7 +55,7 @@ fn enumerating_routes() {
 
     wasm.execute(
         &contract_addr,
-        &ExecuteMsg::SetRoute {
+        &ExecuteMsg::<OsmosisRoute, OsmosisConfig>::SetRoute {
             denom_in: "uosmo".to_string(),
             denom_out: "umars".to_string(),
             route: routes.get(&("uosmo", "umars")).unwrap().clone(),

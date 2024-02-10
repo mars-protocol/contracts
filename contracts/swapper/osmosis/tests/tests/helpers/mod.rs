@@ -49,7 +49,8 @@ pub fn instantiate_contract(wasm: &Wasm<OsmosisTestApp>, owner: &SigningAccount)
 ///
 /// We need to swap n times to pass TWAP_WINDOW_SIZE_SECONDS (10 min). Every swap moves block 5 sec so
 /// n = TWAP_WINDOW_SIZE_SECONDS / 5 sec = 600 sec / 5 sec = 120.
-/// We need to swap at least 120 times to create historical index for TWAP.
+/// We need to swap at least 120 times to create historical index for TWAP. We set to 122 to be sure that no
+/// errors will occur.
 pub fn swap_to_create_twap_records(
     app: &OsmosisTestApp,
     signer: &SigningAccount,
@@ -57,7 +58,7 @@ pub fn swap_to_create_twap_records(
     coin_in: Coin,
     denom_out: &str,
 ) {
-    swap_n_times(app, signer, pool_id, coin_in, denom_out, 120u64);
+    swap_n_times(app, signer, pool_id, coin_in, denom_out, 122u64);
 }
 
 pub fn swap_n_times(
