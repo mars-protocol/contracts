@@ -53,7 +53,7 @@ fn setup_test() -> TestSuite {
         borrow_rate: Decimal::from_ratio(20u128, 100u128),
         liquidity_rate: Decimal::from_ratio(10u128, 100u128),
         indexes_last_updated: 10000000,
-        collateral_total_scaled: Uint128::new(20_000_000) * SCALING_FACTOR,
+        collateral_total_scaled: Uint128::new(2_000_000) * SCALING_FACTOR,
         debt_total_scaled: Uint128::new(10_000_000) * SCALING_FACTOR,
         ..Default::default()
     };
