@@ -1,5 +1,6 @@
 use cosmwasm_std::{
-    CheckedFromRatioError, CheckedMultiplyFractionError, DivideByZeroError, OverflowError, StdError,
+    CheckedFromRatioError, CheckedMultiplyFractionError, Decimal, DivideByZeroError, OverflowError,
+    StdError,
 };
 use cw_utils::PaymentError;
 use mars_health::error::HealthError;
@@ -163,4 +164,9 @@ pub enum ContractError {
 
     #[error("{0}")]
     Guard(#[from] GuardError),
+
+    #[error("Utilization rate exceeded. Current value: {utilization_rate}. Maximum value: 1.0")]
+    UtilizationRateExeeded {
+        utilization_rate: Decimal,
+    },
 }
