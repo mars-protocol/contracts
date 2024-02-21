@@ -1,6 +1,6 @@
 use std::{cmp::Ordering, fmt};
 
-use astroport::{factory::PairType, pair::TWAP_PRECISION, querier::simulate};
+use astroport::{asset::PairInfo, factory::PairType, pair::TWAP_PRECISION, querier::simulate};
 use cosmwasm_schema::cw_serde;
 use cosmwasm_std::{Addr, Decimal, Deps, Empty, Env, Uint128};
 use cw_storage_plus::Map;
@@ -20,6 +20,8 @@ use crate::{
     },
     state::{ASTROPORT_FACTORY, ASTROPORT_TWAP_SNAPSHOTS},
 };
+
+pub const PRICE_PRECISION: Uint128 = Uint128::new(10_u128.pow(TWAP_PRECISION as u32));
 
 #[cw_serde]
 pub enum WasmPriceSource<A> {
@@ -370,9 +372,7 @@ fn query_astroport_twap_price(
         // For XYK we just need to divide by the TWAP_PRECISION as the number of decimals for each asset
         // is disregarded in the calculations.
         PairType::Xyk {} => {
-            let price_precision = Uint128::from(10_u128.pow(TWAP_PRECISION.into()));
-
-            Decimal::from_ratio(price_delta, price_precision.checked_mul(period.into())?)
+            Decimal::from_ratio(price_delta, PRICE_PRECISION.checked_mul(period.into())?)
         }
         // For StableSwap, the cumulative price is stored as a simulated swap of one unit of the
         // offer asset into the ask asset and then adjusted by the TWAP_PRECISION. So we need to
@@ -398,12 +398,7 @@ fn query_astroport_twap_price(
         // final price of 10^3 uosmo/uatom.
         PairType::Stable {} => {
             // Get the number of decimals of offer and ask denoms
-            let pair_denoms = get_astroport_pair_denoms(&pair_info)?;
-            let other_pair_denom = get_other_astroport_pair_denom(&pair_denoms, denom)?;
-            let astroport_factory = ASTROPORT_FACTORY.load(deps.storage)?;
-            let offer_decimals = query_token_precision(&deps.querier, &astroport_factory, denom)?;
-            let ask_decimals =
-                query_token_precision(&deps.querier, &astroport_factory, &other_pair_denom)?;
+            let (offer_decimals, ask_decimals) = get_precisions(deps, &pair_info, denom)?;
 
             // Adjust the precision of the price delta from TWAP_PRECISION to ask_decimals
             let price_delta = adjust_precision(price_delta, TWAP_PRECISION, ask_decimals)?;
@@ -414,14 +409,68 @@ fn query_astroport_twap_price(
 
             Decimal::from_ratio(price_delta, offer_simulation_amount.checked_mul(period.into())?)
         }
+        PairType::Custom(ref custom) if custom == "concentrated" => {
+            // Get the number of decimals of offer and ask denoms
+            let (offer_decimals, ask_decimals) = get_precisions(deps, &pair_info, denom)?;
+
+            let denominator = PRICE_PRECISION.checked_mul(period.into())?;
+
+            // price = (price_delta / (10^TWAP_PRECISION * period)) * (10^ask_decimals / 10^offer_decimals)
+            apply_decimals_to_price(price_delta, denominator, ask_decimals, offer_decimals)?
+        }
         PairType::Custom(_) => return Err(ContractError::InvalidPairType {}),
     };
 
     normalize_price(deps, env, config, price_sources, &pair_info, denom, price, kind)
 }
 
+fn get_precisions(
+    deps: &Deps,
+    pair_info: &PairInfo,
+    denom: &str,
+) -> Result<(u8, u8), ContractError> {
+    let pair_denoms = get_astroport_pair_denoms(pair_info)?;
+    let other_pair_denom = get_other_astroport_pair_denom(&pair_denoms, denom)?;
+    let astroport_factory = ASTROPORT_FACTORY.load(deps.storage)?;
+    let offer_decimals = query_token_precision(&deps.querier, &astroport_factory, denom)?;
+    let ask_decimals = query_token_precision(&deps.querier, &astroport_factory, &other_pair_denom)?;
+    Ok((offer_decimals, ask_decimals))
+}
+
+/// Applies the decimals of the offer and ask assets to the price.
+/// The price is calculated as `(price_delta / (10^TWAP_PRECISION * period)) * (10^ask_decimals / 10^offer_decimals)`.
+fn apply_decimals_to_price(
+    nominator: Uint128,
+    denominator: Uint128,
+    ask_decimals: u8,
+    offer_decimals: u8,
+) -> Result<Decimal, ContractError> {
+    Ok(match ask_decimals.cmp(&offer_decimals) {
+        // If the decimals are equal, we can just divide the nominator by the denominator
+        Ordering::Equal => Decimal::from_ratio(nominator, denominator),
+        // If the ask decimals are lower than the offer decimals, we need to multiply the denominator by
+        // 10^(offer_decimals - ask_decimals)
+        // E.g. if the decimals are 6 and 8, we need to multiply the denominator by 10^(8 - 6) = 10^2
+        Ordering::Less => {
+            let denominator = denominator
+                .checked_mul(Uint128::new(10_u128.pow((offer_decimals - ask_decimals) as u32)))?;
+            Decimal::from_ratio(nominator, denominator)
+        }
+        // If the ask decimals are higher than the offer decimals, we need to multiply the nominator by
+        // 10^(ask_decimals - offer_decimals)
+        // E.g. if the decimals are 8 and 6, we need to multiply the nominator by 10^(8 - 6) = 10^2
+        Ordering::Greater => {
+            let nominator = nominator
+                .checked_mul(Uint128::new(10_u128.pow((ask_decimals - offer_decimals) as u32)))?;
+            Decimal::from_ratio(nominator, denominator)
+        }
+    })
+}
+
 #[cfg(test)]
 mod tests {
+    use std::str::FromStr;
+
     use super::*;
 
     #[test]
@@ -441,5 +490,58 @@ mod tests {
                 ps.to_string(),
                 "pyth:osmo12j43nf2f0qumnt2zrrmpvnsqgzndxefujlvr08:0x61226d39beea19d334f17c2febce27e12646d84675924ebb02b9cdaea68727e3:60:0.1:0.15:18"
             )
+    }
+
+    #[test]
+    fn concentrated_price_if_equal_decimals() {
+        let nominator = Uint128::new(10_u128.pow(6));
+        let denominator = Uint128::new(10_u128.pow(6));
+        let ask_decimals = 6;
+        let offer_decimals = 6;
+        let price =
+            apply_decimals_to_price(nominator, denominator, ask_decimals, offer_decimals).unwrap();
+        assert_eq!(price, Decimal::one());
+    }
+
+    #[test]
+    fn concentrated_price_if_ask_decimals_less_than_offer_decimals() {
+        let nominator = Uint128::new(10_u128.pow(6));
+        let denominator = Uint128::new(10_u128.pow(6));
+        let ask_decimals = 6;
+        let offer_decimals = 8;
+        let price =
+            apply_decimals_to_price(nominator, denominator, ask_decimals, offer_decimals).unwrap();
+        assert_eq!(price, Decimal::from_ratio(1u128, 100u128));
+
+        // simulate calculation with big different between decimals, for example DyDx/USDC pair
+        let two_days_sec = Uint128::new(172800);
+        let nominator = Uint128::new(12_000_000_000_000);
+        let denominator = PRICE_PRECISION * two_days_sec;
+        let ask_decimals = 6;
+        let offer_decimals = 18;
+        let price =
+            apply_decimals_to_price(nominator, denominator, ask_decimals, offer_decimals).unwrap();
+        assert_eq!(price, Decimal::from_str("0.000000000069444444").unwrap());
+    }
+
+    #[test]
+    fn concentrated_price_if_ask_decimals_greater_than_offer_decimals() {
+        let nominator = Uint128::new(10_u128.pow(6));
+        let denominator = Uint128::new(10_u128.pow(6));
+        let ask_decimals = 8;
+        let offer_decimals = 6;
+        let price =
+            apply_decimals_to_price(nominator, denominator, ask_decimals, offer_decimals).unwrap();
+        assert_eq!(price, Decimal::from_ratio(100u128, 1u128));
+
+        // simulate calculation with big different between decimals, for example DyDx/USDC pair
+        let two_days_sec = Uint128::new(172800);
+        let nominator = Uint128::new(12_000_000_000_000);
+        let denominator = PRICE_PRECISION * two_days_sec;
+        let ask_decimals = 18;
+        let offer_decimals = 6;
+        let price =
+            apply_decimals_to_price(nominator, denominator, ask_decimals, offer_decimals).unwrap();
+        assert_eq!(price, Decimal::from_str("69444444444444.444444444444444444").unwrap());
     }
 }

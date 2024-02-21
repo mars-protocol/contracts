@@ -281,6 +281,26 @@
               },
               "denom": {
                 "type": "string"
+              },
+              "fee_collector_route": {
+                "anyOf": [
+                  {
+                    "$ref": "#/definitions/SwapperRoute"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "safety_fund_route": {
+                "anyOf": [
+                  {
+                    "$ref": "#/definitions/SwapperRoute"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
               }
             },
             "additionalProperties": false
@@ -607,6 +627,16 @@
                   "denom_out": {
                     "type": "string"
                   },
+                  "route": {
+                    "anyOf": [
+                      {
+                        "$ref": "#/definitions/SwapperRoute"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  },
                   "slippage": {
                     "$ref": "#/definitions/Decimal"
                   }
@@ -729,6 +759,40 @@
         },
         "additionalProperties": false
       },
+      "AstroRoute": {
+        "type": "object",
+        "required": [
+          "swaps"
+        ],
+        "properties": {
+          "swaps": {
+            "description": "The swap operations of the route",
+            "type": "array",
+            "items": {
+              "$ref": "#/definitions/AstroSwap"
+            }
+          }
+        },
+        "additionalProperties": false
+      },
+      "AstroSwap": {
+        "type": "object",
+        "required": [
+          "from",
+          "to"
+        ],
+        "properties": {
+          "from": {
+            "description": "Asset to swap from",
+            "type": "string"
+          },
+          "to": {
+            "description": "Asset to swap to",
+            "type": "string"
+          }
+        },
+        "additionalProperties": false
+      },
       "Coin": {
         "type": "object",
         "required": [
@@ -830,6 +894,42 @@
         },
         "additionalProperties": false
       },
+      "OsmoRoute": {
+        "type": "object",
+        "required": [
+          "swaps"
+        ],
+        "properties": {
+          "swaps": {
+            "type": "array",
+            "items": {
+              "$ref": "#/definitions/OsmoSwap"
+            }
+          }
+        },
+        "additionalProperties": false
+      },
+      "OsmoSwap": {
+        "description": "Swap operation with pool id and asset to swap to. \"from\" is another asset in the pool.",
+        "type": "object",
+        "required": [
+          "pool_id",
+          "to"
+        ],
+        "properties": {
+          "pool_id": {
+            "description": "Pool id",
+            "type": "integer",
+            "format": "uint64",
+            "minimum": 0.0
+          },
+          "to": {
+            "description": "Asset to swap to",
+            "type": "string"
+          }
+        },
+        "additionalProperties": false
+      },
       "OwnerUpdate": {
         "oneOf": [
           {
@@ -903,6 +1003,34 @@
             "enum": [
               "clear_emergency_owner"
             ]
+          }
+        ]
+      },
+      "SwapperRoute": {
+        "oneOf": [
+          {
+            "type": "object",
+            "required": [
+              "astro"
+            ],
+            "properties": {
+              "astro": {
+                "$ref": "#/definitions/AstroRoute"
+              }
+            },
+            "additionalProperties": false
+          },
+          {
+            "type": "object",
+            "required": [
+              "osmo"
+            ],
+            "properties": {
+              "osmo": {
+                "$ref": "#/definitions/OsmoRoute"
+              }
+            },
+            "additionalProperties": false
           }
         ]
       },

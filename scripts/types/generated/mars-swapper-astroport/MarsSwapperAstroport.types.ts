@@ -23,6 +23,7 @@ export type ExecuteMsg =
       swap_exact_in: {
         coin_in: Coin
         denom_out: string
+        route?: SwapperRoute | null
         slippage: Decimal
       }
     }
@@ -31,6 +32,11 @@ export type ExecuteMsg =
         denom_in: string
         denom_out: string
         recipient: Addr
+      }
+    }
+  | {
+      update_config: {
+        config: AstroportConfig
       }
     }
 export type OwnerUpdate =
@@ -74,6 +80,13 @@ export type AssetInfo =
     }
 export type Addr = string
 export type Uint128 = string
+export type SwapperRoute =
+  | {
+      astro: AstroRoute
+    }
+  | {
+      osmo: OsmoRoute
+    }
 export type Decimal = string
 export interface AstroportRoute {
   factory: string
@@ -85,6 +98,25 @@ export interface Coin {
   amount: Uint128
   denom: string
   [k: string]: unknown
+}
+export interface AstroRoute {
+  swaps: AstroSwap[]
+}
+export interface AstroSwap {
+  from: string
+  to: string
+}
+export interface OsmoRoute {
+  swaps: OsmoSwap[]
+}
+export interface OsmoSwap {
+  pool_id: number
+  to: string
+}
+export interface AstroportConfig {
+  factory: string
+  oracle: string
+  router: string
 }
 export type QueryMsg =
   | {
@@ -106,8 +138,15 @@ export type QueryMsg =
       estimate_exact_in_swap: {
         coin_in: Coin
         denom_out: string
+        route?: SwapperRoute | null
       }
     }
+  | {
+      config: {}
+    }
+export interface Empty {
+  [k: string]: unknown
+}
 export interface EstimateExactInSwapResponse {
   amount: Uint128
 }
@@ -122,8 +161,5 @@ export interface RouteResponseForEmpty {
   denom_in: string
   denom_out: string
   route: Empty
-}
-export interface Empty {
-  [k: string]: unknown
 }
 export type ArrayOfRouteResponseForEmpty = RouteResponseForEmpty[]

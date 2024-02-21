@@ -1,3 +1,4 @@
+mod test_config;
 mod test_queries;
 mod test_routes;
 mod test_swap;

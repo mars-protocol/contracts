@@ -3,13 +3,48 @@ use cosmwasm_std::{Addr, Coin, Decimal, Uint128};
 use mars_owner::OwnerUpdate;
 
 #[cw_serde]
+pub enum SwapperRoute {
+    Astro(AstroRoute),
+    Osmo(OsmoRoute),
+}
+
+#[cw_serde]
+pub struct AstroRoute {
+    /// The swap operations of the route
+    pub swaps: Vec<AstroSwap>,
+}
+
+#[cw_serde]
+pub struct AstroSwap {
+    /// Asset to swap from
+    pub from: String,
+    /// Asset to swap to
+    pub to: String,
+}
+
+#[cw_serde]
+pub struct OsmoRoute {
+    pub swaps: Vec<OsmoSwap>,
+}
+
+/// Swap operation with pool id and asset to swap to.
+/// "from" is another asset in the pool.
+#[cw_serde]
+pub struct OsmoSwap {
+    /// Pool id
+    pub pool_id: u64,
+    /// Asset to swap to
+    pub to: String,
+}
+
+#[cw_serde]
 pub struct InstantiateMsg {
     /// The contract's owner, who can update config
     pub owner: String,
 }
 
 #[cw_serde]
-pub enum ExecuteMsg<Route> {
+pub enum ExecuteMsg<Route, C> {
     /// Manges owner role state
     UpdateOwner(OwnerUpdate),
     /// Configure the route for swapping an asset
@@ -26,12 +61,16 @@ pub enum ExecuteMsg<Route> {
         coin_in: Coin,
         denom_out: String,
         slippage: Decimal,
+        route: Option<SwapperRoute>,
     },
     /// Send swapper results back to swapper. Also refunds extra if sent more than needed. Internal use only.
     TransferResult {
         recipient: Addr,
         denom_in: String,
         denom_out: String,
+    },
+    UpdateConfig {
+        config: C,
     },
 }
 
@@ -59,7 +98,11 @@ pub enum QueryMsg {
     EstimateExactInSwap {
         coin_in: Coin,
         denom_out: String,
+        route: Option<SwapperRoute>,
     },
+    /// Query contract config
+    #[returns(cosmwasm_std::Empty)]
+    Config {},
 }
 
 #[cw_serde]
@@ -74,4 +117,10 @@ pub type RoutesResponse<Route> = Vec<RouteResponse<Route>>;
 #[cw_serde]
 pub struct EstimateExactInSwapResponse {
     pub amount: Uint128,
+}
+
+#[cw_serde]
+pub enum MigrateMsg {
+    V1_0_0ToV2_0_0 {},
+    V2_0_0ToV2_0_1 {},
 }

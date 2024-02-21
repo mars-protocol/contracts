@@ -6,6 +6,6 @@ fn main() {
     write_api! {
         instantiate: InstantiateMsg,
         query: QueryMsg,
-        execute: ExecuteMsg<Empty>,
+        execute: ExecuteMsg<Empty, Empty>,
     }
 }

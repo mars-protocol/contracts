@@ -5,54 +5,60 @@ use cosmwasm_std::{
     DepsMut, Env, MessageInfo, Response, WasmMsg,
 };
 use cw_paginate::paginate_map;
-use cw_storage_plus::{Bound, Map};
+use cw_storage_plus::{Bound, Item, Map};
 use mars_owner::{Owner, OwnerInit::SetInitialOwner, OwnerUpdate};
 use mars_types::swapper::{
     EstimateExactInSwapResponse, ExecuteMsg, InstantiateMsg, QueryMsg, RouteResponse,
-    RoutesResponse,
+    RoutesResponse, SwapperRoute,
 };
 
-use crate::{ContractError, ContractResult, Route};
+use crate::{Config, ContractError, ContractResult, Route};
 
 // Max allowed slippage percentage for swap
 const MAX_SLIPPAGE_PERCENTAGE: u64 = 10;
 
-pub struct SwapBase<'a, Q, M, R>
+pub struct SwapBase<'a, Q, M, R, C>
 where
     Q: CustomQuery,
     M: CustomMsg,
-    R: Route<M, Q>,
+    C: Config,
+    R: Route<M, Q, C>,
 {
     /// The contract's owner who has special rights to update contract
     pub owner: Owner<'a>,
     /// The trade route for each pair of input/output assets
     pub routes: Map<'a, (String, String), R>,
+    /// Custom config
+    pub config: Item<'a, C>,
     /// Phantom data holds generics
     pub custom_query: PhantomData<Q>,
     pub custom_message: PhantomData<M>,
 }
 
-impl<'a, Q, M, R> Default for SwapBase<'a, Q, M, R>
+impl<'a, Q, M, R, C> Default for SwapBase<'a, Q, M, R, C>
 where
     Q: CustomQuery,
     M: CustomMsg,
-    R: Route<M, Q>,
+    C: Config,
+    R: Route<M, Q, C>,
 {
     fn default() -> Self {
         Self {
             owner: Owner::new("owner"),
             routes: Map::new("routes"),
+            config: Item::new("config"),
             custom_query: PhantomData,
             custom_message: PhantomData,
         }
     }
 }
 
-impl<'a, Q, M, R> SwapBase<'a, Q, M, R>
+impl<'a, Q, M, R, C> SwapBase<'a, Q, M, R, C>
 where
     Q: CustomQuery,
     M: CustomMsg,
-    R: Route<M, Q>,
+    C: Config,
+    R: Route<M, Q, C>,
 {
     pub fn instantiate(
         &self,
@@ -74,7 +80,7 @@ where
         deps: DepsMut<Q>,
         env: Env,
         info: MessageInfo,
-        msg: ExecuteMsg<R>,
+        msg: ExecuteMsg<R, C>,
     ) -> ContractResult<Response<M>> {
         match msg {
             ExecuteMsg::UpdateOwner(update) => self.update_owner(deps, info, update),
@@ -87,12 +93,16 @@ where
                 coin_in,
                 denom_out,
                 slippage,
-            } => self.swap_exact_in(deps, env, info, coin_in, denom_out, slippage),
+                route,
+            } => self.swap_exact_in(deps, env, info, coin_in, denom_out, slippage, route),
             ExecuteMsg::TransferResult {
                 recipient,
                 denom_in,
                 denom_out,
             } => self.transfer_result(deps, env, info, recipient, denom_in, denom_out),
+            ExecuteMsg::UpdateConfig {
+                config,
+            } => self.update_config(deps, info, config),
         }
     }
 
@@ -102,7 +112,8 @@ where
             QueryMsg::EstimateExactInSwap {
                 coin_in,
                 denom_out,
-            } => to_binary(&self.estimate_exact_in_swap(deps, env, coin_in, denom_out)?),
+                route,
+            } => to_binary(&self.estimate_exact_in_swap(deps, env, coin_in, denom_out, route)?),
             QueryMsg::Route {
                 denom_in,
                 denom_out,
@@ -111,6 +122,7 @@ where
                 start_after,
                 limit,
             } => to_binary(&self.query_routes(deps, start_after, limit)?),
+            QueryMsg::Config {} => to_binary(&self.query_config(deps)?),
         };
         res.map_err(Into::into)
     }
@@ -144,14 +156,30 @@ where
         })
     }
 
+    fn query_config(&self, deps: Deps<Q>) -> ContractResult<Option<C>> {
+        let config = self.config.may_load(deps.storage)?;
+        Ok(config)
+    }
+
     fn estimate_exact_in_swap(
         &self,
         deps: Deps<Q>,
         env: Env,
         coin_in: Coin,
         denom_out: String,
+        route: Option<SwapperRoute>,
     ) -> ContractResult<EstimateExactInSwapResponse> {
-        let route = self.get_route(deps, &coin_in.denom, &denom_out)?;
+        let config = self.query_config(deps)?;
+
+        // if route is not provided, use the default route from state
+        let route = match route {
+            Some(route) => {
+                let route = R::from(route, config)?;
+                route.validate(&deps.querier, &coin_in.denom, &denom_out)?;
+                route
+            }
+            None => self.get_route(deps, &coin_in.denom, &denom_out)?,
+        };
         route.estimate_exact_in_swap(&deps.querier, &env, &coin_in)
     }
 
@@ -163,6 +191,7 @@ where
         coin_in: Coin,
         denom_out: String,
         slippage: Decimal,
+        route: Option<SwapperRoute>,
     ) -> ContractResult<Response<M>> {
         let max_slippage = Decimal::percent(MAX_SLIPPAGE_PERCENTAGE);
         if slippage > max_slippage {
@@ -172,20 +201,32 @@ where
             });
         }
 
-        let swap_msg = self
-            .routes
-            .load(deps.storage, (coin_in.denom.clone(), denom_out.clone()))
-            .map_err(|_| ContractError::NoRoute {
-                from: coin_in.denom.clone(),
-                to: denom_out.clone(),
-            })?
-            .build_exact_in_swap_msg(&deps.querier, &env, &coin_in, slippage)?;
+        // if route is not provided, use the default route from state
+        let route = match route {
+            Some(route) => {
+                let config = self.query_config(deps.as_ref())?;
+
+                let route = R::from(route, config)?;
+                route.validate(&deps.querier, &coin_in.denom, &denom_out)?;
+
+                route
+            }
+            None => self
+                .routes
+                .load(deps.storage, (coin_in.denom.clone(), denom_out.clone()))
+                .map_err(|_| ContractError::NoRoute {
+                    from: coin_in.denom.clone(),
+                    to: denom_out.clone(),
+                })?,
+        };
+
+        let swap_msg = route.build_exact_in_swap_msg(&deps.querier, &env, &coin_in, slippage)?;
 
         // Check balance of result of swapper and send back result to sender
         let transfer_msg = CosmosMsg::Wasm(WasmMsg::Execute {
             contract_addr: env.contract.address.to_string(),
             funds: vec![],
-            msg: to_binary(&ExecuteMsg::<R>::TransferResult {
+            msg: to_binary(&ExecuteMsg::<R, C>::TransferResult {
                 recipient: info.sender,
                 denom_in: coin_in.denom.clone(),
                 denom_out: denom_out.clone(),
@@ -272,5 +313,19 @@ where
         update: OwnerUpdate,
     ) -> ContractResult<Response<M>> {
         Ok(self.owner.update(deps, info, update)?)
+    }
+
+    fn update_config(
+        &self,
+        deps: DepsMut<Q>,
+        info: MessageInfo,
+        config: C,
+    ) -> ContractResult<Response<M>> {
+        self.owner.assert_owner(deps.storage, &info.sender)?;
+
+        config.validate(deps.api)?;
+        self.config.save(deps.storage, &config)?;
+
+        Ok(Response::new().add_attribute("action", "rover/base/update_config"))
     }
 }

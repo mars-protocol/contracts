@@ -13,10 +13,15 @@ import {
   ExecuteMsg,
   OwnerUpdate,
   Uint128,
+  SwapperRoute,
   Decimal,
   Addr,
   Empty,
   Coin,
+  AstroRoute,
+  AstroSwap,
+  OsmoRoute,
+  OsmoSwap,
   QueryMsg,
   EstimateExactInSwapResponse,
   OwnerResponse,
@@ -46,6 +51,8 @@ export const marsSwapperBaseQueryKeys = {
         args,
       },
     ] as const,
+  config: (contractAddress: string | undefined, args?: Record<string, unknown>) =>
+    [{ ...marsSwapperBaseQueryKeys.address(contractAddress)[0], method: 'config', args }] as const,
 }
 export interface MarsSwapperBaseReactQuery<TResponse, TData = TResponse> {
   client: MarsSwapperBaseQueryClient | undefined
@@ -56,11 +63,24 @@ export interface MarsSwapperBaseReactQuery<TResponse, TData = TResponse> {
     initialData?: undefined
   }
 }
+export interface MarsSwapperBaseConfigQuery<TData>
+  extends MarsSwapperBaseReactQuery<Empty, TData> {}
+export function useMarsSwapperBaseConfigQuery<TData = Empty>({
+  client,
+  options,
+}: MarsSwapperBaseConfigQuery<TData>) {
+  return useQuery<Empty, Error, TData>(
+    marsSwapperBaseQueryKeys.config(client?.contractAddress),
+    () => (client ? client.config() : Promise.reject(new Error('Invalid client'))),
+    { ...options, enabled: !!client && (options?.enabled != undefined ? options.enabled : true) },
+  )
+}
 export interface MarsSwapperBaseEstimateExactInSwapQuery<TData>
   extends MarsSwapperBaseReactQuery<EstimateExactInSwapResponse, TData> {
   args: {
     coinIn: Coin
     denomOut: string
+    route?: SwapperRoute
   }
 }
 export function useMarsSwapperBaseEstimateExactInSwapQuery<TData = EstimateExactInSwapResponse>({
@@ -75,6 +95,7 @@ export function useMarsSwapperBaseEstimateExactInSwapQuery<TData = EstimateExact
         ? client.estimateExactInSwap({
             coinIn: args.coinIn,
             denomOut: args.denomOut,
+            route: args.route,
           })
         : Promise.reject(new Error('Invalid client')),
     { ...options, enabled: !!client && (options?.enabled != undefined ? options.enabled : true) },
@@ -140,6 +161,29 @@ export function useMarsSwapperBaseOwnerQuery<TData = OwnerResponse>({
     { ...options, enabled: !!client && (options?.enabled != undefined ? options.enabled : true) },
   )
 }
+export interface MarsSwapperBaseUpdateConfigMutation {
+  client: MarsSwapperBaseClient
+  msg: {
+    config: Empty
+  }
+  args?: {
+    fee?: number | StdFee | 'auto'
+    memo?: string
+    funds?: Coin[]
+  }
+}
+export function useMarsSwapperBaseUpdateConfigMutation(
+  options?: Omit<
+    UseMutationOptions<ExecuteResult, Error, MarsSwapperBaseUpdateConfigMutation>,
+    'mutationFn'
+  >,
+) {
+  return useMutation<ExecuteResult, Error, MarsSwapperBaseUpdateConfigMutation>(
+    ({ client, msg, args: { fee, memo, funds } = {} }) =>
+      client.updateConfig(msg, fee, memo, funds),
+    options,
+  )
+}
 export interface MarsSwapperBaseTransferResultMutation {
   client: MarsSwapperBaseClient
   msg: {
@@ -170,6 +214,7 @@ export interface MarsSwapperBaseSwapExactInMutation {
   msg: {
     coinIn: Coin
     denomOut: string
+    route?: SwapperRoute
     slippage: Decimal
   }
   args?: {

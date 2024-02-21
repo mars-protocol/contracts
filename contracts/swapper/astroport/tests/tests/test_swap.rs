@@ -1,12 +1,12 @@
-use astroport::{
-    asset::AssetInfo, factory::PairType, pair::StablePoolParams, router::SwapOperation,
-};
+use astroport::{asset::AssetInfo, factory::PairType, pair::StablePoolParams};
 use cosmwasm_std::{coin, to_binary, Binary, Decimal, Uint128};
 use cw_it::{
     astroport::robot::AstroportTestRobot, robot::TestRobot, test_tube::Account, traits::CwItRunner,
 };
 use mars_oracle_wasm::WasmPriceSourceUnchecked;
+use mars_swapper_astroport::config::AstroportConfig;
 use mars_testing::{astroport_swapper::AstroportSwapperRobot, test_runner::get_test_runner};
+use mars_types::swapper::SwapperRoute;
 use test_case::test_case;
 
 #[derive(Clone, Debug)]
@@ -68,13 +68,9 @@ fn swap(
     no_route: bool,
 ) {
     let denom_in = "uosmo";
-    let operations = vec![SwapOperation::AstroSwap {
-        offer_asset_info: AssetInfo::NativeToken {
-            denom: denom_in.to_string(),
-        },
-        ask_asset_info: AssetInfo::NativeToken {
-            denom: denom_out.to_string(),
-        },
+    let swaps = vec![mars_types::swapper::AstroSwap {
+        from: denom_in.to_string(),
+        to: denom_out.to_string(),
     }];
     let coin_in = coin(1000000, denom_in);
 
@@ -130,16 +126,31 @@ fn swap(
             &admin,
         );
 
-    if !no_route {
-        robot.set_route(operations, denom_in, denom_out, &admin);
-    }
+    robot.set_config(
+        AstroportConfig {
+            router: robot.astroport_contracts().router.address.clone(),
+            factory: robot.astroport_contracts().factory.address.clone(),
+            oracle: robot.oracle_robot.mars_oracle_contract_addr.clone(),
+        },
+        &admin,
+    );
 
-    let estimated_amount = robot.query_estimate_exact_in_swap(&coin_in, denom_out);
+    let swaps = if !no_route {
+        swaps
+    } else {
+        vec![]
+    };
+
+    let route = SwapperRoute::Astro(mars_types::swapper::AstroRoute {
+        swaps,
+    });
+
+    let estimated_amount = robot.query_estimate_exact_in_swap(&coin_in, denom_out, route.clone());
 
     println!("Estimated amount: {}", estimated_amount);
 
     let balance = robot
-        .swap(coin_in, denom_out, slippage, &alice)
+        .swap(coin_in, denom_out, slippage, &alice, route)
         .query_native_token_balance(alice.address(), denom_out);
 
     let received_amount = balance - initial_balance;

@@ -5,6 +5,7 @@ use mars_credit_manager::error::ContractError;
 use mars_types::{
     credit_manager::{Action, ActionAmount, ActionCoin},
     params::{AssetParams, AssetParamsUpdate},
+    swapper::{OsmoRoute, OsmoSwap, SwapperRoute},
 };
 use test_case::test_case;
 
@@ -57,6 +58,12 @@ use super::helpers::{uatom_info, uosmo_info, AccountToFund, MockEnv};
             },
             denom_out: "uosmo".into(),
             slippage: Decimal::percent(5),
+            route: Some(SwapperRoute::Osmo(OsmoRoute{swaps: vec![
+                OsmoSwap {
+                    pool_id: 101,
+                    to: "uosmo".into(),
+                }
+            ]}))
         }
     ],
     true;
@@ -78,6 +85,12 @@ use super::helpers::{uatom_info, uosmo_info, AccountToFund, MockEnv};
             },
             denom_out: "uosmo".into(),
             slippage: Decimal::percent(5),
+            route: Some(SwapperRoute::Osmo(OsmoRoute{swaps: vec![
+                OsmoSwap {
+                    pool_id: 101,
+                    to: "uosmo".into(),
+                }
+            ]}))
         }
     ],
     false;
