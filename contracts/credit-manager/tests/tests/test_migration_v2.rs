@@ -151,24 +151,24 @@ fn successful_migration() {
 }
 
 #[test]
-fn successful_migration_to_v2_0_2() {
+fn successful_migration_to_v2_0_3() {
     let mut deps = mock_dependencies();
-    cw2::set_contract_version(deps.as_mut().storage, "crates.io:mars-credit-manager", "2.0.1")
+    cw2::set_contract_version(deps.as_mut().storage, "crates.io:mars-credit-manager", "2.0.2")
         .unwrap();
 
-    let res = migrate(deps.as_mut(), mock_env(), MigrateMsg::V2_0_1ToV2_0_2 {}).unwrap();
+    let res = migrate(deps.as_mut(), mock_env(), MigrateMsg::V2_0_2ToV2_0_3 {}).unwrap();
 
     assert_eq!(res.messages, vec![]);
     assert_eq!(res.events, vec![] as Vec<Event>);
     assert!(res.data.is_none());
     assert_eq!(
         res.attributes,
-        vec![attr("action", "migrate"), attr("from_version", "2.0.1"), attr("to_version", "2.0.2")]
+        vec![attr("action", "migrate"), attr("from_version", "2.0.2"), attr("to_version", "2.0.3")]
     );
 
     let new_contract_version = ContractVersion {
         contract: "crates.io:mars-credit-manager".to_string(),
-        version: "2.0.2".to_string(),
+        version: "2.0.3".to_string(),
     };
     assert_eq!(cw2::get_contract_version(deps.as_ref().storage).unwrap(), new_contract_version);
 }
