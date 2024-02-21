@@ -111,11 +111,16 @@ pub fn update_interest_rates(
     let total_debt =
         get_underlying_debt_amount(market.debt_total_scaled, market, current_timestamp)?;
 
-    let current_utilization_rate = if !total_collateral.is_zero() {
+    let mut current_utilization_rate = if !total_collateral.is_zero() {
         Decimal::from_ratio(total_debt, total_collateral)
     } else {
         Decimal::zero()
     };
+
+    // Limit utilization_rate to 100%.
+    // With the current code it should hopefully never happen that it gets calculated to more than 100%,
+    // but better be safe than sorry.
+    current_utilization_rate = current_utilization_rate.min(Decimal::one());
 
     market.update_interest_rates(current_utilization_rate)?;
 

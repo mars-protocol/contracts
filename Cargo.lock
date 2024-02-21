@@ -2215,7 +2215,7 @@ dependencies = [
 
 [[package]]
 name = "mars-credit-manager"
-version = "2.0.2"
+version = "2.0.3"
 dependencies = [
  "anyhow",
  "cosmwasm-schema",
@@ -2519,7 +2519,7 @@ dependencies = [
 
 [[package]]
 name = "mars-red-bank"
-version = "2.0.0"
+version = "2.0.1"
 dependencies = [
  "anyhow",
  "cosmwasm-schema",
@@ -2762,7 +2762,7 @@ dependencies = [
 name = "mars-types"
 version = "2.0.0"
 dependencies = [
- "astroport",
+ "astroport 2.9.0",
  "cosmwasm-schema",
  "cosmwasm-std",
  "cw-storage-plus 1.1.0",

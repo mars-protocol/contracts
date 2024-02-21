@@ -3,7 +3,7 @@ use std::{collections::HashMap, str::FromStr};
 use cosmwasm_std::{
     attr,
     testing::{mock_env, mock_info},
-    Addr, Decimal, Empty, Event, Order, StdResult, Uint128,
+    Addr, Decimal, Event, Order, StdResult, Uint128,
 };
 use cw2::{ContractVersion, VersionError};
 use mars_red_bank::{
@@ -15,7 +15,7 @@ use mars_red_bank::{
 use mars_testing::mock_dependencies;
 use mars_types::{
     keys::{UserId, UserIdKey},
-    red_bank::{Collateral, ExecuteMsg, InterestRateModel, Market, MigrateV1ToV2},
+    red_bank::{Collateral, ExecuteMsg, InterestRateModel, Market, MigrateMsg, MigrateV1ToV2},
 };
 use mars_utils::error::GuardError;
 
@@ -24,7 +24,7 @@ fn wrong_contract_name() {
     let mut deps = mock_dependencies(&[]);
     cw2::set_contract_version(deps.as_mut().storage, "contract_xyz", "1.0.0").unwrap();
 
-    let err = migrate(deps.as_mut(), mock_env(), Empty {}).unwrap_err();
+    let err = migrate(deps.as_mut(), mock_env(), MigrateMsg::V1_0_0ToV2_0_0 {}).unwrap_err();
 
     assert_eq!(
         err,
@@ -40,7 +40,7 @@ fn wrong_contract_version() {
     let mut deps = mock_dependencies(&[]);
     cw2::set_contract_version(deps.as_mut().storage, "crates.io:mars-red-bank", "4.1.0").unwrap();
 
-    let err = migrate(deps.as_mut(), mock_env(), Empty {}).unwrap_err();
+    let err = migrate(deps.as_mut(), mock_env(), MigrateMsg::V1_0_0ToV2_0_0 {}).unwrap_err();
 
     assert_eq!(
         err,
@@ -101,19 +101,19 @@ fn full_migration() {
         .save(deps.as_mut().storage, (&Addr::unchecked("user_2"), "uatom"), &user_2_atom_collateral)
         .unwrap();
 
-    let res = migrate(deps.as_mut(), mock_env(), Empty {}).unwrap();
+    let res = migrate(deps.as_mut(), mock_env(), MigrateMsg::V1_0_0ToV2_0_0 {}).unwrap();
 
     assert_eq!(res.messages, vec![]);
     assert_eq!(res.events, vec![] as Vec<Event>);
     assert!(res.data.is_none());
     assert_eq!(
         res.attributes,
-        vec![attr("action", "migrate"), attr("from_version", "1.0.0"), attr("to_version", "2.0.0")]
+        vec![attr("action", "migrate"), attr("from_version", "1.0.0"), attr("to_version", "2.0.1")]
     );
 
     let new_contract_version = ContractVersion {
         contract: "crates.io:mars-red-bank".to_string(),
-        version: "2.0.0".to_string(),
+        version: "2.0.1".to_string(),
     };
     assert_eq!(cw2::get_contract_version(deps.as_ref().storage).unwrap(), new_contract_version);
 
@@ -380,4 +380,26 @@ fn compare_markers(old_market: &v1_state::Market, market: &Market) -> bool {
         && old_market.indexes_last_updated == market.indexes_last_updated
         && old_market.collateral_total_scaled == market.collateral_total_scaled
         && old_market.debt_total_scaled == market.debt_total_scaled
+}
+
+#[test]
+fn successful_migration_to_v2_0_1() {
+    let mut deps = mock_dependencies(&[]);
+    cw2::set_contract_version(deps.as_mut().storage, "crates.io:mars-red-bank", "2.0.0").unwrap();
+
+    let res = migrate(deps.as_mut(), mock_env(), MigrateMsg::V2_0_0ToV2_0_1 {}).unwrap();
+
+    assert_eq!(res.messages, vec![]);
+    assert_eq!(res.events, vec![] as Vec<Event>);
+    assert!(res.data.is_none());
+    assert_eq!(
+        res.attributes,
+        vec![attr("action", "migrate"), attr("from_version", "2.0.0"), attr("to_version", "2.0.1")]
+    );
+
+    let new_contract_version = ContractVersion {
+        contract: "crates.io:mars-red-bank".to_string(),
+        version: "2.0.1".to_string(),
+    };
+    assert_eq!(cw2::get_contract_version(deps.as_ref().storage).unwrap(), new_contract_version);
 }

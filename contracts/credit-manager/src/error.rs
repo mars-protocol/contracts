@@ -186,4 +186,7 @@ pub enum ContractError {
 
     #[error(transparent)]
     Oracle(#[from] OracleError),
+
+    #[error("Debt cannot be represented by zero debt shares")]
+    ZeroDebtShares,
 }
