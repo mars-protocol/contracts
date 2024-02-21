@@ -157,9 +157,22 @@ pub enum QueryMsg {
         denom: String,
     },
 
+    /// Get asset market with underlying collateral and debt amount
+    #[returns(crate::red_bank::MarketResponse)]
+    MarketV2 {
+        denom: String,
+    },
+
     /// Enumerate markets with pagination
     #[returns(Vec<crate::red_bank::Market>)]
     Markets {
+        start_after: Option<String>,
+        limit: Option<u32>,
+    },
+
+    /// Enumerate marketsV2 with pagination
+    #[returns(Vec<crate::red_bank::MarketResponse>)]
+    MarketsV2 {
         start_after: Option<String>,
         limit: Option<u32>,
     },

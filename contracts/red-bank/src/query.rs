@@ -1,5 +1,6 @@
 use cosmwasm_std::{Addr, BlockInfo, Deps, Env, Order, StdResult, Uint128};
 use cw_paginate::paginate_prefix_query;
+use cosmwasm_std::{Addr, BlockInfo, Decimal, Deps, Env, Order, StdResult, Uint128};
 use cw_storage_plus::Bound;
 use mars_interest_rate::{
     get_scaled_debt_amount, get_scaled_liquidity_amount, get_underlying_debt_amount,
@@ -9,7 +10,7 @@ use mars_types::{
     address_provider::{self, MarsAddressType},
     keys::{UserId, UserIdKey},
     red_bank::{
-        Collateral, ConfigResponse, Debt, Market, PaginatedUserCollateralResponse,
+        Collateral, ConfigResponse, Debt, Market, MarketResponse, PaginatedUserCollateralResponse,
         UncollateralizedLoanLimitResponse, UserCollateralResponse, UserDebtResponse,
         UserHealthStatus, UserPositionResponse,
     },
@@ -38,6 +39,27 @@ pub fn query_market(deps: Deps, denom: String) -> StdResult<Option<Market>> {
     MARKETS.may_load(deps.storage, &denom)
 }
 
+pub fn query_market_v2(deps: Deps, env: Env, denom: String) -> StdResult<MarketResponse> {
+    let block_time = env.block.time.seconds();
+    let market = MARKETS.load(deps.storage, &denom)?;
+
+    let collateral_underlying_amount =
+        get_underlying_liquidity_amount(market.collateral_total_scaled, &market, block_time)?;
+
+    let debt_underlying_amount =
+        get_underlying_debt_amount(market.debt_total_scaled, &market, block_time)?;
+
+    Ok(MarketResponse {
+        debt_underlying_amount,
+        collateral_underlying_amount,
+        collateralization_rate: Decimal::from_ratio(
+            collateral_underlying_amount,
+            debt_underlying_amount,
+        ),
+        market,
+    })
+}
+
 pub fn query_markets(
     deps: Deps,
     start_after: Option<String>,
@@ -52,6 +74,43 @@ pub fn query_markets(
         .map(|item| {
             let (_, market) = item?;
             Ok(market)
+        })
+        .collect()
+}
+
+pub fn query_markets_v2(
+    deps: Deps,
+    env: Env,
+    start_after: Option<String>,
+    limit: Option<u32>,
+) -> StdResult<Vec<MarketResponse>> {
+    let block_time = env.block.time.seconds();
+    let start = start_after.map(|denom| Bound::ExclusiveRaw(denom.into_bytes()));
+    let limit = limit.unwrap_or(DEFAULT_LIMIT).min(MAX_LIMIT) as usize;
+
+    MARKETS
+        .range(deps.storage, start, None, Order::Ascending)
+        .take(limit)
+        .map(|item| {
+            let (_, market) = item?;
+
+            let collateral_underlying_amount = get_underlying_liquidity_amount(
+                market.collateral_total_scaled,
+                &market,
+                block_time,
+            )?;
+            let debt_underlying_amount =
+                get_underlying_debt_amount(market.debt_total_scaled, &market, block_time)?;
+
+            Ok(MarketResponse {
+                debt_underlying_amount,
+                collateral_underlying_amount,
+                collateralization_rate: Decimal::from_ratio(
+                    collateral_underlying_amount,
+                    debt_underlying_amount,
+                ),
+                market,
+            })
         })
         .collect()
 }
