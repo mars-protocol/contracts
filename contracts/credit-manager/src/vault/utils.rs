@@ -1,10 +1,14 @@
 use cosmwasm_std::{Addr, Coin, Deps, DepsMut, StdResult, Storage, Uint128};
 use mars_types::{
-    adapters::vault::{
-        LockingVaultAmount, UnlockingPositions, Vault, VaultAmount, VaultPosition,
-        VaultPositionAmount, VaultPositionUpdate,
+    adapters::{
+        oracle::Oracle,
+        vault::{
+            LockingVaultAmount, UnlockingPositions, Vault, VaultAmount, VaultPosition,
+            VaultPositionAmount, VaultPositionUpdate,
+        },
     },
     oracle::ActionKind,
+    params::VaultConfig,
 };
 
 use crate::{
@@ -82,18 +86,20 @@ pub fn query_withdraw_denom_balance(
 
 pub fn vault_utilization_in_deposit_cap_denom(
     deps: &Deps,
-    vault: &Vault,
+    oracle: &Oracle,
+    vault_config: &VaultConfig,
     rover_addr: &Addr,
 ) -> ContractResult<Coin> {
+    let vault = &Vault {
+        address: vault_config.addr.clone(),
+    };
     let rover_vault_balance_value = rover_vault_coin_balance_value(deps, vault, rover_addr)?;
-    let params = PARAMS.load(deps.storage)?;
-    let config = params.query_vault_config(&deps.querier, &vault.address)?;
-    let oracle = ORACLE.load(deps.storage)?;
-    let deposit_cap_denom_price =
-        oracle.query_price(&deps.querier, &config.deposit_cap.denom, ActionKind::Default)?.price;
+    let deposit_cap_denom_price = oracle
+        .query_price(&deps.querier, &vault_config.deposit_cap.denom, ActionKind::Default)?
+        .price;
 
     Ok(Coin {
-        denom: config.deposit_cap.denom,
+        denom: vault_config.deposit_cap.denom.clone(),
         amount: rover_vault_balance_value.checked_div_floor(deposit_cap_denom_price)?,
     })
 }
