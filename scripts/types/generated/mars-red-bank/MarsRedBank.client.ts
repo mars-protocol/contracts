@@ -20,7 +20,9 @@ import {
   QueryMsg,
   ConfigResponse,
   Market,
+  MarketResponse,
   ArrayOfMarket,
+  ArrayOfMarketResponse,
   UncollateralizedLoanLimitResponse,
   ArrayOfUncollateralizedLoanLimitResponse,
   UserCollateralResponse,
@@ -36,6 +38,7 @@ export interface MarsRedBankReadOnlyInterface {
   contractAddress: string
   config: () => Promise<ConfigResponse>
   market: ({ denom }: { denom: string }) => Promise<Market>
+  marketV2: ({ denom }: { denom: string }) => Promise<MarketResponse>
   markets: ({
     limit,
     startAfter,
@@ -43,6 +46,13 @@ export interface MarsRedBankReadOnlyInterface {
     limit?: number
     startAfter?: string
   }) => Promise<ArrayOfMarket>
+  marketsV2: ({
+    limit,
+    startAfter,
+  }: {
+    limit?: number
+    startAfter?: string
+  }) => Promise<ArrayOfMarketResponse>
   uncollateralizedLoanLimit: ({
     denom,
     user,
@@ -140,7 +150,9 @@ export class MarsRedBankQueryClient implements MarsRedBankReadOnlyInterface {
     this.contractAddress = contractAddress
     this.config = this.config.bind(this)
     this.market = this.market.bind(this)
+    this.marketV2 = this.marketV2.bind(this)
     this.markets = this.markets.bind(this)
+    this.marketsV2 = this.marketsV2.bind(this)
     this.uncollateralizedLoanLimit = this.uncollateralizedLoanLimit.bind(this)
     this.uncollateralizedLoanLimits = this.uncollateralizedLoanLimits.bind(this)
     this.userDebt = this.userDebt.bind(this)
@@ -168,6 +180,13 @@ export class MarsRedBankQueryClient implements MarsRedBankReadOnlyInterface {
       },
     })
   }
+  marketV2 = async ({ denom }: { denom: string }): Promise<MarketResponse> => {
+    return this.client.queryContractSmart(this.contractAddress, {
+      market_v2: {
+        denom,
+      },
+    })
+  }
   markets = async ({
     limit,
     startAfter,
@@ -177,6 +196,20 @@ export class MarsRedBankQueryClient implements MarsRedBankReadOnlyInterface {
   }): Promise<ArrayOfMarket> => {
     return this.client.queryContractSmart(this.contractAddress, {
       markets: {
+        limit,
+        start_after: startAfter,
+      },
+    })
+  }
+  marketsV2 = async ({
+    limit,
+    startAfter,
+  }: {
+    limit?: number
+    startAfter?: string
+  }): Promise<ArrayOfMarketResponse> => {
+    return this.client.queryContractSmart(this.contractAddress, {
+      markets_v2: {
         limit,
         start_after: startAfter,
       },
