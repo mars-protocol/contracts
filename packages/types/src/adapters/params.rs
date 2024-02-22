@@ -71,6 +71,21 @@ impl Params {
         )
     }
 
+    pub fn query_all_vault_configs(
+        &self,
+        querier: &QuerierWrapper,
+        start_after: Option<String>,
+        limit: Option<u32>,
+    ) -> StdResult<Vec<VaultConfig>> {
+        querier.query_wasm_smart(
+            self.address().to_string(),
+            &QueryMsg::AllVaultConfigs {
+                start_after,
+                limit,
+            },
+        )
+    }
+
     pub fn query_target_health_factor(&self, querier: &QuerierWrapper) -> StdResult<Decimal> {
         querier.query_wasm_smart(self.address().to_string(), &QueryMsg::TargetHealthFactor {})
     }

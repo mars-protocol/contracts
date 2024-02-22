@@ -34,6 +34,7 @@ mod test_update_admin;
 mod test_update_config;
 mod test_update_nft_config;
 mod test_utilization_query;
+mod test_utilizations_all_query;
 mod test_vault_enter;
 mod test_vault_exit;
 mod test_vault_exit_unlocked;
