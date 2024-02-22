@@ -65,6 +65,8 @@ import {
   DebtShares,
   ArrayOfVaultPositionResponseItem,
   VaultPositionResponseItem,
+  ArrayOfVaultUtilizationResponse,
+  VaultUtilizationResponse,
   ConfigResponse,
   OwnerResponse,
   RewardsCollector,
@@ -73,7 +75,6 @@ import {
   DebtAmount,
   VaultPositionValue,
   CoinValue,
-  VaultUtilizationResponse,
 } from './MarsCreditManager.types'
 import { MarsCreditManagerQueryClient, MarsCreditManagerClient } from './MarsCreditManager.client'
 export const marsCreditManagerQueryKeys = {
@@ -101,6 +102,14 @@ export const marsCreditManagerQueryKeys = {
       {
         ...marsCreditManagerQueryKeys.address(contractAddress)[0],
         method: 'vault_utilization',
+        args,
+      },
+    ] as const,
+  allVaultUtilizations: (contractAddress: string | undefined, args?: Record<string, unknown>) =>
+    [
+      {
+        ...marsCreditManagerQueryKeys.address(contractAddress)[0],
+        method: 'all_vault_utilizations',
         args,
       },
     ] as const,
@@ -376,6 +385,28 @@ export function useMarsCreditManagerPositionsQuery<TData = Positions>({
       client
         ? client.positions({
             accountId: args.accountId,
+          })
+        : Promise.reject(new Error('Invalid client')),
+    { ...options, enabled: !!client && (options?.enabled != undefined ? options.enabled : true) },
+  )
+}
+export interface MarsCreditManagerAllVaultUtilizationsQuery<TData>
+  extends MarsCreditManagerReactQuery<ArrayOfVaultUtilizationResponse, TData> {
+  args: {
+    limit?: number
+    startAfter?: string
+  }
+}
+export function useMarsCreditManagerAllVaultUtilizationsQuery<
+  TData = ArrayOfVaultUtilizationResponse,
+>({ client, args, options }: MarsCreditManagerAllVaultUtilizationsQuery<TData>) {
+  return useQuery<ArrayOfVaultUtilizationResponse, Error, TData>(
+    marsCreditManagerQueryKeys.allVaultUtilizations(client?.contractAddress, args),
+    () =>
+      client
+        ? client.allVaultUtilizations({
+            limit: args.limit,
+            startAfter: args.startAfter,
           })
         : Promise.reject(new Error('Invalid client')),
     { ...options, enabled: !!client && (options?.enabled != undefined ? options.enabled : true) },

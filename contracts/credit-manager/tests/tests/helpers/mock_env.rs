@@ -531,6 +531,20 @@ impl MockEnv {
         )
     }
 
+    pub fn query_all_vault_utilizations(
+        &self,
+        start_after: Option<String>,
+        limit: Option<u32>,
+    ) -> StdResult<Vec<VaultUtilizationResponse>> {
+        self.app.wrap().query_wasm_smart(
+            self.rover.clone(),
+            &QueryMsg::AllVaultUtilizations {
+                start_after,
+                limit,
+            },
+        )
+    }
+
     pub fn query_all_coin_balances(
         &self,
         start_after: Option<(String, String)>,

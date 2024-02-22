@@ -64,6 +64,8 @@ import {
   DebtShares,
   ArrayOfVaultPositionResponseItem,
   VaultPositionResponseItem,
+  ArrayOfVaultUtilizationResponse,
+  VaultUtilizationResponse,
   ConfigResponse,
   OwnerResponse,
   RewardsCollector,
@@ -72,7 +74,6 @@ import {
   DebtAmount,
   VaultPositionValue,
   CoinValue,
-  VaultUtilizationResponse,
 } from './MarsCreditManager.types'
 export interface MarsCreditManagerReadOnlyInterface {
   contractAddress: string
@@ -88,6 +89,13 @@ export interface MarsCreditManagerReadOnlyInterface {
   }) => Promise<ArrayOfAccount>
   config: () => Promise<ConfigResponse>
   vaultUtilization: ({ vault }: { vault: VaultBaseForString }) => Promise<VaultUtilizationResponse>
+  allVaultUtilizations: ({
+    limit,
+    startAfter,
+  }: {
+    limit?: number
+    startAfter?: string
+  }) => Promise<ArrayOfVaultUtilizationResponse>
   positions: ({ accountId }: { accountId: string }) => Promise<Positions>
   allCoinBalances: ({
     limit,
@@ -143,6 +151,7 @@ export class MarsCreditManagerQueryClient implements MarsCreditManagerReadOnlyIn
     this.accounts = this.accounts.bind(this)
     this.config = this.config.bind(this)
     this.vaultUtilization = this.vaultUtilization.bind(this)
+    this.allVaultUtilizations = this.allVaultUtilizations.bind(this)
     this.positions = this.positions.bind(this)
     this.allCoinBalances = this.allCoinBalances.bind(this)
     this.allDebtShares = this.allDebtShares.bind(this)
@@ -191,6 +200,20 @@ export class MarsCreditManagerQueryClient implements MarsCreditManagerReadOnlyIn
     return this.client.queryContractSmart(this.contractAddress, {
       vault_utilization: {
         vault,
+      },
+    })
+  }
+  allVaultUtilizations = async ({
+    limit,
+    startAfter,
+  }: {
+    limit?: number
+    startAfter?: string
+  }): Promise<ArrayOfVaultUtilizationResponse> => {
+    return this.client.queryContractSmart(this.contractAddress, {
+      all_vault_utilizations: {
+        limit,
+        start_after: startAfter,
       },
     })
   }
