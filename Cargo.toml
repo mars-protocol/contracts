@@ -73,10 +73,8 @@ ica-oracle         = { git = "https://github.com/Stride-Labs/ica-oracle", rev = 
 itertools          = "0.12.1"
 mars-owner         = { version = "2.0.0", features = ["emergency-owner"] }
 neutron-sdk        = "0.8.0"
-# TODO
-osmosis-std        = "0.19.2"
-# TODO
-prost              = { version = "0.11.9", default-features = false }
+osmosis-std        = "0.22.0"
+prost              = { version = "0.12.3", default-features = false }
 pyth-sdk-cw        = "1.2.0"
 schemars           = "0.8.16"
 serde              = { version = "1.0.197", default-features = false }
@@ -90,8 +88,8 @@ wasm-bindgen       = "0.2.91"
 
 # dev-dependencies
 cw-multi-test     = "0.17.0"
-cw-it             = "0.2.3"
-osmosis-test-tube = "19.2.0"
+cw-it             = "0.3.0"
+osmosis-test-tube = "22.1.0"
 proptest          = "1.2.0"
 test-case         = "3.2.1"
 
