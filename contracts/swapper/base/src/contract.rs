@@ -1,7 +1,7 @@
 use std::marker::PhantomData;
 
 use cosmwasm_std::{
-    to_binary, Addr, BankMsg, Binary, Coin, CosmosMsg, CustomMsg, CustomQuery, Decimal, Deps,
+    to_json_binary, Addr, BankMsg, Binary, Coin, CosmosMsg, CustomMsg, CustomQuery, Decimal, Deps,
     DepsMut, Env, MessageInfo, Response, WasmMsg,
 };
 use cw_paginate::paginate_map;
@@ -108,21 +108,23 @@ where
 
     pub fn query(&self, deps: Deps<Q>, env: Env, msg: QueryMsg) -> ContractResult<Binary> {
         let res = match msg {
-            QueryMsg::Owner {} => to_binary(&self.owner.query(deps.storage)?),
+            QueryMsg::Owner {} => to_json_binary(&self.owner.query(deps.storage)?),
             QueryMsg::EstimateExactInSwap {
                 coin_in,
                 denom_out,
                 route,
-            } => to_binary(&self.estimate_exact_in_swap(deps, env, coin_in, denom_out, route)?),
+            } => {
+                to_json_binary(&self.estimate_exact_in_swap(deps, env, coin_in, denom_out, route)?)
+            }
             QueryMsg::Route {
                 denom_in,
                 denom_out,
-            } => to_binary(&self.query_route(deps, denom_in, denom_out)?),
+            } => to_json_binary(&self.query_route(deps, denom_in, denom_out)?),
             QueryMsg::Routes {
                 start_after,
                 limit,
-            } => to_binary(&self.query_routes(deps, start_after, limit)?),
-            QueryMsg::Config {} => to_binary(&self.query_config(deps)?),
+            } => to_json_binary(&self.query_routes(deps, start_after, limit)?),
+            QueryMsg::Config {} => to_json_binary(&self.query_config(deps)?),
         };
         res.map_err(Into::into)
     }
@@ -226,7 +228,7 @@ where
         let transfer_msg = CosmosMsg::Wasm(WasmMsg::Execute {
             contract_addr: env.contract.address.to_string(),
             funds: vec![],
-            msg: to_binary(&ExecuteMsg::<R, C>::TransferResult {
+            msg: to_json_binary(&ExecuteMsg::<R, C>::TransferResult {
                 recipient: info.sender,
                 denom_in: coin_in.denom.clone(),
                 denom_out: denom_out.clone(),

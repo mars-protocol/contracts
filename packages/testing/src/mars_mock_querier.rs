@@ -1,5 +1,5 @@
 use cosmwasm_std::{
-    from_binary, from_slice,
+    from_json,
     testing::{MockQuerier, MOCK_CONTRACT_ADDR},
     Addr, Coin, Decimal, Empty, Querier, QuerierResult, QueryRequest, StdResult, SystemError,
     SystemResult, Uint128, WasmQuery,
@@ -38,7 +38,7 @@ pub struct MarsMockQuerier {
 
 impl Querier for MarsMockQuerier {
     fn raw_query(&self, bin_request: &[u8]) -> QuerierResult {
-        let request: QueryRequest<Empty> = match from_slice(bin_request) {
+        let request: QueryRequest<Empty> = match from_json(bin_request) {
             Ok(v) => v,
             Err(e) => {
                 return SystemResult::Err(SystemError::InvalidRequest {
@@ -214,7 +214,7 @@ impl MarsMockQuerier {
 
                 // Address Provider Queries
                 let parse_address_provider_query: StdResult<address_provider::QueryMsg> =
-                    from_binary(msg);
+                    from_json(msg);
                 if let Ok(address_provider_query) = parse_address_provider_query {
                     return mock_address_provider::handle_query(
                         &contract_addr,
@@ -223,39 +223,39 @@ impl MarsMockQuerier {
                 }
 
                 // Oracle Queries
-                let parse_oracle_query: StdResult<oracle::QueryMsg> = from_binary(msg);
+                let parse_oracle_query: StdResult<oracle::QueryMsg> = from_json(msg);
                 if let Ok(oracle_query) = parse_oracle_query {
                     return self.oracle_querier.handle_query(&contract_addr, oracle_query);
                 }
 
                 // Incentives Queries
-                let parse_incentives_query: StdResult<incentives::QueryMsg> = from_binary(msg);
+                let parse_incentives_query: StdResult<incentives::QueryMsg> = from_json(msg);
                 if let Ok(incentives_query) = parse_incentives_query {
                     return self.incentives_querier.handle_query(&contract_addr, incentives_query);
                 }
 
                 // Pyth Queries
-                if let Ok(pyth_query) = from_binary::<pyth_sdk_cw::QueryMsg>(msg) {
+                if let Ok(pyth_query) = from_json::<pyth_sdk_cw::QueryMsg>(msg) {
                     return self.pyth_querier.handle_query(&contract_addr, pyth_query);
                 }
 
                 // RedBank Queries
-                if let Ok(redbank_query) = from_binary::<red_bank::QueryMsg>(msg) {
+                if let Ok(redbank_query) = from_json::<red_bank::QueryMsg>(msg) {
                     return self.redbank_querier.handle_query(redbank_query);
                 }
 
                 // Pyth Queries
-                if let Ok(pyth_query) = from_binary::<pyth_sdk_cw::QueryMsg>(msg) {
+                if let Ok(pyth_query) = from_json::<pyth_sdk_cw::QueryMsg>(msg) {
                     return self.pyth_querier.handle_query(&contract_addr, pyth_query);
                 }
 
                 // Redemption Rate Queries
-                if let Ok(redemption_rate_query) = from_binary::<ica_oracle::msg::QueryMsg>(msg) {
+                if let Ok(redemption_rate_query) = from_json::<ica_oracle::msg::QueryMsg>(msg) {
                     return self.redemption_rate_querier.handle_query(redemption_rate_query);
                 }
 
                 // Params Queries
-                if let Ok(params_query) = from_binary::<mars_types::params::QueryMsg>(msg) {
+                if let Ok(params_query) = from_json::<mars_types::params::QueryMsg>(msg) {
                     return self.params_querier.handle_query(params_query);
                 }
 

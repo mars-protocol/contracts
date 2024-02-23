@@ -1,4 +1,4 @@
-use cosmwasm_std::{from_binary, Decimal};
+use cosmwasm_std::{from_json, Decimal};
 use mars_oracle_base::ContractError;
 use mars_oracle_osmosis::{contract::entry, OsmosisPriceSourceUnchecked};
 use mars_testing::mock_env_at_block_time;
@@ -374,7 +374,7 @@ fn querying_pyth_price_if_confidence_exceeded() {
         },
     )
     .unwrap();
-    let res: PriceResponse = from_binary(&res).unwrap();
+    let res: PriceResponse = from_json(res).unwrap();
     assert_eq!(res.price, Decimal::from_ratio(101u128, 1u128));
 }
 
@@ -452,7 +452,7 @@ fn querying_pyth_price_if_deviation_exceeded() {
         },
     )
     .unwrap();
-    let res: PriceResponse = from_binary(&res).unwrap();
+    let res: PriceResponse = from_json(res).unwrap();
     assert_eq!(res.price, Decimal::from_ratio(1061u128, 10u128));
 
     // ema_price > price
@@ -504,7 +504,7 @@ fn querying_pyth_price_if_deviation_exceeded() {
         },
     )
     .unwrap();
-    let res: PriceResponse = from_binary(&res).unwrap();
+    let res: PriceResponse = from_json(res).unwrap();
     assert_eq!(res.price, Decimal::from_ratio(939999u128, 10000u128));
 }
 
@@ -564,7 +564,7 @@ fn querying_pyth_price_successfully() {
         },
     )
     .unwrap();
-    let res: PriceResponse = from_binary(&res).unwrap();
+    let res: PriceResponse = from_json(res).unwrap();
     assert_eq!(res.price, Decimal::from_ratio(1021000u128, 10000u128));
 
     // exp > 0
@@ -598,7 +598,7 @@ fn querying_pyth_price_successfully() {
         },
     )
     .unwrap();
-    let default_res: PriceResponse = from_binary(&default_res).unwrap();
+    let default_res: PriceResponse = from_json(default_res).unwrap();
     assert_eq!(default_res.price, Decimal::from_ratio(102000u128, 1u128));
 
     let liq_res = entry::query(
@@ -610,7 +610,7 @@ fn querying_pyth_price_successfully() {
         },
     )
     .unwrap();
-    let liq_res: PriceResponse = from_binary(&liq_res).unwrap();
+    let liq_res: PriceResponse = from_json(liq_res).unwrap();
     // Price for default and liquidation actions should be the same
     assert_eq!(liq_res.price, default_res.price);
 }

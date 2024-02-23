@@ -1,7 +1,7 @@
 #![allow(dead_code)]
 
 use cosmwasm_std::{
-    coin, from_binary,
+    coin, from_json,
     testing::{mock_env, MockApi, MockQuerier, MockStorage, MOCK_CONTRACT_ADDR},
     Coin, Decimal, Deps, OwnedDeps,
 };
@@ -131,5 +131,5 @@ fn prepare_pool_assets(coins: &[Coin], weights: &[u64]) -> Vec<PoolAsset> {
 }
 
 pub fn query<T: serde::de::DeserializeOwned>(deps: Deps, msg: QueryMsg) -> T {
-    from_binary(&entry::query(deps, mock_env(), msg).unwrap()).unwrap()
+    from_json(entry::query(deps, mock_env(), msg).unwrap()).unwrap()
 }

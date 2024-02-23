@@ -2,7 +2,7 @@ use std::str::FromStr;
 
 use astroport::factory::PairType;
 use cosmwasm_std::{
-    from_binary,
+    from_json,
     testing::{mock_dependencies, mock_env},
     Addr, Decimal, Empty, Uint128,
 };
@@ -589,7 +589,7 @@ fn querying_pyth_price_successfully() {
         },
     )
     .unwrap();
-    let res: PriceResponse = from_binary(&res).unwrap();
+    let res: PriceResponse = from_json(res).unwrap();
     assert_eq!(res.price, Decimal::from_ratio(1021000u128, 10000u128));
 
     // exp > 0
@@ -623,7 +623,7 @@ fn querying_pyth_price_successfully() {
         },
     )
     .unwrap();
-    let res: PriceResponse = from_binary(&res).unwrap();
+    let res: PriceResponse = from_json(res).unwrap();
     assert_eq!(res.price, Decimal::from_ratio(102000u128, 1u128));
 }
 

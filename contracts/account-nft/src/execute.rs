@@ -1,5 +1,5 @@
 use cosmwasm_std::{
-    to_binary, DepsMut, Empty, Env, MessageInfo, QueryRequest, Response, WasmQuery,
+    to_json_binary, DepsMut, Empty, Env, MessageInfo, QueryRequest, Response, WasmQuery,
 };
 use cw721::Cw721Execute;
 use cw721_base::{
@@ -48,7 +48,7 @@ pub fn burn(
 
     let acc_kind: AccountKind = deps.querier.query(&QueryRequest::Wasm(WasmQuery::Smart {
         contract_addr: cm_contract_addr.into(),
-        msg: to_binary(&QueryMsg::AccountKind {
+        msg: to_json_binary(&QueryMsg::AccountKind {
             account_id: token_id.clone(),
         })?,
     }))?;
@@ -56,7 +56,7 @@ pub fn burn(
     let response: HealthValuesResponse =
         deps.querier.query(&QueryRequest::Wasm(WasmQuery::Smart {
             contract_addr: health_contract_addr.into(),
-            msg: to_binary(&HealthValues {
+            msg: to_json_binary(&HealthValues {
                 account_id: token_id.clone(),
                 kind: acc_kind,
                 action: ActionKind::Default,

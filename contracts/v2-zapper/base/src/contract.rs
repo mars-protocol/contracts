@@ -1,7 +1,7 @@
 use std::marker::PhantomData;
 
 use cosmwasm_std::{
-    to_binary, Addr, BankMsg, Binary, Coin, CosmosMsg, Deps, DepsMut, Env, Event, MessageInfo,
+    to_json_binary, Addr, BankMsg, Binary, Coin, CosmosMsg, Deps, DepsMut, Env, Event, MessageInfo,
     Response, StdResult, Uint128,
 };
 use cw_utils::one_coin;
@@ -230,7 +230,7 @@ where
 
         let lp_tokens_returned = pool.simulate_provide_liquidity(deps, &env, coins_in.into())?;
 
-        to_binary(&lp_tokens_returned.amount)
+        to_json_binary(&lp_tokens_returned.amount)
     }
 
     fn query_estimate_withdraw_liquidity(
@@ -248,7 +248,7 @@ where
             .filter_map(|x| x.try_into().ok()) // filter out non native coins
             .collect();
 
-        to_binary(&native_coins_returned)
+        to_json_binary(&native_coins_returned)
     }
 }
 

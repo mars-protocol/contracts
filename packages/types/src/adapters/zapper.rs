@@ -1,6 +1,6 @@
 use cosmwasm_schema::cw_serde;
 use cosmwasm_std::{
-    to_binary, Addr, Api, Coin, CosmosMsg, QuerierWrapper, StdResult, Uint128, WasmMsg,
+    to_json_binary, Addr, Api, Coin, CosmosMsg, QuerierWrapper, StdResult, Uint128, WasmMsg,
 };
 
 use crate::zapper::{ExecuteMsg, QueryMsg};
@@ -70,7 +70,7 @@ impl Zapper {
     ) -> StdResult<CosmosMsg> {
         Ok(CosmosMsg::Wasm(WasmMsg::Execute {
             contract_addr: self.address().to_string(),
-            msg: to_binary(&ExecuteMsg::ProvideLiquidity {
+            msg: to_json_binary(&ExecuteMsg::ProvideLiquidity {
                 lp_token_out: lp_token_out.to_string(),
                 minimum_receive,
                 recipient: None,
@@ -86,7 +86,7 @@ impl Zapper {
     ) -> StdResult<CosmosMsg> {
         Ok(CosmosMsg::Wasm(WasmMsg::Execute {
             contract_addr: self.address().to_string(),
-            msg: to_binary(&ExecuteMsg::WithdrawLiquidity {
+            msg: to_json_binary(&ExecuteMsg::WithdrawLiquidity {
                 recipient: None,
                 minimum_receive,
             })?,

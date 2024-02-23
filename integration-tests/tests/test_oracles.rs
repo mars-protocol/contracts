@@ -1,6 +1,6 @@
 use std::{str::FromStr, time::SystemTime};
 
-use cosmwasm_std::{coin, to_binary, Coin, Decimal, Empty, Isqrt, Uint128};
+use cosmwasm_std::{coin, to_json_binary, Coin, Decimal, Empty, Isqrt, Uint128};
 use helpers::osmosis::instantiate_stride_contract;
 use mars_oracle_base::ContractError;
 use mars_oracle_osmosis::{
@@ -1059,7 +1059,7 @@ fn query_lsd_price() {
     let rr_attr = ica_oracle::state::RedemptionRateAttributes {
         sttoken_denom: "stuosmo".to_string(),
     };
-    let rr_attr_bin = to_binary(&rr_attr).unwrap();
+    let rr_attr_bin = to_json_binary(&rr_attr).unwrap();
     let rr_value = Decimal::from_str("1.123").unwrap();
     let now_sec = SystemTime::now().duration_since(SystemTime::UNIX_EPOCH).unwrap().as_secs();
     wasm.execute(

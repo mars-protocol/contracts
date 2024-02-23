@@ -1,4 +1,6 @@
-use cosmwasm_std::{entry_point, to_binary, Binary, Deps, DepsMut, Env, MessageInfo, Response};
+use cosmwasm_std::{
+    entry_point, to_json_binary, Binary, Deps, DepsMut, Env, MessageInfo, Response,
+};
 use mars_types::red_bank::{ExecuteMsg, InstantiateMsg, MigrateMsg, QueryMsg};
 
 use crate::{
@@ -138,20 +140,20 @@ pub fn execute(
 #[cfg_attr(not(feature = "library"), entry_point)]
 pub fn query(deps: Deps, env: Env, msg: QueryMsg) -> Result<Binary, ContractError> {
     let res = match msg {
-        QueryMsg::Config {} => to_binary(&query::query_config(deps)?),
+        QueryMsg::Config {} => to_json_binary(&query::query_config(deps)?),
         QueryMsg::Market {
             denom,
-        } => to_binary(&query::query_market(deps, denom)?),
+        } => to_json_binary(&query::query_market(deps, denom)?),
         QueryMsg::Markets {
             start_after,
             limit,
-        } => to_binary(&query::query_markets(deps, start_after, limit)?),
+        } => to_json_binary(&query::query_markets(deps, start_after, limit)?),
         QueryMsg::UncollateralizedLoanLimit {
             user,
             denom,
         } => {
             let user_addr = deps.api.addr_validate(&user)?;
-            to_binary(&query::query_uncollateralized_loan_limit(deps, user_addr, denom)?)
+            to_json_binary(&query::query_uncollateralized_loan_limit(deps, user_addr, denom)?)
         }
         QueryMsg::UncollateralizedLoanLimits {
             user,
@@ -159,7 +161,7 @@ pub fn query(deps: Deps, env: Env, msg: QueryMsg) -> Result<Binary, ContractErro
             limit,
         } => {
             let user_addr = deps.api.addr_validate(&user)?;
-            to_binary(&query::query_uncollateralized_loan_limits(
+            to_json_binary(&query::query_uncollateralized_loan_limits(
                 deps,
                 user_addr,
                 start_after,
@@ -171,7 +173,7 @@ pub fn query(deps: Deps, env: Env, msg: QueryMsg) -> Result<Binary, ContractErro
             denom,
         } => {
             let user_addr = deps.api.addr_validate(&user)?;
-            to_binary(&query::query_user_debt(deps, &env.block, user_addr, denom)?)
+            to_json_binary(&query::query_user_debt(deps, &env.block, user_addr, denom)?)
         }
         QueryMsg::UserDebts {
             user,
@@ -179,7 +181,13 @@ pub fn query(deps: Deps, env: Env, msg: QueryMsg) -> Result<Binary, ContractErro
             limit,
         } => {
             let user_addr = deps.api.addr_validate(&user)?;
-            to_binary(&query::query_user_debts(deps, &env.block, user_addr, start_after, limit)?)
+            to_json_binary(&query::query_user_debts(
+                deps,
+                &env.block,
+                user_addr,
+                start_after,
+                limit,
+            )?)
         }
         QueryMsg::UserCollateral {
             user,
@@ -187,7 +195,7 @@ pub fn query(deps: Deps, env: Env, msg: QueryMsg) -> Result<Binary, ContractErro
             denom,
         } => {
             let user_addr = deps.api.addr_validate(&user)?;
-            to_binary(&query::query_user_collateral(
+            to_json_binary(&query::query_user_collateral(
                 deps, &env.block, user_addr, account_id, denom,
             )?)
         }
@@ -198,7 +206,7 @@ pub fn query(deps: Deps, env: Env, msg: QueryMsg) -> Result<Binary, ContractErro
             limit,
         } => {
             let user_addr = deps.api.addr_validate(&user)?;
-            to_binary(&query::query_user_collaterals(
+            to_json_binary(&query::query_user_collaterals(
                 deps,
                 &env.block,
                 user_addr,
@@ -214,7 +222,7 @@ pub fn query(deps: Deps, env: Env, msg: QueryMsg) -> Result<Binary, ContractErro
             limit,
         } => {
             let user_addr = deps.api.addr_validate(&user)?;
-            to_binary(&query::query_user_collaterals_v2(
+            to_json_binary(&query::query_user_collaterals_v2(
                 deps,
                 &env.block,
                 user_addr,
@@ -228,31 +236,36 @@ pub fn query(deps: Deps, env: Env, msg: QueryMsg) -> Result<Binary, ContractErro
             account_id,
         } => {
             let user_addr = deps.api.addr_validate(&user)?;
-            to_binary(&query::query_user_position(deps, env, user_addr, account_id, false)?)
+            to_json_binary(&query::query_user_position(deps, env, user_addr, account_id, false)?)
         }
         QueryMsg::UserPositionLiquidationPricing {
             user,
             account_id,
         } => {
             let user_addr = deps.api.addr_validate(&user)?;
-            to_binary(&query::query_user_position(deps, env, user_addr, account_id, true)?)
+            to_json_binary(&query::query_user_position(deps, env, user_addr, account_id, true)?)
         }
         QueryMsg::ScaledLiquidityAmount {
             denom,
             amount,
-        } => to_binary(&query::query_scaled_liquidity_amount(deps, env, denom, amount)?),
+        } => to_json_binary(&query::query_scaled_liquidity_amount(deps, env, denom, amount)?),
         QueryMsg::ScaledDebtAmount {
             denom,
             amount,
-        } => to_binary(&query::query_scaled_debt_amount(deps, env, denom, amount)?),
+        } => to_json_binary(&query::query_scaled_debt_amount(deps, env, denom, amount)?),
         QueryMsg::UnderlyingLiquidityAmount {
             denom,
             amount_scaled,
-        } => to_binary(&query::query_underlying_liquidity_amount(deps, env, denom, amount_scaled)?),
+        } => to_json_binary(&query::query_underlying_liquidity_amount(
+            deps,
+            env,
+            denom,
+            amount_scaled,
+        )?),
         QueryMsg::UnderlyingDebtAmount {
             denom,
             amount_scaled,
-        } => to_binary(&query::query_underlying_debt_amount(deps, env, denom, amount_scaled)?),
+        } => to_json_binary(&query::query_underlying_debt_amount(deps, env, denom, amount_scaled)?),
     };
     res.map_err(Into::into)
 }

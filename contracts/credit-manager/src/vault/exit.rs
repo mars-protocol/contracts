@@ -1,4 +1,4 @@
-use cosmwasm_std::{to_binary, CosmosMsg, DepsMut, Env, Response, Uint128, WasmMsg};
+use cosmwasm_std::{to_json_binary, CosmosMsg, DepsMut, Env, Response, Uint128, WasmMsg};
 use mars_types::{
     adapters::vault::{UpdateType, Vault, VaultPositionUpdate},
     credit_manager::{CallbackMsg, ChangeExpected, ExecuteMsg as RoverExecuteMsg},
@@ -34,7 +34,7 @@ pub fn exit_vault(
     let update_coin_balance_msg = CosmosMsg::Wasm(WasmMsg::Execute {
         contract_addr: env.contract.address.to_string(),
         funds: vec![],
-        msg: to_binary(&RoverExecuteMsg::Callback(CallbackMsg::UpdateCoinBalance {
+        msg: to_json_binary(&RoverExecuteMsg::Callback(CallbackMsg::UpdateCoinBalance {
             account_id: account_id.to_string(),
             previous_balance,
             change: ChangeExpected::Increase,

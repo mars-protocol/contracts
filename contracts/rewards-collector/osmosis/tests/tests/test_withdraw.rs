@@ -1,4 +1,6 @@
-use cosmwasm_std::{testing::mock_env, to_binary, CosmosMsg, Decimal, SubMsg, Uint128, WasmMsg};
+use cosmwasm_std::{
+    testing::mock_env, to_json_binary, CosmosMsg, Decimal, SubMsg, Uint128, WasmMsg,
+};
 use mars_rewards_collector_base::ContractError;
 use mars_rewards_collector_osmosis::entry::execute;
 use mars_testing::mock_info;
@@ -30,7 +32,7 @@ fn withdrawing_from_red_bank() {
         res.messages[0],
         SubMsg::new(CosmosMsg::Wasm(WasmMsg::Execute {
             contract_addr: "red_bank".to_string(),
-            msg: to_binary(&mars_types::red_bank::ExecuteMsg::Withdraw {
+            msg: to_json_binary(&mars_types::red_bank::ExecuteMsg::Withdraw {
                 denom: "uatom".to_string(),
                 amount: Some(Uint128::new(42069)),
                 recipient: None,
@@ -118,7 +120,7 @@ fn withdrawing_from_cm_successfully() {
         res.messages[0],
         SubMsg::new(CosmosMsg::Wasm(WasmMsg::Execute {
             contract_addr: "credit_manager".to_string(),
-            msg: to_binary(&credit_manager::ExecuteMsg::UpdateCreditAccount {
+            msg: to_json_binary(&credit_manager::ExecuteMsg::UpdateCreditAccount {
                 account_id,
                 actions
             })

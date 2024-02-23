@@ -1,9 +1,7 @@
-use std::any::type_name;
-
 use cosmwasm_std::{
     attr, coin, coins,
     testing::{mock_env, mock_info, MockApi, MockStorage},
-    to_binary, Addr, Decimal, OwnedDeps, StdError, SubMsg, Uint128, WasmMsg,
+    to_json_binary, Addr, Decimal, OwnedDeps, StdError, SubMsg, Uint128, WasmMsg,
 };
 use cw_utils::PaymentError;
 use mars_interest_rate::{
@@ -316,7 +314,7 @@ fn depositing_without_existing_position() {
         res.messages,
         vec![SubMsg::new(WasmMsg::Execute {
             contract_addr: MarsAddressType::Incentives.to_string(),
-            msg: to_binary(&incentives::ExecuteMsg::BalanceChange {
+            msg: to_json_binary(&incentives::ExecuteMsg::BalanceChange {
                 user_addr: depositor_addr.clone(),
                 account_id: None,
                 denom: initial_market.denom.clone(),
@@ -410,7 +408,7 @@ fn depositing_with_existing_position() {
         res.messages,
         vec![SubMsg::new(WasmMsg::Execute {
             contract_addr: MarsAddressType::Incentives.to_string(),
-            msg: to_binary(&incentives::ExecuteMsg::BalanceChange {
+            msg: to_json_binary(&incentives::ExecuteMsg::BalanceChange {
                 user_addr: depositor_addr.clone(),
                 account_id: None,
                 denom: initial_market.denom.clone(),
@@ -485,7 +483,7 @@ fn depositing_on_behalf_of() {
         vec![
             SubMsg::new(WasmMsg::Execute {
                 contract_addr: MarsAddressType::Incentives.to_string(),
-                msg: to_binary(&incentives::ExecuteMsg::BalanceChange {
+                msg: to_json_binary(&incentives::ExecuteMsg::BalanceChange {
                     user_addr: Addr::unchecked(MarsAddressType::RewardsCollector.to_string()),
                     account_id: None,
                     denom: initial_market.denom.clone(),
@@ -497,7 +495,7 @@ fn depositing_on_behalf_of() {
             }),
             SubMsg::new(WasmMsg::Execute {
                 contract_addr: MarsAddressType::Incentives.to_string(),
-                msg: to_binary(&incentives::ExecuteMsg::BalanceChange {
+                msg: to_json_binary(&incentives::ExecuteMsg::BalanceChange {
                     user_addr: on_behalf_of_addr.clone(),
                     account_id: None,
                     denom: initial_market.denom.clone(),

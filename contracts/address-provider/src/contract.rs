@@ -3,7 +3,8 @@ use std::convert::TryInto;
 #[cfg(not(feature = "library"))]
 use cosmwasm_std::entry_point;
 use cosmwasm_std::{
-    to_binary, Addr, Binary, Deps, DepsMut, Empty, Env, MessageInfo, Order, Response, StdResult,
+    to_json_binary, Addr, Binary, Deps, DepsMut, Empty, Env, MessageInfo, Order, Response,
+    StdResult,
 };
 use cw2::set_contract_version;
 use cw_storage_plus::Bound;
@@ -108,13 +109,15 @@ fn update_owner(
 #[cfg_attr(not(feature = "library"), entry_point)]
 pub fn query(deps: Deps, _env: Env, msg: QueryMsg) -> StdResult<Binary> {
     match msg {
-        QueryMsg::Config {} => to_binary(&query_config(deps)?),
-        QueryMsg::Address(address_type) => to_binary(&query_address(deps, address_type)?),
-        QueryMsg::Addresses(address_types) => to_binary(&query_addresses(deps, address_types)?),
+        QueryMsg::Config {} => to_json_binary(&query_config(deps)?),
+        QueryMsg::Address(address_type) => to_json_binary(&query_address(deps, address_type)?),
+        QueryMsg::Addresses(address_types) => {
+            to_json_binary(&query_addresses(deps, address_types)?)
+        }
         QueryMsg::AllAddresses {
             start_after,
             limit,
-        } => to_binary(&query_all_addresses(deps, start_after, limit)?),
+        } => to_json_binary(&query_all_addresses(deps, start_after, limit)?),
     }
 }
 

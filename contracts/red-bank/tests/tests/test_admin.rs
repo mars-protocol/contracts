@@ -1,4 +1,4 @@
-use cosmwasm_std::{attr, coin, from_binary, testing::mock_info, Addr, Decimal, Event, Uint128};
+use cosmwasm_std::{attr, coin, from_json, testing::mock_info, Addr, Decimal, Event, Uint128};
 use mars_interest_rate::{compute_scaled_amount, compute_underlying_amount, ScalingOperation};
 use mars_owner::OwnerError::NotOwner;
 use mars_red_bank::{
@@ -62,7 +62,7 @@ fn proper_initialization() {
 
     // it worked, let's query the state
     let res = query(deps.as_ref(), env, QueryMsg::Config {}).unwrap();
-    let value: ConfigResponse = from_binary(&res).unwrap();
+    let value: ConfigResponse = from_json(res).unwrap();
     assert_eq!(value.owner.unwrap(), "owner");
     assert_eq!(value.address_provider, "address_provider");
 }
@@ -113,7 +113,7 @@ fn update_config() {
 
     // Read config from state
     let res = query(deps.as_ref(), env, QueryMsg::Config {}).unwrap();
-    let new_config: ConfigResponse = from_binary(&res).unwrap();
+    let new_config: ConfigResponse = from_json(res).unwrap();
 
     assert_eq!(new_config.owner.unwrap(), "owner".to_string());
     assert_eq!(new_config.address_provider, Addr::unchecked(config.address_provider.unwrap()));

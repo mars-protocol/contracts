@@ -1,5 +1,5 @@
 use astroport::{asset::AssetInfo, factory::PairType, pair::StablePoolParams};
-use cosmwasm_std::{coin, to_binary, Binary, Decimal, Uint128};
+use cosmwasm_std::{coin, to_json_binary, Binary, Decimal, Uint128};
 use cw_it::{
     astroport::robot::AstroportTestRobot, robot::TestRobot, test_tube::Account, traits::CwItRunner,
 };
@@ -35,7 +35,7 @@ impl PoolType {
             PoolType::Stable {
                 amp,
             } => Some(
-                to_binary(&StablePoolParams {
+                to_json_binary(&StablePoolParams {
                     amp: *amp,
                     owner: None,
                 })

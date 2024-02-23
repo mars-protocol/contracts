@@ -1,5 +1,6 @@
 use cosmwasm_std::{
-    to_binary, Addr, Coin, CosmosMsg, Deps, DepsMut, QuerierWrapper, Response, Uint128, WasmMsg,
+    to_json_binary, Addr, Coin, CosmosMsg, Deps, DepsMut, QuerierWrapper, Response, Uint128,
+    WasmMsg,
 };
 use mars_types::{
     adapters::vault::{UpdateType, Vault, VaultPositionUpdate},
@@ -46,7 +47,7 @@ pub fn enter_vault(
     let update_vault_balance_msg = CosmosMsg::Wasm(WasmMsg::Execute {
         contract_addr: rover_addr.to_string(),
         funds: vec![],
-        msg: to_binary(&ExecuteMsg::Callback(CallbackMsg::UpdateVaultCoinBalance {
+        msg: to_json_binary(&ExecuteMsg::Callback(CallbackMsg::UpdateVaultCoinBalance {
             vault: vault.clone(),
             account_id: account_id.to_string(),
             previous_total_balance: current_balance,

@@ -1,4 +1,4 @@
-use std::{any::type_name, str::FromStr};
+use std::str::FromStr;
 
 use cosmwasm_std::{Coin, Decimal, StdError, Uint128};
 use mars_types::{

@@ -1,5 +1,5 @@
 use cosmwasm_std::{
-    coins, to_binary, BankMsg, Binary, Coin, CosmosMsg, Decimal, Deps, DepsMut, Empty, Env,
+    coins, to_json_binary, BankMsg, Binary, Coin, CosmosMsg, Decimal, Deps, DepsMut, Empty, Env,
     MessageInfo, Response, StdError, StdResult, Uint128,
 };
 use mars_types::swapper::{
@@ -59,7 +59,7 @@ pub fn query(_deps: Deps, _env: Env, msg: QueryMsg) -> StdResult<Binary> {
         } => unimplemented!("not implemented"),
         QueryMsg::EstimateExactInSwap {
             ..
-        } => to_binary(&estimate_exact_in_swap()),
+        } => to_json_binary(&estimate_exact_in_swap()),
         QueryMsg::Config {
             ..
         } => unimplemented!("not implemented"),

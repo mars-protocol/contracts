@@ -1,5 +1,5 @@
 use cosmwasm_std::{
-    coin, to_binary, Addr, Binary, Coin, CosmosMsg, CustomMsg, Deps, DepsMut, Empty, Env,
+    coin, to_json_binary, Addr, Binary, Coin, CosmosMsg, CustomMsg, Deps, DepsMut, Empty, Env,
     MessageInfo, Response, StdResult, Uint128, WasmMsg,
 };
 use cw_storage_plus::Item;
@@ -116,7 +116,7 @@ where
 
     pub fn query(&self, deps: Deps, _env: Env, msg: QueryMsg) -> StdResult<Binary> {
         match msg {
-            QueryMsg::Config {} => to_binary(&self.query_config(deps)?),
+            QueryMsg::Config {} => to_json_binary(&self.query_config(deps)?),
         }
     }
 
@@ -186,7 +186,7 @@ where
 
         let withdraw_msg = CosmosMsg::Wasm(WasmMsg::Execute {
             contract_addr: red_bank_addr.to_string(),
-            msg: to_binary(&red_bank::ExecuteMsg::Withdraw {
+            msg: to_json_binary(&red_bank::ExecuteMsg::Withdraw {
                 denom: denom.clone(),
                 amount,
                 recipient: None,
@@ -226,7 +226,7 @@ where
 
         let withdraw_from_cm_msg = CosmosMsg::Wasm(WasmMsg::Execute {
             contract_addr: cm_addr.to_string(),
-            msg: to_binary(&credit_manager::ExecuteMsg::UpdateCreditAccount {
+            msg: to_json_binary(&credit_manager::ExecuteMsg::UpdateCreditAccount {
                 account_id: account_id.clone(),
                 actions,
             })?,
@@ -256,7 +256,7 @@ where
 
         let claim_msg = CosmosMsg::Wasm(WasmMsg::Execute {
             contract_addr: incentives_addr.to_string(),
-            msg: to_binary(&incentives::ExecuteMsg::ClaimRewards {
+            msg: to_json_binary(&incentives::ExecuteMsg::ClaimRewards {
                 account_id: None,
                 start_after_collateral_denom,
                 start_after_incentive_denom,
@@ -304,12 +304,14 @@ where
             let coin_in_safety_fund = coin(amount_safety_fund.u128(), denom.clone());
             messages.push(WasmMsg::Execute {
                 contract_addr: swapper_addr.clone(),
-                msg: to_binary(&mars_types::swapper::ExecuteMsg::<Empty, Empty>::SwapExactIn {
-                    coin_in: coin_in_safety_fund.clone(),
-                    denom_out: cfg.safety_fund_denom,
-                    slippage: cfg.slippage_tolerance,
-                    route: safety_fund_route,
-                })?,
+                msg: to_json_binary(
+                    &mars_types::swapper::ExecuteMsg::<Empty, Empty>::SwapExactIn {
+                        coin_in: coin_in_safety_fund.clone(),
+                        denom_out: cfg.safety_fund_denom,
+                        slippage: cfg.slippage_tolerance,
+                        route: safety_fund_route,
+                    },
+                )?,
                 funds: vec![coin_in_safety_fund],
             });
         }
@@ -320,12 +322,14 @@ where
             let coin_in_fee_collector = coin(amount_fee_collector.u128(), denom.clone());
             messages.push(WasmMsg::Execute {
                 contract_addr: swapper_addr,
-                msg: to_binary(&mars_types::swapper::ExecuteMsg::<Empty, Empty>::SwapExactIn {
-                    coin_in: coin_in_fee_collector.clone(),
-                    denom_out: cfg.fee_collector_denom,
-                    slippage: cfg.slippage_tolerance,
-                    route: fee_collector_route,
-                })?,
+                msg: to_json_binary(
+                    &mars_types::swapper::ExecuteMsg::<Empty, Empty>::SwapExactIn {
+                        coin_in: coin_in_fee_collector.clone(),
+                        denom_out: cfg.fee_collector_denom,
+                        slippage: cfg.slippage_tolerance,
+                        route: fee_collector_route,
+                    },
+                )?,
                 funds: vec![coin_in_fee_collector],
             });
         }

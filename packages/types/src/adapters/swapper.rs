@@ -1,5 +1,7 @@
 use cosmwasm_schema::cw_serde;
-use cosmwasm_std::{to_binary, Addr, Api, Coin, CosmosMsg, Decimal, Empty, StdResult, WasmMsg};
+use cosmwasm_std::{
+    to_json_binary, Addr, Api, Coin, CosmosMsg, Decimal, Empty, StdResult, WasmMsg,
+};
 
 use crate::swapper::{ExecuteMsg, SwapperRoute};
 
@@ -42,7 +44,7 @@ impl Swapper {
     ) -> StdResult<CosmosMsg> {
         Ok(CosmosMsg::Wasm(WasmMsg::Execute {
             contract_addr: self.address().to_string(),
-            msg: to_binary(&ExecuteMsg::<Empty, Empty>::SwapExactIn {
+            msg: to_json_binary(&ExecuteMsg::<Empty, Empty>::SwapExactIn {
                 coin_in: coin_in.clone(),
                 denom_out: denom_out.to_string(),
                 slippage,
@@ -113,7 +115,7 @@ mod tests {
             msg,
             CosmosMsg::Wasm(WasmMsg::Execute {
                 contract_addr: "swapper".to_string(),
-                msg: to_binary(&ExecuteMsg::<Empty, Empty>::SwapExactIn {
+                msg: to_json_binary(&ExecuteMsg::<Empty, Empty>::SwapExactIn {
                     coin_in: coin_in.clone(),
                     denom_out: denom_out.to_string(),
                     slippage,
@@ -142,7 +144,7 @@ mod tests {
             msg,
             CosmosMsg::Wasm(WasmMsg::Execute {
                 contract_addr: "swapper".to_string(),
-                msg: to_binary(&ExecuteMsg::<Empty, Empty>::SwapExactIn {
+                msg: to_json_binary(&ExecuteMsg::<Empty, Empty>::SwapExactIn {
                     coin_in: coin_in.clone(),
                     denom_out: denom_out.to_string(),
                     slippage,

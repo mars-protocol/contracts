@@ -1,4 +1,4 @@
-use cosmwasm_std::{to_binary, CosmosMsg, DepsMut, Env, Response, WasmMsg};
+use cosmwasm_std::{to_json_binary, CosmosMsg, DepsMut, Env, Response, WasmMsg};
 use cw_vault_standard::extensions::lockup::UnlockingPosition;
 use mars_types::{
     adapters::vault::{UnlockingChange, Vault, VaultError, VaultPositionUpdate},
@@ -46,7 +46,7 @@ pub fn exit_vault_unlocked(
     let update_coin_balance_msg = CosmosMsg::Wasm(WasmMsg::Execute {
         contract_addr: env.contract.address.to_string(),
         funds: vec![],
-        msg: to_binary(&ExecuteMsg::Callback(CallbackMsg::UpdateCoinBalance {
+        msg: to_json_binary(&ExecuteMsg::Callback(CallbackMsg::UpdateCoinBalance {
             account_id: account_id.to_string(),
             previous_balance,
             change: ChangeExpected::Increase,

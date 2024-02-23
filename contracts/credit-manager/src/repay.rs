@@ -1,7 +1,7 @@
 use std::cmp::min;
 
 use cosmwasm_std::{
-    to_binary, BankMsg, Coin, CosmosMsg, Deps, DepsMut, Env, MessageInfo, Response, Uint128,
+    to_json_binary, BankMsg, Coin, CosmosMsg, Deps, DepsMut, Env, MessageInfo, Response, Uint128,
     WasmMsg,
 };
 use cw_utils::one_coin;
@@ -103,7 +103,7 @@ pub fn repay_for_recipient(
     let repay_callback_msg = CosmosMsg::Wasm(WasmMsg::Execute {
         contract_addr: env.contract.address.to_string(),
         funds: vec![],
-        msg: to_binary(&ExecuteMsg::Callback(Repay {
+        msg: to_json_binary(&ExecuteMsg::Callback(Repay {
             account_id: recipient_account_id.to_string(),
             coin: ActionCoin::from(coin_to_repay),
         }))?,
@@ -137,7 +137,7 @@ pub fn repay_from_wallet(
     let repay_callback_msg = CosmosMsg::Wasm(WasmMsg::Execute {
         contract_addr: env.contract.address.to_string(),
         funds: vec![],
-        msg: to_binary(&ExecuteMsg::Callback(Repay {
+        msg: to_json_binary(&ExecuteMsg::Callback(Repay {
             account_id: account_id.to_string(),
             coin: ActionCoin::from(&coin_to_repay),
         }))?,

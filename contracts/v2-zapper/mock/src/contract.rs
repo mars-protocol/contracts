@@ -1,6 +1,6 @@
 #[cfg(not(feature = "library"))]
 use cosmwasm_std::entry_point;
-use cosmwasm_std::{to_binary, Binary, Deps, DepsMut, Env, MessageInfo, Response, Uint128};
+use cosmwasm_std::{to_json_binary, Binary, Deps, DepsMut, Env, MessageInfo, Response, Uint128};
 use mars_types::zapper::{ExecuteMsg, QueryMsg};
 
 use crate::{
@@ -73,10 +73,10 @@ pub fn query(deps: Deps, _env: Env, msg: QueryMsg) -> ContractResult<Binary> {
         QueryMsg::EstimateProvideLiquidity {
             lp_token_out,
             coins_in,
-        } => to_binary(&estimate_provide_liquidity(&deps, &lp_token_out, coins_in)?),
+        } => to_json_binary(&estimate_provide_liquidity(&deps, &lp_token_out, coins_in)?),
         QueryMsg::EstimateWithdrawLiquidity {
             coin_in,
-        } => to_binary(&estimate_withdraw_liquidity(deps.storage, &coin_in)?),
+        } => to_json_binary(&estimate_withdraw_liquidity(deps.storage, &coin_in)?),
     };
     res.map_err(Into::into)
 }

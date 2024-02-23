@@ -1,6 +1,6 @@
 use cosmwasm_std::{
-    to_binary, Addr, BankMsg, Coin, CosmosMsg, DepsMut, Env, QuerierWrapper, Response, StdResult,
-    WasmMsg,
+    to_json_binary, Addr, BankMsg, Coin, CosmosMsg, DepsMut, Env, QuerierWrapper, Response,
+    StdResult, WasmMsg,
 };
 use mars_types::{
     credit_manager::{CallbackMsg, ExecuteMsg},
@@ -61,7 +61,7 @@ fn send_rewards_msg(
     Ok(CosmosMsg::Wasm(WasmMsg::Execute {
         contract_addr: credit_manager_addr.to_string(),
         funds: vec![],
-        msg: to_binary(&ExecuteMsg::Callback(CallbackMsg::SendRewardsToAddr {
+        msg: to_json_binary(&ExecuteMsg::Callback(CallbackMsg::SendRewardsToAddr {
             account_id: account_id.to_string(),
             previous_balances: coins,
             recipient,

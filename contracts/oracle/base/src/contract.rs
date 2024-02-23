@@ -1,7 +1,7 @@
 use std::marker::PhantomData;
 
 use cosmwasm_std::{
-    to_binary, Addr, Binary, CustomQuery, Deps, DepsMut, Env, MessageInfo, Order, Response,
+    to_json_binary, Addr, Binary, CustomQuery, Deps, DepsMut, Env, MessageInfo, Order, Response,
     StdError, StdResult,
 };
 use cw_storage_plus::{Bound, Item, Map};
@@ -114,18 +114,18 @@ where
 
     pub fn query(&self, deps: Deps<C>, env: Env, msg: QueryMsg) -> ContractResult<Binary> {
         let res = match msg {
-            QueryMsg::Config {} => to_binary(&self.query_config(deps)?),
+            QueryMsg::Config {} => to_json_binary(&self.query_config(deps)?),
             QueryMsg::PriceSource {
                 denom,
-            } => to_binary(&self.query_price_source(deps, denom)?),
+            } => to_json_binary(&self.query_price_source(deps, denom)?),
             QueryMsg::PriceSources {
                 start_after,
                 limit,
-            } => to_binary(&self.query_price_sources(deps, start_after, limit)?),
+            } => to_json_binary(&self.query_price_sources(deps, start_after, limit)?),
             QueryMsg::Price {
                 denom,
                 kind,
-            } => to_binary(&self.query_price(
+            } => to_json_binary(&self.query_price(
                 deps,
                 env,
                 denom,
@@ -135,7 +135,7 @@ where
                 start_after,
                 limit,
                 kind,
-            } => to_binary(&self.query_prices(
+            } => to_json_binary(&self.query_prices(
                 deps,
                 env,
                 start_after,

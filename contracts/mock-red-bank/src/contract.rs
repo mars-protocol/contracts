@@ -1,7 +1,7 @@
 #[cfg(not(feature = "library"))]
 use cosmwasm_std::entry_point;
 use cosmwasm_std::{
-    to_binary, Binary, Deps, DepsMut, Empty, Env, MessageInfo, Response, StdResult,
+    to_json_binary, Binary, Deps, DepsMut, Empty, Env, MessageInfo, Response, StdResult,
 };
 use mars_types::red_bank;
 
@@ -62,28 +62,28 @@ pub fn query(deps: Deps, _env: Env, msg: red_bank::QueryMsg) -> StdResult<Binary
     match msg {
         red_bank::QueryMsg::Market {
             denom,
-        } => to_binary(&query_market(deps, denom)?),
+        } => to_json_binary(&query_market(deps, denom)?),
         red_bank::QueryMsg::UserDebt {
             user,
             denom,
-        } => to_binary(&query_debt(deps, user, denom)?),
+        } => to_json_binary(&query_debt(deps, user, denom)?),
         red_bank::QueryMsg::UserCollateral {
             user,
             account_id,
             denom,
-        } => to_binary(&query_collateral(deps, user, account_id, denom)?),
+        } => to_json_binary(&query_collateral(deps, user, account_id, denom)?),
         red_bank::QueryMsg::UserCollaterals {
             user,
             account_id,
             start_after,
             limit,
-        } => to_binary(&query_collaterals(deps, user, account_id, start_after, limit)?),
+        } => to_json_binary(&query_collaterals(deps, user, account_id, start_after, limit)?),
         red_bank::QueryMsg::UserCollateralsV2 {
             user,
             account_id,
             start_after,
             limit,
-        } => to_binary(&query_collaterals_v2(deps, user, account_id, start_after, limit)?),
+        } => to_json_binary(&query_collaterals_v2(deps, user, account_id, start_after, limit)?),
         _ => unimplemented!("Query not supported!"),
     }
 }
