@@ -33,7 +33,7 @@ jobs:
       - name: Compile workspace
         run: |
           cargo make build
-          find target/wasm32-unknown-unknown/release -type f ! -name '*.wasm' -deletegit
+          find target/wasm32-unknown-unknown/release -type f ! -name '*.wasm' -delete
 
       - name: Run test coverage
         run: cargo make coverage-lcov
