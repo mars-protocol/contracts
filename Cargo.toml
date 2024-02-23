@@ -87,11 +87,11 @@ tsify              = "0.4.5"
 wasm-bindgen       = "0.2.91"
 
 # dev-dependencies
-cw-multi-test     = "0.17.0"
+cw-multi-test     = "0.20.0"
 cw-it             = "0.3.0"
 osmosis-test-tube = "22.1.0"
-proptest          = "1.2.0"
-test-case         = "3.2.1"
+proptest          = "1.4.0"
+test-case         = "3.3.1"
 
 # packages
 mars-health                = { path = "./packages/health" }
