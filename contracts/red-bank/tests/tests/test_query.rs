@@ -7,8 +7,12 @@ use mars_red_bank::{
     },
     state::DEBTS,
 };
-use mars_types::red_bank::{
-    Debt, Market, MarketResponse, UserCollateralResponse, UserDebtResponse,
+use mars_types::{
+    red_bank::{
+        Debt, Market, MarketV2Response, PaginatedMarketV2Response, UserCollateralResponse,
+        UserDebtResponse,
+    },
+    Metadata,
 };
 
 use super::helpers::{set_collateral, th_init_market, th_setup};
@@ -313,7 +317,7 @@ fn query_user_asset_debt() {
 }
 
 #[test]
-pub fn test_query_market_v2() {
+pub fn query_single_market_v2() {
     let mut deps = th_setup(&[]);
     let env = mock_env();
     let market = th_init_market(
@@ -337,12 +341,12 @@ pub fn test_query_market_v2() {
 
     assert_eq!(
         market_response,
-        MarketResponse {
+        MarketV2Response {
             debt_underlying_amount,
             collateral_underlying_amount,
-            collateralization_rate: Decimal::from_ratio(
+            utilization_rate: Decimal::from_ratio(
+                debt_underlying_amount,
                 collateral_underlying_amount,
-                debt_underlying_amount
             ),
             market,
         }
@@ -350,7 +354,7 @@ pub fn test_query_market_v2() {
 }
 
 #[test]
-pub fn test_query_markets_v2() {
+pub fn query_all_markets_v2() {
     let mut deps = th_setup(&[]);
     let env = mock_env();
     let market_1 = th_init_market(
@@ -388,27 +392,34 @@ pub fn test_query_markets_v2() {
     let debt_underlying_amount_2 = Uint128::new(51u128);
     let collateral_underlying_amount_2 = Uint128::new(76u128);
 
+    let data = vec![
+        MarketV2Response {
+            debt_underlying_amount: debt_underlying_amount_2,
+            collateral_underlying_amount: collateral_underlying_amount_2,
+            utilization_rate: Decimal::from_ratio(
+                debt_underlying_amount_2,
+                collateral_underlying_amount_2,
+            ),
+            market: market_2,
+        },
+        MarketV2Response {
+            debt_underlying_amount: debt_underlying_amount_1,
+            collateral_underlying_amount: collateral_underlying_amount_1,
+            utilization_rate: Decimal::from_ratio(
+                debt_underlying_amount_1,
+                collateral_underlying_amount_1,
+            ),
+            market: market_1,
+        },
+    ];
+
     assert_eq!(
         markets_response,
-        vec![
-            MarketResponse {
-                debt_underlying_amount: debt_underlying_amount_2,
-                collateral_underlying_amount: collateral_underlying_amount_2,
-                collateralization_rate: Decimal::from_ratio(
-                    collateral_underlying_amount_2,
-                    debt_underlying_amount_2
-                ),
-                market: market_2,
+        PaginatedMarketV2Response {
+            data,
+            metadata: Metadata {
+                has_more: false,
             },
-            MarketResponse {
-                debt_underlying_amount: debt_underlying_amount_1,
-                collateral_underlying_amount: collateral_underlying_amount_1,
-                collateralization_rate: Decimal::from_ratio(
-                    collateral_underlying_amount_1,
-                    debt_underlying_amount_1
-                ),
-                market: market_1,
-            },
-        ]
+        }
     );
 }

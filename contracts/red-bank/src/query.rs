@@ -10,9 +10,9 @@ use mars_types::{
     address_provider::{self, MarsAddressType},
     keys::{UserId, UserIdKey},
     red_bank::{
-        Collateral, ConfigResponse, Debt, Market, MarketResponse, PaginatedUserCollateralResponse,
-        UncollateralizedLoanLimitResponse, UserCollateralResponse, UserDebtResponse,
-        UserHealthStatus, UserPositionResponse,
+        Collateral, ConfigResponse, Debt, Market, MarketV2Response, PaginatedMarketV2Response,
+        PaginatedUserCollateralResponse, UncollateralizedLoanLimitResponse, UserCollateralResponse,
+        UserDebtResponse, UserHealthStatus, UserPositionResponse,
     },
 };
 
@@ -39,7 +39,7 @@ pub fn query_market(deps: Deps, denom: String) -> StdResult<Option<Market>> {
     MARKETS.may_load(deps.storage, &denom)
 }
 
-pub fn query_market_v2(deps: Deps, env: Env, denom: String) -> StdResult<MarketResponse> {
+pub fn query_market_v2(deps: Deps, env: Env, denom: String) -> StdResult<MarketV2Response> {
     let block_time = env.block.time.seconds();
     let market = MARKETS.load(deps.storage, &denom)?;
 
@@ -49,13 +49,14 @@ pub fn query_market_v2(deps: Deps, env: Env, denom: String) -> StdResult<MarketR
     let debt_underlying_amount =
         get_underlying_debt_amount(market.debt_total_scaled, &market, block_time)?;
 
-    Ok(MarketResponse {
+    Ok(MarketV2Response {
         debt_underlying_amount,
         collateral_underlying_amount,
-        collateralization_rate: Decimal::from_ratio(
-            collateral_underlying_amount,
-            debt_underlying_amount,
-        ),
+        utilization_rate: if !collateral_underlying_amount.is_zero() {
+            Decimal::from_ratio(debt_underlying_amount, collateral_underlying_amount)
+        } else {
+            Decimal::zero()
+        },
         market,
     })
 }
@@ -83,14 +84,14 @@ pub fn query_markets_v2(
     env: Env,
     start_after: Option<String>,
     limit: Option<u32>,
-) -> StdResult<Vec<MarketResponse>> {
+) -> Result<PaginatedMarketV2Response, ContractError> {
     let block_time = env.block.time.seconds();
     let start = start_after.map(|denom| Bound::ExclusiveRaw(denom.into_bytes()));
     let limit = limit.unwrap_or(DEFAULT_LIMIT).min(MAX_LIMIT) as usize;
 
-    MARKETS
+    let markets_res: Result<Vec<MarketV2Response>, ContractError> = MARKETS
         .range(deps.storage, start, None, Order::Ascending)
-        .take(limit)
+        .take(limit + 1)
         .map(|item| {
             let (_, market) = item?;
 
@@ -102,17 +103,31 @@ pub fn query_markets_v2(
             let debt_underlying_amount =
                 get_underlying_debt_amount(market.debt_total_scaled, &market, block_time)?;
 
-            Ok(MarketResponse {
+            Ok(MarketV2Response {
                 debt_underlying_amount,
                 collateral_underlying_amount,
-                collateralization_rate: Decimal::from_ratio(
-                    collateral_underlying_amount,
-                    debt_underlying_amount,
-                ),
+                utilization_rate: if !collateral_underlying_amount.is_zero() {
+                    Decimal::from_ratio(debt_underlying_amount, collateral_underlying_amount)
+                } else {
+                    Decimal::zero()
+                },
                 market,
             })
         })
-        .collect()
+        .collect();
+
+    let mut markets = markets_res?;
+    let has_more = markets.len() > limit;
+    if has_more {
+        markets.pop(); // Remove the extra item used for checking if there are more items
+    }
+
+    Ok(PaginatedMarketV2Response {
+        data: markets,
+        metadata: Metadata {
+            has_more,
+        },
+    })
 }
 
 pub fn query_uncollateralized_loan_limit(

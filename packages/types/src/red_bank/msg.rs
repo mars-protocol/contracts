@@ -158,20 +158,20 @@ pub enum QueryMsg {
     },
 
     /// Get asset market with underlying collateral and debt amount
-    #[returns(crate::red_bank::MarketResponse)]
+    #[returns(crate::red_bank::MarketV2Response)]
     MarketV2 {
         denom: String,
     },
 
     /// Enumerate markets with pagination
-    #[returns(Vec<crate::red_bank::Market>)]
+    #[returns(Vec < crate::red_bank::Market >)]
     Markets {
         start_after: Option<String>,
         limit: Option<u32>,
     },
 
     /// Enumerate marketsV2 with pagination
-    #[returns(Vec<crate::red_bank::MarketResponse>)]
+    #[returns(Vec < crate::red_bank::MarketV2Response >)]
     MarketsV2 {
         start_after: Option<String>,
         limit: Option<u32>,
@@ -185,7 +185,7 @@ pub enum QueryMsg {
     },
 
     /// Get all uncollateralized limits for a given user
-    #[returns(Vec<crate::red_bank::UncollateralizedLoanLimitResponse>)]
+    #[returns(Vec < crate::red_bank::UncollateralizedLoanLimitResponse >)]
     UncollateralizedLoanLimits {
         user: String,
         start_after: Option<String>,
@@ -200,7 +200,7 @@ pub enum QueryMsg {
     },
 
     /// Get all debt positions for a user
-    #[returns(Vec<crate::red_bank::UserDebtResponse>)]
+    #[returns(Vec < crate::red_bank::UserDebtResponse >)]
     UserDebts {
         user: String,
         start_after: Option<String>,
@@ -216,7 +216,7 @@ pub enum QueryMsg {
     },
 
     /// Get all collateral positions for a user
-    #[returns(Vec<crate::red_bank::UserCollateralResponse>)]
+    #[returns(Vec < crate::red_bank::UserCollateralResponse >)]
     UserCollaterals {
         user: String,
         account_id: Option<String>,
