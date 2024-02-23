@@ -1,10 +1,19 @@
 use cosmwasm_std::{testing::mock_env, Addr, Decimal, Uint128};
 use mars_interest_rate::{get_scaled_debt_amount, get_underlying_debt_amount, SCALING_FACTOR};
 use mars_red_bank::{
-    query::{query_user_collaterals, query_user_collaterals_v2, query_user_debt, query_user_debts},
+    query::{
+        query_market_v2, query_markets_v2, query_user_collaterals, query_user_collaterals_v2,
+        query_user_debt, query_user_debts,
+    },
     state::DEBTS,
 };
-use mars_types::red_bank::{Debt, Market, UserCollateralResponse, UserDebtResponse};
+use mars_types::{
+    red_bank::{
+        Debt, Market, MarketV2Response, PaginatedMarketV2Response, UserCollateralResponse,
+        UserDebtResponse,
+    },
+    Metadata,
+};
 
 use super::helpers::{set_collateral, th_init_market, th_setup};
 
@@ -62,7 +71,7 @@ fn query_collateral() {
                 amount_scaled: amount_2 * SCALING_FACTOR,
                 amount: amount_2,
                 enabled: true,
-            }
+            },
         ]
     );
 }
@@ -305,4 +314,112 @@ fn query_user_asset_debt() {
             }
         );
     }
+}
+
+#[test]
+pub fn query_single_market_v2() {
+    let mut deps = th_setup(&[]);
+    let env = mock_env();
+    let market = th_init_market(
+        deps.as_mut(),
+        "uosmo",
+        &Market {
+            borrow_index: Decimal::one(),
+            borrow_rate: Decimal::one(),
+            debt_total_scaled: Uint128::new(500000u128),
+            liquidity_rate: Decimal::one(),
+            liquidity_index: Decimal::one(),
+            collateral_total_scaled: Uint128::new(1000000u128),
+            ..Default::default()
+        },
+    );
+
+    let market_response = query_market_v2(deps.as_ref(), env, market.denom.clone()).unwrap();
+
+    let debt_underlying_amount = Uint128::new(26u128);
+    let collateral_underlying_amount = Uint128::new(50u128);
+
+    assert_eq!(
+        market_response,
+        MarketV2Response {
+            debt_underlying_amount,
+            collateral_underlying_amount,
+            utilization_rate: Decimal::from_ratio(
+                debt_underlying_amount,
+                collateral_underlying_amount,
+            ),
+            market,
+        }
+    );
+}
+
+#[test]
+pub fn query_all_markets_v2() {
+    let mut deps = th_setup(&[]);
+    let env = mock_env();
+    let market_1 = th_init_market(
+        deps.as_mut(),
+        "uosmo",
+        &Market {
+            borrow_index: Decimal::one(),
+            borrow_rate: Decimal::one(),
+            debt_total_scaled: Uint128::new(500000u128),
+            liquidity_rate: Decimal::one(),
+            liquidity_index: Decimal::one(),
+            collateral_total_scaled: Uint128::new(1000000u128),
+            ..Default::default()
+        },
+    );
+
+    let market_2 = th_init_market(
+        deps.as_mut(),
+        "atom",
+        &Market {
+            borrow_index: Decimal::one(),
+            borrow_rate: Decimal::one(),
+            debt_total_scaled: Uint128::new(1000000u128),
+            liquidity_rate: Decimal::one(),
+            liquidity_index: Decimal::one(),
+            collateral_total_scaled: Uint128::new(1500000u128),
+            ..Default::default()
+        },
+    );
+
+    let markets_response = query_markets_v2(deps.as_ref(), env, None, None).unwrap();
+
+    let debt_underlying_amount_1 = Uint128::new(26u128);
+    let collateral_underlying_amount_1 = Uint128::new(50u128);
+    let debt_underlying_amount_2 = Uint128::new(51u128);
+    let collateral_underlying_amount_2 = Uint128::new(76u128);
+
+    let data = vec![
+        MarketV2Response {
+            debt_underlying_amount: debt_underlying_amount_2,
+            collateral_underlying_amount: collateral_underlying_amount_2,
+            utilization_rate: Decimal::from_ratio(
+                debt_underlying_amount_2,
+                collateral_underlying_amount_2,
+            ),
+            market: market_2,
+        },
+        MarketV2Response {
+            debt_underlying_amount: debt_underlying_amount_1,
+            collateral_underlying_amount: collateral_underlying_amount_1,
+            utilization_rate: Decimal::from_ratio(
+                debt_underlying_amount_1,
+                collateral_underlying_amount_1,
+            ),
+            market: market_1,
+        },
+    ];
+
+    assert_eq!(
+        markets_response,
+        PaginatedMarketV2Response {
+            data,
+            metadata: Metadata {
+                has_more: false,
+            },
+        }
+    );
 }

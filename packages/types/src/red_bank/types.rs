@@ -1,7 +1,7 @@
 use cosmwasm_schema::cw_serde;
 use cosmwasm_std::{Decimal, Uint128};
 
-use crate::PaginationResponse;
+use crate::{red_bank::Market, PaginationResponse};
 
 /// Global configuration
 #[cw_serde]
@@ -112,4 +112,16 @@ pub struct UserPositionResponse {
     pub weighted_max_ltv_collateral: Uint128,
     pub weighted_liquidation_threshold_collateral: Uint128,
     pub health_status: UserHealthStatus,
+}
+
+pub type PaginatedMarketV2Response = PaginationResponse<MarketV2Response>;
+
+#[cw_serde]
+pub struct MarketV2Response {
+    pub collateral_underlying_amount: Uint128,
+    pub debt_underlying_amount: Uint128,
+    pub utilization_rate: Decimal,
+
+    #[serde(flatten)]
+    pub market: Market,
 }

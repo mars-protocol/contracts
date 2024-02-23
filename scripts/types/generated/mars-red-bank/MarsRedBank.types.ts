@@ -129,7 +129,18 @@ export type QueryMsg =
       }
     }
   | {
+      market_v2: {
+        denom: string
+      }
+    }
+  | {
       markets: {
+        limit?: number | null
+        start_after?: string | null
+      }
+    }
+  | {
+      markets_v2: {
         limit?: number | null
         start_after?: string | null
       }
@@ -236,7 +247,23 @@ export interface Market {
   liquidity_rate: Decimal
   reserve_factor: Decimal
 }
+export interface MarketResponse {
+  borrow_index: Decimal
+  borrow_rate: Decimal
+  collateral_total_scaled: Uint128
+  collateral_underlying_amount: Uint128
+  collateralization_rate: Decimal
+  debt_total_scaled: Uint128
+  debt_underlying_amount: Uint128
+  denom: string
+  indexes_last_updated: number
+  interest_rate_model: InterestRateModel
+  liquidity_index: Decimal
+  liquidity_rate: Decimal
+  reserve_factor: Decimal
+}
 export type ArrayOfMarket = Market[]
+export type ArrayOfMarketResponse = MarketResponse[]
 export interface UncollateralizedLoanLimitResponse {
   denom: string
   limit: Uint128
