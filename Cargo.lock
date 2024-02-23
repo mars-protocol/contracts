@@ -1132,9 +1132,9 @@ dependencies = [
 
 [[package]]
 name = "cw-vault-standard"
-version = "0.3.3"
+version = "0.4.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "908934004eb811c72acd4d2d4f6d936695a7e9236815c01c4b6ce3f47c29d272"
+checksum = "9e70a60d4a86860d6b51908201339530c47ef7bfc4fb137f9f9f54468124d35d"
 dependencies = [
  "cosmwasm-schema",
  "cosmwasm-std",
@@ -2112,7 +2112,7 @@ dependencies = [
  "cw-paginate",
  "cw-storage-plus 1.2.0",
  "cw-utils 1.0.3",
- "cw-vault-standard 0.3.3",
+ "cw-vault-standard 0.4.0",
  "cw2 1.1.2",
  "cw721 0.18.0",
  "cw721-base 0.18.0",
@@ -2288,7 +2288,7 @@ dependencies = [
  "cosmwasm-std",
  "cw-storage-plus 1.2.0",
  "cw-utils 1.0.3",
- "cw-vault-standard 0.3.3",
+ "cw-vault-standard 0.4.0",
  "mars-types",
  "thiserror",
 ]
@@ -2527,7 +2527,7 @@ dependencies = [
  "cw-multi-test",
  "cw-storage-plus 1.2.0",
  "cw-utils 1.0.3",
- "cw-vault-standard 0.3.3",
+ "cw-vault-standard 0.4.0",
  "cw2 1.1.2",
  "mars-mock-credit-manager",
  "mars-mock-oracle",
@@ -2546,7 +2546,7 @@ dependencies = [
  "console_error_panic_hook",
  "cosmwasm-schema",
  "cosmwasm-std",
- "cw-vault-standard 0.3.3",
+ "cw-vault-standard 0.4.0",
  "mars-types",
  "proptest",
  "schemars",
@@ -2655,7 +2655,7 @@ dependencies = [
  "cosmwasm-std",
  "cw-storage-plus 1.2.0",
  "cw-utils 1.0.3",
- "cw-vault-standard 0.3.3",
+ "cw-vault-standard 0.4.0",
  "cw721 0.18.0",
  "cw721-base 0.18.0",
  "mars-osmosis",
