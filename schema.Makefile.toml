@@ -5,8 +5,8 @@ use std::fs;
 use std::process::Command;
 
 fn main() -> std::io::Result<()> {
-    fs::remove_dir_all("schema");
-    fs::remove_dir_all("schemas");
+    let _ = fs::remove_dir_all("schema");
+    let _ = fs::remove_dir_all("schemas");
     fs::create_dir("schemas")?;
     println!("Done");
 
@@ -53,7 +53,7 @@ fn main() -> std::io::Result<()> {
         )?;
     }
 
-    fs::remove_dir_all("schema");
+    let _ = fs::remove_dir_all("schema");
 
     Ok(())
 }
