@@ -123,7 +123,7 @@ Creates JSON schema files for relevant contract calls, queries and query respons
 `rustfmt` is used to format any Rust source code:
 
 ```bash
-cargo +nightly fmt
+cargo make fmt
 ```
 
 `clippy` is used as a linting tool:

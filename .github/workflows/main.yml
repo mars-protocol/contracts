@@ -33,7 +33,7 @@ jobs:
         uses: Swatinem/rust-cache@v2
 
       - name: Format
-        run: cargo make fmt
+        run: cargo make fmt-check
 
       - name: Clippy
         run: cargo make clippy
