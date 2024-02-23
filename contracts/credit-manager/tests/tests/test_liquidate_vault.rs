@@ -68,7 +68,7 @@ fn liquidatee_must_have_the_request_vault_position() {
     assert_err(
         res,
         ContractError::Std(NotFound {
-            kind: "mars_types::adapters::vault::amount::VaultPositionAmount".to_string(),
+            kind: "type: mars_types::adapters::vault::amount::VaultPositionAmount; key: [00, 0F, 76, 61, 75, 6C, 74, 5F, 70, 6F, 73, 69, 74, 69, 6F, 6E, 73, 00, 01, 32, 63, 6F, 6E, 74, 72, 61, 63, 74, 31, 30]".to_string(),
         }),
     )
 }

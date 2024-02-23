@@ -354,7 +354,7 @@ fn querying_staked_geometric_twap_price_if_no_transitive_denom_price_source() {
     assert_eq!(
         res_err,
         ContractError::Std(StdError::not_found(
-            "mars_oracle_osmosis::price_source::OsmosisPriceSource<cosmwasm_std::addresses::Addr>"
+            "type: mars_oracle_osmosis::price_source::OsmosisPriceSource<cosmwasm_std::addresses::Addr>; key: [00, 0D, 70, 72, 69, 63, 65, 5F, 73, 6F, 75, 72, 63, 65, 73, 75, 61, 74, 6F, 6D]"
         ))
     );
 }
@@ -658,7 +658,7 @@ fn querying_lsd_price_if_no_transitive_denom_price_source() {
     assert_eq!(
         res_err,
         ContractError::Std(StdError::not_found(
-            "mars_oracle_osmosis::price_source::OsmosisPriceSource<cosmwasm_std::addresses::Addr>"
+            "type: mars_oracle_osmosis::price_source::OsmosisPriceSource<cosmwasm_std::addresses::Addr>; key: [00, 0D, 70, 72, 69, 63, 65, 5F, 73, 6F, 75, 72, 63, 65, 73, 75, 61, 74, 6F, 6D]"
         ))
     );
 }

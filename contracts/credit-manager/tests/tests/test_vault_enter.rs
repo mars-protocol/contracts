@@ -172,7 +172,7 @@ fn fails_if_not_enough_funds_for_implied_deposit() {
     assert_err(
         res,
         ContractError::Std(NotFound {
-            kind: "cosmwasm_std::math::uint128::Uint128".to_string(),
+            kind: "type: cosmwasm_std::math::uint128::Uint128; key: [00, 0C, 63, 6F, 69, 6E, 5F, 62, 61, 6C, 61, 6E, 63, 65, 00, 01, 32, 75, 67, 61, 6D, 6D, 32, 32]".to_string(),
         }),
     );
 }

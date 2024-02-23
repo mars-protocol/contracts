@@ -75,7 +75,7 @@ fn uses_liquidation_pricing() {
     assert_eq!(
         err,
         StdError::generic_err(
-            "Querier contract error: Generic error: Querier contract error: cosmwasm_std::math::decimal::Decimal not found".to_string()
+            "Querier contract error: Generic error: Querier contract error: type: cosmwasm_std::math::decimal::Decimal; key: [00, 12, 64, 65, 66, 61, 75, 6C, 74, 5F, 63, 6F, 69, 6E, 5F, 70, 72, 69, 63, 65, 75, 6D, 61, 72, 73] not found".to_string()
         )
     );
     let err: StdError = mock
@@ -84,7 +84,7 @@ fn uses_liquidation_pricing() {
     assert_eq!(
         err,
         StdError::generic_err(
-            "Querier contract error: Generic error: Querier contract error: cosmwasm_std::math::decimal::Decimal not found".to_string()
+            "Querier contract error: Generic error: Querier contract error: type: cosmwasm_std::math::decimal::Decimal; key: [00, 12, 64, 65, 66, 61, 75, 6C, 74, 5F, 63, 6F, 69, 6E, 5F, 70, 72, 69, 63, 65, 75, 6D, 61, 72, 73] not found".to_string()
         )
     );
 

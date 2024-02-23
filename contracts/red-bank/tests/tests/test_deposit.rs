@@ -166,7 +166,9 @@ fn depositing_to_non_existent_market() {
         },
     )
     .unwrap_err();
-    assert_eq!(err, StdError::not_found(type_name::<Market>()).into());
+    assert_eq!(err, ContractError::Std(StdError::not_found(
+        "type: mars_types::red_bank::market::Market; key: [00, 07, 6D, 61, 72, 6B, 65, 74, 73, 75, 73, 74, 65, 61, 6B]"
+    )));
 }
 
 #[test]
