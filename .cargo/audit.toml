@@ -3,4 +3,4 @@
 [advisories]
 # Ignore the following advisory IDs.
 # Reported vulnerabilities relate to test-tube which is only used for testing.
-ignore = ["RUSTSEC-2022-0093", "RUSTSEC-2023-0052", "RUSTSEC-2024-0003", "RUSTSEC-2024-0006"]
+ignore = ["RUSTSEC-2024-0003", "RUSTSEC-2024-0006"]
