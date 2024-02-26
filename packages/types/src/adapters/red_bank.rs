@@ -1,6 +1,6 @@
 use cosmwasm_schema::cw_serde;
 use cosmwasm_std::{
-    to_binary, Addr, Api, Coin, CosmosMsg, QuerierWrapper, QueryRequest, StdResult, Uint128,
+    to_json_binary, Addr, Api, Coin, CosmosMsg, QuerierWrapper, QueryRequest, StdResult, Uint128,
     WasmMsg, WasmQuery,
 };
 
@@ -50,7 +50,7 @@ impl RedBank {
     pub fn borrow_msg(&self, coin: &Coin) -> StdResult<CosmosMsg> {
         Ok(CosmosMsg::Wasm(WasmMsg::Execute {
             contract_addr: self.addr.to_string(),
-            msg: to_binary(&red_bank::ExecuteMsg::Borrow {
+            msg: to_json_binary(&red_bank::ExecuteMsg::Borrow {
                 denom: coin.denom.to_string(),
                 amount: coin.amount,
                 recipient: None,
@@ -63,7 +63,7 @@ impl RedBank {
     pub fn repay_msg(&self, coin: &Coin) -> StdResult<CosmosMsg> {
         Ok(CosmosMsg::Wasm(WasmMsg::Execute {
             contract_addr: self.addr.to_string(),
-            msg: to_binary(&red_bank::ExecuteMsg::Repay {
+            msg: to_json_binary(&red_bank::ExecuteMsg::Repay {
                 on_behalf_of: None,
             })?,
             funds: vec![coin.clone()],
@@ -74,7 +74,7 @@ impl RedBank {
     pub fn lend_msg(&self, coin: &Coin, account_id: &str) -> StdResult<CosmosMsg> {
         Ok(CosmosMsg::Wasm(WasmMsg::Execute {
             contract_addr: self.addr.to_string(),
-            msg: to_binary(&red_bank::ExecuteMsg::Deposit {
+            msg: to_json_binary(&red_bank::ExecuteMsg::Deposit {
                 account_id: Some(account_id.to_string()),
                 on_behalf_of: None,
             })?,
@@ -91,7 +91,7 @@ impl RedBank {
     ) -> StdResult<CosmosMsg> {
         Ok(CosmosMsg::Wasm(WasmMsg::Execute {
             contract_addr: self.addr.to_string(),
-            msg: to_binary(&red_bank::ExecuteMsg::Withdraw {
+            msg: to_json_binary(&red_bank::ExecuteMsg::Withdraw {
                 denom: coin.denom.clone(),
                 amount: Some(coin.amount),
                 recipient: None,
@@ -111,7 +111,7 @@ impl RedBank {
         let response: red_bank::UserCollateralResponse =
             querier.query(&QueryRequest::Wasm(WasmQuery::Smart {
                 contract_addr: self.addr.to_string(),
-                msg: to_binary(&red_bank::QueryMsg::UserCollateral {
+                msg: to_json_binary(&red_bank::QueryMsg::UserCollateral {
                     user: self.credit_manager.to_string(),
                     account_id: Some(account_id.to_string()),
                     denom: denom.to_string(),
@@ -151,7 +151,7 @@ impl RedBank {
     ) -> StdResult<red_bank::PaginatedUserCollateralResponse> {
         querier.query(&QueryRequest::Wasm(WasmQuery::Smart {
             contract_addr: self.addr.to_string(),
-            msg: to_binary(&red_bank::QueryMsg::UserCollateralsV2 {
+            msg: to_json_binary(&red_bank::QueryMsg::UserCollateralsV2 {
                 user: self.credit_manager.to_string(),
                 account_id: Some(account_id.to_string()),
                 start_after,
@@ -164,7 +164,7 @@ impl RedBank {
         let response: red_bank::UserDebtResponse =
             querier.query(&QueryRequest::Wasm(WasmQuery::Smart {
                 contract_addr: self.addr.to_string(),
-                msg: to_binary(&red_bank::QueryMsg::UserDebt {
+                msg: to_json_binary(&red_bank::QueryMsg::UserDebt {
                     user: self.credit_manager.to_string(),
                     denom: denom.to_string(),
                 })?,

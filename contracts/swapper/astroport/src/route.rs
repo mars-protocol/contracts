@@ -3,7 +3,7 @@ use std::{fmt, str::FromStr};
 use astroport::{asset::AssetInfo, pair::MAX_ALLOWED_SLIPPAGE, router::SwapOperation};
 use cosmwasm_schema::cw_serde;
 use cosmwasm_std::{
-    to_binary, Coin, CosmosMsg, Decimal, Empty, Env, QuerierWrapper, QueryRequest, StdError,
+    to_json_binary, Coin, CosmosMsg, Decimal, Empty, Env, QuerierWrapper, QueryRequest, StdError,
     StdResult, Uint128, WasmMsg, WasmQuery,
 };
 use mars_swapper_base::{ContractError, ContractResult, Route};
@@ -57,7 +57,7 @@ impl AstroportRoute {
         querier
             .query::<PriceResponse>(&QueryRequest::Wasm(WasmQuery::Smart {
                 contract_addr: self.oracle.clone(),
-                msg: to_binary(&mars_types::oracle::QueryMsg::Price {
+                msg: to_json_binary(&mars_types::oracle::QueryMsg::Price {
                     denom: denom.to_string(),
                     kind: None,
                 })?,
@@ -159,7 +159,7 @@ impl Route<Empty, Empty, AstroportConfig> for AstroportRoute {
             denom: denom_in.to_string(),
         };
         let mut seen_denoms = hashset(&[prev_denom_out.clone()]);
-        for (_, step) in steps.iter().enumerate() {
+        for step in steps.iter() {
             let offer = step.offer();
             let ask = step.ask();
 
@@ -213,7 +213,7 @@ impl Route<Empty, Empty, AstroportConfig> for AstroportRoute {
 
         let swap_msg: CosmosMsg = WasmMsg::Execute {
             contract_addr: self.router.clone(),
-            msg: to_binary(&astroport::router::ExecuteMsg::ExecuteSwapOperations {
+            msg: to_json_binary(&astroport::router::ExecuteMsg::ExecuteSwapOperations {
                 operations: self.operations.clone(),
                 minimum_receive,
                 to: None,

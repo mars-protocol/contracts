@@ -1,4 +1,4 @@
-use cosmwasm_std::{to_binary, Addr, Binary, ContractResult, QuerierResult};
+use cosmwasm_std::{to_json_binary, Addr, Binary, ContractResult, QuerierResult};
 use mars_types::address_provider::{AddressResponseItem, QueryMsg};
 
 // NOTE: Addresses here are all hardcoded as we always use those to target a specific contract
@@ -18,7 +18,7 @@ pub fn handle_query(contract_addr: &Addr, query: QueryMsg) -> QuerierResult {
                 address_type,
                 address: address_type.to_string(),
             };
-            to_binary(&res).into()
+            to_json_binary(&res).into()
         }
 
         QueryMsg::Addresses(address_types) => {
@@ -29,7 +29,7 @@ pub fn handle_query(contract_addr: &Addr, query: QueryMsg) -> QuerierResult {
                     address: address_type.to_string(),
                 })
                 .collect::<Vec<_>>();
-            to_binary(&addresses).into()
+            to_json_binary(&addresses).into()
         }
 
         _ => panic!("[mock]: Unsupported address provider query"),

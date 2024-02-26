@@ -1,5 +1,7 @@
 use cosmwasm_schema::cw_serde;
-use cosmwasm_std::{to_binary, Addr, Api, Coin, CosmosMsg, QuerierWrapper, StdResult, WasmMsg};
+use cosmwasm_std::{
+    to_json_binary, Addr, Api, Coin, CosmosMsg, QuerierWrapper, StdResult, WasmMsg,
+};
 
 use crate::incentives::{ExecuteMsg, QueryMsg};
 
@@ -44,7 +46,7 @@ impl Incentives {
     pub fn claim_rewards_msg(&self, account_id: &str) -> StdResult<CosmosMsg> {
         Ok(CosmosMsg::Wasm(WasmMsg::Execute {
             contract_addr: self.addr.to_string(),
-            msg: to_binary(&ExecuteMsg::ClaimRewards {
+            msg: to_json_binary(&ExecuteMsg::ClaimRewards {
                 account_id: Some(account_id.to_string()),
                 start_after_collateral_denom: None,
                 start_after_incentive_denom: None,

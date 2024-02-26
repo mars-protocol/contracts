@@ -1,4 +1,4 @@
-use cosmwasm_std::{to_binary, Addr, CosmosMsg, DepsMut, Env, Response, WasmMsg};
+use cosmwasm_std::{to_json_binary, Addr, CosmosMsg, DepsMut, Env, Response, WasmMsg};
 use mars_types::credit_manager::{ActionAmount, ActionCoin, CallbackMsg, ExecuteMsg};
 
 use crate::{error::ContractResult, query::query_coin_balances, utils::query_nft_token_owner};
@@ -17,7 +17,7 @@ pub fn refund_coin_balances(deps: DepsMut, env: Env, account_id: &str) -> Contra
             Ok(CosmosMsg::Wasm(WasmMsg::Execute {
                 contract_addr: env.contract.address.to_string(),
                 funds: vec![],
-                msg: to_binary(&ExecuteMsg::Callback(CallbackMsg::Withdraw {
+                msg: to_json_binary(&ExecuteMsg::Callback(CallbackMsg::Withdraw {
                     account_id: account_id.to_string(),
                     coin: action_coin,
                     recipient: Addr::unchecked(account_nft_owner.clone()),

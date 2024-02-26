@@ -1,5 +1,5 @@
 use cosmwasm_std::{
-    to_binary, Addr, CosmosMsg, Order, Response, StdResult, Storage, Uint128, WasmMsg,
+    to_json_binary, Addr, CosmosMsg, Order, Response, StdResult, Storage, Uint128, WasmMsg,
 };
 use mars_types::{
     incentives,
@@ -197,7 +197,7 @@ impl<'a> User<'a> {
     ) -> StdResult<CosmosMsg> {
         Ok(WasmMsg::Execute {
             contract_addr: incentives_addr.into(),
-            msg: to_binary(&incentives::ExecuteMsg::BalanceChange {
+            msg: to_json_binary(&incentives::ExecuteMsg::BalanceChange {
                 user_addr: self.address().clone(),
                 account_id,
                 denom: market.denom.clone(),

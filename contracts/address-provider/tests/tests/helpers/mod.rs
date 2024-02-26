@@ -1,7 +1,7 @@
 #![allow(dead_code)]
 
 use cosmwasm_std::{
-    from_binary,
+    from_json,
     testing::{
         mock_dependencies_with_balance, mock_env, mock_info, MockApi, MockQuerier, MockStorage,
     },
@@ -28,5 +28,5 @@ pub fn th_setup() -> OwnedDeps<MockStorage, MockApi, MockQuerier> {
 }
 
 pub fn th_query<T: serde::de::DeserializeOwned>(deps: Deps, msg: QueryMsg) -> T {
-    from_binary(&query(deps, mock_env(), msg).unwrap()).unwrap()
+    from_json(query(deps, mock_env(), msg).unwrap()).unwrap()
 }

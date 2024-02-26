@@ -1,4 +1,4 @@
-use cosmwasm_std::{to_binary, Addr, QuerierWrapper, QueryRequest, StdResult, WasmQuery};
+use cosmwasm_std::{to_json_binary, Addr, QuerierWrapper, QueryRequest, StdResult, WasmQuery};
 use ica_oracle::msg::{QueryMsg, RedemptionRateResponse};
 use mars_oracle_base::{ContractError, ContractResult};
 use mars_osmosis::{
@@ -141,7 +141,7 @@ pub fn query_redemption_rate(
 ) -> StdResult<RedemptionRateResponse> {
     querier.query(&QueryRequest::Wasm(WasmQuery::Smart {
         contract_addr: contract_addr.into_string(),
-        msg: to_binary(&QueryMsg::RedemptionRate {
+        msg: to_json_binary(&QueryMsg::RedemptionRate {
             denom,
             params: None,
         })?,

@@ -1,6 +1,6 @@
 #[cfg(not(feature = "library"))]
 use cosmwasm_std::entry_point;
-use cosmwasm_std::{to_binary, Binary, Deps, DepsMut, Env, MessageInfo, Response};
+use cosmwasm_std::{to_json_binary, Binary, Deps, DepsMut, Env, MessageInfo, Response};
 use cw2::set_contract_version;
 use mars_owner::OwnerInit::SetInitialOwner;
 use mars_types::health::{ConfigResponse, ExecuteMsg, HealthResult, InstantiateMsg, QueryMsg};
@@ -61,13 +61,13 @@ pub fn query(deps: Deps, _: Env, msg: QueryMsg) -> HealthResult<Binary> {
             account_id,
             kind,
             action,
-        } => to_binary(&health_values(deps, &account_id, kind, action)?),
+        } => to_json_binary(&health_values(deps, &account_id, kind, action)?),
         QueryMsg::HealthState {
             account_id,
             kind,
             action,
-        } => to_binary(&health_state(deps, &account_id, kind, action)?),
-        QueryMsg::Config {} => to_binary(&query_config(deps)?),
+        } => to_json_binary(&health_state(deps, &account_id, kind, action)?),
+        QueryMsg::Config {} => to_json_binary(&query_config(deps)?),
     };
     res.map_err(Into::into)
 }

@@ -1,4 +1,4 @@
-pub use self::{assertions::*, contracts::*, generator::*, mock_env::*};
+pub use self::{assertions::*, generator::*, mock_env::*};
 
 mod assertions;
 mod contracts;

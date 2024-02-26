@@ -2,7 +2,7 @@ use std::hash::Hash;
 
 use cosmwasm_schema::cw_serde;
 use cosmwasm_std::{
-    to_binary, Addr, Api, BalanceResponse, BankQuery, Coin, CosmosMsg, QuerierWrapper,
+    to_json_binary, Addr, Api, BalanceResponse, BankQuery, Coin, CosmosMsg, QuerierWrapper,
     QueryRequest, StdResult, SubMsg, Uint128, WasmMsg, WasmQuery,
 };
 use cw_utils::Duration;
@@ -77,7 +77,7 @@ impl Vault {
         let deposit_msg = CosmosMsg::Wasm(WasmMsg::Execute {
             contract_addr: self.address.to_string(),
             funds: vec![coin.clone()],
-            msg: to_binary(&ExecuteMsg::Deposit {
+            msg: to_json_binary(&ExecuteMsg::Deposit {
                 amount: coin.amount,
                 recipient: None,
             })?,
@@ -93,7 +93,7 @@ impl Vault {
                 denom: vault_info.vault_token,
                 amount,
             }],
-            msg: to_binary(&ExecuteMsg::Redeem {
+            msg: to_json_binary(&ExecuteMsg::Redeem {
                 recipient: None,
                 amount,
             })?,
@@ -113,7 +113,7 @@ impl Vault {
                 denom: vault_info.vault_token,
                 amount,
             }],
-            msg: to_binary(&ExecuteMsg::VaultExtension(ExtensionExecuteMsg::ForceUnlock(
+            msg: to_json_binary(&ExecuteMsg::VaultExtension(ExtensionExecuteMsg::ForceUnlock(
                 ForceRedeem {
                     recipient: None,
                     amount,
@@ -131,7 +131,7 @@ impl Vault {
         let withdraw_msg = CosmosMsg::Wasm(WasmMsg::Execute {
             contract_addr: self.address.to_string(),
             funds: vec![],
-            msg: to_binary(&ExecuteMsg::VaultExtension(ExtensionExecuteMsg::ForceUnlock(
+            msg: to_json_binary(&ExecuteMsg::VaultExtension(ExtensionExecuteMsg::ForceUnlock(
                 ForceWithdrawUnlocking {
                     lockup_id,
                     amount,
@@ -147,9 +147,11 @@ impl Vault {
             CosmosMsg::Wasm(WasmMsg::Execute {
                 contract_addr: self.address.to_string(),
                 funds: vec![coin.clone()],
-                msg: to_binary(&ExecuteMsg::VaultExtension(ExtensionExecuteMsg::Lockup(Unlock {
-                    amount: coin.amount,
-                })))?,
+                msg: to_json_binary(&ExecuteMsg::VaultExtension(ExtensionExecuteMsg::Lockup(
+                    Unlock {
+                        amount: coin.amount,
+                    },
+                )))?,
             }),
             VAULT_REQUEST_REPLY_ID,
         );
@@ -160,7 +162,7 @@ impl Vault {
         let withdraw_msg = CosmosMsg::Wasm(WasmMsg::Execute {
             contract_addr: self.address.to_string(),
             funds: vec![],
-            msg: to_binary(&ExecuteMsg::VaultExtension(ExtensionExecuteMsg::Lockup(
+            msg: to_json_binary(&ExecuteMsg::VaultExtension(ExtensionExecuteMsg::Lockup(
                 WithdrawUnlocked {
                     recipient: None,
                     lockup_id,
@@ -173,14 +175,14 @@ impl Vault {
     pub fn query_info(&self, querier: &QuerierWrapper) -> StdResult<VaultInfoResponse> {
         querier.query(&QueryRequest::Wasm(WasmQuery::Smart {
             contract_addr: self.address.to_string(),
-            msg: to_binary(&QueryMsg::Info {})?,
+            msg: to_json_binary(&QueryMsg::Info {})?,
         }))
     }
 
     pub fn query_lockup_duration(&self, querier: &QuerierWrapper) -> StdResult<Duration> {
         querier.query(&QueryRequest::Wasm(WasmQuery::Smart {
             contract_addr: self.address.to_string(),
-            msg: to_binary(&QueryMsg::VaultExtension(ExtensionQueryMsg::Lockup(
+            msg: to_json_binary(&QueryMsg::VaultExtension(ExtensionQueryMsg::Lockup(
                 LockupDuration {},
             )))?,
         }))
@@ -193,7 +195,7 @@ impl Vault {
     ) -> StdResult<UnlockingPosition> {
         querier.query(&QueryRequest::Wasm(WasmQuery::Smart {
             contract_addr: self.address.to_string(),
-            msg: to_binary(&QueryMsg::VaultExtension(ExtensionQueryMsg::Lockup(
+            msg: to_json_binary(&QueryMsg::VaultExtension(ExtensionQueryMsg::Lockup(
                 LockupQueryMsg::UnlockingPosition {
                     lockup_id,
                 },
@@ -217,7 +219,7 @@ impl Vault {
     ) -> StdResult<Uint128> {
         querier.query(&QueryRequest::Wasm(WasmQuery::Smart {
             contract_addr: self.address.to_string(),
-            msg: to_binary(&QueryMsg::PreviewRedeem {
+            msg: to_json_binary(&QueryMsg::PreviewRedeem {
                 amount,
             })?,
         }))
@@ -226,7 +228,7 @@ impl Vault {
     pub fn query_total_vault_coins_issued(&self, querier: &QuerierWrapper) -> StdResult<Uint128> {
         querier.query(&QueryRequest::Wasm(WasmQuery::Smart {
             contract_addr: self.address.to_string(),
-            msg: to_binary(&QueryMsg::TotalVaultTokenSupply {})?,
+            msg: to_json_binary(&QueryMsg::TotalVaultTokenSupply {})?,
         }))
     }
 }

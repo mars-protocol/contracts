@@ -1,6 +1,6 @@
 use std::collections::HashMap;
 
-use cosmwasm_std::{to_binary, Binary, ContractResult, QuerierResult, SystemError};
+use cosmwasm_std::{to_json_binary, Binary, ContractResult, QuerierResult, SystemError};
 use osmosis_std::types::osmosis::{
     downtimedetector::v1beta1::{
         RecoveredSinceDowntimeOfLengthRequest, RecoveredSinceDowntimeOfLengthResponse,
@@ -79,7 +79,7 @@ impl OsmosisQuerier {
     fn handle_query_pool_request(&self, request: PoolRequest) -> QuerierResult {
         let pool_id = request.pool_id;
         let res: ContractResult<Binary> = match self.pools.get(&pool_id) {
-            Some(query_response) => to_binary(&query_response).into(),
+            Some(query_response) => to_json_binary(&query_response).into(),
             None => Err(SystemError::InvalidRequest {
                 error: format!("QueryPoolResponse is not found for pool id: {pool_id}"),
                 request: Default::default(),
@@ -96,7 +96,7 @@ impl OsmosisQuerier {
             denom_out: request.quote_asset_denom,
         };
         let res: ContractResult<Binary> = match self.spot_prices.get(&price_key) {
-            Some(query_response) => to_binary(&query_response).into(),
+            Some(query_response) => to_json_binary(&query_response).into(),
             None => Err(SystemError::InvalidRequest {
                 error: format!("QuerySpotPriceResponse is not found for price key: {price_key:?}"),
                 request: Default::default(),
@@ -116,7 +116,7 @@ impl OsmosisQuerier {
             denom_out: request.quote_asset,
         };
         let res: ContractResult<Binary> = match self.arithmetic_twap_prices.get(&price_key) {
-            Some(query_response) => to_binary(&query_response).into(),
+            Some(query_response) => to_json_binary(&query_response).into(),
             None => Err(SystemError::InvalidRequest {
                 error: format!(
                     "ArithmeticTwapToNowResponse is not found for price key: {price_key:?}"
@@ -138,7 +138,7 @@ impl OsmosisQuerier {
             denom_out: request.quote_asset,
         };
         let res: ContractResult<Binary> = match self.geometric_twap_prices.get(&price_key) {
-            Some(query_response) => to_binary(&query_response).into(),
+            Some(query_response) => to_json_binary(&query_response).into(),
             None => Err(SystemError::InvalidRequest {
                 error: format!(
                     "GeometricTwapToNowResponse is not found for price key: {price_key:?}"
@@ -158,7 +158,7 @@ impl OsmosisQuerier {
             .downtime_detector
             .get(&(request.downtime, request.recovery.unwrap().seconds as u64))
         {
-            Some(query_response) => to_binary(&query_response).into(),
+            Some(query_response) => to_json_binary(&query_response).into(),
             None => Err(SystemError::InvalidRequest {
                 error: format!(
                     "RecoveredSinceDowntimeOfLengthResponse is not found for downtime: {:?}",

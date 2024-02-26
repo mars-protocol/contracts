@@ -1,7 +1,7 @@
 #[cfg(not(feature = "library"))]
 use cosmwasm_std::entry_point;
 use cosmwasm_std::{
-    to_binary, Binary, Deps, DepsMut, Empty, Env, MessageInfo, Response, StdResult,
+    to_json_binary, Binary, Deps, DepsMut, Empty, Env, MessageInfo, Response, StdResult,
 };
 use mars_types::incentives;
 
@@ -50,7 +50,7 @@ pub fn query(deps: Deps, _env: Env, msg: incentives::QueryMsg) -> StdResult<Bina
             user,
             account_id,
             ..
-        } => to_binary(&query_unclaimed_rewards(deps, &user, &account_id)?),
+        } => to_json_binary(&query_unclaimed_rewards(deps, &user, &account_id)?),
         _ => unimplemented!("Query not supported!"),
     }
 }

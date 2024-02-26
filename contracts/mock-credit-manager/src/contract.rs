@@ -1,6 +1,6 @@
 #[cfg(not(feature = "library"))]
 use cosmwasm_std::entry_point;
-use cosmwasm_std::{to_binary, Binary, Deps, DepsMut, Env, MessageInfo, Response, StdResult};
+use cosmwasm_std::{to_json_binary, Binary, Deps, DepsMut, Env, MessageInfo, Response, StdResult};
 use mars_types::credit_manager::QueryMsg;
 
 use crate::{
@@ -45,11 +45,11 @@ pub fn query(deps: Deps, _env: Env, msg: QueryMsg) -> StdResult<Binary> {
     match msg {
         QueryMsg::Positions {
             account_id,
-        } => to_binary(&query_positions(deps, account_id)?),
-        QueryMsg::Config {} => to_binary(&query_config(deps)?),
+        } => to_json_binary(&query_positions(deps, account_id)?),
+        QueryMsg::Config {} => to_json_binary(&query_config(deps)?),
         QueryMsg::AccountKind {
             account_id,
-        } => to_binary(&query_account_kind(deps, account_id)?),
+        } => to_json_binary(&query_account_kind(deps, account_id)?),
         _ => unimplemented!("query msg not supported"),
     }
 }

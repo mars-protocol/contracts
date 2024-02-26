@@ -1,8 +1,8 @@
 use std::{collections::HashSet, hash::Hash};
 
 use cosmwasm_std::{
-    to_binary, Addr, Coin, CosmosMsg, Decimal, Deps, DepsMut, Empty, QuerierWrapper, StdResult,
-    Storage, Uint128, WasmMsg,
+    to_json_binary, Addr, Coin, CosmosMsg, Decimal, Deps, DepsMut, Empty, QuerierWrapper,
+    StdResult, Storage, Uint128, WasmMsg,
 };
 use cw721::OwnerOfResponse;
 use cw721_base::QueryMsg;
@@ -119,7 +119,7 @@ pub fn update_balance_msg(
     Ok(CosmosMsg::Wasm(WasmMsg::Execute {
         contract_addr: credit_manager_addr.to_string(),
         funds: vec![],
-        msg: to_binary(&ExecuteMsg::Callback(CallbackMsg::UpdateCoinBalance {
+        msg: to_json_binary(&ExecuteMsg::Callback(CallbackMsg::UpdateCoinBalance {
             account_id: account_id.to_string(),
             previous_balance,
             change,
@@ -153,7 +153,7 @@ pub fn update_balance_after_vault_liquidation_msg(
     Ok(CosmosMsg::Wasm(WasmMsg::Execute {
         contract_addr: credit_manager_addr.to_string(),
         funds: vec![],
-        msg: to_binary(&ExecuteMsg::Callback(
+        msg: to_json_binary(&ExecuteMsg::Callback(
             CallbackMsg::UpdateCoinBalanceAfterVaultLiquidation {
                 account_id: account_id.to_string(),
                 previous_balance,

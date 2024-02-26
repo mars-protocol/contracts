@@ -5,7 +5,7 @@ use astroport::{
     pair::{CumulativePricesResponse, QueryMsg as PairQueryMsg},
 };
 use cosmwasm_std::{
-    to_binary, Addr, Decimal, Deps, Env, QuerierWrapper, QueryRequest, StdResult, Uint128,
+    to_json_binary, Addr, Decimal, Deps, Env, QuerierWrapper, QueryRequest, StdResult, Uint128,
     WasmQuery,
 };
 use cw_storage_plus::Map;
@@ -134,7 +134,7 @@ pub fn query_astroport_cumulative_price(
     let response: CumulativePricesResponse =
         querier.query(&QueryRequest::Wasm(WasmQuery::Smart {
             contract_addr: pair_address.to_string(),
-            msg: to_binary(&PairQueryMsg::CumulativePrices {})?,
+            msg: to_json_binary(&PairQueryMsg::CumulativePrices {})?,
         }))?;
 
     let (_, _, price) =

@@ -1,6 +1,6 @@
 #[cfg(not(feature = "library"))]
 use cosmwasm_std::entry_point;
-use cosmwasm_std::{to_binary, Binary, Deps, DepsMut, Env, MessageInfo, Response, StdResult};
+use cosmwasm_std::{to_json_binary, Binary, Deps, DepsMut, Env, MessageInfo, Response, StdResult};
 use mars_types::oracle::{ActionKind, PriceResponse};
 
 use crate::{
@@ -64,7 +64,7 @@ pub fn query(deps: Deps, _env: Env, msg: QueryMsg) -> StdResult<Binary> {
         QueryMsg::Price {
             denom,
             kind,
-        } => to_binary(&query_price(deps, denom, kind)?),
+        } => to_json_binary(&query_price(deps, denom, kind)?),
     }
 }
 

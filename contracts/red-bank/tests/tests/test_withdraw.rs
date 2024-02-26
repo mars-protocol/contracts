@@ -3,7 +3,7 @@ use std::str::FromStr;
 use cosmwasm_std::{
     attr, coin, coins,
     testing::{mock_env, mock_info, MockApi, MockStorage},
-    to_binary, Addr, BankMsg, CosmosMsg, Decimal, OwnedDeps, SubMsg, Uint128, WasmMsg,
+    to_json_binary, Addr, BankMsg, CosmosMsg, Decimal, OwnedDeps, SubMsg, Uint128, WasmMsg,
 };
 use mars_interest_rate::{
     compute_scaled_amount, compute_underlying_amount, get_scaled_liquidity_amount,
@@ -186,7 +186,7 @@ fn withdrawing_partially() {
         vec![
             SubMsg::new(WasmMsg::Execute {
                 contract_addr: MarsAddressType::Incentives.to_string(),
-                msg: to_binary(&incentives::ExecuteMsg::BalanceChange {
+                msg: to_json_binary(&incentives::ExecuteMsg::BalanceChange {
                     user_addr: Addr::unchecked(MarsAddressType::RewardsCollector.to_string()),
                     account_id: None,
                     denom: denom.to_string(),
@@ -198,7 +198,7 @@ fn withdrawing_partially() {
             }),
             SubMsg::new(WasmMsg::Execute {
                 contract_addr: MarsAddressType::Incentives.to_string(),
-                msg: to_binary(&incentives::ExecuteMsg::BalanceChange {
+                msg: to_json_binary(&incentives::ExecuteMsg::BalanceChange {
                     user_addr: withdrawer_addr.clone(),
                     account_id: None,
                     denom: denom.to_string(),
@@ -310,7 +310,7 @@ fn withdrawing_completely() {
         vec![
             SubMsg::new(WasmMsg::Execute {
                 contract_addr: MarsAddressType::Incentives.to_string(),
-                msg: to_binary(&incentives::ExecuteMsg::BalanceChange {
+                msg: to_json_binary(&incentives::ExecuteMsg::BalanceChange {
                     user_addr: Addr::unchecked(MarsAddressType::RewardsCollector.to_string()),
                     account_id: None,
                     denom: denom.to_string(),
@@ -322,7 +322,7 @@ fn withdrawing_completely() {
             }),
             SubMsg::new(WasmMsg::Execute {
                 contract_addr: MarsAddressType::Incentives.to_string(),
-                msg: to_binary(&incentives::ExecuteMsg::BalanceChange {
+                msg: to_json_binary(&incentives::ExecuteMsg::BalanceChange {
                     user_addr: withdrawer_addr.clone(),
                     account_id: None,
                     denom: denom.to_string(),
@@ -422,7 +422,7 @@ fn withdrawing_to_another_user() {
         vec![
             SubMsg::new(WasmMsg::Execute {
                 contract_addr: MarsAddressType::Incentives.to_string(),
-                msg: to_binary(&incentives::ExecuteMsg::BalanceChange {
+                msg: to_json_binary(&incentives::ExecuteMsg::BalanceChange {
                     user_addr: Addr::unchecked(MarsAddressType::RewardsCollector.to_string()),
                     account_id: None,
                     denom: denom.to_string(),
@@ -434,7 +434,7 @@ fn withdrawing_to_another_user() {
             }),
             SubMsg::new(WasmMsg::Execute {
                 contract_addr: MarsAddressType::Incentives.to_string(),
-                msg: to_binary(&incentives::ExecuteMsg::BalanceChange {
+                msg: to_json_binary(&incentives::ExecuteMsg::BalanceChange {
                     user_addr: withdrawer_addr.clone(),
                     account_id: None,
                     denom: denom.to_string(),
@@ -736,7 +736,7 @@ fn withdrawing_if_health_factor_met() {
         vec![
             SubMsg::new(WasmMsg::Execute {
                 contract_addr: MarsAddressType::Incentives.to_string(),
-                msg: to_binary(&incentives::ExecuteMsg::BalanceChange {
+                msg: to_json_binary(&incentives::ExecuteMsg::BalanceChange {
                     user_addr: withdrawer_addr.clone(),
                     account_id: None,
                     denom: denoms[2].to_string(),

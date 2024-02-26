@@ -1,6 +1,8 @@
 #[cfg(not(feature = "library"))]
 use cosmwasm_std::entry_point;
-use cosmwasm_std::{coin, to_binary, Binary, Deps, DepsMut, Env, MessageInfo, Response, Uint128};
+use cosmwasm_std::{
+    coin, to_json_binary, Binary, Deps, DepsMut, Env, MessageInfo, Response, Uint128,
+};
 use cw_vault_standard::{
     extensions::{
         force_unlock::ForceUnlockExecuteMsg,
@@ -95,22 +97,24 @@ pub fn execute(
 #[cfg_attr(not(feature = "library"), entry_point)]
 pub fn query(deps: Deps, _env: Env, msg: QueryMsg) -> ContractResult<Binary> {
     let res = match msg {
-        QueryMsg::TotalVaultTokenSupply {} => to_binary(&query_vault_token_supply(deps.storage)?),
-        QueryMsg::Info {} => to_binary(&query_vault_info(deps)?),
+        QueryMsg::TotalVaultTokenSupply {} => {
+            to_json_binary(&query_vault_token_supply(deps.storage)?)
+        }
+        QueryMsg::Info {} => to_json_binary(&query_vault_info(deps)?),
         QueryMsg::PreviewRedeem {
             amount,
-        } => to_binary(&shares_to_base_denom_amount(deps.storage, amount)?),
+        } => to_json_binary(&shares_to_base_denom_amount(deps.storage, amount)?),
         QueryMsg::VaultExtension(ext) => match ext {
             ExtensionQueryMsg::Lockup(lockup_msg) => match lockup_msg {
                 LockupQueryMsg::UnlockingPositions {
                     owner,
                     ..
-                } => to_binary(&query_unlocking_positions(deps, owner)?),
+                } => to_json_binary(&query_unlocking_positions(deps, owner)?),
                 LockupQueryMsg::UnlockingPosition {
                     lockup_id,
                     ..
-                } => to_binary(&query_unlocking_position(deps, lockup_id)?),
-                LockupQueryMsg::LockupDuration {} => to_binary(&query_lockup_duration(deps)?),
+                } => to_json_binary(&query_unlocking_position(deps, lockup_id)?),
+                LockupQueryMsg::LockupDuration {} => to_json_binary(&query_lockup_duration(deps)?),
             },
         },
         _ => unimplemented!(),

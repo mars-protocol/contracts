@@ -1,4 +1,4 @@
-use std::{any::type_name, str::FromStr};
+use std::str::FromStr;
 
 use cosmwasm_std::{Coin, Decimal, StdError, Uint128};
 use mars_types::{
@@ -37,10 +37,9 @@ fn raises_with_non_existent_account_id() {
         mock.query_health_values("xyz", AccountKind::Default, ActionKind::Default).unwrap_err();
     assert_eq!(
         err,
-        StdError::generic_err(format!(
-            "Querier contract error: Generic error: Querier contract error: {} not found",
-            type_name::<Positions>()
-        ))
+        StdError::generic_err(
+            "Querier contract error: Generic error: Querier contract error: type: mars_types::credit_manager::query::Positions; key: [00, 12, 70, 6F, 73, 69, 74, 69, 6F, 6E, 5F, 72, 65, 73, 70, 6F, 6E, 73, 65, 73, 78, 79, 7A] not found".to_string()
+        )
     );
 }
 

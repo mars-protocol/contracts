@@ -1,7 +1,7 @@
 #[cfg(not(feature = "library"))]
 use cosmwasm_std::entry_point;
 use cosmwasm_std::{
-    attr, to_binary, Addr, BankMsg, Binary, Coin, Coins, Decimal, Deps, DepsMut, Env, Event,
+    attr, to_json_binary, Addr, BankMsg, Binary, Coin, Coins, Decimal, Deps, DepsMut, Env, Event,
     MessageInfo, Order, Response, StdError, StdResult, Uint128,
 };
 use cw2::set_contract_version;
@@ -552,16 +552,16 @@ fn update_owner(
 #[cfg_attr(not(feature = "library"), entry_point)]
 pub fn query(deps: Deps, env: Env, msg: QueryMsg) -> StdResult<Binary> {
     match msg {
-        QueryMsg::Config {} => to_binary(&query_config(deps)?),
+        QueryMsg::Config {} => to_json_binary(&query_config(deps)?),
         QueryMsg::IncentiveState {
             collateral_denom,
             incentive_denom,
-        } => to_binary(&query_incentive_state(deps, collateral_denom, incentive_denom)?),
+        } => to_json_binary(&query_incentive_state(deps, collateral_denom, incentive_denom)?),
         QueryMsg::IncentiveStates {
             start_after_collateral_denom,
             start_after_incentive_denom,
             limit,
-        } => to_binary(&query_incentive_states(
+        } => to_json_binary(&query_incentive_states(
             deps,
             start_after_collateral_denom,
             start_after_incentive_denom,
@@ -573,7 +573,7 @@ pub fn query(deps: Deps, env: Env, msg: QueryMsg) -> StdResult<Binary> {
             start_after_collateral_denom,
             start_after_incentive_denom,
             limit,
-        } => to_binary(&query_user_unclaimed_rewards(
+        } => to_json_binary(&query_user_unclaimed_rewards(
             deps,
             env,
             user,
@@ -582,18 +582,18 @@ pub fn query(deps: Deps, env: Env, msg: QueryMsg) -> StdResult<Binary> {
             start_after_incentive_denom,
             limit,
         )?),
-        QueryMsg::Whitelist {} => to_binary(&query_whitelist(deps)?),
+        QueryMsg::Whitelist {} => to_json_binary(&query_whitelist(deps)?),
         QueryMsg::Emission {
             collateral_denom,
             incentive_denom,
             timestamp,
-        } => to_binary(&query_emission(deps, &collateral_denom, &incentive_denom, timestamp)?),
+        } => to_json_binary(&query_emission(deps, &collateral_denom, &incentive_denom, timestamp)?),
         QueryMsg::Emissions {
             collateral_denom,
             incentive_denom,
             start_after_timestamp,
             limit,
-        } => to_binary(&query_emissions(
+        } => to_json_binary(&query_emissions(
             deps,
             collateral_denom,
             incentive_denom,
@@ -602,7 +602,7 @@ pub fn query(deps: Deps, env: Env, msg: QueryMsg) -> StdResult<Binary> {
         )?),
         QueryMsg::ActiveEmissions {
             collateral_denom,
-        } => to_binary(&query_active_emissions(deps, env, &collateral_denom)?),
+        } => to_json_binary(&query_active_emissions(deps, env, &collateral_denom)?),
     }
 }
 

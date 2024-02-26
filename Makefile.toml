@@ -10,10 +10,10 @@ default_to_workspace = false
 # Directory with wasm files used by integration tests (another directory can be used instead, for example 'artifacts' from rust-optimizer)
 ARTIFACTS_DIR_PATH = "target/wasm32-unknown-unknown/release"
 # If you bump this version, verify RUST_VERSION correctness
-RUST_OPTIMIZER_VERSION = "0.13.0"
-# Use rust version from rust-optimizer Dockerfile (see https://github.com/CosmWasm/rust-optimizer/blob/main/Dockerfile#L1)
+RUST_OPTIMIZER_VERSION = "0.15.0"
+# Use rust version from rust-optimizer Dockerfile (see https://github.com/CosmWasm/rust-optimizer/blob/v0.15.0/Dockerfile#L1)
 # to be sure that we compile / test against the same version
-RUST_VERSION = "1.69.0"
+RUST_VERSION = "1.73.0"
 
 [tasks.install-stable]
 script = '''
@@ -25,7 +25,7 @@ rustup component add llvm-tools-preview --toolchain ${RUST_VERSION}
 '''
 
 [tasks.install-stable-for-scripts]
-env = { RUST_VERSION = "1.72.0" }
+env = { RUST_VERSION = "1.76.0" }
 run_task = "install-stable"
 
 [tasks.install-nightly]
@@ -69,6 +69,11 @@ command = "cargo"
 args = ["test", "--locked", "-p", "mars-integration-tests", "-p", "mars-swapper-astroport", "-p", "mars-oracle-wasm", "-p", "mars-swapper-osmosis", "--test", "*"]
 
 [tasks.fmt]
+toolchain = "nightly"
+command = "cargo"
+args = ["fmt", "--all"]
+
+[tasks.fmt-check]
 toolchain = "nightly"
 command = "cargo"
 args = ["fmt", "--all", "--check"]

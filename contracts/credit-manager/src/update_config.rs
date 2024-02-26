@@ -1,4 +1,4 @@
-use cosmwasm_std::{to_binary, CosmosMsg, DepsMut, Env, MessageInfo, Response, WasmMsg};
+use cosmwasm_std::{to_json_binary, CosmosMsg, DepsMut, Env, MessageInfo, Response, WasmMsg};
 use cw721_base::Action;
 use mars_owner::OwnerUpdate;
 use mars_types::{
@@ -36,7 +36,7 @@ pub fn update_config(
         let accept_ownership_msg = CosmosMsg::Wasm(WasmMsg::Execute {
             contract_addr: account_nft.address().into(),
             funds: vec![],
-            msg: to_binary(&NftExecuteMsg::UpdateOwnership(Action::AcceptOwnership))?,
+            msg: to_json_binary(&NftExecuteMsg::UpdateOwnership(Action::AcceptOwnership))?,
         });
 
         response = response
@@ -143,7 +143,7 @@ pub fn update_nft_config(
         let update_config_msg = CosmosMsg::Wasm(WasmMsg::Execute {
             contract_addr: nft_contract.address().into(),
             funds: vec![],
-            msg: to_binary(&NftExecuteMsg::UpdateConfig {
+            msg: to_json_binary(&NftExecuteMsg::UpdateConfig {
                 updates,
             })?,
         });
@@ -155,7 +155,7 @@ pub fn update_nft_config(
         let update_ownership_msg = CosmosMsg::Wasm(WasmMsg::Execute {
             contract_addr: nft_contract.address().into(),
             funds: vec![],
-            msg: to_binary(&NftExecuteMsg::UpdateOwnership(action))?,
+            msg: to_json_binary(&NftExecuteMsg::UpdateOwnership(action))?,
         });
         response =
             response.add_message(update_ownership_msg).add_attribute("action", "update_ownership")

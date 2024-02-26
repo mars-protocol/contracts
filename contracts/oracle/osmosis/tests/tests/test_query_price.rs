@@ -1,7 +1,7 @@
 use std::str::FromStr;
 
 use cosmwasm_std::{
-    coin, from_binary,
+    coin, from_json,
     testing::{mock_env, MockApi, MockStorage},
     Decimal, OwnedDeps, StdError,
 };
@@ -354,7 +354,7 @@ fn querying_staked_geometric_twap_price_if_no_transitive_denom_price_source() {
     assert_eq!(
         res_err,
         ContractError::Std(StdError::not_found(
-            "mars_oracle_osmosis::price_source::OsmosisPriceSource<cosmwasm_std::addresses::Addr>"
+            "type: mars_oracle_osmosis::price_source::OsmosisPriceSource<cosmwasm_std::addresses::Addr>; key: [00, 0D, 70, 72, 69, 63, 65, 5F, 73, 6F, 75, 72, 63, 65, 73, 75, 61, 74, 6F, 6D]"
         ))
     );
 }
@@ -487,7 +487,7 @@ fn querying_lsd_price() {
         },
     )
     .unwrap();
-    let res: PriceResponse = from_binary(&res).unwrap();
+    let res: PriceResponse = from_json(res).unwrap();
     let expected_price = ustatom_uatom_geometric_price * pyth_price;
     assert_eq!(res.price, expected_price);
 
@@ -528,7 +528,7 @@ fn querying_lsd_price() {
         },
     )
     .unwrap();
-    let res: PriceResponse = from_binary(&res).unwrap();
+    let res: PriceResponse = from_json(res).unwrap();
     let expected_price = ustatom_uatom_redemption_rate * pyth_price;
     assert_eq!(res.price, expected_price);
 }
@@ -658,7 +658,7 @@ fn querying_lsd_price_if_no_transitive_denom_price_source() {
     assert_eq!(
         res_err,
         ContractError::Std(StdError::not_found(
-            "mars_oracle_osmosis::price_source::OsmosisPriceSource<cosmwasm_std::addresses::Addr>"
+            "type: mars_oracle_osmosis::price_source::OsmosisPriceSource<cosmwasm_std::addresses::Addr>; key: [00, 0D, 70, 72, 69, 63, 65, 5F, 73, 6F, 75, 72, 63, 65, 73, 75, 61, 74, 6F, 6D]"
         ))
     );
 }
@@ -804,7 +804,7 @@ fn querying_lsd_price_with_arithmetic_twap_and_downtime_detector() {
         },
     )
     .unwrap();
-    let res: PriceResponse = from_binary(&res).unwrap();
+    let res: PriceResponse = from_json(res).unwrap();
     let expected_price = ustatom_uatom_arithmetic_price * pyth_price;
     assert_eq!(res.price, expected_price);
 }
@@ -886,7 +886,7 @@ fn querying_lsd_price_with_geometric_twap_and_downtime_detector() {
         },
     )
     .unwrap();
-    let res: PriceResponse = from_binary(&res).unwrap();
+    let res: PriceResponse = from_json(res).unwrap();
     let expected_price = ustatom_uatom_geometric_price * pyth_price;
     assert_eq!(res.price, expected_price);
 }

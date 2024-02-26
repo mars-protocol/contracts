@@ -2,7 +2,7 @@
 
 use cosmwasm_schema::serde;
 use cosmwasm_std::{
-    from_binary,
+    from_json,
     testing::{mock_env, mock_info, MockApi, MockStorage},
     Deps, DepsMut, Env, OwnedDeps, Uint128,
 };
@@ -50,11 +50,11 @@ pub fn ths_setup_with_epoch_duration(
 }
 
 pub fn th_query<T: serde::de::DeserializeOwned>(deps: Deps, msg: QueryMsg) -> T {
-    from_binary(&query(deps, mock_env(), msg).unwrap()).unwrap()
+    from_json(query(deps, mock_env(), msg).unwrap()).unwrap()
 }
 
 pub fn th_query_with_env<T: serde::de::DeserializeOwned>(deps: Deps, env: Env, msg: QueryMsg) -> T {
-    from_binary(&query(deps, env, msg).unwrap()).unwrap()
+    from_json(query(deps, env, msg).unwrap()).unwrap()
 }
 
 pub fn th_whitelist_denom(deps: DepsMut, denom: &str) {

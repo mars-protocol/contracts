@@ -1,6 +1,6 @@
 #[cfg(not(feature = "library"))]
 use cosmwasm_std::entry_point;
-use cosmwasm_std::{to_binary, Binary, Deps, DepsMut, Empty, Env, MessageInfo, Response};
+use cosmwasm_std::{to_json_binary, Binary, Deps, DepsMut, Empty, Env, MessageInfo, Response};
 use cw2::set_contract_version;
 use mars_owner::OwnerInit::SetInitialOwner;
 use mars_types::params::{
@@ -87,26 +87,28 @@ pub fn execute(
 #[cfg_attr(not(feature = "library"), entry_point)]
 pub fn query(deps: Deps, env: Env, msg: QueryMsg) -> ContractResult<Binary> {
     let res = match msg {
-        QueryMsg::Owner {} => to_binary(&OWNER.query(deps.storage)?),
-        QueryMsg::Config {} => to_binary(&query_config(deps)?),
+        QueryMsg::Owner {} => to_json_binary(&OWNER.query(deps.storage)?),
+        QueryMsg::Config {} => to_json_binary(&query_config(deps)?),
         QueryMsg::AssetParams {
             denom,
-        } => to_binary(&ASSET_PARAMS.load(deps.storage, &denom)?),
+        } => to_json_binary(&ASSET_PARAMS.load(deps.storage, &denom)?),
         QueryMsg::AllAssetParams {
             start_after,
             limit,
-        } => to_binary(&query_all_asset_params(deps, start_after, limit)?),
+        } => to_json_binary(&query_all_asset_params(deps, start_after, limit)?),
         QueryMsg::VaultConfig {
             address,
-        } => to_binary(&query_vault_config(deps, &address)?),
+        } => to_json_binary(&query_vault_config(deps, &address)?),
         QueryMsg::AllVaultConfigs {
             start_after,
             limit,
-        } => to_binary(&query_all_vault_configs(deps, start_after, limit)?),
-        QueryMsg::TargetHealthFactor {} => to_binary(&TARGET_HEALTH_FACTOR.load(deps.storage)?),
+        } => to_json_binary(&query_all_vault_configs(deps, start_after, limit)?),
+        QueryMsg::TargetHealthFactor {} => {
+            to_json_binary(&TARGET_HEALTH_FACTOR.load(deps.storage)?)
+        }
         QueryMsg::TotalDeposit {
             denom,
-        } => to_binary(&query_total_deposit(deps, &env, denom)?),
+        } => to_json_binary(&query_total_deposit(deps, &env, denom)?),
     };
     res.map_err(Into::into)
 }

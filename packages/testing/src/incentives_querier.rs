@@ -1,6 +1,6 @@
 use std::collections::HashMap;
 
-use cosmwasm_std::{to_binary, Addr, Binary, Coin, ContractResult, QuerierResult, Uint128};
+use cosmwasm_std::{to_json_binary, Addr, Binary, Coin, ContractResult, QuerierResult, Uint128};
 use mars_types::incentives::QueryMsg;
 
 pub struct IncentivesQuerier {
@@ -45,7 +45,7 @@ impl IncentivesQuerier {
                         amount: *amount,
                     })
                     .collect::<Vec<_>>();
-                to_binary(&unclaimed_rewards).into()
+                to_json_binary(&unclaimed_rewards).into()
             }
             _ => Err("[mock]: query not supported").into(),
         };

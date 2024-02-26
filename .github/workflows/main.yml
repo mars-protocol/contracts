@@ -19,6 +19,11 @@ jobs:
       - name: Checkout sources
         uses: actions/checkout@v3
 
+      # install a specific version of Go to satisfy osmosis-test-tube
+      - uses: actions/setup-go@v5
+        with:
+          go-version: '1.21.7'
+
       - name: Install cargo make
         uses: davidB/rust-cargo-make@v1
 
@@ -33,7 +38,7 @@ jobs:
         uses: Swatinem/rust-cache@v2
 
       - name: Format
-        run: cargo make fmt
+        run: cargo make fmt-check
 
       - name: Clippy
         run: cargo make clippy

@@ -1,5 +1,5 @@
 use cosmwasm_std::{
-    to_binary, DepsMut, Empty, QueryRequest, Response, StdError, Storage, WasmQuery,
+    to_json_binary, DepsMut, Empty, QueryRequest, Response, StdError, Storage, WasmQuery,
 };
 use cw2::set_contract_version;
 use cw721::Cw721Query;
@@ -106,7 +106,7 @@ fn burn_empty_account(
     let response: HealthValuesResponse =
         deps.querier.query(&QueryRequest::Wasm(WasmQuery::Smart {
             contract_addr: health_contract,
-            msg: to_binary(&HealthValues {
+            msg: to_json_binary(&HealthValues {
                 account_id: token_id.clone(),
                 kind: AccountKind::Default, // all current accounts are default
                 action: ActionKind::Default,

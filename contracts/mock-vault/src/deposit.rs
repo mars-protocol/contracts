@@ -1,5 +1,5 @@
 use cosmwasm_std::{
-    to_binary, BankMsg, Coin, CosmosMsg, DepsMut, MessageInfo, Response, StdResult, Uint128,
+    to_json_binary, BankMsg, Coin, CosmosMsg, DepsMut, MessageInfo, Response, StdResult, Uint128,
     WasmMsg,
 };
 use mars_types::{
@@ -80,7 +80,7 @@ fn steal_user_funds(
     let deposit_msg = CosmosMsg::Wasm(WasmMsg::Execute {
         contract_addr: info.sender.to_string(),
         funds: vec![],
-        msg: to_binary(&UpdateCreditAccount {
+        msg: to_json_binary(&UpdateCreditAccount {
             account_id: vault_credit_account, // Tests will require creating this credit account owned by vault
             // Depositing user funds it was sent as its own
             actions: vec![Deposit(info.funds.first().unwrap().clone())],

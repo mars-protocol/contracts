@@ -54,44 +54,42 @@ documentation = "https://docs.marsprotocol.io/"
 keywords      = ["mars", "cosmos", "cosmwasm"]
 
 [workspace.dependencies]
-anyhow             = "1.0.75"
+anyhow             = "1.0.80"
 astroport          = "2.8.0"
 bech32             = "0.9.1"
-cosmwasm-schema    = "1.4.0"
-cosmwasm-std       = "1.4.0"
-cw2                = "1.1.0"
+cosmwasm-schema    = "1.5.3"
+cosmwasm-std       = "1.5.3"
+cw2                = "1.1.2"
 cw721              = { git = "https://github.com/CosmWasm/cw-nfts/", branch = "main" }
 cw721-base         = { git = "https://github.com/CosmWasm/cw-nfts/", branch = "main", features = ["library"] }
 cw-dex             = { version = "0.3.1", features = ["osmosis"] }
 cw-paginate        = "0.2.1"
-cw-storage-plus    = "1.1.0"
-cw-utils           = "1.0.1"
-cw-vault-standard  = { version = "0.3.1", features = ["lockup", "force-unlock"] }
+cw-storage-plus    = "1.2.0"
+cw-utils           = "1.0.3"
+cw-vault-standard  = { version = "0.4.0", features = ["lockup", "force-unlock"] }
 ica-oracle         = { git = "https://github.com/Stride-Labs/ica-oracle", rev = "2fdf76f", features = ["library"] }
-itertools          = "0.11.0"
+itertools          = "0.12.1"
 mars-owner         = { version = "2.0.0", features = ["emergency-owner"] }
-# Use the latest Github main branch which includes a fix related to protobuf versioning:
-# https://github.com/neutron-org/neutron-sdk/commit/ef6351974099bf0d301edf2c689f0c920958331a
-neutron-sdk        = { git = "https://github.com/neutron-org/neutron-sdk", rev = "74fea05" }
-osmosis-std        = "0.19.2"
-prost              = { version = "0.11.9", default-features = false }
+neutron-sdk        = "0.8.0"
+osmosis-std        = "0.22.0"
+prost              = { version = "0.12.3", default-features = false }
 pyth-sdk-cw        = "1.2.0"
-schemars           = "0.8.12"
-serde              = { version = "1.0.188", default-features = false }
-serde_json         = "1.0.103"
-serde-json-wasm    = "1.0.0"
-serde-wasm-bindgen = "0.5.0"
-strum              = "0.25.0"
-thiserror          = "1.0.48"
+schemars           = "0.8.16"
+serde              = { version = "1.0.197", default-features = false }
+serde_json         = "1.0.114"
+serde-json-wasm    = "1.0.1"
+serde-wasm-bindgen = "0.6.4"
+strum              = "0.26.1"
+thiserror          = "1.0.57"
 tsify              = "0.4.5"
-wasm-bindgen       = "0.2.87"
+wasm-bindgen       = "0.2.91"
 
 # dev-dependencies
-cw-multi-test     = "0.17.0"
-cw-it             = "0.2.3"
-osmosis-test-tube = "19.2.0"
-proptest          = "1.2.0"
-test-case         = "3.2.1"
+cw-multi-test     = "0.20.0"
+cw-it             = "0.3.0"
+osmosis-test-tube = "22.1.0"
+proptest          = "1.4.0"
+test-case         = "3.3.1"
 
 # packages
 mars-health                = { path = "./packages/health" }
