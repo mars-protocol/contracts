@@ -17,6 +17,8 @@ import {
   Identifier,
   OwnerUpdate,
   WasmOracleCustomExecuteMsg,
+  RedemptionRateForString,
+  AstroportTwapForString,
   QueryMsg,
   ActionKind,
   ConfigResponse,

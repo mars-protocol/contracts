@@ -64,6 +64,13 @@ export type WasmPriceSourceForString =
         price_feed_id: Identifier
       }
     }
+  | {
+      lsd: {
+        redemption_rate: RedemptionRateForString
+        transitive_denom: string
+        twap: AstroportTwapForString
+      }
+    }
 export type Decimal = string
 export type Identifier = string
 export type OwnerUpdate =
@@ -85,6 +92,15 @@ export type WasmOracleCustomExecuteMsg = {
   record_twap_snapshots: {
     denoms: string[]
   }
+}
+export interface RedemptionRateForString {
+  contract_addr: string
+  max_staleness: number
+}
+export interface AstroportTwapForString {
+  pair_address: string
+  tolerance: number
+  window_size: number
 }
 export type QueryMsg =
   | {
