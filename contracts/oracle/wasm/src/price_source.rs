@@ -1,12 +1,15 @@
-use std::{cmp::Ordering, fmt};
+use std::{
+    cmp::{min, Ordering},
+    fmt,
+};
 
 use astroport::{asset::PairInfo, factory::PairType, pair::TWAP_PRECISION, querier::simulate};
 use cosmwasm_schema::cw_serde;
 use cosmwasm_std::{Addr, Decimal, Deps, Empty, Env, Uint128};
 use cw_storage_plus::Map;
 use mars_oracle_base::{
-    ContractError::{self},
-    ContractResult, PriceSourceChecked, PriceSourceUnchecked,
+    redemption_rate::{assert_rr_not_too_old, query_redemption_rate, RedemptionRate},
+    ContractError, ContractResult, PriceSourceChecked, PriceSourceUnchecked,
 };
 use mars_types::oracle::{ActionKind, AstroportTwapSnapshot, Config};
 use pyth_sdk_cw::PriceIdentifier;
@@ -89,6 +92,39 @@ pub enum WasmPriceSource<A> {
         /// uosmo_price_in_uusd = 0.59958994 * 1000000 * 10^(-6) = 0.59958994
         denom_decimals: u8,
     },
+    /// Liquid Staking Derivatives (LSD) price quoted in USD based on data from Pyth, Astroport and Redemption Rate provider (e.g. Stride).
+    ///
+    /// Equation to calculate the price:
+    /// stAsset/USD = stAsset/Asset * Asset/USD
+    /// where:
+    /// stAsset/Asset = min(stAsset/Asset TWAP, stAsset/Asset Redemption Rate)
+    ///
+    /// Example:
+    /// stATOM/USD = stATOM/ATOM * ATOM/USD
+    /// where:
+    /// - stATOM/ATOM = min(stAtom/Atom TWAP from Astroport, stAtom/Atom Redemption Rate)
+    /// - ATOM/USD price comes from the Mars Oracle contract (should point to Pyth).
+    Lsd {
+        /// Transitive denom for which we query price in USD. It refers to 'Asset' in the equation:
+        /// stAsset/USD = stAsset/Asset * Asset/USD
+        transitive_denom: String,
+
+        /// Params to query TWAP price
+        twap: AstroportTwap<A>,
+
+        /// Params to query redemption rate
+        redemption_rate: RedemptionRate<A>,
+    },
+}
+
+#[cw_serde]
+pub struct AstroportTwap<A> {
+    /// Address of the Astroport pair
+    pair_address: A,
+    /// The size of the sliding TWAP window in seconds.
+    window_size: u64,
+    /// The tolerance in seconds for the sliding TWAP window.
+    tolerance: u64,
 }
 
 pub type WasmPriceSourceUnchecked = WasmPriceSource<String>;
@@ -122,6 +158,18 @@ impl fmt::Display for WasmPriceSourceChecked {
                 max_deviation,
                 denom_decimals
             } => format!("pyth:{contract_addr}:{price_feed_id}:{max_staleness}:{max_confidence}:{max_deviation}:{denom_decimals}"),
+            WasmPriceSource::Lsd { transitive_denom, twap, redemption_rate } => {
+                let AstroportTwap {
+                    pair_address,
+                    window_size,
+                    tolerance,
+                } = twap;
+                let RedemptionRate {
+                    contract_addr,
+                    max_staleness,
+                } = redemption_rate;
+                format!("lsd:{transitive_denom}:{pair_address}:{window_size}:{tolerance}:{contract_addr}:{max_staleness}")
+            },
         };
         write!(f, "{label}")
     }
@@ -214,6 +262,55 @@ impl PriceSourceUnchecked<WasmPriceSourceChecked, Empty> for WasmPriceSourceUnch
                     denom_decimals,
                 })
             }
+            WasmPriceSource::Lsd {
+                transitive_denom,
+                twap,
+                redemption_rate,
+            } => {
+                if !price_sources.has(deps.storage, &transitive_denom) {
+                    return Err(ContractError::InvalidPriceSource {
+                        reason: format!("missing price source for {}", transitive_denom),
+                    });
+                }
+
+                let AstroportTwap {
+                    pair_address,
+                    window_size,
+                    tolerance,
+                } = twap.clone();
+                if tolerance >= window_size {
+                    return Err(ContractError::InvalidPriceSource {
+                        reason: "tolerance must be less than window size".to_string(),
+                    });
+                }
+
+                let pair_address = deps.api.addr_validate(&pair_address)?;
+                validate_astroport_pair_price_source(
+                    deps,
+                    &pair_address,
+                    denom,
+                    &transitive_denom,
+                    price_sources,
+                )?;
+                if window_size <= 1 {
+                    return Err(ContractError::InvalidPriceSource {
+                        reason: "window_size must be greater than 1".to_string(),
+                    });
+                }
+
+                Ok(WasmPriceSourceChecked::Lsd {
+                    transitive_denom,
+                    twap: AstroportTwap {
+                        pair_address,
+                        window_size,
+                        tolerance,
+                    },
+                    redemption_rate: RedemptionRate {
+                        contract_addr: deps.api.addr_validate(&redemption_rate.contract_addr)?,
+                        max_staleness: redemption_rate.max_staleness,
+                    },
+                })
+            }
         }
     }
 }
@@ -275,6 +372,21 @@ impl PriceSourceChecked<Empty> for WasmPriceSourceChecked {
                 *max_confidence,
                 *max_deviation,
                 *denom_decimals,
+                config,
+                price_sources,
+                kind,
+            ),
+            WasmPriceSource::Lsd {
+                transitive_denom,
+                twap,
+                redemption_rate,
+            } => query_lsd_price(
+                deps,
+                env,
+                denom,
+                transitive_denom,
+                twap,
+                redemption_rate,
                 config,
                 price_sources,
                 kind,
@@ -465,6 +577,55 @@ fn apply_decimals_to_price(
             Decimal::from_ratio(nominator, denominator)
         }
     })
+}
+
+/// Staked asset price quoted in USD.
+///
+/// stAsset/USD = stAsset/Asset * Asset/USD
+/// where:
+/// stAsset/Asset = min(stAsset/Asset TWAP, stAsset/Asset Redemption Rate)
+#[allow(clippy::too_many_arguments)]
+fn query_lsd_price(
+    deps: &Deps,
+    env: &Env,
+    denom: &str,
+    transitive_denom: &str,
+    _twap: &AstroportTwap<Addr>,
+    redemption_rate: &RedemptionRate<Addr>,
+    config: &Config,
+    price_sources: &Map<&str, WasmPriceSourceChecked>,
+    kind: ActionKind,
+) -> ContractResult<Decimal> {
+    let current_time = env.block.time.seconds();
+    // FIXME: query TWAP price
+    let staked_price = Decimal::one();
+    // let staked_price =
+    //     twap.query_price(&deps.querier, current_time, denom, transitive_denom)?;
+
+    // query redemption rate
+    let rr = query_redemption_rate(
+        &deps.querier,
+        redemption_rate.contract_addr.clone(),
+        denom.to_string(),
+    )?;
+
+    // Check if the redemption rate is not too old
+    assert_rr_not_too_old(current_time, &rr, redemption_rate)?;
+
+    // min from geometric TWAP and exchange rate
+    let min_price = min(staked_price, rr.redemption_rate);
+
+    // use current price source
+    let transitive_price = price_sources.load(deps.storage, transitive_denom)?.query_price(
+        deps,
+        env,
+        transitive_denom,
+        config,
+        price_sources,
+        kind,
+    )?;
+
+    min_price.checked_mul(transitive_price).map_err(Into::into)
 }
 
 #[cfg(test)]

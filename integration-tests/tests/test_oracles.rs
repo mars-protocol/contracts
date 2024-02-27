@@ -2,10 +2,10 @@ use std::{str::FromStr, time::SystemTime};
 
 use cosmwasm_std::{coin, to_json_binary, Coin, Decimal, Empty, Isqrt, Uint128};
 use helpers::osmosis::instantiate_stride_contract;
-use mars_oracle_base::ContractError;
+use mars_oracle_base::{redemption_rate::RedemptionRate, ContractError};
 use mars_oracle_osmosis::{
     msg::PriceSourceResponse, DowntimeDetector, OsmosisPriceSourceChecked,
-    OsmosisPriceSourceUnchecked, RedemptionRate, Twap, TwapKind,
+    OsmosisPriceSourceUnchecked, Twap, TwapKind,
 };
 use mars_types::{
     address_provider::{

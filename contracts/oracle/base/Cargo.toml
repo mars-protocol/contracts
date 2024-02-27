@@ -17,9 +17,11 @@ doctest = false
 backtraces  = ["cosmwasm-std/backtraces"]
 
 [dependencies]
+cosmwasm-schema = { workspace = true }
 cosmwasm-std    = { workspace = true }
 cw2             = { workspace = true }
 cw-storage-plus = { workspace = true }
+ica-oracle      = { workspace = true }
 mars-owner      = { workspace = true }
 mars-utils      = { workspace = true }
 mars-types      = { workspace = true }

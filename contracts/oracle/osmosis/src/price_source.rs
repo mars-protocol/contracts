@@ -5,8 +5,8 @@ use cosmwasm_std::{
     Addr, Decimal, Decimal256, Deps, Empty, Env, Isqrt, QuerierWrapper, StdResult, Uint128, Uint256,
 };
 use cw_storage_plus::Map;
-use ica_oracle::msg::RedemptionRateResponse;
 use mars_oracle_base::{
+    redemption_rate::{assert_rr_not_too_old, query_redemption_rate, RedemptionRate},
     ContractError::{self, InvalidPrice},
     ContractResult, PriceSourceChecked, PriceSourceUnchecked,
 };
@@ -19,7 +19,7 @@ use mars_utils::helpers::validate_native_denom;
 use osmosis_std::types::osmosis::downtimedetector::v1beta1::Downtime;
 use pyth_sdk_cw::PriceIdentifier;
 
-use crate::helpers::{self, query_redemption_rate};
+use crate::helpers;
 
 #[cw_serde]
 #[derive(Eq)]
@@ -241,16 +241,6 @@ impl Twap {
             ),
         }
     }
-}
-
-#[cw_serde]
-pub struct RedemptionRate<T> {
-    /// Contract addr
-    pub contract_addr: T,
-
-    /// The maximum number of seconds since the last price was by an oracle, before
-    /// rejecting the price as too stale
-    pub max_staleness: u64,
 }
 
 pub type OsmosisPriceSourceUnchecked = OsmosisPriceSource<String>;
@@ -734,7 +724,7 @@ impl OsmosisPriceSourceChecked {
         // Check if the redemption rate is not too old
         assert_rr_not_too_old(current_time, &rr, redemption_rate)?;
 
-        // min from geometric TWAP and exchange rate
+        // min from TWAP and exchange rate
         let min_price = min(staked_price, rr.redemption_rate);
 
         // use current price source
@@ -749,22 +739,4 @@ impl OsmosisPriceSourceChecked {
 
         min_price.checked_mul(transitive_price).map_err(Into::into)
     }
-}
-
-/// Redemption rate comes from different chain (Stride) and it can be greater than the current block time due to differences in block generation times,
-/// network latency, and the asynchronous nature of cross-chain data updates. We accept such case as valid RR.
-fn assert_rr_not_too_old(
-    current_time: u64,
-    rr_res: &RedemptionRateResponse,
-    rr_config: &RedemptionRate<Addr>,
-) -> Result<(), ContractError> {
-    if rr_res.update_time + rr_config.max_staleness < current_time {
-        return Err(InvalidPrice {
-            reason: format!(
-                "redemption rate update time is too old/stale. last updated: {}, now: {}",
-                rr_res.update_time, current_time
-            ),
-        });
-    }
-    Ok(())
 }
