@@ -36,6 +36,11 @@ impl ExecuteTwapSnapshots for WasmOracle<'_> {
                     window_size,
                     tolerance,
                 } => (pair_address, window_size, tolerance),
+                WasmPriceSourceChecked::Lsd {
+                    transitive_denom: _,
+                    twap,
+                    redemption_rate: _,
+                } => (twap.pair_address, twap.window_size, twap.tolerance),
                 _ => {
                     return Err(ContractError::PriceSourceNotTwap {});
                 }

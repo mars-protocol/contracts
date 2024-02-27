@@ -120,11 +120,11 @@ pub enum WasmPriceSource<A> {
 #[cw_serde]
 pub struct AstroportTwap<A> {
     /// Address of the Astroport pair
-    pair_address: A,
+    pub pair_address: A,
     /// The size of the sliding TWAP window in seconds.
-    window_size: u64,
+    pub window_size: u64,
     /// The tolerance in seconds for the sliding TWAP window.
-    tolerance: u64,
+    pub tolerance: u64,
 }
 
 pub type WasmPriceSourceUnchecked = WasmPriceSource<String>;
@@ -355,6 +355,7 @@ impl PriceSourceChecked<Empty> for WasmPriceSourceChecked {
                 *window_size,
                 *tolerance,
                 kind,
+                true,
             ),
             WasmPriceSource::Pyth {
                 contract_addr,
@@ -433,6 +434,7 @@ fn query_astroport_twap_price(
     window_size: u64,
     tolerance: u64,
     kind: ActionKind,
+    normalize: bool,
 ) -> ContractResult<Decimal> {
     let snapshots = ASTROPORT_TWAP_SNAPSHOTS
         .may_load(deps.storage, denom)?
@@ -533,7 +535,11 @@ fn query_astroport_twap_price(
         PairType::Custom(_) => return Err(ContractError::InvalidPairType {}),
     };
 
-    normalize_price(deps, env, config, price_sources, &pair_info, denom, price, kind)
+    if normalize {
+        normalize_price(deps, env, config, price_sources, &pair_info, denom, price, kind)
+    } else {
+        Ok(price)
+    }
 }
 
 fn get_precisions(
@@ -590,17 +596,26 @@ fn query_lsd_price(
     env: &Env,
     denom: &str,
     transitive_denom: &str,
-    _twap: &AstroportTwap<Addr>,
+    twap: &AstroportTwap<Addr>,
     redemption_rate: &RedemptionRate<Addr>,
     config: &Config,
     price_sources: &Map<&str, WasmPriceSourceChecked>,
     kind: ActionKind,
 ) -> ContractResult<Decimal> {
     let current_time = env.block.time.seconds();
-    // FIXME: query TWAP price
-    let staked_price = Decimal::one();
-    // let staked_price =
-    //     twap.query_price(&deps.querier, current_time, denom, transitive_denom)?;
+
+    let staked_price = query_astroport_twap_price(
+        deps,
+        env,
+        denom,
+        config,
+        price_sources,
+        &twap.pair_address,
+        twap.window_size,
+        twap.tolerance,
+        kind.clone(),
+        false, // we don't want to normalize the price to be in base_denom
+    )?;
 
     // query redemption rate
     let rr = query_redemption_rate(
