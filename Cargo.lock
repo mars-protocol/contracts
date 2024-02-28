@@ -2618,6 +2618,8 @@ dependencies = [
  "mars-testing",
  "mars-types",
  "osmosis-std 0.22.0",
+ "serde",
+ "serde_json",
 ]
 
 [[package]]
