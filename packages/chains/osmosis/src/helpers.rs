@@ -9,6 +9,7 @@ use osmosis_std::{
         cosmos::base::v1beta1::Coin,
         osmosis::{
             concentratedliquidity::v1beta1::Pool as ConcentratedLiquidityPool,
+            cosmwasmpool::v1beta1::{CosmWasmPool as OsmoCosmWasmPool, InstantiateMsg},
             downtimedetector::v1beta1::DowntimedetectorQuerier,
             gamm::{
                 poolmodels::stableswap::v1beta1::Pool as StableSwapPool,
@@ -21,6 +22,12 @@ use osmosis_std::{
 };
 use prost::Message;
 
+#[derive(Debug, PartialEq)]
+pub struct CosmWasmPool {
+    pub id: u64,
+    pub denoms: Vec<String>,
+}
+
 // Get denoms from different type of the pool
 pub trait CommonPoolData {
     fn get_pool_id(&self) -> u64;
@@ -32,6 +39,7 @@ pub enum Pool {
     Balancer(BalancerPool),
     StableSwap(StableSwapPool),
     ConcentratedLiquidity(ConcentratedLiquidityPool),
+    CosmWasm(CosmWasmPool),
 }
 
 impl CommonPoolData for Pool {
@@ -40,6 +48,7 @@ impl CommonPoolData for Pool {
             Pool::Balancer(pool) => pool.id,
             Pool::StableSwap(pool) => pool.id,
             Pool::ConcentratedLiquidity(pool) => pool.id,
+            Pool::CosmWasm(pool) => pool.id,
         }
     }
 
@@ -57,6 +66,7 @@ impl CommonPoolData for Pool {
             Pool::ConcentratedLiquidity(pool) => {
                 vec![pool.token0.clone(), pool.token1.clone()]
             }
+            Pool::CosmWasm(pool) => pool.denoms.clone(),
         }
     }
 }
@@ -75,6 +85,20 @@ impl TryFrom<osmosis_std::shim::Any> for Pool {
 
         if let Ok(pool) = ConcentratedLiquidityPool::decode(value.value.as_slice()) {
             return Ok(Pool::ConcentratedLiquidity(pool));
+        }
+
+        if let Ok(pool) = OsmoCosmWasmPool::decode(value.value.as_slice()) {
+            if let Ok(msg) = InstantiateMsg::decode(pool.instantiate_msg.as_slice()) {
+                return Ok(Pool::CosmWasm(CosmWasmPool {
+                    id: pool.pool_id,
+                    denoms: msg.pool_asset_denoms,
+                }));
+            } else {
+                return Err(StdError::parse_err(
+                    "Pool",
+                    "Failed to parse CosmWasm pool instantiate message.",
+                ));
+            }
         }
 
         Err(StdError::parse_err(
@@ -318,6 +342,34 @@ mod tests {
             vec![
                 "uosmo".to_string(),
                 "ibc/0CD3A0285E1341859B5E86B6AB7682F023D03E97607CCC1DC95706411D866DF7".to_string()
+            ],
+            pool.get_pool_denoms()
+        );
+    }
+
+    #[test]
+    fn common_data_for_cosmwasm_pool() {
+        let msg = InstantiateMsg {
+            pool_asset_denoms: vec![
+                "ibc/D189335C6E4A68B513C10AB227BF1C1D38C746766278BA3EEB4FB14124F1D858".to_string(),
+                "ibc/498A0751C798A0D9A389AA3691123DADA57DAA4FE165D5C75894505B876BA6E4".to_string(),
+            ],
+        };
+        let cosmwasm_pool = OsmoCosmWasmPool {
+            contract_address: "pool_address".to_string(),
+            pool_id: 1212,
+            code_id: 148,
+            instantiate_msg: msg.encode_to_vec(),
+        };
+
+        let any_pool = cosmwasm_pool.to_any();
+        let pool: Pool = any_pool.try_into().unwrap();
+
+        assert_eq!(cosmwasm_pool.pool_id, pool.get_pool_id());
+        assert_eq!(
+            vec![
+                "ibc/D189335C6E4A68B513C10AB227BF1C1D38C746766278BA3EEB4FB14124F1D858".to_string(),
+                "ibc/498A0751C798A0D9A389AA3691123DADA57DAA4FE165D5C75894505B876BA6E4".to_string()
             ],
             pool.get_pool_denoms()
         );
