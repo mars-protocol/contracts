@@ -1,7 +1,7 @@
 use std::str::FromStr;
 
 use cosmwasm_std::{
-    coin, Decimal, Empty, QuerierWrapper, QueryRequest, StdError, StdResult, Uint128,
+    coin, from_json, Decimal, Empty, QuerierWrapper, QueryRequest, StdError, StdResult, Uint128,
 };
 use osmosis_std::{
     shim::{Duration, Timestamp},
@@ -88,7 +88,7 @@ impl TryFrom<osmosis_std::shim::Any> for Pool {
         }
 
         if let Ok(pool) = OsmoCosmWasmPool::decode(value.value.as_slice()) {
-            if let Ok(msg) = serde_json::from_slice::<InstantiateMsg>(&pool.instantiate_msg) {
+            if let Ok(msg) = from_json::<InstantiateMsg>(&pool.instantiate_msg) {
                 return Ok(Pool::CosmWasm(CosmWasmPool {
                     id: pool.pool_id,
                     denoms: msg.pool_asset_denoms,
@@ -212,6 +212,7 @@ pub fn recovered_since_downtime_of_length(
 
 #[cfg(test)]
 mod tests {
+    use cosmwasm_std::to_json_vec;
     use osmosis_std::types::osmosis::gamm::v1beta1::PoolAsset;
 
     use super::*;
@@ -359,7 +360,7 @@ mod tests {
             contract_address: "pool_address".to_string(),
             pool_id: 1212,
             code_id: 148,
-            instantiate_msg: serde_json::to_vec(&msg).unwrap(),
+            instantiate_msg: to_json_vec(&msg).unwrap(),
         };
 
         let any_pool = cosmwasm_pool.to_any();

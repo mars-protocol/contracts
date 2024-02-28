@@ -3,7 +3,7 @@ use std::{marker::PhantomData, str::FromStr};
 use cosmwasm_std::{
     coin, from_json,
     testing::{mock_env, MockApi, MockQuerier, MockStorage},
-    Decimal, OwnedDeps, Uint128,
+    to_json_vec, Decimal, OwnedDeps, Uint128,
 };
 use cw_it::osmosis_test_tube::{Gamm, Module, OsmosisTestApp, RunnerResult, Wasm};
 use mars_osmosis::ConcentratedLiquidityPool;
@@ -366,7 +366,7 @@ fn estimate_swap_multi_step_with_cosmwasm_pool() {
             .to_string(),
         pool_id: cw_pool_id,
         code_id: 148,
-        instantiate_msg: serde_json::to_vec(&msg).unwrap(),
+        instantiate_msg: to_json_vec(&msg).unwrap(),
     };
     let cw_pool = PoolResponse {
         pool: Some(pool.to_any()),

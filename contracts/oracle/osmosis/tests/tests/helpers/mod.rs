@@ -5,7 +5,7 @@ use std::{marker::PhantomData, str::FromStr};
 use cosmwasm_std::{
     coin, from_json,
     testing::{mock_env, MockApi, MockQuerier, MockStorage},
-    Coin, Decimal, Deps, DepsMut, OwnedDeps,
+    to_json_vec, Coin, Decimal, Deps, DepsMut, OwnedDeps,
 };
 use mars_oracle_base::ContractError;
 use mars_oracle_osmosis::{contract::entry, msg::ExecuteMsg, OsmosisPriceSourceUnchecked};
@@ -257,7 +257,7 @@ pub fn prepare_query_cosmwasm_pool_response(
             .to_string(),
         pool_id,
         code_id: 148,
-        instantiate_msg: serde_json::to_vec(&msg).unwrap(),
+        instantiate_msg: to_json_vec(&msg).unwrap(),
     };
     PoolResponse {
         pool: Some(pool.to_any()),

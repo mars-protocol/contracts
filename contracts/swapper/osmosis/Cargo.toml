@@ -35,4 +35,3 @@ anyhow       = { workspace = true }
 cw-it        = { workspace = true, features = ["osmosis-test-tube"] }
 mars-testing = { workspace = true }
 serde        = { workspace = true }
-serde_json   = { workspace = true }

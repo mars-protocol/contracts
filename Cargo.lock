@@ -2328,7 +2328,6 @@ dependencies = [
  "pyth-sdk-cw",
  "schemars",
  "serde",
- "serde_json",
  "test-case",
 ]
 
@@ -2359,7 +2358,6 @@ dependencies = [
  "osmosis-std 0.22.0",
  "prost 0.12.3",
  "serde",
- "serde_json",
 ]
 
 [[package]]
@@ -2619,7 +2617,6 @@ dependencies = [
  "mars-types",
  "osmosis-std 0.22.0",
  "serde",
- "serde_json",
 ]
 
 [[package]]
