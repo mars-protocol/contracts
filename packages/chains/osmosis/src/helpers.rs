@@ -88,7 +88,7 @@ impl TryFrom<osmosis_std::shim::Any> for Pool {
         }
 
         if let Ok(pool) = OsmoCosmWasmPool::decode(value.value.as_slice()) {
-            if let Ok(msg) = InstantiateMsg::decode(pool.instantiate_msg.as_slice()) {
+            if let Ok(msg) = serde_json::from_slice::<InstantiateMsg>(&pool.instantiate_msg) {
                 return Ok(Pool::CosmWasm(CosmWasmPool {
                     id: pool.pool_id,
                     denoms: msg.pool_asset_denoms,
@@ -359,7 +359,7 @@ mod tests {
             contract_address: "pool_address".to_string(),
             pool_id: 1212,
             code_id: 148,
-            instantiate_msg: msg.encode_to_vec(),
+            instantiate_msg: serde_json::to_vec(&msg).unwrap(),
         };
 
         let any_pool = cosmwasm_pool.to_any();
@@ -372,6 +372,30 @@ mod tests {
                 "ibc/498A0751C798A0D9A389AA3691123DADA57DAA4FE165D5C75894505B876BA6E4".to_string()
             ],
             pool.get_pool_denoms()
+        );
+    }
+
+    #[test]
+    fn cosmwasm_pool_error_handled() {
+        let msg = InstantiateMsg {
+            pool_asset_denoms: vec![
+                "ibc/D189335C6E4A68B513C10AB227BF1C1D38C746766278BA3EEB4FB14124F1D858".to_string(),
+                "ibc/498A0751C798A0D9A389AA3691123DADA57DAA4FE165D5C75894505B876BA6E4".to_string(),
+            ],
+        };
+        let cosmwasm_pool = OsmoCosmWasmPool {
+            contract_address: "pool_address".to_string(),
+            pool_id: 1212,
+            code_id: 148,
+            instantiate_msg: msg.encode_to_vec(),
+        };
+
+        let any_pool = cosmwasm_pool.to_any();
+        let pool: Result<Pool, StdError> = any_pool.try_into();
+
+        assert_eq!(
+            pool.unwrap_err(),
+            StdError::parse_err("Pool", "Failed to parse CosmWasm pool instantiate message.",)
         );
     }
 }

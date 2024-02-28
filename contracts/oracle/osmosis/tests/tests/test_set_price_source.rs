@@ -1038,6 +1038,15 @@ fn setting_price_source_xyk_lp() {
         }
     );
 
+    // attempting to use CosmWasm pool
+    let err = set_price_source_xyk_lp("uausdc_unusdc_lp", 8888).unwrap_err();
+    assert_eq!(
+        err,
+        ContractError::InvalidPriceSource {
+            reason: "CosmWasm pool not supported. Pool id 8888".to_string()
+        }
+    );
+
     // properly set xyk lp price source
     let res = set_price_source_xyk_lp("uosmo_umars_lp", 89).unwrap();
     assert_eq!(res.messages.len(), 0);
