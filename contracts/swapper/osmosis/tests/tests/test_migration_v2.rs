@@ -64,12 +64,12 @@ fn successful_migration() {
     assert!(res.data.is_none());
     assert_eq!(
         res.attributes,
-        vec![attr("action", "migrate"), attr("from_version", "1.0.0"), attr("to_version", "2.0.1")] // to_version should be 2.0.0 but because of global current version in Cargo.toml is different
+        vec![attr("action", "migrate"), attr("from_version", "1.0.0"), attr("to_version", "2.0.2")] // to_version should be 2.0.0 but because of global current version in Cargo.toml is different
     );
 
     let new_contract_version = ContractVersion {
         contract: "crates.io:mars-swapper-osmosis".to_string(),
-        version: "2.0.1".to_string(), // should be 2.0.0 but global current version in Cargo.toml is different
+        version: "2.0.2".to_string(), // should be 2.0.0 but global current version in Cargo.toml is different
     };
     assert_eq!(cw2::get_contract_version(deps.as_ref().storage).unwrap(), new_contract_version);
 
@@ -85,22 +85,22 @@ fn successful_migration() {
 #[test]
 fn successful_migration_to_v2_0_2() {
     let mut deps = mock_dependencies(&[]);
-    cw2::set_contract_version(deps.as_mut().storage, "crates.io:mars-swapper-osmosis", "2.0.0")
+    cw2::set_contract_version(deps.as_mut().storage, "crates.io:mars-swapper-osmosis", "2.0.1")
         .unwrap();
 
-    let res = migrate(deps.as_mut(), mock_env(), MigrateMsg::V2_0_0ToV2_0_1 {}).unwrap();
+    let res = migrate(deps.as_mut(), mock_env(), MigrateMsg::V2_0_1ToV2_0_2 {}).unwrap();
 
     assert_eq!(res.messages, vec![]);
     assert_eq!(res.events, vec![] as Vec<Event>);
     assert!(res.data.is_none());
     assert_eq!(
         res.attributes,
-        vec![attr("action", "migrate"), attr("from_version", "2.0.0"), attr("to_version", "2.0.1")]
+        vec![attr("action", "migrate"), attr("from_version", "2.0.1"), attr("to_version", "2.0.2")]
     );
 
     let new_contract_version = ContractVersion {
         contract: "crates.io:mars-swapper-osmosis".to_string(),
-        version: "2.0.1".to_string(),
+        version: "2.0.2".to_string(),
     };
     assert_eq!(cw2::get_contract_version(deps.as_ref().storage).unwrap(), new_contract_version);
 }
