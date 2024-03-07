@@ -204,9 +204,7 @@ fn query_out_amount(
         let pool = query_pool(querier, step.pool_id)?;
         let step_price = if let Pool::CosmWasm(cw_pool) = pool {
             // TWAP not supported.
-            // This is transmuter (https://github.com/osmosis-labs/transmuter) pool:
-            // * v1 pool - 1:1 conversion of one asset to another,
-            // * v2 pool - use normalization factor to convert one asset to another.
+            // This is transmuter (https://github.com/osmosis-labs/transmuter) pool.
             cw_pool.query_price(&denom_in, &step.token_out_denom)?
         } else {
             query_arithmetic_twap_price(
