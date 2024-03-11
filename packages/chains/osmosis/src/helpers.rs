@@ -2,7 +2,8 @@ use std::str::FromStr;
 
 use cosmwasm_schema::cw_serde;
 use cosmwasm_std::{
-    coin, from_json, Decimal, Empty, QuerierWrapper, QueryRequest, StdError, StdResult, Uint128,
+    coin, from_json, to_json_binary, Decimal, Empty, QuerierWrapper, QueryRequest, StdError,
+    StdResult, Uint128, WasmQuery,
 };
 use osmosis_std::{
     shim::{Duration, Timestamp},
@@ -10,7 +11,10 @@ use osmosis_std::{
         cosmos::base::v1beta1::Coin,
         osmosis::{
             concentratedliquidity::v1beta1::Pool as ConcentratedLiquidityPool,
-            cosmwasmpool::v1beta1::{CosmWasmPool as OsmoCosmWasmPool, InstantiateMsg},
+            cosmwasmpool::v1beta1::{
+                CalcOutAmtGivenIn, CalcOutAmtGivenInRequest, CalcOutAmtGivenInResponse,
+                CosmWasmPool as OsmoCosmWasmPool, CosmwasmpoolQuerier, InstantiateMsg,
+            },
             downtimedetector::v1beta1::DowntimedetectorQuerier,
             gamm::{
                 poolmodels::stableswap::v1beta1::Pool as StableSwapPool,
@@ -30,27 +34,17 @@ pub struct CosmWasmPool {
 }
 
 impl CosmWasmPool {
-    pub fn query_price(&self, denom_in: &str, denom_out: &str) -> StdResult<Decimal> {
-        if denom_in == denom_out {
-            return Err(StdError::generic_err("denom_in and denom_out must be different"));
-        }
-
-        let asset_in =
-            self.pool_asset_configs.iter().find(|ac| ac.denom == denom_in).ok_or_else(|| {
-                StdError::generic_err(format!("asset config for {} not found", denom_in))
-            })?;
-        let asset_out =
-            self.pool_asset_configs.iter().find(|ac| ac.denom == denom_out).ok_or_else(|| {
-                StdError::generic_err(format!("asset config for {} not found", denom_out))
-            })?;
-
-        // denom_out_amount / denom_out_normalization_factor = denom_in_amount / denom_in_normalization_factor
-        // denom_out_amount = denom_in_amount * denom_out_normalization_factor / denom_in_normalization_factor
-        // For more details, see: https://github.com/osmosis-labs/transmuter/blob/main/contracts/transmuter/src/asset.rs#L174
-        Ok(Decimal::from_ratio(
-            asset_out.normalization_factor.u128(),
-            asset_in.normalization_factor.u128(),
-        ))
+    pub fn query_out_amount(
+        &self,
+        querier: &QuerierWrapper,
+        pool_id: u64,
+        coin_in: &cosmwasm_std::Coin,
+        denom_out: &str,
+    ) -> StdResult<Uint128> {
+        let contract_addr = query_cosmwasm_pool_contract_addr(querier, pool_id)?;
+        let out_amount =
+            query_cosmwasm_pool_out_amount(querier, &contract_addr, coin_in, denom_out)?;
+        Ok(out_amount)
     }
 }
 
@@ -289,6 +283,41 @@ pub fn recovered_since_downtime_of_length(
             }),
         )?;
     Ok(downtime_detector_res.succesfully_recovered)
+}
+
+/// Query contract address for cosmwasm pool id. It is used to query smart contract (e.g. `calc_out_amt_given_in`).
+pub fn query_cosmwasm_pool_contract_addr(
+    querier: &QuerierWrapper,
+    pool_id: u64,
+) -> StdResult<String> {
+    let res = CosmwasmpoolQuerier::new(querier).contract_info_by_pool_id(pool_id)?;
+    Ok(res.contract_address)
+}
+
+/// Execute `calc_out_amt_given_in` query on CosmWasm pool contract
+pub fn query_cosmwasm_pool_out_amount(
+    querier: &QuerierWrapper,
+    contract_addr: &str,
+    token_in: &cosmwasm_std::Coin,
+    token_out_denom: &str,
+) -> StdResult<Uint128> {
+    let res: CalcOutAmtGivenInResponse = querier.query(&QueryRequest::Wasm(WasmQuery::Smart {
+        contract_addr: contract_addr.to_string(),
+        msg: to_json_binary(&CalcOutAmtGivenInRequest {
+            calc_out_amt_given_in: Some(CalcOutAmtGivenIn {
+                token_in: Some(Coin {
+                    denom: token_in.denom.to_string(),
+                    amount: token_in.amount.to_string(),
+                }),
+                token_out_denom: token_out_denom.to_string(),
+                swap_fee: "0".to_string(), // 0 is required by the contract
+            }),
+        })?,
+    }))?;
+    // token_out should be available so `expect` just in case
+    let amount_str =
+        res.token_out.expect("token_out not found for CalcOutAmtGivenInRequest response").amount;
+    Uint128::from_str(&amount_str)
 }
 
 #[cfg(test)]
@@ -545,74 +574,5 @@ mod tests {
             pool.unwrap_err(),
             StdError::parse_err("Pool", "Failed to parse CosmWasm pool instantiate message.",)
         );
-    }
-
-    #[test]
-    fn cosmwasm_pool_price_error_if_denoms_the_same() {
-        let cw_pool = CosmWasmPool {
-            id: 1212,
-            pool_asset_configs: vec![
-                AssetConfig {
-                    denom: "nobleUsdc".to_string(),
-                    normalization_factor: Uint128::one(),
-                },
-                AssetConfig {
-                    denom: "axlUsdc".to_string(),
-                    normalization_factor: Uint128::one(),
-                },
-            ],
-        };
-
-        let res = cw_pool.query_price("nobleUsdc", "nobleUsdc");
-        assert_eq!(
-            res.unwrap_err(),
-            StdError::generic_err("denom_in and denom_out must be different")
-        );
-    }
-
-    #[test]
-    fn cosmwasm_pool_price_error_if_missing_denom() {
-        let cw_pool = CosmWasmPool {
-            id: 1212,
-            pool_asset_configs: vec![
-                AssetConfig {
-                    denom: "nobleUsdc".to_string(),
-                    normalization_factor: Uint128::one(),
-                },
-                AssetConfig {
-                    denom: "axlUsdc".to_string(),
-                    normalization_factor: Uint128::one(),
-                },
-            ],
-        };
-
-        let res = cw_pool.query_price("nobleUsdc", "uosmo");
-        assert_eq!(res.unwrap_err(), StdError::generic_err("asset config for uosmo not found"));
-
-        let res = cw_pool.query_price("untrn", "nobleUsdc");
-        assert_eq!(res.unwrap_err(), StdError::generic_err("asset config for untrn not found"));
-    }
-
-    #[test]
-    fn cosmwasm_pool_price() {
-        let cw_pool = CosmWasmPool {
-            id: 1212,
-            pool_asset_configs: vec![
-                AssetConfig {
-                    denom: "nobleUsdc".to_string(),
-                    normalization_factor: Uint128::new(1000),
-                },
-                AssetConfig {
-                    denom: "axlUsdc".to_string(),
-                    normalization_factor: Uint128::new(200),
-                },
-            ],
-        };
-
-        let price = cw_pool.query_price("axlUsdc", "nobleUsdc").unwrap();
-        assert_eq!(price, Decimal::from_ratio(1000u128, 200u128));
-
-        let price = cw_pool.query_price("nobleUsdc", "axlUsdc").unwrap();
-        assert_eq!(price, Decimal::from_ratio(200u128, 1000u128));
     }
 }

@@ -8,6 +8,7 @@ use ica_oracle::msg::RedemptionRateResponse;
 use mars_oracle_osmosis::DowntimeDetector;
 use mars_types::{address_provider, incentives, oracle, params::AssetParams, red_bank};
 use osmosis_std::types::osmosis::{
+    cosmwasmpool::v1beta1::CalcOutAmtGivenInRequest,
     downtimedetector::v1beta1::RecoveredSinceDowntimeOfLengthResponse,
     poolmanager::v1beta1::{PoolResponse, SpotPriceResponse},
     twap::v1beta1::{ArithmeticTwapToNowResponse, GeometricTwapToNowResponse},
@@ -15,6 +16,7 @@ use osmosis_std::types::osmosis::{
 use pyth_sdk_cw::{PriceFeedResponse, PriceIdentifier};
 
 use crate::{
+    cosmwasm_pool_querier::CosmWasmPoolQuerier,
     incentives_querier::IncentivesQuerier,
     mock_address_provider,
     oracle_querier::OracleQuerier,
@@ -34,6 +36,7 @@ pub struct MarsMockQuerier {
     redbank_querier: RedBankQuerier,
     redemption_rate_querier: RedemptionRateQuerier,
     params_querier: ParamsQuerier,
+    cosmwasm_pool_queries: CosmWasmPoolQuerier,
 }
 
 impl Querier for MarsMockQuerier {
@@ -63,6 +66,7 @@ impl MarsMockQuerier {
             redbank_querier: RedBankQuerier::default(),
             redemption_rate_querier: Default::default(),
             params_querier: ParamsQuerier::default(),
+            cosmwasm_pool_queries: CosmWasmPoolQuerier::default(),
         }
     }
 
@@ -257,6 +261,11 @@ impl MarsMockQuerier {
                 // Params Queries
                 if let Ok(params_query) = from_json::<mars_types::params::QueryMsg>(msg) {
                     return self.params_querier.handle_query(params_query);
+                }
+
+                // CosmWasm pool Queries
+                if let Ok(cw_pool_query) = from_json::<CalcOutAmtGivenInRequest>(msg) {
+                    return self.cosmwasm_pool_queries.handle_query(cw_pool_query);
                 }
 
                 panic!("[mock]: Unsupported wasm query: {msg:?}");

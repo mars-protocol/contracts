@@ -2,6 +2,7 @@ use std::collections::HashMap;
 
 use cosmwasm_std::{to_json_binary, Binary, ContractResult, QuerierResult, SystemError};
 use osmosis_std::types::osmosis::{
+    cosmwasmpool::v1beta1::{ContractInfoByPoolIdRequest, ContractInfoByPoolIdResponse},
     downtimedetector::v1beta1::{
         RecoveredSinceDowntimeOfLengthRequest, RecoveredSinceDowntimeOfLengthResponse,
     },
@@ -70,6 +71,14 @@ impl OsmosisQuerier {
                 Message::decode(data.as_slice());
             if let Ok(osmosis_query) = parse_osmosis_query {
                 return Ok(self.handle_recovered_since_downtime_of_length(osmosis_query));
+            }
+        }
+
+        if path == "/osmosis.cosmwasmpool.v1beta1.Query/ContractInfoByPoolId" {
+            let parse_osmosis_query: Result<ContractInfoByPoolIdRequest, DecodeError> =
+                Message::decode(data.as_slice());
+            if let Ok(osmosis_query) = parse_osmosis_query {
+                return Ok(self.handle_cosmwasm_pool_contract_info_request(osmosis_query.pool_id));
             }
         }
 
@@ -168,6 +177,15 @@ impl OsmosisQuerier {
             })
             .into(),
         };
+        Ok(res).into()
+    }
+
+    fn handle_cosmwasm_pool_contract_info_request(&self, pool_id: u64) -> QuerierResult {
+        let res: ContractResult<Binary> = to_json_binary(&ContractInfoByPoolIdResponse {
+            contract_address: format!("pool_id_{}", pool_id),
+            code_id: pool_id,
+        })
+        .into();
         Ok(res).into()
     }
 }

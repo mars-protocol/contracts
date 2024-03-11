@@ -1,7 +1,7 @@
 use std::fmt;
 
 use cosmwasm_schema::cw_serde;
-use cosmwasm_std::{BlockInfo, CosmosMsg, Decimal, Empty, Env, Fraction, QuerierWrapper, Uint128};
+use cosmwasm_std::{coin, BlockInfo, CosmosMsg, Decimal, Empty, Env, QuerierWrapper, Uint128};
 use mars_osmosis::helpers::{query_arithmetic_twap_price, query_pool, CommonPoolData, Pool};
 use mars_swapper_base::{ContractError, ContractResult, Route};
 use mars_types::swapper::{EstimateExactInSwapResponse, SwapperRoute};
@@ -198,28 +198,25 @@ fn query_out_amount(
 ) -> ContractResult<Uint128> {
     let start_time = block.time.seconds() - TWAP_WINDOW_SIZE_SECONDS;
 
-    let mut price = Decimal::one();
-    let mut denom_in = coin_in.denom.clone();
+    let mut coin_in = coin_in.clone();
     for step in steps {
         let pool = query_pool(querier, step.pool_id)?;
-        let step_price = if let Pool::CosmWasm(cw_pool) = pool {
+        let out_amount = if let Pool::CosmWasm(cw_pool) = pool {
             // TWAP not supported.
             // This is transmuter (https://github.com/osmosis-labs/transmuter) pool.
-            cw_pool.query_price(&denom_in, &step.token_out_denom)?
+            cw_pool.query_out_amount(querier, step.pool_id, &coin_in, &step.token_out_denom)?
         } else {
-            query_arithmetic_twap_price(
+            let price = query_arithmetic_twap_price(
                 querier,
                 step.pool_id,
-                &denom_in,
+                &coin_in.denom,
                 &step.token_out_denom,
                 start_time,
-            )?
+            )?;
+            coin_in.amount.checked_mul_floor(price)?
         };
-        price = price.checked_mul(step_price)?;
-        denom_in = step.token_out_denom.clone();
+        coin_in = coin(out_amount.u128(), &step.token_out_denom);
     }
 
-    let out_amount =
-        coin_in.amount.checked_multiply_ratio(price.numerator(), price.denominator())?;
-    Ok(out_amount)
+    Ok(coin_in.amount)
 }
