@@ -18,7 +18,8 @@ doctest = false
 backtraces = ["cosmwasm-std/backtraces"]
 
 [dependencies]
-cosmwasm-std = { workspace = true }
-osmosis-std  = { workspace = true }
-serde        = { workspace = true }
-prost        = { workspace = true }
+cosmwasm-std    = { workspace = true }
+cosmwasm-schema = { workspace = true }
+osmosis-std     = { workspace = true }
+serde           = { workspace = true }
+prost           = { workspace = true }

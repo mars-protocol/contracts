@@ -2354,6 +2354,7 @@ dependencies = [
 name = "mars-osmosis"
 version = "2.0.0"
 dependencies = [
+ "cosmwasm-schema",
  "cosmwasm-std",
  "osmosis-std 0.22.0",
  "prost 0.12.3",
