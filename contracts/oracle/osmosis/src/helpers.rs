@@ -26,6 +26,7 @@ pub fn assert_osmosis_pool_assets(
         }
         Pool::StableSwap(_) => {}
         Pool::ConcentratedLiquidity(_) => {}
+        Pool::CosmWasm(_) => {}
     };
 
     Ok(())
@@ -45,6 +46,11 @@ pub fn assert_osmosis_xyk_lp_pool(pool: &Pool) -> ContractResult<()> {
         Pool::ConcentratedLiquidity(cl_pool) => {
             return Err(ContractError::InvalidPriceSource {
                 reason: format!("ConcentratedLiquidity pool not supported. Pool id {}", cl_pool.id),
+            });
+        }
+        Pool::CosmWasm(cw_pool) => {
+            return Err(ContractError::InvalidPriceSource {
+                reason: format!("CosmWasm pool not supported. Pool id {}", cw_pool.id),
             });
         }
     };

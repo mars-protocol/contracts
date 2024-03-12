@@ -1,7 +1,9 @@
 use std::str::FromStr;
 
+use cosmwasm_schema::cw_serde;
 use cosmwasm_std::{
-    coin, Decimal, Empty, QuerierWrapper, QueryRequest, StdError, StdResult, Uint128,
+    coin, from_json, to_json_binary, Decimal, Empty, QuerierWrapper, QueryRequest, StdError,
+    StdResult, Uint128, WasmQuery,
 };
 use osmosis_std::{
     shim::{Duration, Timestamp},
@@ -9,6 +11,10 @@ use osmosis_std::{
         cosmos::base::v1beta1::Coin,
         osmosis::{
             concentratedliquidity::v1beta1::Pool as ConcentratedLiquidityPool,
+            cosmwasmpool::v1beta1::{
+                CalcOutAmtGivenIn, CalcOutAmtGivenInRequest, CalcOutAmtGivenInResponse,
+                CosmWasmPool as OsmoCosmWasmPool, CosmwasmpoolQuerier, InstantiateMsg,
+            },
             downtimedetector::v1beta1::DowntimedetectorQuerier,
             gamm::{
                 poolmodels::stableswap::v1beta1::Pool as StableSwapPool,
@@ -21,6 +27,43 @@ use osmosis_std::{
 };
 use prost::Message;
 
+#[derive(Debug, PartialEq)]
+pub struct CosmWasmPool {
+    pub id: u64,
+    pub pool_asset_configs: Vec<AssetConfig>,
+}
+
+impl CosmWasmPool {
+    pub fn query_out_amount(
+        &self,
+        querier: &QuerierWrapper,
+        pool_id: u64,
+        coin_in: &cosmwasm_std::Coin,
+        denom_out: &str,
+    ) -> StdResult<Uint128> {
+        let contract_addr = query_cosmwasm_pool_contract_addr(querier, pool_id)?;
+        let out_amount =
+            query_cosmwasm_pool_out_amount(querier, &contract_addr, coin_in, denom_out)?;
+        Ok(out_amount)
+    }
+}
+
+/// Fields taken from Instantiate msg https://github.com/osmosis-labs/transmuter/blob/47bbb023463578937a7086ad80071196126349d9/contracts/transmuter/src/contract.rs#L74
+#[cw_serde]
+struct TransmuterV3InstantiateMsg {
+    pub pool_asset_configs: Vec<AssetConfig>,
+    pub alloyed_asset_subdenom: String,
+    pub alloyed_asset_normalization_factor: Uint128,
+    pub admin: Option<String>,
+    pub moderator: Option<String>,
+}
+
+#[cw_serde]
+pub struct AssetConfig {
+    pub denom: String,
+    pub normalization_factor: Uint128,
+}
+
 // Get denoms from different type of the pool
 pub trait CommonPoolData {
     fn get_pool_id(&self) -> u64;
@@ -32,6 +75,7 @@ pub enum Pool {
     Balancer(BalancerPool),
     StableSwap(StableSwapPool),
     ConcentratedLiquidity(ConcentratedLiquidityPool),
+    CosmWasm(CosmWasmPool),
 }
 
 impl CommonPoolData for Pool {
@@ -40,6 +84,7 @@ impl CommonPoolData for Pool {
             Pool::Balancer(pool) => pool.id,
             Pool::StableSwap(pool) => pool.id,
             Pool::ConcentratedLiquidity(pool) => pool.id,
+            Pool::CosmWasm(pool) => pool.id,
         }
     }
 
@@ -56,6 +101,9 @@ impl CommonPoolData for Pool {
             }
             Pool::ConcentratedLiquidity(pool) => {
                 vec![pool.token0.clone(), pool.token1.clone()]
+            }
+            Pool::CosmWasm(pool) => {
+                pool.pool_asset_configs.iter().map(|ac| ac.denom.clone()).collect()
             }
         }
     }
@@ -77,9 +125,60 @@ impl TryFrom<osmosis_std::shim::Any> for Pool {
             return Ok(Pool::ConcentratedLiquidity(pool));
         }
 
+        if let Ok(pool) = OsmoCosmWasmPool::decode(value.value.as_slice()) {
+            // Try to parse the instantiate message of the cosmwasm pool:
+            // V1:
+            // ```json
+            // {
+            //  "pool_asset_denoms": [
+            //      "ibc/40F1B2458AEDA66431F9D44F48413240B8D28C072463E2BF53655728683583E3",
+            //      "ibc/6F34E1BD664C36CE49ACC28E60D62559A5F96C4F9A6CCE4FC5A67B2852E24CFE"
+            //  ]
+            // }
+            //
+            // V2:
+            // ```json
+            // {
+            //  "pool_asset_denoms": [
+            //      "uosmo",
+            //      "factory/osmo14eq94mckd6kp0pwnxx33ycpk762z7rum29epr3/teko02"
+            //  ],
+            //  "admin": "osmo14eq94mckd6kp0pwnxx33ycpk762z7rum29epr3",
+            //  "alloyed_asset_subdenom": "teko"
+            // }
+            //
+            // Both of them have the same field `pool_asset_denoms` and it's the only field we need to use.
+            if let Ok(msg) = from_json::<InstantiateMsg>(&pool.instantiate_msg) {
+                return Ok(Pool::CosmWasm(CosmWasmPool {
+                    id: pool.pool_id,
+                    pool_asset_configs: msg
+                        .pool_asset_denoms
+                        .iter()
+                        .map(|denom| AssetConfig {
+                            denom: denom.clone(),
+                            normalization_factor: Uint128::one(), // 1:1 conversion of one asset to another
+                        })
+                        .collect(),
+                }));
+            }
+
+            // try to parse the instantiate message V3
+            if let Ok(msg) = from_json::<TransmuterV3InstantiateMsg>(&pool.instantiate_msg) {
+                return Ok(Pool::CosmWasm(CosmWasmPool {
+                    id: pool.pool_id,
+                    pool_asset_configs: msg.pool_asset_configs,
+                }));
+            }
+
+            return Err(StdError::parse_err(
+                "Pool",
+                "Failed to parse CosmWasm pool instantiate message.",
+            ));
+        }
+
         Err(StdError::parse_err(
             "Pool",
-            "Unsupported pool: must be either `Balancer`, `StableSwap` or `ConcentratedLiquidity`.",
+            "Unsupported pool: must be either `Balancer`, `StableSwap`, `ConcentratedLiquidity` or CosmWasm transmuter.",
         ))
     }
 }
@@ -186,11 +285,54 @@ pub fn recovered_since_downtime_of_length(
     Ok(downtime_detector_res.succesfully_recovered)
 }
 
+/// Query contract address for cosmwasm pool id. It is used to query smart contract (e.g. `calc_out_amt_given_in`).
+pub fn query_cosmwasm_pool_contract_addr(
+    querier: &QuerierWrapper,
+    pool_id: u64,
+) -> StdResult<String> {
+    let res = CosmwasmpoolQuerier::new(querier).contract_info_by_pool_id(pool_id)?;
+    Ok(res.contract_address)
+}
+
+/// Execute `calc_out_amt_given_in` query on CosmWasm pool contract
+pub fn query_cosmwasm_pool_out_amount(
+    querier: &QuerierWrapper,
+    contract_addr: &str,
+    token_in: &cosmwasm_std::Coin,
+    token_out_denom: &str,
+) -> StdResult<Uint128> {
+    let res: CalcOutAmtGivenInResponse = querier.query(&QueryRequest::Wasm(WasmQuery::Smart {
+        contract_addr: contract_addr.to_string(),
+        msg: to_json_binary(&CalcOutAmtGivenInRequest {
+            calc_out_amt_given_in: Some(CalcOutAmtGivenIn {
+                token_in: Some(Coin {
+                    denom: token_in.denom.to_string(),
+                    amount: token_in.amount.to_string(),
+                }),
+                token_out_denom: token_out_denom.to_string(),
+                swap_fee: "0".to_string(), // 0 is required by the contract
+            }),
+        })?,
+    }))?;
+    // token_out should be available so `expect` just in case
+    let amount_str =
+        res.token_out.expect("token_out not found for CalcOutAmtGivenInRequest response").amount;
+    Uint128::from_str(&amount_str)
+}
+
 #[cfg(test)]
 mod tests {
+    use cosmwasm_std::to_json_vec;
     use osmosis_std::types::osmosis::gamm::v1beta1::PoolAsset;
 
     use super::*;
+
+    #[cw_serde]
+    struct TransmuterV1InstantiateMsg {
+        pub pool_asset_denoms: Vec<String>,
+        pub alloyed_asset_subdenom: String,
+        pub admin: Option<String>,
+    }
 
     #[test]
     fn unwrapping_coin() {
@@ -320,6 +462,117 @@ mod tests {
                 "ibc/0CD3A0285E1341859B5E86B6AB7682F023D03E97607CCC1DC95706411D866DF7".to_string()
             ],
             pool.get_pool_denoms()
+        );
+    }
+
+    #[test]
+    fn common_data_for_cosmwasm_pool_v1() {
+        let msg = InstantiateMsg {
+            pool_asset_denoms: vec![
+                "ibc/D189335C6E4A68B513C10AB227BF1C1D38C746766278BA3EEB4FB14124F1D858".to_string(),
+                "ibc/498A0751C798A0D9A389AA3691123DADA57DAA4FE165D5C75894505B876BA6E4".to_string(),
+            ],
+        };
+        let cosmwasm_pool = OsmoCosmWasmPool {
+            contract_address: "pool_address".to_string(),
+            pool_id: 1212,
+            code_id: 148,
+            instantiate_msg: to_json_vec(&msg).unwrap(),
+        };
+
+        let any_pool = cosmwasm_pool.to_any();
+        let pool: Pool = any_pool.try_into().unwrap();
+
+        assert_eq!(cosmwasm_pool.pool_id, pool.get_pool_id());
+        assert_eq!(
+            vec![
+                "ibc/D189335C6E4A68B513C10AB227BF1C1D38C746766278BA3EEB4FB14124F1D858".to_string(),
+                "ibc/498A0751C798A0D9A389AA3691123DADA57DAA4FE165D5C75894505B876BA6E4".to_string()
+            ],
+            pool.get_pool_denoms()
+        );
+    }
+
+    #[test]
+    fn common_data_for_cosmwasm_pool_v2() {
+        // check if extra fields are ignored during deserialization
+        let msg = TransmuterV1InstantiateMsg {
+            pool_asset_denoms: vec![
+                "uosmo".to_string(),
+                "factory/osmo14eq94mckd6kp0pwnxx33ycpk762z7rum29epr3/teko02".to_string(),
+            ],
+            alloyed_asset_subdenom: "teko".to_string(),
+            admin: Some("osmo14eq94mckd6kp0pwnxx33ycpk762z7rum29epr3".to_string()),
+        };
+        let cosmwasm_pool = OsmoCosmWasmPool {
+            contract_address: "pool_address".to_string(),
+            pool_id: 1212,
+            code_id: 148,
+            instantiate_msg: to_json_vec(&msg).unwrap(),
+        };
+
+        let any_pool = cosmwasm_pool.to_any();
+        let pool: Pool = any_pool.try_into().unwrap();
+
+        assert_eq!(cosmwasm_pool.pool_id, pool.get_pool_id());
+        assert_eq!(
+            vec![
+                "uosmo".to_string(),
+                "factory/osmo14eq94mckd6kp0pwnxx33ycpk762z7rum29epr3/teko02".to_string(),
+            ],
+            pool.get_pool_denoms()
+        );
+    }
+
+    #[test]
+    fn common_data_for_cosmwasm_pool_v3() {
+        let msg = InstantiateMsg {
+            pool_asset_denoms: vec![
+                "ibc/D189335C6E4A68B513C10AB227BF1C1D38C746766278BA3EEB4FB14124F1D858".to_string(),
+                "ibc/498A0751C798A0D9A389AA3691123DADA57DAA4FE165D5C75894505B876BA6E4".to_string(),
+            ],
+        };
+        let cosmwasm_pool = OsmoCosmWasmPool {
+            contract_address: "pool_address".to_string(),
+            pool_id: 1212,
+            code_id: 148,
+            instantiate_msg: to_json_vec(&msg).unwrap(),
+        };
+
+        let any_pool = cosmwasm_pool.to_any();
+        let pool: Pool = any_pool.try_into().unwrap();
+
+        assert_eq!(cosmwasm_pool.pool_id, pool.get_pool_id());
+        assert_eq!(
+            vec![
+                "ibc/D189335C6E4A68B513C10AB227BF1C1D38C746766278BA3EEB4FB14124F1D858".to_string(),
+                "ibc/498A0751C798A0D9A389AA3691123DADA57DAA4FE165D5C75894505B876BA6E4".to_string()
+            ],
+            pool.get_pool_denoms()
+        );
+    }
+
+    #[test]
+    fn cosmwasm_pool_error_handled() {
+        let msg = InstantiateMsg {
+            pool_asset_denoms: vec![
+                "ibc/D189335C6E4A68B513C10AB227BF1C1D38C746766278BA3EEB4FB14124F1D858".to_string(),
+                "ibc/498A0751C798A0D9A389AA3691123DADA57DAA4FE165D5C75894505B876BA6E4".to_string(),
+            ],
+        };
+        let cosmwasm_pool = OsmoCosmWasmPool {
+            contract_address: "pool_address".to_string(),
+            pool_id: 1212,
+            code_id: 148,
+            instantiate_msg: msg.encode_to_vec(),
+        };
+
+        let any_pool = cosmwasm_pool.to_any();
+        let pool: Result<Pool, StdError> = any_pool.try_into();
+
+        assert_eq!(
+            pool.unwrap_err(),
+            StdError::parse_err("Pool", "Failed to parse CosmWasm pool instantiate message.",)
         );
     }
 }

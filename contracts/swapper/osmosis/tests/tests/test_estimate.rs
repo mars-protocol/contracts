@@ -1,11 +1,26 @@
-use cosmwasm_std::{coin, Uint128};
+use std::{marker::PhantomData, str::FromStr};
+
+use cosmwasm_std::{
+    coin, from_json,
+    testing::{mock_env, MockApi, MockQuerier, MockStorage},
+    to_json_vec, Decimal, OwnedDeps, Uint128,
+};
 use cw_it::osmosis_test_tube::{Gamm, Module, OsmosisTestApp, RunnerResult, Wasm};
+use mars_osmosis::ConcentratedLiquidityPool;
 use mars_swapper_osmosis::{
     config::OsmosisConfig,
+    contract::{instantiate, query},
     route::{OsmosisRoute, SwapAmountInRoute},
 };
+use mars_testing::{mock_info, MarsMockQuerier};
 use mars_types::swapper::{
-    EstimateExactInSwapResponse, ExecuteMsg, OsmoRoute, OsmoSwap, QueryMsg, SwapperRoute,
+    EstimateExactInSwapResponse, ExecuteMsg, InstantiateMsg, OsmoRoute, OsmoSwap, QueryMsg,
+    SwapperRoute,
+};
+use osmosis_std::types::osmosis::{
+    cosmwasmpool::v1beta1::{CosmWasmPool, InstantiateMsg as CosmwasmPoolInstantiateMsg},
+    poolmanager::v1beta1::PoolResponse,
+    twap::v1beta1::ArithmeticTwapToNowResponse,
 };
 
 use super::helpers::{
@@ -292,4 +307,107 @@ fn estimate_swap_multi_step() {
         )
         .unwrap();
     assert_eq!(res.amount, expected_output);
+}
+
+#[test]
+fn estimate_swap_multi_step_with_cosmwasm_pool() {
+    let mut deps = OwnedDeps::<_, _, _> {
+        storage: MockStorage::default(),
+        api: MockApi::default(),
+        querier: MarsMockQuerier::new(MockQuerier::new(&[])),
+        custom_query_type: PhantomData,
+    };
+
+    // instantiate the swapper contract
+    instantiate(
+        deps.as_mut(),
+        mock_env(),
+        mock_info("owner"),
+        InstantiateMsg {
+            owner: "owner".to_string(),
+        },
+    )
+    .unwrap();
+
+    let atom = "uatom".to_string();
+    let noble_usdc = "unusdc".to_string();
+    let axl_usdc = "uausdc".to_string();
+
+    // prepare ConcentratedLiquidity pool
+    let cl_pool_id = 1251;
+    let pool = ConcentratedLiquidityPool {
+        address: "osmo126pr9qp44aft4juw7x4ev4s2qdtnwe38jzwunec9pxt5cpzaaphqyagqpu".to_string(),
+        incentives_address: "osmo1h2mhtj3wmsdt3uacev9pgpg38hkcxhsmyyn9ums0ya6eddrsafjsxs9j03"
+            .to_string(),
+        spread_rewards_address: "osmo16j5sssw32xuk8a0kjj8n54g25ye6kr339nz5axf8lzyeajk0k22stsm36c"
+            .to_string(),
+        id: cl_pool_id,
+        current_tick_liquidity: "3820025893854099618.699762490947860933".to_string(),
+        token0: atom.clone(),
+        token1: noble_usdc.clone(),
+        current_sqrt_price: "656651.537483144215151633465586753226461989".to_string(),
+        current_tick: 102311912,
+        tick_spacing: 100,
+        exponent_at_price_one: -6,
+        spread_factor: "0.002000000000000000".to_string(),
+        last_liquidity_update: None,
+    };
+    let cl_pool = PoolResponse {
+        pool: Some(pool.to_any()),
+    };
+
+    // prepare CosmWasm (transmuter) pool
+    let cw_pool_id = 1212;
+    let msg = CosmwasmPoolInstantiateMsg {
+        pool_asset_denoms: vec![axl_usdc.clone(), noble_usdc.clone()],
+    };
+    let pool = CosmWasmPool {
+        contract_address: "osmo10c8y69yylnlwrhu32ralf08ekladhfknfqrjsy9yqc9ml8mlxpqq2sttzk"
+            .to_string(),
+        pool_id: cw_pool_id,
+        code_id: 148,
+        instantiate_msg: to_json_vec(&msg).unwrap(),
+    };
+    let cw_pool = PoolResponse {
+        pool: Some(pool.to_any()),
+    };
+
+    deps.querier.set_query_pool_response(cl_pool_id, cl_pool);
+    deps.querier.set_query_pool_response(cw_pool_id, cw_pool);
+
+    // set arithmetic twap price for the ConcentratedLiquidity pool
+    deps.querier.set_arithmetic_twap_price(
+        cl_pool_id,
+        &atom,
+        &noble_usdc,
+        ArithmeticTwapToNowResponse {
+            arithmetic_twap: Decimal::from_str("11.5").unwrap().to_string(),
+        },
+    );
+
+    // check the estimate swap output
+    let res = query(
+        deps.as_ref(),
+        mock_env(),
+        QueryMsg::EstimateExactInSwap {
+            coin_in: coin(1250, &atom),
+            denom_out: axl_usdc.clone(),
+            route: Some(SwapperRoute::Osmo(OsmoRoute {
+                swaps: vec![
+                    OsmoSwap {
+                        pool_id: cl_pool_id,
+                        to: noble_usdc,
+                    },
+                    OsmoSwap {
+                        pool_id: cw_pool_id,
+                        to: axl_usdc,
+                    },
+                ],
+            })),
+        },
+    )
+    .unwrap();
+    let res: EstimateExactInSwapResponse = from_json(res).unwrap();
+    // 1250 * 11.5 * 1 = 14375
+    assert_eq!(res.amount, Uint128::from(14375u128));
 }

@@ -5,14 +5,18 @@ use std::{marker::PhantomData, str::FromStr};
 use cosmwasm_std::{
     coin, from_json,
     testing::{mock_env, MockApi, MockQuerier, MockStorage},
-    Coin, Decimal, Deps, DepsMut, OwnedDeps,
+    to_json_vec, Coin, Decimal, Deps, DepsMut, OwnedDeps,
 };
 use mars_oracle_base::ContractError;
 use mars_oracle_osmosis::{contract::entry, msg::ExecuteMsg, OsmosisPriceSourceUnchecked};
 use mars_osmosis::{BalancerPool, ConcentratedLiquidityPool, StableSwapPool};
 use mars_testing::{mock_info, MarsMockQuerier};
 use mars_types::oracle::{InstantiateMsg, QueryMsg};
-use osmosis_std::types::osmosis::{gamm::v1beta1::PoolAsset, poolmanager::v1beta1::PoolResponse};
+use osmosis_std::types::osmosis::{
+    cosmwasmpool::v1beta1::{CosmWasmPool, InstantiateMsg as CosmwasmPoolInstantiateMsg},
+    gamm::v1beta1::PoolAsset,
+    poolmanager::v1beta1::PoolResponse,
+};
 use pyth_sdk_cw::PriceIdentifier;
 
 pub fn setup_test_with_pools() -> OwnedDeps<MockStorage, MockApi, MarsMockQuerier> {
@@ -99,6 +103,12 @@ pub fn setup_test_with_pools() -> OwnedDeps<MockStorage, MockApi, MarsMockQuerie
     // Set ConcentratedLiquidity pool
     deps.querier
         .set_query_pool_response(7777, prepare_query_cl_pool_response(7777, "ujuno", "uosmo"));
+
+    // Set CosmWasm pool
+    deps.querier.set_query_pool_response(
+        8888,
+        prepare_query_cosmwasm_pool_response(8888, "uausdc", "unusdc"),
+    );
 
     deps
 }
@@ -228,6 +238,26 @@ pub fn prepare_query_cl_pool_response(pool_id: u64, token0: &str, token1: &str) 
         exponent_at_price_one: -6,
         spread_factor: "0.002000000000000000".to_string(),
         last_liquidity_update: None,
+    };
+    PoolResponse {
+        pool: Some(pool.to_any()),
+    }
+}
+
+pub fn prepare_query_cosmwasm_pool_response(
+    pool_id: u64,
+    token0: &str,
+    token1: &str,
+) -> PoolResponse {
+    let msg = CosmwasmPoolInstantiateMsg {
+        pool_asset_denoms: vec![token0.to_string(), token1.to_string()],
+    };
+    let pool = CosmWasmPool {
+        contract_address: "osmo10c8y69yylnlwrhu32ralf08ekladhfknfqrjsy9yqc9ml8mlxpqq2sttzk"
+            .to_string(),
+        pool_id,
+        code_id: 148,
+        instantiate_msg: to_json_vec(&msg).unwrap(),
     };
     PoolResponse {
         pool: Some(pool.to_any()),

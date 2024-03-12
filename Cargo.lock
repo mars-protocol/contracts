@@ -2354,6 +2354,7 @@ dependencies = [
 name = "mars-osmosis"
 version = "2.0.0"
 dependencies = [
+ "cosmwasm-schema",
  "cosmwasm-std",
  "osmosis-std 0.22.0",
  "prost 0.12.3",
@@ -2602,7 +2603,7 @@ dependencies = [
 
 [[package]]
 name = "mars-swapper-osmosis"
-version = "2.0.1"
+version = "2.0.2"
 dependencies = [
  "anyhow",
  "cosmwasm-schema",
@@ -2616,6 +2617,7 @@ dependencies = [
  "mars-testing",
  "mars-types",
  "osmosis-std 0.22.0",
+ "serde",
 ]
 
 [[package]]

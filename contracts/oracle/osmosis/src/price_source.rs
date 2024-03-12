@@ -624,6 +624,11 @@ impl OsmosisPriceSourceChecked {
                     ),
                 })
             }
+            Pool::CosmWasm(pool) => {
+                return Err(ContractError::InvalidPrice {
+                    reason: format!("CosmWasm pool not supported. Pool id {}", pool.id),
+                })
+            }
         };
 
         let coin0 = Pool::unwrap_coin(&pool.pool_assets[0].token)?;
