@@ -2343,6 +2343,7 @@ dependencies = [
  "cw-it",
  "cw-storage-plus 1.2.0",
  "cw2 1.1.2",
+ "ica-oracle",
  "mars-oracle-base",
  "mars-owner 2.0.0",
  "mars-testing",
