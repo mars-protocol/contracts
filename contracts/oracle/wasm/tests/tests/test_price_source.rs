@@ -102,6 +102,23 @@ fn display_twap_price_source_with_route() {
 }
 
 #[test]
+fn display_lsd_price_source() {
+    let ps = WasmPriceSourceChecked::Lsd {
+        transitive_denom: "other_denom".to_string(),
+        twap: AstroportTwap {
+            pair_address: Addr::unchecked("astro_addr"),
+            window_size: 101,
+            tolerance: 16,
+        },
+        redemption_rate: RedemptionRate {
+            contract_addr: Addr::unchecked("redemption_addr"),
+            max_staleness: 1234,
+        },
+    };
+    assert_eq!(ps.to_string(), "lsd:other_denom:astro_addr:101:16:redemption_addr:1234")
+}
+
+#[test]
 fn validate_fixed_price_source() {
     let ps = WasmPriceSource::Fixed {
         price: Decimal::from_ratio(1u128, 2u128),
