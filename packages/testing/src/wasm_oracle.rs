@@ -34,10 +34,15 @@ pub const ASTRO_ARTIFACTS_PATH: Option<&str> = Some("tests/astroport-artifacts")
 
 pub const ORACLE_CONTRACT_NAME: &str = "mars-oracle-wasm";
 
+pub const STRIDE_ARTIFACTS_PATH: &str = "tests/stride-artifacts";
+pub const STRIDE_ICA_ORACLE_CONTRACT_NAME: &str = "ica_oracle";
+pub const STRIDE_TRANSFER_CHANNEL_ID: &str = "channel-8";
+
 pub struct WasmOracleTestRobot<'a> {
     runner: &'a TestRunner<'a>,
     pub astroport_contracts: AstroportContracts,
     pub mars_oracle_contract_addr: String,
+    pub stride_contract_addr: Option<String>,
 }
 
 impl<'a> WasmOracleTestRobot<'a> {
@@ -48,13 +53,14 @@ impl<'a> WasmOracleTestRobot<'a> {
         base_denom: Option<&str>,
     ) -> Self {
         // Upload and instantiate contracts
-        let (astroport_contracts, contract_addr) =
+        let (astroport_contracts, oracle_contract_addr, stride_contract_addr) =
             Self::upload_and_init_contracts(runner, contract_map, admin, base_denom);
 
         Self {
             runner,
             astroport_contracts,
-            mars_oracle_contract_addr: contract_addr,
+            mars_oracle_contract_addr: oracle_contract_addr,
+            stride_contract_addr,
         }
     }
 
@@ -64,7 +70,7 @@ impl<'a> WasmOracleTestRobot<'a> {
         contracts: ContractMap,
         admin: &SigningAccount,
         base_denom: Option<&str>,
-    ) -> (AstroportContracts, String) {
+    ) -> (AstroportContracts, String, Option<String>) {
         let admin_addr = admin.address();
         // Upload contracts
         let code_ids = cw_it::helpers::upload_wasm_files(runner, admin, contracts).unwrap();
@@ -75,22 +81,38 @@ impl<'a> WasmOracleTestRobot<'a> {
                 runner, admin, &code_ids,
             );
 
+        let wasm = Wasm::new(runner);
+
         // Instantiate Mars Oracle Wasm contract
         let code_id = code_ids[ORACLE_CONTRACT_NAME];
-        let init_msg = InstantiateMsg::<WasmOracleCustomInitParams> {
+        let oracle_init_msg = InstantiateMsg::<WasmOracleCustomInitParams> {
             owner: admin_addr.clone(),
             base_denom: base_denom.unwrap_or(BASE_DENOM).to_string(),
             custom_init: Some(WasmOracleCustomInitParams {
                 astroport_factory: astroport_contracts.factory.address.clone(),
             }),
         };
-        let wasm = Wasm::new(runner);
-        let init_res =
-            wasm.instantiate(code_id, &init_msg, Some(&admin_addr), None, &[], admin).unwrap();
+        let oracle_init_res = wasm
+            .instantiate(code_id, &oracle_init_msg, Some(&admin_addr), None, &[], admin)
+            .unwrap();
+        let oracle_contract_addr = oracle_init_res.data.address;
 
-        let contract_addr = init_res.data.address;
+        // Instantiate Stride ICA oracle contract
+        let stride_contract_addr =
+            if let Some(&code_id) = code_ids.get(STRIDE_ICA_ORACLE_CONTRACT_NAME) {
+                let stride_init_msg = ica_oracle::msg::InstantiateMsg {
+                    admin_address: admin_addr.clone(),
+                    transfer_channel_id: Some(STRIDE_TRANSFER_CHANNEL_ID.to_string()),
+                };
+                let stride_init_res = wasm
+                    .instantiate(code_id, &stride_init_msg, Some(&admin_addr), None, &[], admin)
+                    .unwrap();
+                Some(stride_init_res.data.address)
+            } else {
+                None
+            };
 
-        (astroport_contracts, contract_addr)
+        (astroport_contracts, oracle_contract_addr, stride_contract_addr)
     }
 
     pub fn increase_time(&self, seconds: u64) -> &Self {
@@ -276,6 +298,53 @@ impl<'a> WasmOracleTestRobot<'a> {
         assert_eq!(config.proposed_new_owner, Some(expected_proposed_owner.into()));
         self
     }
+
+    // ====== Stride methods ======
+
+    pub fn set_redemption_rate_metric(
+        &self,
+        denom: &str,
+        value: Decimal,
+        update_time: u64,
+        block_height: u64,
+        signer: &SigningAccount,
+    ) -> &Self {
+        let stride_contract_addr =
+            self.stride_contract_addr.clone().expect("Stride ica oracle contract not found");
+
+        let ica_attr = ica_oracle::state::RedemptionRateAttributes {
+            sttoken_denom: denom.to_string(),
+        };
+        let binary_attr = to_json_binary(&ica_attr).expect("Failed to serialize Stride attributes");
+
+        let msg = ica_oracle::msg::ExecuteMsg::PostMetric {
+            key: format!("{}_redemption_rate", denom),
+            value: value.to_string(),
+            metric_type: ica_oracle::state::MetricType::RedemptionRate,
+            update_time,
+            block_height,
+            attributes: Some(binary_attr),
+        };
+        self.wasm().execute(&stride_contract_addr, &msg, &[], signer).unwrap();
+        self
+    }
+
+    pub fn query_redemption_rate(&self, denom: &str) -> ica_oracle::msg::RedemptionRateResponse {
+        let stride_contract_addr =
+            self.stride_contract_addr.clone().expect("Stride ica oracle contract not found");
+
+        let msg = &ica_oracle::msg::QueryMsg::RedemptionRate {
+            denom: denom.to_string(),
+            params: None,
+        };
+        self.wasm().query(&stride_contract_addr, &msg).unwrap()
+    }
+
+    pub fn assert_redemption_rate(&self, denom: &str, expected_value: Decimal) -> &Self {
+        let rr = self.query_redemption_rate(denom);
+        assert_eq!(rr.redemption_rate, expected_value);
+        self
+    }
 }
 
 impl<'a> TestRobot<'a, TestRunner<'a>> for WasmOracleTestRobot<'a> {
@@ -324,11 +393,34 @@ pub fn get_wasm_oracle_contract(runner: &TestRunner) -> ContractType {
     }
 }
 
+pub fn get_stride_ica_oracle_contract(runner: &TestRunner) -> ContractType {
+    match runner {
+        #[cfg(feature = "osmosis-test-tube")]
+        TestRunner::OsmosisTestApp(_) => {
+            let oracle_wasm_path =
+                format!("{}/{}.wasm", STRIDE_ARTIFACTS_PATH, STRIDE_ICA_ORACLE_CONTRACT_NAME);
+            ContractType::Artifact(Artifact::Local(oracle_wasm_path))
+        }
+        TestRunner::MultiTest(_) => {
+            ContractType::MultiTestContract(Box::new(cw_it::cw_multi_test::ContractWrapper::new(
+                ica_oracle::contract::execute,
+                ica_oracle::contract::instantiate,
+                ica_oracle::contract::query,
+            )))
+        }
+        _ => panic!("Unsupported test runner type"),
+    }
+}
+
 /// Returns a HashMap of contracts to be used in the tests
 pub fn get_contracts(runner: &TestRunner) -> ContractMap {
     // Get Astroport contracts
     let mut contracts =
         cw_it::astroport::utils::get_local_contracts(runner, &ASTRO_ARTIFACTS_PATH, false, &None);
+
+    // Get Stride contract
+    let stride_contract = get_stride_ica_oracle_contract(runner);
+    contracts.insert(STRIDE_ICA_ORACLE_CONTRACT_NAME.to_string(), stride_contract);
 
     // Get Oracle contract
     let contract = get_wasm_oracle_contract(runner);
