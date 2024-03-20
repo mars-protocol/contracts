@@ -324,8 +324,17 @@ impl PriceSourceChecked<Empty> for WasmPriceSourceChecked {
         denom: &str,
         config: &Config,
         price_sources: &Map<&str, Self>,
-        kind: ActionKind,
+        _kind: ActionKind,
     ) -> ContractResult<Decimal> {
+        // Kind (Default or Liquidation) is used to differentiate between the two types of pricing in Pyth price source.
+        // Liquidation only check Staleness, while Default checks Staleness, Confidence and Deviation.
+        //
+        // Current Mars contracts on Neutron don't use kind and always checks only Staleness for Pyth (if we want to use this feature we
+        // have to migrate other Mars v2 contracts).
+        //
+        // It is safe to use Liquidation kind for all price sources simulating the current behavior on Neutron (only Staleness check).
+        let kind = ActionKind::Liquidation;
+
         match self {
             WasmPriceSource::Fixed {
                 price,
