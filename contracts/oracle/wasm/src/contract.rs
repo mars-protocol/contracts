@@ -25,10 +25,10 @@ pub mod entry {
     use cosmwasm_std::{entry_point, Binary, Decimal, Deps, DepsMut, Env, MessageInfo, Response};
     use cw2::set_contract_version;
     use mars_oracle_base::{ContractError, ContractResult};
-    use mars_types::oracle::{ExecuteMsg, InstantiateMsg, QueryMsg};
+    use mars_types::oracle::{ExecuteMsg, InstantiateMsg, MigrateMsg, QueryMsg};
 
     use super::*;
-    use crate::{state::ASTROPORT_FACTORY, WasmPriceSourceUnchecked};
+    use crate::{migrations, state::ASTROPORT_FACTORY, WasmPriceSourceUnchecked};
 
     #[entry_point]
     pub fn instantiate(
@@ -81,7 +81,15 @@ pub mod entry {
     }
 
     #[entry_point]
-    pub fn migrate(_deps: DepsMut, _env: Env, _msg: Empty) -> ContractResult<Response> {
-        Ok(Response::default())
+    pub fn migrate(deps: DepsMut, _env: Env, msg: MigrateMsg) -> ContractResult<Response> {
+        match msg {
+            MigrateMsg::V1_2_1ToV1_3_0(updates) => migrations::v1_3_0::migrate(deps, updates),
+            MigrateMsg::V1_1_0ToV2_0_0(_) => {
+                unimplemented!("V1_1_0ToV2_0_0 migration is not supported")
+            }
+            MigrateMsg::V2_0_0ToV2_0_1 {} => {
+                unimplemented!("V2_0_0ToV2_0_1 migration is not supported")
+            }
+        }
     }
 }

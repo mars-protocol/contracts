@@ -116,6 +116,7 @@ pub struct PriceResponse {
 pub enum MigrateMsg {
     V1_1_0ToV2_0_0(V2Updates),
     V2_0_0ToV2_0_1 {},
+    V1_2_1ToV1_3_0(V2Updates),
 }
 
 #[cw_serde]
