@@ -7,9 +7,9 @@ use cosmwasm_std::{
 };
 use helpers::prepare_query_balancer_pool_response;
 use ica_oracle::msg::RedemptionRateResponse;
-use mars_oracle_base::{pyth::scale_pyth_price, ContractError};
+use mars_oracle_base::{pyth::scale_pyth_price, redemption_rate::RedemptionRate, ContractError};
 use mars_oracle_osmosis::{
-    contract::entry, DowntimeDetector, OsmosisPriceSourceUnchecked, RedemptionRate, Twap, TwapKind,
+    contract::entry, DowntimeDetector, OsmosisPriceSourceUnchecked, Twap, TwapKind,
 };
 use mars_testing::{mock_env_at_block_time, MarsMockQuerier};
 use mars_types::oracle::{PriceResponse, QueryMsg};

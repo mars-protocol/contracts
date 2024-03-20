@@ -1,5 +1,3 @@
-use cosmwasm_std::{to_json_binary, Addr, QuerierWrapper, QueryRequest, StdResult, WasmQuery};
-use ica_oracle::msg::{QueryMsg, RedemptionRateResponse};
 use mars_oracle_base::{ContractError, ContractResult};
 use mars_osmosis::{
     helpers::{CommonPoolData, Pool},
@@ -132,24 +130,4 @@ pub fn assert_osmosis_twap(
     }
 
     Ok(())
-}
-
-/// How much base_denom we get for 1 denom
-///
-/// Example:
-/// denom: stAtom, base_denom: Atom
-/// exchange_rate: 1.0211
-/// 1 stAtom = 1.0211 Atom
-pub fn query_redemption_rate(
-    querier: &QuerierWrapper,
-    contract_addr: Addr,
-    denom: String,
-) -> StdResult<RedemptionRateResponse> {
-    querier.query(&QueryRequest::Wasm(WasmQuery::Smart {
-        contract_addr: contract_addr.into_string(),
-        msg: to_json_binary(&QueryMsg::RedemptionRate {
-            denom,
-            params: None,
-        })?,
-    }))
 }

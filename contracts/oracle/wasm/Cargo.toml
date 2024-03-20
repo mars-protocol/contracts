@@ -33,6 +33,7 @@ pyth-sdk-cw      = { workspace = true }
 [dev-dependencies]
 cosmwasm-schema  = { workspace = true }
 cw-it            = { workspace = true, features = ["astroport", "astroport-multi-test"] }
+ica-oracle       = { workspace = true }
 mars-owner       = { workspace = true }
 mars-testing     = { workspace = true, features = ["astroport"] }
 proptest         = { workspace = true }

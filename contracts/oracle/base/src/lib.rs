@@ -3,6 +3,7 @@ mod error;
 mod traits;
 
 pub mod pyth;
+pub mod redemption_rate;
 
 pub use contract::*;
 pub use error::*;

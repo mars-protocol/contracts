@@ -2,7 +2,7 @@ use std::str::FromStr;
 
 use astroport::factory::PairType;
 use cosmwasm_std::{
-    from_json,
+    coin, from_json,
     testing::{mock_dependencies, mock_env},
     Addr, Decimal, Empty, Uint128,
 };
@@ -13,13 +13,13 @@ use cw_it::{
     },
     robot::TestRobot,
     test_tube::{Account, Module, Wasm},
-    traits::CwItRunner,
+    traits::{CwItRunner, DEFAULT_COIN_AMOUNT},
 };
 use cw_storage_plus::Map;
-use mars_oracle_base::{ContractError, PriceSourceUnchecked};
+use mars_oracle_base::{redemption_rate::RedemptionRate, ContractError, PriceSourceUnchecked};
 use mars_oracle_wasm::{
     contract::entry::{self, execute},
-    WasmPriceSource, WasmPriceSourceChecked, WasmPriceSourceUnchecked,
+    AstroportTwap, WasmPriceSource, WasmPriceSourceChecked, WasmPriceSourceUnchecked,
 };
 use mars_types::oracle::{ExecuteMsg, PriceResponse, QueryMsg};
 use pyth_sdk_cw::PriceIdentifier;
@@ -35,6 +35,7 @@ use mars_testing::{
         astro_init_params, fixed_source, get_contracts, setup_test,
         validate_and_query_astroport_spot_price_source,
         validate_and_query_astroport_twap_price_source, WasmOracleTestRobot,
+        STRIDE_TRANSFER_CHANNEL_ID,
     },
 };
 use pyth_sdk_cw::{Price, PriceFeed, PriceFeedResponse};
@@ -98,6 +99,23 @@ fn display_twap_price_source_with_route() {
         tolerance: 10,
     };
     assert_eq!(ps.to_string(), "astroport_twap:fake_addr. Window Size: 100. Tolerance: 10.")
+}
+
+#[test]
+fn display_lsd_price_source() {
+    let ps = WasmPriceSourceChecked::Lsd {
+        transitive_denom: "other_denom".to_string(),
+        twap: AstroportTwap {
+            pair_address: Addr::unchecked("astro_addr"),
+            window_size: 101,
+            tolerance: 16,
+        },
+        redemption_rate: RedemptionRate {
+            contract_addr: Addr::unchecked("redemption_addr"),
+            max_staleness: 1234,
+        },
+    };
+    assert_eq!(ps.to_string(), "lsd:other_denom:astro_addr:101:16:redemption_addr:1234")
 }
 
 #[test]
@@ -758,4 +776,136 @@ fn twap_window_size_not_gt_tolerance() {
 
     println!("{:?}", err);
     assert!(err.to_string().contains("tolerance must be less than window size"));
+}
+
+#[test_case(PairType::Xyk {}, &["usttia","utia"], None, DEFAULT_LIQ, 5, 100, true, false => panics "missing price source for"; "missing transitive denom price source")]
+#[test_case(PairType::Xyk {}, &["usttia","utia"], Some(Decimal::from_ratio(1242u128, 10u128)), DEFAULT_LIQ, 100, 100, true, false => panics "tolerance must be less than window size"; "tolerance equal to window size")]
+#[test_case(PairType::Xyk {}, &["usttia","utia"], Some(Decimal::from_ratio(1242u128, 10u128)), DEFAULT_LIQ, 101, 100, true, false => panics "tolerance must be less than window size"; "tolerance larger than window size")]
+#[test_case(PairType::Xyk {}, &["usttia","utia"], Some(Decimal::from_ratio(1242u128, 10u128)), DEFAULT_LIQ, 0, 1, true, false => panics "window_size must be greater than 1"; "window size equal to 1")]
+#[test_case(PairType::Xyk {}, &["usttia","utia"], Some(Decimal::from_ratio(1242u128, 10u128)), DEFAULT_LIQ, 5, 100, false, false => panics "redemption rate update time is too old/stale"; "XYK, redemption rate too old")]
+#[test_case(PairType::Xyk {}, &["usttia","utia"], Some(Decimal::from_ratio(1242u128, 10u128)), DEFAULT_LIQ, 5, 100, true, true; "XYK, staleness valid, rr gt twap")]
+#[test_case(PairType::Xyk {}, &["usttia","utia"], Some(Decimal::from_ratio(1242u128, 10u128)), DEFAULT_LIQ, 5, 100, true, false; "XYK, staleness valid, rr lt twap")]
+#[test_case(PairType::Stable { }, &["usttia","utia"], Some(Decimal::from_ratio(2242u128, 10u128)), DEFAULT_LIQ, 10, 200, true, true; "Stable, staleness valid, rr gt twap")]
+#[test_case(PairType::Stable {}, &["usttia","utia"], Some(Decimal::from_ratio(2242u128, 10u128)), DEFAULT_LIQ, 10, 200, true, false; "Stable, staleness valid, rr lt twap")]
+#[test_case(PairType::Custom("concentrated".to_string()), &["usttia","utia"], Some(Decimal::from_ratio(5242u128, 10u128)), [145692686804, 175998046105], 10, 200, true, true; "Concentrated, staleness valid, rr gt twap")]
+#[test_case(PairType::Custom("concentrated".to_string()), &["usttia","utia"], Some(Decimal::from_ratio(5242u128, 10u128)), [145692686804, 175998046105], 10, 200, true, false; "Concentrated, staleness valid, rr lt twap")]
+pub fn validate_and_query_lsd_price_source(
+    pair_type: PairType,
+    pair_denoms: &[&str; 2],
+    other_asset_price: Option<Decimal>,
+    initial_liq: [u128; 2],
+    tolerance: u64,
+    window_size: u64,
+    rr_staleness_valid: bool,
+    rr_value_gt_twap: bool,
+) {
+    let rr_max_staleness = 43200u64; // 12 hours
+
+    let primary_denom = pair_denoms[0];
+    let other_denom = pair_denoms[1];
+
+    // Convert denoms to IBC denoms (redemption rate metric is pushed as native denom but queried as IBC denom)
+    let primary_ibc_denom =
+        ica_oracle::helpers::denom_trace_to_hash(primary_denom, STRIDE_TRANSFER_CHANNEL_ID)
+            .unwrap();
+    let other_ibc_denom =
+        ica_oracle::helpers::denom_trace_to_hash(other_denom, STRIDE_TRANSFER_CHANNEL_ID).unwrap();
+    let primary_ibc_denom = primary_ibc_denom.as_str();
+    let other_ibc_denom = other_ibc_denom.as_str();
+
+    let owned_runner = get_test_runner();
+    let runner = owned_runner.as_ref();
+    let admin = &runner
+        .init_account(&[
+            coin(DEFAULT_COIN_AMOUNT, primary_ibc_denom),
+            coin(DEFAULT_COIN_AMOUNT, other_ibc_denom),
+        ])
+        .unwrap();
+    let robot = WasmOracleTestRobot::new(&runner, get_contracts(&runner), admin, Some("uusd"));
+
+    let (pair_address, _lp_token_addr) = robot.create_astroport_pair(
+        pair_type.clone(),
+        &[native_info(primary_ibc_denom), native_info(other_ibc_denom)],
+        astro_init_params(&pair_type),
+        admin,
+        Some(&initial_liq),
+        Some(&[6, 6]),
+    );
+    let initial_price = robot.query_price_via_simulation(&pair_address, primary_ibc_denom);
+
+    let stride_contract_addr =
+        robot.stride_contract_addr.clone().expect("Stride ica oracle contract not found");
+    let price_source = WasmPriceSourceUnchecked::Lsd {
+        transitive_denom: other_ibc_denom.to_string(),
+        twap: AstroportTwap {
+            pair_address: pair_address.clone(),
+            tolerance,
+            window_size,
+        },
+        redemption_rate: RedemptionRate {
+            contract_addr: stride_contract_addr,
+            max_staleness: rr_max_staleness,
+        },
+    };
+
+    let other_asset_price_source = if let Some(other_asset_price) = other_asset_price {
+        vec![(other_ibc_denom, fixed_source(other_asset_price))]
+    } else {
+        vec![]
+    };
+
+    println!("Swap amount: {}", initial_liq[1] / 1000000);
+
+    let price_after_swap = robot
+        .set_price_sources(other_asset_price_source, admin)
+        .set_price_source(primary_ibc_denom, price_source.clone(), admin)
+        .assert_price_source(primary_ibc_denom, price_source)
+        .record_twap_snapshots(&[primary_ibc_denom], admin)
+        .increase_time(window_size + tolerance)
+        .swap_on_astroport_pair(
+            &pair_address,
+            native_asset(other_ibc_denom, initial_liq[1] / 1000000),
+            None,
+            None,
+            Some(Decimal::from_ratio(1u128, 2u128)),
+            admin,
+        )
+        .query_price_via_simulation(&pair_address, primary_ibc_denom);
+
+    let price_precision: Uint128 = Uint128::from(10_u128.pow(8));
+    let mut expected_price = Decimal::from_ratio(
+        (initial_price + price_after_swap) * Decimal::from_ratio(1u128, 2u128) * price_precision,
+        price_precision,
+    );
+
+    // Configure redemption rate value to be greater or less than TWAP
+    let rr_value = if rr_value_gt_twap {
+        expected_price.checked_mul(Decimal::percent(105)).unwrap()
+    } else {
+        expected_price = expected_price.checked_mul(Decimal::percent(95)).unwrap();
+        expected_price
+    };
+
+    if let Some(other_asset_price) = other_asset_price {
+        expected_price *= other_asset_price
+    }
+
+    let robot = robot
+        .record_twap_snapshots(&[primary_ibc_denom], admin)
+        .increase_time(window_size + tolerance);
+
+    let block_time_nanos = robot.runner().query_block_time_nanos();
+    let block_time_sec = block_time_nanos / 1_000_000_000;
+
+    // Configure staleness to be valid or invalid
+    let block_time_sec = if rr_staleness_valid {
+        block_time_sec - rr_max_staleness + 100
+    } else {
+        block_time_sec - rr_max_staleness - 100
+    };
+
+    robot
+        .set_redemption_rate_metric(primary_denom, rr_value, block_time_sec, block_time_sec, admin) // block_height doesn't matter here
+        .assert_redemption_rate(primary_ibc_denom, rr_value)
+        .assert_price_almost_equal(primary_ibc_denom, expected_price, Decimal::percent(1));
 }

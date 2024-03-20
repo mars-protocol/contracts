@@ -1,12 +1,11 @@
 use std::str::FromStr;
 
 use cosmwasm_std::{testing::mock_env, Addr, Decimal};
-use mars_oracle_base::ContractError;
+use mars_oracle_base::{redemption_rate::RedemptionRate, ContractError};
 use mars_oracle_osmosis::{
     contract::entry::execute,
     msg::{ExecuteMsg, PriceSourceResponse},
-    DowntimeDetector, OsmosisPriceSourceChecked, OsmosisPriceSourceUnchecked, RedemptionRate, Twap,
-    TwapKind,
+    DowntimeDetector, OsmosisPriceSourceChecked, OsmosisPriceSourceUnchecked, Twap, TwapKind,
 };
 use mars_owner::OwnerError::NotOwner;
 use mars_testing::mock_info;

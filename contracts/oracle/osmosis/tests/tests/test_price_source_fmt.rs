@@ -1,7 +1,6 @@
 use cosmwasm_std::{Addr, Decimal};
-use mars_oracle_osmosis::{
-    DowntimeDetector, OsmosisPriceSourceChecked, RedemptionRate, Twap, TwapKind,
-};
+use mars_oracle_base::redemption_rate::RedemptionRate;
+use mars_oracle_osmosis::{DowntimeDetector, OsmosisPriceSourceChecked, Twap, TwapKind};
 use osmosis_std::types::osmosis::downtimedetector::v1beta1::Downtime;
 use pyth_sdk_cw::PriceIdentifier;
 
