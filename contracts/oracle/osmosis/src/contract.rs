@@ -52,6 +52,9 @@ pub mod entry {
         match msg {
             MigrateMsg::V1_1_0ToV2_0_0(updates) => migrations::v2_0_0::migrate(deps, updates),
             MigrateMsg::V2_0_0ToV2_0_1 {} => migrations::v2_0_1::migrate(deps),
+            MigrateMsg::V1_2_1ToV1_3_0(_) => {
+                unimplemented!("V1_2_1ToV1_3_0 migration is not supported")
+            }
         }
     }
 }
