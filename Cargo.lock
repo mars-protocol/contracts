@@ -2747,6 +2747,21 @@ dependencies = [
 ]
 
 [[package]]
+name = "mars-zapper-wasm"
+version = "2.0.0"
+dependencies = [
+ "astroport 2.9.0",
+ "cosmwasm-std",
+ "cw-dex",
+ "cw-utils 1.0.3",
+ "cw2 1.1.2",
+ "mars-types",
+ "mars-zapper-base",
+ "osmosis-std 0.22.0",
+ "osmosis-test-tube",
+]
+
+[[package]]
 name = "memchr"
 version = "2.6.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
