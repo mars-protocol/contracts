@@ -1,7 +1,10 @@
 use cosmwasm_schema::cw_serde;
 use cosmwasm_std::{Addr, Api, Decimal, QuerierWrapper, StdResult};
 
-use crate::params::{AssetParams, QueryMsg, TotalDepositResponse, VaultConfig};
+use crate::{
+    params::{AssetParams, QueryMsg, TotalDepositResponse, VaultConfig},
+    PaginationResponse,
+};
 
 #[cw_serde]
 pub struct ParamsBase<T>(T);
@@ -80,6 +83,21 @@ impl Params {
         querier.query_wasm_smart(
             self.address().to_string(),
             &QueryMsg::AllVaultConfigs {
+                start_after,
+                limit,
+            },
+        )
+    }
+
+    pub fn query_all_vault_configs_v2(
+        &self,
+        querier: &QuerierWrapper,
+        start_after: Option<String>,
+        limit: Option<u32>,
+    ) -> StdResult<PaginationResponse<VaultConfig>> {
+        querier.query_wasm_smart(
+            self.address().to_string(),
+            &QueryMsg::AllVaultConfigsV2 {
                 start_after,
                 limit,
             },

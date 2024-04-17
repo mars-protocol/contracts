@@ -3,6 +3,7 @@ use cosmwasm_std::{Decimal, Uint128};
 use mars_owner::OwnerUpdate;
 
 use super::{asset::AssetParamsUnchecked, vault::VaultConfigUnchecked};
+use crate::PaginationResponse;
 
 #[cw_serde]
 pub struct InstantiateMsg {
@@ -54,6 +55,12 @@ pub enum QueryMsg {
 
     #[returns(Vec<super::vault::VaultConfig>)]
     AllVaultConfigs {
+        start_after: Option<String>,
+        limit: Option<u32>,
+    },
+
+    #[returns(PaginationResponse<super::vault::VaultConfig>)]
+    AllVaultConfigsV2 {
         start_after: Option<String>,
         limit: Option<u32>,
     },

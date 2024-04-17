@@ -9,6 +9,7 @@ use crate::{
     },
     health::AccountKind,
     traits::Coins,
+    PaginationResponse,
 };
 
 #[cw_serde]
@@ -35,7 +36,7 @@ pub enum QueryMsg {
     },
     /// Enumerate the amounts the vaults have been utilized,
     /// denominated in the same denom set in the vault config's deposit cap
-    #[returns(Vec < VaultUtilizationResponse >)]
+    #[returns(PaginationResponse < VaultUtilizationResponse >)]
     AllVaultUtilizations {
         start_after: Option<String>,
         limit: Option<u32>,

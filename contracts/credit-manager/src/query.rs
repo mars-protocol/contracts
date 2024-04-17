@@ -9,6 +9,7 @@ use mars_types::{
     },
     health::AccountKind,
     oracle::ActionKind,
+    PaginationResponse,
 };
 
 use crate::{
@@ -147,7 +148,7 @@ pub fn query_vault_utilization(
     let vault_config = params.query_vault_config(&deps.querier, &vault.address)?;
 
     Ok(VaultUtilizationResponse {
-        vault: vault.clone().into(),
+        vault: vault.into(),
         utilization: vault_utilization_in_deposit_cap_denom(
             &deps,
             &oracle,
@@ -162,12 +163,14 @@ pub fn query_all_vault_utilizations(
     env: Env,
     start_after: Option<String>,
     limit: Option<u32>,
-) -> ContractResult<Vec<VaultUtilizationResponse>> {
+) -> ContractResult<PaginationResponse<VaultUtilizationResponse>> {
     let params = PARAMS.load(deps.storage)?;
     let oracle = ORACLE.load(deps.storage)?;
-    let vault_configs = params.query_all_vault_configs(&deps.querier, start_after, limit)?;
+    let vault_configs_response =
+        params.query_all_vault_configs_v2(&deps.querier, start_after, limit)?;
 
-    vault_configs
+    let vault_utilizations: ContractResult<Vec<VaultUtilizationResponse>> = vault_configs_response
+        .data
         .iter()
         .map(|vault_config| {
             Ok(VaultUtilizationResponse {
@@ -178,12 +181,17 @@ pub fn query_all_vault_utilizations(
                 utilization: vault_utilization_in_deposit_cap_denom(
                     &deps,
                     &oracle,
-                    &vault_config,
+                    vault_config,
                     &env.contract.address,
                 )?,
             })
         })
-        .collect()
+        .collect();
+
+    Ok(PaginationResponse {
+        data: vault_utilizations?,
+        metadata: vault_configs_response.metadata,
+    })
 }
 
 pub fn query_vault_positions(deps: Deps, account_id: &str) -> ContractResult<Vec<VaultPosition>> {

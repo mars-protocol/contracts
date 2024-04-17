@@ -3,11 +3,16 @@ use cw_storage_plus::Bound;
 use mars_interest_rate::get_underlying_liquidity_amount;
 use mars_types::{
     address_provider::{self, MarsAddressType},
+    paginate_query,
     params::{AssetParams, ConfigResponse, TotalDepositResponse, VaultConfig},
     red_bank::{self, Market},
+    PaginationResponse,
 };
 
-use crate::state::{ADDRESS_PROVIDER, ASSET_PARAMS, VAULT_CONFIGS};
+use crate::{
+    error::ContractError,
+    state::{ADDRESS_PROVIDER, ASSET_PARAMS, VAULT_CONFIGS},
+};
 
 pub const DEFAULT_LIMIT: u32 = 10;
 pub const MAX_LIMIT: u32 = 30;
@@ -58,6 +63,27 @@ pub fn query_all_vault_configs(
         .take(limit)
         .map(|res| Ok(res?.1))
         .collect()
+}
+
+pub fn query_all_vault_configs_v2(
+    deps: Deps,
+    start_after: Option<String>,
+    limit: Option<u32>,
+) -> Result<PaginationResponse<VaultConfig>, ContractError> {
+    let vault_addr: Addr;
+    let start = match &start_after {
+        Some(unchecked) => {
+            vault_addr = deps.api.addr_validate(unchecked)?;
+            Some(Bound::exclusive(&vault_addr))
+        }
+        None => None,
+    };
+
+    let limit = limit.unwrap_or(DEFAULT_LIMIT).min(MAX_LIMIT) as usize;
+
+    paginate_query(&VAULT_CONFIGS, deps.storage, start, limit, |_res, config| {
+        Ok::<VaultConfig, ContractError>(config)
+    })
 }
 
 /// Query and compute the total deposited amount of the given asset across Red

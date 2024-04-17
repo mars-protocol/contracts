@@ -25,6 +25,7 @@ cosmwasm-schema   = { workspace = true }
 cosmwasm-std      = { workspace = true }
 cw721             = { workspace = true }
 cw721-base        = { workspace = true }
+cw-paginate       = { workspace = true }
 cw-storage-plus   = { workspace = true }
 cw-utils          = { workspace = true }
 cw-vault-standard = { workspace = true }

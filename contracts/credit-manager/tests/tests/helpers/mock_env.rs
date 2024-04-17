@@ -61,6 +61,7 @@ use mars_types::{
         EstimateExactInSwapResponse, InstantiateMsg as SwapperInstantiateMsg,
         QueryMsg::EstimateExactInSwap, SwapperRoute,
     },
+    PaginationResponse,
 };
 use mars_zapper_mock::msg::{InstantiateMsg as ZapperInstantiateMsg, LpConfig};
 
@@ -535,7 +536,7 @@ impl MockEnv {
         &self,
         start_after: Option<String>,
         limit: Option<u32>,
-    ) -> StdResult<Vec<VaultUtilizationResponse>> {
+    ) -> StdResult<PaginationResponse<VaultUtilizationResponse>> {
         self.app.wrap().query_wasm_smart(
             self.rover.clone(),
             &QueryMsg::AllVaultUtilizations {
