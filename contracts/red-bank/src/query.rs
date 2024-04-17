@@ -4,16 +4,11 @@ use mars_interest_rate::{
     get_scaled_debt_amount, get_scaled_liquidity_amount, get_underlying_debt_amount,
     get_underlying_liquidity_amount,
 };
-use mars_types::{
-    address_provider::{self, MarsAddressType},
-    keys::{UserId, UserIdKey},
-    red_bank::{
-        Collateral, ConfigResponse, Debt, Market, PaginatedUserCollateralResponse,
-        UncollateralizedLoanLimitResponse, UserCollateralResponse, UserDebtResponse,
-        UserHealthStatus, UserPositionResponse,
-    },
-    Metadata,
-};
+use mars_types::{address_provider::{self, MarsAddressType}, keys::{UserId, UserIdKey}, paginate_prefix_query, red_bank::{
+    Collateral, ConfigResponse, Debt, Market, PaginatedUserCollateralResponse,
+    UncollateralizedLoanLimitResponse, UserCollateralResponse, UserDebtResponse,
+    UserHealthStatus, UserPositionResponse,
+}};
 
 use crate::{
     error::ContractError,
@@ -207,38 +202,18 @@ pub fn query_user_collaterals_v2(
     let user_id = UserId::credit_manager(user_addr, acc_id);
     let user_id_key: UserIdKey = user_id.try_into()?;
 
-    let user_collaterals_res: Result<Vec<_>, ContractError> = COLLATERALS
-        .prefix(&user_id_key)
-        .range(deps.storage, start, None, Order::Ascending)
-        .take(limit + 1) // Fetch one extra item to determine if there are more
-        .map(|item| {
-            let (denom, collateral) = item?;
+    paginate_prefix_query(&COLLATERALS, deps.storage, &user_id_key, start, limit, |denom, collateral| {
+        let market = MARKETS.load(deps.storage, &denom)?;
 
-            let market = MARKETS.load(deps.storage, &denom)?;
+        let amount_scaled = collateral.amount_scaled;
+        let amount = get_underlying_liquidity_amount(amount_scaled, &market, block_time)?;
 
-            let amount_scaled = collateral.amount_scaled;
-            let amount = get_underlying_liquidity_amount(amount_scaled, &market, block_time)?;
-
-            Ok(UserCollateralResponse {
-                denom,
-                amount_scaled,
-                amount,
-                enabled: collateral.enabled,
-            })
+        Ok(UserCollateralResponse {
+            denom,
+            amount_scaled,
+            amount,
+            enabled: collateral.enabled,
         })
-        .collect();
-
-    let mut user_collaterals = user_collaterals_res?;
-    let has_more = user_collaterals.len() > limit;
-    if has_more {
-        user_collaterals.pop(); // Remove the extra item used for checking if there are more items
-    }
-
-    Ok(PaginatedUserCollateralResponse {
-        data: user_collaterals,
-        metadata: Metadata {
-            has_more,
-        },
     })
 }
 
