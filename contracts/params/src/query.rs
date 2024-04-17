@@ -3,7 +3,7 @@ use cw_storage_plus::Bound;
 use mars_interest_rate::get_underlying_liquidity_amount;
 use mars_types::{
     address_provider::{self, MarsAddressType},
-    paginate_query,
+    paginate_map_query,
     params::{AssetParams, ConfigResponse, TotalDepositResponse, VaultConfig},
     red_bank::{self, Market},
     PaginationResponse,
@@ -81,7 +81,7 @@ pub fn query_all_vault_configs_v2(
 
     let limit = limit.unwrap_or(DEFAULT_LIMIT).min(MAX_LIMIT) as usize;
 
-    paginate_query(&VAULT_CONFIGS, deps.storage, start, limit, |_res, config| {
+    paginate_map_query(&VAULT_CONFIGS, deps.storage, start, limit, |_res, config| {
         Ok::<VaultConfig, ContractError>(config)
     })
 }

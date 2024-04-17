@@ -107,7 +107,7 @@ pub fn query(deps: Deps, env: Env, msg: QueryMsg) -> ContractResult<Binary> {
             start_after,
             limit,
         } => to_json_binary(&query_all_vault_configs_v2(deps, start_after, limit)?),
-        QueryMsg::TargetHealthFactor {} => to_binary(&TARGET_HEALTH_FACTOR.load(deps.storage)?),
+        QueryMsg::TargetHealthFactor {} => to_json_binary(&TARGET_HEALTH_FACTOR.load(deps.storage)?),
         QueryMsg::TotalDeposit {
             denom,
         } => to_json_binary(&query_total_deposit(deps, &env, denom)?),
