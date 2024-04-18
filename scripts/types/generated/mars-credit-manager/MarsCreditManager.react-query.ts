@@ -65,8 +65,9 @@ import {
   DebtShares,
   ArrayOfVaultPositionResponseItem,
   VaultPositionResponseItem,
-  ArrayOfVaultUtilizationResponse,
+  PaginationResponseForVaultUtilizationResponse,
   VaultUtilizationResponse,
+  Metadata,
   ConfigResponse,
   OwnerResponse,
   RewardsCollector,
@@ -391,16 +392,16 @@ export function useMarsCreditManagerPositionsQuery<TData = Positions>({
   )
 }
 export interface MarsCreditManagerAllVaultUtilizationsQuery<TData>
-  extends MarsCreditManagerReactQuery<ArrayOfVaultUtilizationResponse, TData> {
+  extends MarsCreditManagerReactQuery<PaginationResponseForVaultUtilizationResponse, TData> {
   args: {
     limit?: number
     startAfter?: string
   }
 }
 export function useMarsCreditManagerAllVaultUtilizationsQuery<
-  TData = ArrayOfVaultUtilizationResponse,
+  TData = PaginationResponseForVaultUtilizationResponse,
 >({ client, args, options }: MarsCreditManagerAllVaultUtilizationsQuery<TData>) {
-  return useQuery<ArrayOfVaultUtilizationResponse, Error, TData>(
+  return useQuery<PaginationResponseForVaultUtilizationResponse, Error, TData>(
     marsCreditManagerQueryKeys.allVaultUtilizations(client?.contractAddress, args),
     () =>
       client

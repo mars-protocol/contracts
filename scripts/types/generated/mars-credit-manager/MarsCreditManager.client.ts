@@ -64,8 +64,9 @@ import {
   DebtShares,
   ArrayOfVaultPositionResponseItem,
   VaultPositionResponseItem,
-  ArrayOfVaultUtilizationResponse,
+  PaginationResponseForVaultUtilizationResponse,
   VaultUtilizationResponse,
+  Metadata,
   ConfigResponse,
   OwnerResponse,
   RewardsCollector,
@@ -95,7 +96,7 @@ export interface MarsCreditManagerReadOnlyInterface {
   }: {
     limit?: number
     startAfter?: string
-  }) => Promise<ArrayOfVaultUtilizationResponse>
+  }) => Promise<PaginationResponseForVaultUtilizationResponse>
   positions: ({ accountId }: { accountId: string }) => Promise<Positions>
   allCoinBalances: ({
     limit,
@@ -209,7 +210,7 @@ export class MarsCreditManagerQueryClient implements MarsCreditManagerReadOnlyIn
   }: {
     limit?: number
     startAfter?: string
-  }): Promise<ArrayOfVaultUtilizationResponse> => {
+  }): Promise<PaginationResponseForVaultUtilizationResponse> => {
     return this.client.queryContractSmart(this.contractAddress, {
       all_vault_utilizations: {
         limit,

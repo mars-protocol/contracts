@@ -17,6 +17,7 @@ export function max_swap_estimate_js(
 export function liquidation_price_js(a: number, b: number, c: number, d: number, e: number): void
 export function allocate(a: number): number
 export function deallocate(a: number): void
+export function requires_stargate(): void
 export function requires_iterator(): void
 export function interface_version_8(): void
 export function __wbindgen_malloc(a: number, b: number): number

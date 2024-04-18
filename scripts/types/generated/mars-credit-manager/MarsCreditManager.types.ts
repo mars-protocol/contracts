@@ -551,10 +551,16 @@ export interface VaultPositionResponseItem {
   account_id: string
   position: VaultPosition
 }
-export type ArrayOfVaultUtilizationResponse = VaultUtilizationResponse[]
+export interface PaginationResponseForVaultUtilizationResponse {
+  data: VaultUtilizationResponse[]
+  metadata: Metadata
+}
 export interface VaultUtilizationResponse {
   utilization: Coin
   vault: VaultBaseForString
+}
+export interface Metadata {
+  has_more: boolean
 }
 export interface ConfigResponse {
   account_nft?: string | null

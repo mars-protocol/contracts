@@ -36,6 +36,8 @@ import {
   HlsParamsBaseForAddr,
   ArrayOfVaultConfigBaseForAddr,
   VaultConfigBaseForAddr,
+  PaginationResponseForVaultConfigBaseForAddr,
+  Metadata,
   ConfigResponse,
   OwnerResponse,
   TotalDepositResponse,
@@ -64,6 +66,10 @@ export const marsParamsQueryKeys = {
   allVaultConfigs: (contractAddress: string | undefined, args?: Record<string, unknown>) =>
     [
       { ...marsParamsQueryKeys.address(contractAddress)[0], method: 'all_vault_configs', args },
+    ] as const,
+  allVaultConfigsV2: (contractAddress: string | undefined, args?: Record<string, unknown>) =>
+    [
+      { ...marsParamsQueryKeys.address(contractAddress)[0], method: 'all_vault_configs_v2', args },
     ] as const,
   targetHealthFactor: (contractAddress: string | undefined, args?: Record<string, unknown>) =>
     [
@@ -114,6 +120,28 @@ export function useMarsParamsTargetHealthFactorQuery<TData = Decimal>({
   return useQuery<Decimal, Error, TData>(
     marsParamsQueryKeys.targetHealthFactor(client?.contractAddress),
     () => (client ? client.targetHealthFactor() : Promise.reject(new Error('Invalid client'))),
+    { ...options, enabled: !!client && (options?.enabled != undefined ? options.enabled : true) },
+  )
+}
+export interface MarsParamsAllVaultConfigsV2Query<TData>
+  extends MarsParamsReactQuery<PaginationResponseForVaultConfigBaseForAddr, TData> {
+  args: {
+    limit?: number
+    startAfter?: string
+  }
+}
+export function useMarsParamsAllVaultConfigsV2Query<
+  TData = PaginationResponseForVaultConfigBaseForAddr,
+>({ client, args, options }: MarsParamsAllVaultConfigsV2Query<TData>) {
+  return useQuery<PaginationResponseForVaultConfigBaseForAddr, Error, TData>(
+    marsParamsQueryKeys.allVaultConfigsV2(client?.contractAddress, args),
+    () =>
+      client
+        ? client.allVaultConfigsV2({
+            limit: args.limit,
+            startAfter: args.startAfter,
+          })
+        : Promise.reject(new Error('Invalid client')),
     { ...options, enabled: !!client && (options?.enabled != undefined ? options.enabled : true) },
   )
 }
