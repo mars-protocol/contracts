@@ -1,12 +1,11 @@
 use cosmwasm_std::{Addr, Deps, Env, Order, StdResult, Uint128};
+use cw_paginate::{paginate_map_query, PaginationResponse};
 use cw_storage_plus::Bound;
 use mars_interest_rate::get_underlying_liquidity_amount;
 use mars_types::{
     address_provider::{self, MarsAddressType},
-    paginate_map_query,
     params::{AssetParams, ConfigResponse, TotalDepositResponse, VaultConfig},
     red_bank::{self, Market},
-    PaginationResponse,
 };
 
 use crate::{
@@ -79,9 +78,9 @@ pub fn query_all_vault_configs_v2(
         None => None,
     };
 
-    let limit = limit.unwrap_or(DEFAULT_LIMIT).min(MAX_LIMIT) as usize;
+    let limit = limit.unwrap_or(DEFAULT_LIMIT).min(MAX_LIMIT);
 
-    paginate_map_query(&VAULT_CONFIGS, deps.storage, start, limit, |_res, config| {
+    paginate_map_query(&VAULT_CONFIGS, deps.storage, start, Some(limit), |_res, config| {
         Ok::<VaultConfig, ContractError>(config)
     })
 }

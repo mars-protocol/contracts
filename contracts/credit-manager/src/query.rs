@@ -1,5 +1,5 @@
 use cosmwasm_std::{Coin, Deps, Env, Order, StdResult};
-use cw_paginate::paginate_map;
+use cw_paginate::{paginate_map, PaginationResponse};
 use cw_storage_plus::Bound;
 use mars_types::{
     adapters::vault::{Vault, VaultBase, VaultPosition, VaultPositionValue, VaultUnchecked},
@@ -9,7 +9,6 @@ use mars_types::{
     },
     health::AccountKind,
     oracle::ActionKind,
-    PaginationResponse,
 };
 
 use crate::{

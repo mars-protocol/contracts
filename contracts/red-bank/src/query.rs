@@ -1,14 +1,19 @@
 use cosmwasm_std::{Addr, BlockInfo, Deps, Env, Order, StdResult, Uint128};
+use cw_paginate::paginate_prefix_query;
 use cw_storage_plus::Bound;
 use mars_interest_rate::{
     get_scaled_debt_amount, get_scaled_liquidity_amount, get_underlying_debt_amount,
     get_underlying_liquidity_amount,
 };
-use mars_types::{address_provider::{self, MarsAddressType}, keys::{UserId, UserIdKey}, paginate_prefix_query, red_bank::{
-    Collateral, ConfigResponse, Debt, Market, PaginatedUserCollateralResponse,
-    UncollateralizedLoanLimitResponse, UserCollateralResponse, UserDebtResponse,
-    UserHealthStatus, UserPositionResponse,
-}};
+use mars_types::{
+    address_provider::{self, MarsAddressType},
+    keys::{UserId, UserIdKey},
+    red_bank::{
+        Collateral, ConfigResponse, Debt, Market, PaginatedUserCollateralResponse,
+        UncollateralizedLoanLimitResponse, UserCollateralResponse, UserDebtResponse,
+        UserHealthStatus, UserPositionResponse,
+    },
+};
 
 use crate::{
     error::ContractError,
@@ -195,26 +200,33 @@ pub fn query_user_collaterals_v2(
     let block_time = block.time.seconds();
 
     let start = start_after.map(|denom| Bound::ExclusiveRaw(denom.into_bytes()));
-    let limit = limit.unwrap_or(DEFAULT_LIMIT).min(MAX_LIMIT) as usize;
+    let limit = limit.unwrap_or(DEFAULT_LIMIT).min(MAX_LIMIT);
 
     let acc_id = account_id.unwrap_or("".to_string());
 
     let user_id = UserId::credit_manager(user_addr, acc_id);
     let user_id_key: UserIdKey = user_id.try_into()?;
 
-    paginate_prefix_query(&COLLATERALS, deps.storage, &user_id_key, start, limit, |denom, collateral| {
-        let market = MARKETS.load(deps.storage, &denom)?;
+    paginate_prefix_query(
+        &COLLATERALS,
+        deps.storage,
+        &user_id_key,
+        start,
+        Some(limit),
+        |denom, collateral| {
+            let market = MARKETS.load(deps.storage, &denom)?;
 
-        let amount_scaled = collateral.amount_scaled;
-        let amount = get_underlying_liquidity_amount(amount_scaled, &market, block_time)?;
+            let amount_scaled = collateral.amount_scaled;
+            let amount = get_underlying_liquidity_amount(amount_scaled, &market, block_time)?;
 
-        Ok(UserCollateralResponse {
-            denom,
-            amount_scaled,
-            amount,
-            enabled: collateral.enabled,
-        })
-    })
+            Ok(UserCollateralResponse {
+                denom: denom.to_string(),
+                amount_scaled,
+                amount,
+                enabled: collateral.enabled,
+            })
+        },
+    )
 }
 
 pub fn query_scaled_liquidity_amount(

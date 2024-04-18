@@ -1,10 +1,8 @@
 use cosmwasm_schema::cw_serde;
 use cosmwasm_std::{Addr, Api, Decimal, QuerierWrapper, StdResult};
+use cw_paginate::PaginationResponse;
 
-use crate::{
-    params::{AssetParams, QueryMsg, TotalDepositResponse, VaultConfig},
-    PaginationResponse,
-};
+use crate::params::{AssetParams, QueryMsg, TotalDepositResponse, VaultConfig};
 
 #[cw_serde]
 pub struct ParamsBase<T>(T);

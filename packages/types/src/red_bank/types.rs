@@ -1,7 +1,6 @@
 use cosmwasm_schema::cw_serde;
 use cosmwasm_std::{Decimal, Uint128};
-
-use crate::PaginationResponse;
+use cw_paginate::PaginationResponse;
 
 /// Global configuration
 #[cw_serde]

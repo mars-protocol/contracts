@@ -1,5 +1,6 @@
 use cosmwasm_schema::{cw_serde, QueryResponses};
 use cosmwasm_std::{Coin, Decimal, Uint128};
+use cw_paginate::PaginationResponse;
 use mars_owner::OwnerResponse;
 
 use crate::{
@@ -9,7 +10,6 @@ use crate::{
     },
     health::AccountKind,
     traits::Coins,
-    PaginationResponse,
 };
 
 #[cw_serde]

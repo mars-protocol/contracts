@@ -1,9 +1,9 @@
 use cosmwasm_schema::{cw_serde, QueryResponses};
 use cosmwasm_std::{Decimal, Uint128};
+use cw_paginate::PaginationResponse;
 use mars_owner::OwnerUpdate;
 
 use super::{asset::AssetParamsUnchecked, vault::VaultConfigUnchecked};
-use crate::PaginationResponse;
 
 #[cw_serde]
 pub struct InstantiateMsg {

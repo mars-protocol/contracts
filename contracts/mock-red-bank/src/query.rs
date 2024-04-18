@@ -1,7 +1,7 @@
 use cosmwasm_std::{Deps, StdResult, Uint128};
-use mars_types::{
-    red_bank::{Market, PaginatedUserCollateralResponse, UserCollateralResponse, UserDebtResponse},
-    Metadata,
+use cw_paginate::Metadata;
+use mars_types::red_bank::{
+    Market, PaginatedUserCollateralResponse, UserCollateralResponse, UserDebtResponse,
 };
 
 use crate::{
