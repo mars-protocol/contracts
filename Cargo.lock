@@ -49,6 +49,7 @@ version = "0.1.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "423502406a307052f6877030f48b5fb4e9fb338fc5e7c8ca1064210def52876b"
 dependencies = [
+ "astroport 2.9.0",
  "cosmwasm-std",
  "cw-storage-plus 1.2.0",
  "cw20 1.1.2",
@@ -2750,6 +2751,8 @@ dependencies = [
 name = "mars-zapper-wasm"
 version = "2.0.0"
 dependencies = [
+ "apollo-cw-asset",
+ "apollo-utils",
  "astroport 2.9.0",
  "cosmwasm-std",
  "cw-dex",

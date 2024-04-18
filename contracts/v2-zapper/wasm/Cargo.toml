@@ -19,6 +19,8 @@ backtraces = ["cosmwasm-std/backtraces"]
 library    = []
 
 [dependencies]
+apollo-cw-asset  = { workspace = true }
+apollo-utils     = { workspace = true }
 astroport        = { workspace = true }
 cosmwasm-std     = { workspace = true }
 cw2              = { workspace = true }

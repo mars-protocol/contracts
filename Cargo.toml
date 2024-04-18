@@ -55,6 +55,8 @@ keywords      = ["mars", "cosmos", "cosmwasm"]
 
 [workspace.dependencies]
 anyhow             = "1.0.80"
+apollo-cw-asset    = { version = "0.1.2", features = ["astroport"] }
+apollo-utils       = "0.1.2"
 astroport          = "2.8.0"
 bech32             = "0.9.1"
 cosmwasm-schema    = "1.5.3"
