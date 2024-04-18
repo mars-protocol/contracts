@@ -1,6 +1,5 @@
 use cosmwasm_schema::{cw_serde, QueryResponses};
 use cosmwasm_std::{Decimal, Uint128};
-use cw_paginate::PaginationResponse;
 use mars_owner::OwnerUpdate;
 
 use super::{asset::AssetParamsUnchecked, vault::VaultConfigUnchecked};
@@ -59,7 +58,7 @@ pub enum QueryMsg {
         limit: Option<u32>,
     },
 
-    #[returns(PaginationResponse<super::vault::VaultConfig>)]
+    #[returns(cw_paginate::PaginationResponse<super::vault::VaultConfig>)]
     AllVaultConfigsV2 {
         start_after: Option<String>,
         limit: Option<u32>,

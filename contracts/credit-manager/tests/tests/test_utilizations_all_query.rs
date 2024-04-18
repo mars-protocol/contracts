@@ -252,5 +252,5 @@ fn has_more_true_when_limit_not_reached() {
 
     let res = mock.query_all_vault_utilizations(None, Some(1)).unwrap();
 
-    assert!(!res.metadata.has_more);
+    assert!(res.metadata.has_more);
 }

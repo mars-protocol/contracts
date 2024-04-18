@@ -5,6 +5,7 @@ use cosmwasm_std::{coins, testing::MockApi, Addr, Coin, Decimal, Empty, StdResul
 use cw721::TokensResponse;
 use cw721_base::{Action::TransferOwnership, Ownership};
 use cw_multi_test::{App, AppResponse, BankSudo, BasicApp, Executor, SudoMsg};
+use cw_paginate::PaginationResponse;
 use cw_vault_standard::{
     extensions::lockup::{LockupQueryMsg, UnlockingPosition},
     msg::{ExtensionQueryMsg, VaultStandardQueryMsg::VaultExtension},
@@ -61,7 +62,6 @@ use mars_types::{
         EstimateExactInSwapResponse, InstantiateMsg as SwapperInstantiateMsg,
         QueryMsg::EstimateExactInSwap, SwapperRoute,
     },
-    PaginationResponse,
 };
 use mars_zapper_mock::msg::{InstantiateMsg as ZapperInstantiateMsg, LpConfig};
 

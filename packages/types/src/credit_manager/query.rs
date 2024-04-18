@@ -1,6 +1,5 @@
 use cosmwasm_schema::{cw_serde, QueryResponses};
 use cosmwasm_std::{Coin, Decimal, Uint128};
-use cw_paginate::PaginationResponse;
 use mars_owner::OwnerResponse;
 
 use crate::{
@@ -36,7 +35,7 @@ pub enum QueryMsg {
     },
     /// Enumerate the amounts the vaults have been utilized,
     /// denominated in the same denom set in the vault config's deposit cap
-    #[returns(PaginationResponse < VaultUtilizationResponse >)]
+    #[returns(cw_paginate::PaginationResponse < VaultUtilizationResponse >)]
     AllVaultUtilizations {
         start_after: Option<String>,
         limit: Option<u32>,
