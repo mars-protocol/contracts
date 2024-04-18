@@ -10,10 +10,12 @@ pub enum ExecuteMsg {
         lp_token_out: String,
         recipient: Option<String>,
         minimum_receive: Uint128,
+        params: Option<ZapperParams>,
     },
     WithdrawLiquidity {
         recipient: Option<String>,
         minimum_receive: Vec<Coin>,
+        params: Option<ZapperParams>,
     },
     Callback(CallbackMsg),
 }
@@ -43,9 +45,24 @@ pub enum QueryMsg {
     EstimateProvideLiquidity {
         lp_token_out: String,
         coins_in: Vec<Coin>,
+        params: Option<ZapperParams>,
     },
     #[returns(Vec<Coin>)]
     EstimateWithdrawLiquidity {
         coin_in: Coin,
+        params: Option<ZapperParams>,
     },
+}
+
+#[cw_serde]
+pub enum ZapperParams {
+    Astro(AstroParams),
+}
+
+#[cw_serde]
+pub struct AstroParams {
+    /// The address of the associated pair contract
+    pub pair_addr: String,
+    /// The address of the Astroport liquidity manager contract
+    pub liquidity_manager: String,
 }

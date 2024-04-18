@@ -5,7 +5,7 @@ use cosmwasm_std::{
     Response, StdResult, Uint128,
 };
 use cw_utils::one_coin;
-use mars_types::zapper::{CallbackMsg, ExecuteMsg, InstantiateMsg, QueryMsg};
+use mars_types::zapper::{CallbackMsg, ExecuteMsg, InstantiateMsg, QueryMsg, ZapperParams};
 
 use crate::{ContractError, LpPool};
 
@@ -52,6 +52,7 @@ where
                 lp_token_out,
                 recipient,
                 minimum_receive,
+                params,
             } => Self::execute_provide_liquidity(
                 deps,
                 env,
@@ -59,11 +60,20 @@ where
                 lp_token_out,
                 recipient,
                 minimum_receive,
+                params,
             ),
             ExecuteMsg::WithdrawLiquidity {
                 recipient,
                 minimum_receive,
-            } => Self::execute_withdraw_liquidity(deps, env, info, recipient, minimum_receive),
+                params,
+            } => Self::execute_withdraw_liquidity(
+                deps,
+                env,
+                info,
+                recipient,
+                minimum_receive,
+                params,
+            ),
             ExecuteMsg::Callback(msg) => {
                 // Can only be called by the contract itself
                 if info.sender != env.contract.address {
@@ -84,10 +94,12 @@ where
             QueryMsg::EstimateProvideLiquidity {
                 lp_token_out,
                 coins_in,
-            } => Self::query_estimate_provide_liquidity(deps, env, lp_token_out, coins_in),
+                params,
+            } => Self::query_estimate_provide_liquidity(deps, env, lp_token_out, coins_in, params),
             QueryMsg::EstimateWithdrawLiquidity {
                 coin_in,
-            } => Self::query_estimate_withdraw_liquidity(deps, env, coin_in),
+                params,
+            } => Self::query_estimate_withdraw_liquidity(deps, env, coin_in, params),
         }
     }
 
@@ -98,6 +110,7 @@ where
         lp_token_out: String,
         recipient: Option<String>,
         minimum_receive: Uint128,
+        params: Option<ZapperParams>,
     ) -> Result<Response, ContractError> {
         let pool = P::get_pool_for_lp_token(deps.as_ref(), &lp_token_out)?;
 
@@ -141,6 +154,7 @@ where
         info: MessageInfo,
         recipient: Option<String>,
         minimum_receive: Vec<Coin>,
+        params: Option<ZapperParams>,
     ) -> Result<Response, ContractError> {
         // Make sure only one coin is sent
         one_coin(&info)?;
@@ -225,6 +239,7 @@ where
         env: Env,
         lp_token_out: String,
         coins_in: Vec<Coin>,
+        params: Option<ZapperParams>,
     ) -> StdResult<Binary> {
         let pool = P::get_pool_for_lp_token(deps, &lp_token_out)?;
 
@@ -237,6 +252,7 @@ where
         deps: Deps,
         _env: Env,
         coin_in: Coin,
+        params: Option<ZapperParams>,
     ) -> StdResult<Binary> {
         let pool = P::get_pool_for_lp_token(deps, &coin_in.denom)?;
 
