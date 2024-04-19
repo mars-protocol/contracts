@@ -29,6 +29,8 @@ mars-types       = { workspace = true }
 mars-zapper-base = { workspace = true }
 
 [dev-dependencies]
-cw-utils          = { workspace = true }
-osmosis-std       = { workspace = true }
-osmosis-test-tube = { workspace = true }
+anyhow           = { workspace = true }
+cw-it            = { workspace = true, features = ["astroport", "astroport-multi-test"] }
+mars-oracle-wasm = { workspace = true }
+mars-testing     = { workspace = true, features = ["astroport"] }
+test-case        = { workspace = true }
