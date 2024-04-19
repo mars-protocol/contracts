@@ -144,6 +144,9 @@ pub fn query(deps: Deps, env: Env, msg: QueryMsg) -> Result<Binary, ContractErro
         QueryMsg::Market {
             denom,
         } => to_json_binary(&query::query_market(deps, denom)?),
+        QueryMsg::MarketV2 {
+            denom,
+        } => to_json_binary(&query::query_market_v2(deps, env, denom)?),
         QueryMsg::Markets {
             start_after,
             limit,

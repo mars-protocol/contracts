@@ -1,6 +1,5 @@
 use cosmwasm_schema::cw_serde;
 use cosmwasm_std::{Decimal, Uint128};
-use cw_paginate::PaginationResponse;
 
 use crate::{red_bank::Market};
 

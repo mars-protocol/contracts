@@ -1,6 +1,7 @@
 use cosmwasm_std::{Addr, BlockInfo, Deps, Env, Order, StdResult, Uint128};
 use cw_paginate::paginate_prefix_query;
 use cosmwasm_std::{Addr, BlockInfo, Decimal, Deps, Env, Order, StdResult, Uint128};
+use cw_paginate::{paginate_map_query, Metadata, PaginationResponse};
 use cw_storage_plus::Bound;
 use mars_interest_rate::{
     get_scaled_debt_amount, get_scaled_liquidity_amount, get_underlying_debt_amount,
@@ -10,7 +11,7 @@ use mars_types::{
     address_provider::{self, MarsAddressType},
     keys::{UserId, UserIdKey},
     red_bank::{
-        Collateral, ConfigResponse, Debt, Market, MarketV2Response, PaginatedMarketV2Response,
+        Collateral, ConfigResponse, Debt, Market, MarketV2Response,
         PaginatedUserCollateralResponse, UncollateralizedLoanLimitResponse, UserCollateralResponse,
         UserDebtResponse, UserHealthStatus, UserPositionResponse,
     },
@@ -50,8 +51,8 @@ pub fn query_market_v2(deps: Deps, env: Env, denom: String) -> StdResult<MarketV
         get_underlying_debt_amount(market.debt_total_scaled, &market, block_time)?;
 
     Ok(MarketV2Response {
-        debt_underlying_amount,
         collateral_underlying_amount,
+        debt_underlying_amount,
         utilization_rate: if !collateral_underlying_amount.is_zero() {
             Decimal::from_ratio(debt_underlying_amount, collateral_underlying_amount)
         } else {
@@ -84,49 +85,27 @@ pub fn query_markets_v2(
     env: Env,
     start_after: Option<String>,
     limit: Option<u32>,
-) -> Result<PaginatedMarketV2Response, ContractError> {
+) -> Result<PaginationResponse<MarketV2Response>, ContractError> {
     let block_time = env.block.time.seconds();
     let start = start_after.map(|denom| Bound::ExclusiveRaw(denom.into_bytes()));
-    let limit = limit.unwrap_or(DEFAULT_LIMIT).min(MAX_LIMIT) as usize;
+    let limit = limit.unwrap_or(DEFAULT_LIMIT).min(MAX_LIMIT);
 
-    let markets_res: Result<Vec<MarketV2Response>, ContractError> = MARKETS
-        .range(deps.storage, start, None, Order::Ascending)
-        .take(limit + 1)
-        .map(|item| {
-            let (_, market) = item?;
+    paginate_map_query(&MARKETS, deps.storage, start, Some(limit), |_denom, market| {
+        let collateral_underlying_amount =
+            get_underlying_liquidity_amount(market.collateral_total_scaled, &market, block_time)?;
+        let debt_underlying_amount =
+            get_underlying_debt_amount(market.debt_total_scaled, &market, block_time)?;
 
-            let collateral_underlying_amount = get_underlying_liquidity_amount(
-                market.collateral_total_scaled,
-                &market,
-                block_time,
-            )?;
-            let debt_underlying_amount =
-                get_underlying_debt_amount(market.debt_total_scaled, &market, block_time)?;
-
-            Ok(MarketV2Response {
-                debt_underlying_amount,
-                collateral_underlying_amount,
-                utilization_rate: if !collateral_underlying_amount.is_zero() {
-                    Decimal::from_ratio(debt_underlying_amount, collateral_underlying_amount)
-                } else {
-                    Decimal::zero()
-                },
-                market,
-            })
+        Ok(MarketV2Response {
+            debt_underlying_amount,
+            collateral_underlying_amount,
+            utilization_rate: if !collateral_underlying_amount.is_zero() {
+                Decimal::from_ratio(debt_underlying_amount, collateral_underlying_amount)
+            } else {
+                Decimal::zero()
+            },
+            market,
         })
-        .collect();
-
-    let mut markets = markets_res?;
-    let has_more = markets.len() > limit;
-    if has_more {
-        markets.pop(); // Remove the extra item used for checking if there are more items
-    }
-
-    Ok(PaginatedMarketV2Response {
-        data: markets,
-        metadata: Metadata {
-            has_more,
-        },
     })
 }
 
