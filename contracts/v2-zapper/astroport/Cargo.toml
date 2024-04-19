@@ -1,5 +1,5 @@
 [package]
-name          = "mars-zapper-wasm"
+name          = "mars-zapper-astroport"
 version       = { workspace = true }
 authors       = { workspace = true }
 license       = { workspace = true }
@@ -21,7 +21,7 @@ library    = []
 [dependencies]
 apollo-cw-asset  = { workspace = true }
 apollo-utils     = { workspace = true }
-astroport        = { workspace = true }
+astroport        = { path = "../../../../../astro/hidden_astroport_core/packages/astroport" }
 cosmwasm-std     = { workspace = true }
 cw2              = { workspace = true }
 cw-dex           = { workspace = true }

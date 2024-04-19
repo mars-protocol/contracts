@@ -2376,7 +2376,7 @@ dependencies = [
 name = "mars-oracle-wasm"
 version = "2.0.0"
 dependencies = [
- "astroport 4.0.0",
+ "astroport 2.9.0",
  "cosmwasm-schema",
  "cosmwasm-std",
  "cw-it",
@@ -2605,7 +2605,7 @@ name = "mars-swapper-astroport"
 version = "2.0.0"
 dependencies = [
  "anyhow",
- "astroport 4.0.0",
+ "astroport 2.9.0",
  "cosmwasm-schema",
  "cosmwasm-std",
  "cw-it",
@@ -2667,7 +2667,7 @@ name = "mars-testing"
 version = "2.0.0"
 dependencies = [
  "anyhow",
- "astroport 4.0.0",
+ "astroport 2.9.0",
  "cosmwasm-schema",
  "cosmwasm-std",
  "cw-it",
@@ -2694,7 +2694,7 @@ dependencies = [
 name = "mars-types"
 version = "2.0.0"
 dependencies = [
- "astroport 4.0.0",
+ "astroport 2.9.0",
  "cosmwasm-schema",
  "cosmwasm-std",
  "cw-storage-plus 1.2.0",
@@ -2745,6 +2745,25 @@ dependencies = [
 ]
 
 [[package]]
+name = "mars-zapper-astroport"
+version = "2.0.0"
+dependencies = [
+ "anyhow",
+ "apollo-cw-asset",
+ "apollo-utils",
+ "astroport 4.0.0",
+ "cosmwasm-std",
+ "cw-dex",
+ "cw-it",
+ "cw2 1.1.2",
+ "mars-oracle-wasm",
+ "mars-testing",
+ "mars-types",
+ "mars-zapper-base",
+ "test-case",
+]
+
+[[package]]
 name = "mars-zapper-base"
 version = "2.0.0"
 dependencies = [
@@ -2783,25 +2802,6 @@ dependencies = [
  "mars-zapper-base",
  "osmosis-std 0.22.0",
  "osmosis-test-tube",
-]
-
-[[package]]
-name = "mars-zapper-wasm"
-version = "2.0.0"
-dependencies = [
- "anyhow",
- "apollo-cw-asset",
- "apollo-utils",
- "astroport 4.0.0",
- "cosmwasm-std",
- "cw-dex",
- "cw-it",
- "cw2 1.1.2",
- "mars-oracle-wasm",
- "mars-testing",
- "mars-types",
- "mars-zapper-base",
- "test-case",
 ]
 
 [[package]]
