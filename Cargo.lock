@@ -1031,7 +1031,7 @@ dependencies = [
 [[package]]
 name = "cw-paginate"
 version = "0.2.2"
-source = "git+https://github.com/mars-protocol/cw-plus-plus?branch=feature/add-paginate-queries#cbb5f4034492095e3e0d041d374f2a18d2e9df3b"
+source = "git+https://github.com/mars-protocol/cw-plus-plus?branch=main#607be113819981e48cd965b198fc2b417e85554b"
 dependencies = [
  "cosmwasm-schema",
  "cosmwasm-std",
