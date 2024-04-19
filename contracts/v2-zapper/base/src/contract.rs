@@ -112,7 +112,7 @@ where
         minimum_receive: Uint128,
         params: Option<ZapperParams>,
     ) -> Result<Response, ContractError> {
-        let pool = P::get_pool_for_lp_token(deps.as_ref(), &lp_token_out)?;
+        let pool = P::get_pool_for_lp_token(deps.as_ref(), &lp_token_out, params)?;
 
         // Unwrap recipient or use caller's address
         let recipient = recipient.map_or(Ok(info.sender), |x| deps.api.addr_validate(&x))?;
@@ -160,7 +160,7 @@ where
         one_coin(&info)?;
 
         let lp_token = info.funds[0].clone();
-        let pool = P::get_pool_for_lp_token(deps.as_ref(), &lp_token.denom)?;
+        let pool = P::get_pool_for_lp_token(deps.as_ref(), &lp_token.denom, params)?;
 
         // Unwrap recipient or use caller
         let recipient = recipient.map_or(Ok(info.sender), |x| deps.api.addr_validate(&x))?;
@@ -241,7 +241,7 @@ where
         coins_in: Vec<Coin>,
         params: Option<ZapperParams>,
     ) -> StdResult<Binary> {
-        let pool = P::get_pool_for_lp_token(deps, &lp_token_out)?;
+        let pool = P::get_pool_for_lp_token(deps, &lp_token_out, params)?;
 
         let lp_tokens_returned = pool.simulate_provide_liquidity(deps, &env, coins_in.into())?;
 
@@ -254,7 +254,7 @@ where
         coin_in: Coin,
         params: Option<ZapperParams>,
     ) -> StdResult<Binary> {
-        let pool = P::get_pool_for_lp_token(deps, &coin_in.denom)?;
+        let pool = P::get_pool_for_lp_token(deps, &coin_in.denom, params)?;
 
         let coins_returned = pool.simulate_withdraw_liquidity(deps, &coin_in.into())?;
 

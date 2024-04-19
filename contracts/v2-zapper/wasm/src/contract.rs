@@ -3,10 +3,10 @@ use cw2::set_contract_version;
 use mars_types::zapper::{ExecuteMsg, InstantiateMsg, QueryMsg};
 use mars_zapper_base::{ContractError, ZapperBase};
 
-use crate::lp_pool::OsmosisLpPool;
+use crate::lp_pool::AstroportLpPool;
 
-/// The Osmosis zapper contract inherits logic from the base zapper contract
-pub type OsmosisZapper = ZapperBase<OsmosisLpPool>;
+/// The Astroport zapper contract inherits logic from the base zapper contract
+pub type AstroportZapper = ZapperBase<AstroportLpPool>;
 
 pub const CONTRACT_NAME: &str = env!("CARGO_PKG_NAME");
 pub const CONTRACT_VERSION: &str = env!("CARGO_PKG_VERSION");
@@ -19,7 +19,7 @@ pub fn instantiate(
     msg: InstantiateMsg,
 ) -> Result<Response, ContractError> {
     set_contract_version(deps.storage, format!("crates.io:{CONTRACT_NAME}"), CONTRACT_VERSION)?;
-    OsmosisZapper::default().instantiate(deps, msg)
+    AstroportZapper::default().instantiate(deps, msg)
 }
 
 #[cfg_attr(not(feature = "library"), entry_point)]
@@ -29,10 +29,10 @@ pub fn execute(
     info: MessageInfo,
     msg: ExecuteMsg,
 ) -> Result<Response, ContractError> {
-    OsmosisZapper::default().execute(deps, env, info, msg)
+    AstroportZapper::default().execute(deps, env, info, msg)
 }
 
 #[cfg_attr(not(feature = "library"), entry_point)]
 pub fn query(deps: Deps, env: Env, msg: QueryMsg) -> StdResult<Binary> {
-    OsmosisZapper::default().query(deps, env, msg)
+    AstroportZapper::default().query(deps, env, msg)
 }

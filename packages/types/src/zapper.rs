@@ -63,6 +63,4 @@ pub enum ZapperParams {
 pub struct AstroParams {
     /// The address of the associated pair contract
     pub pair_addr: String,
-    /// The address of the Astroport liquidity manager contract
-    pub liquidity_manager: String,
 }
