@@ -18,7 +18,7 @@ pub enum QueryMsg {
     AccountKind {
         account_id: String,
     },
-    #[returns(Vec < Account >)]
+    #[returns(Vec<Account>)]
     Accounts {
         owner: String,
         start_after: Option<String>,
@@ -35,7 +35,7 @@ pub enum QueryMsg {
     },
     /// Enumerate the amounts the vaults have been utilized,
     /// denominated in the same denom set in the vault config's deposit cap
-    #[returns(cw_paginate::PaginationResponse < VaultUtilizationResponse >)]
+    #[returns(cw_paginate::PaginationResponse<VaultUtilizationResponse>)]
     AllVaultUtilizations {
         start_after: Option<String>,
         limit: Option<u32>,
@@ -46,13 +46,13 @@ pub enum QueryMsg {
         account_id: String,
     },
     /// Enumerate coin balances for all token positions; start_after accepts (account_id, denom)
-    #[returns(Vec < CoinBalanceResponseItem >)]
+    #[returns(Vec<CoinBalanceResponseItem>)]
     AllCoinBalances {
         start_after: Option<(String, String)>,
         limit: Option<u32>,
     },
     /// Enumerate debt shares for all token positions; start_after accepts (account_id, denom)
-    #[returns(Vec < SharesResponseItem >)]
+    #[returns(Vec<SharesResponseItem>)]
     AllDebtShares {
         start_after: Option<(String, String)>,
         limit: Option<u32>,
@@ -61,13 +61,13 @@ pub enum QueryMsg {
     #[returns(DebtShares)]
     TotalDebtShares(String),
     /// Enumerate total debt shares for all supported coins; start_after accepts denom string
-    #[returns(Vec < DebtShares >)]
+    #[returns(Vec<DebtShares>)]
     AllTotalDebtShares {
         start_after: Option<String>,
         limit: Option<u32>,
     },
     /// Enumerate all vault positions; start_after accepts (account_id, addr)
-    #[returns(Vec < VaultPositionResponseItem >)]
+    #[returns(Vec<VaultPositionResponseItem>)]
     AllVaultPositions {
         start_after: Option<(String, String)>,
         limit: Option<u32>,
@@ -79,7 +79,7 @@ pub enum QueryMsg {
         coins_in: Vec<Coin>,
     },
     /// Estimate coins withdrawn if exchanged for LP tokens
-    #[returns(Vec < Coin >)]
+    #[returns(Vec<Coin>)]
     EstimateWithdrawLiquidity {
         lp_token: Coin,
     },
