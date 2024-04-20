@@ -33,14 +33,32 @@ fn utilizations_are_zero() {
     let vault_info_1 = unlocked_vault_info();
     let vault_info_2 = locked_vault_info();
 
-    let mock = MockEnv::new().vault_configs(&[vault_info_1.clone(), vault_info_2]).build().unwrap();
+    let mock = MockEnv::new()
+        .vault_configs(&[vault_info_1.clone(), vault_info_2.clone()])
+        .build()
+        .unwrap();
 
     let res = mock.query_all_vault_utilizations(None, None).unwrap();
 
-    let _ = res.data.iter().map(|vault_utilization| {
-        assert_eq!(Uint128::zero(), vault_utilization.utilization.amount);
-        assert_eq!(vault_info_1.deposit_cap.denom.clone(), vault_utilization.utilization.denom);
-    });
+    assert_eq!(
+        res.data,
+        vec![
+            VaultUtilizationResponse {
+                vault: mock.get_vault(&vault_info_1),
+                utilization: Coin {
+                    denom: vault_info_1.deposit_cap.denom,
+                    amount: Uint128::zero(),
+                },
+            },
+            VaultUtilizationResponse {
+                vault: mock.get_vault(&vault_info_2),
+                utilization: Coin {
+                    denom: vault_info_2.deposit_cap.denom,
+                    amount: Uint128::zero(),
+                },
+            },
+        ]
+    );
 }
 
 #[test]

@@ -13,7 +13,7 @@ use mars_types::{
 
 use crate::{
     error::{ContractError, ContractResult},
-    state::{MAX_UNLOCKING_POSITIONS, ORACLE, PARAMS, VAULT_POSITIONS},
+    state::{MAX_UNLOCKING_POSITIONS, PARAMS, VAULT_POSITIONS},
     update_coin_balances::query_balance,
 };
 
@@ -93,7 +93,8 @@ pub fn vault_utilization_in_deposit_cap_denom(
     let vault = &Vault {
         address: vault_config.addr.clone(),
     };
-    let rover_vault_balance_value = rover_vault_coin_balance_value(deps, vault, rover_addr)?;
+    let rover_vault_balance_value =
+        rover_vault_coin_balance_value(deps, oracle, vault, rover_addr)?;
     let deposit_cap_denom_price = oracle
         .query_price(&deps.querier, &vault_config.deposit_cap.denom, ActionKind::Default)?
         .price;
@@ -107,10 +108,10 @@ pub fn vault_utilization_in_deposit_cap_denom(
 /// Total value of vault coins under Rover's management for vault
 pub fn rover_vault_coin_balance_value(
     deps: &Deps,
+    oracle: &Oracle,
     vault: &Vault,
     rover_addr: &Addr,
 ) -> ContractResult<Uint128> {
-    let oracle = ORACLE.load(deps.storage)?;
     let rover_vault_coin_balance = vault.query_balance(&deps.querier, rover_addr)?;
     let lockup = vault.query_lockup_duration(&deps.querier).ok();
 
@@ -125,6 +126,6 @@ pub fn rover_vault_coin_balance_value(
         },
     };
     let vault_coin_balance_val =
-        position.query_values(&deps.querier, &oracle, ActionKind::Default)?.vault_coin.value;
+        position.query_values(&deps.querier, oracle, ActionKind::Default)?.vault_coin.value;
     Ok(vault_coin_balance_val)
 }
