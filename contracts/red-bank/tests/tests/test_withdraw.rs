@@ -817,17 +817,6 @@ fn withdraw_for_credit_manager_works_during_liquidation() {
         )
         .unwrap();
 
-    // update credit line for credit manager
-    red_bank
-        .update_uncollateralized_loan_limit(
-            &mut mock_env,
-            &owner,
-            &credit_manager,
-            "uusdc",
-            Uint128::MAX,
-        )
-        .unwrap();
-
     // credit manager should be able to borrow
     let cm_usdc_borrow_amt = 100000000u128;
     red_bank.borrow(&mut mock_env, &credit_manager, "uusdc", cm_usdc_borrow_amt).unwrap();
