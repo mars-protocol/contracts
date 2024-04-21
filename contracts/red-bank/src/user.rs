@@ -7,7 +7,7 @@ use mars_types::{
     red_bank::{Collateral, Debt, Market},
 };
 
-use crate::state::{COLLATERALS, DEBTS, UNCOLLATERALIZED_LOAN_LIMITS};
+use crate::state::{COLLATERALS, DEBTS};
 
 /// A helper class providing an intuitive API for managing user positions in the contract store.
 ///
@@ -72,19 +72,6 @@ impl<'a> User<'a> {
             .map(|debt| debt.amount_scaled)
             .unwrap_or_else(Uint128::zero);
         Ok(amount_scaled)
-    }
-
-    /// Load the user's uncollateralized loan limit. Return zero if the user has not been given an
-    /// uncollateralized loan limit.
-    pub fn uncollateralized_loan_limit(
-        &self,
-        store: &dyn Storage,
-        denom: &str,
-    ) -> StdResult<Uint128> {
-        let limit = UNCOLLATERALIZED_LOAN_LIMITS
-            .may_load(store, (self.0, denom))?
-            .unwrap_or_else(Uint128::zero);
-        Ok(limit)
     }
 
     /// Return `true` if the user is borrowing a non-zero amount in _any_ asset; return `false` if

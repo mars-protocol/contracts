@@ -5,7 +5,7 @@ use mars_types::red_bank::{ExecuteMsg, InstantiateMsg, MigrateMsg, QueryMsg};
 
 use crate::{
     asset, borrow, collateral, config, deposit, error::ContractError, instantiate, liquidate,
-    migrations, query, repay, state::MIGRATION_GUARD, uncollateralized_loan, withdraw,
+    migrations, query, repay, state::MIGRATION_GUARD, withdraw,
 };
 
 pub const CONTRACT_NAME: &str = env!("CARGO_PKG_NAME");
@@ -41,16 +41,6 @@ pub fn execute(
             denom,
             params,
         } => asset::update_asset(deps, env, info, denom, params),
-        ExecuteMsg::UpdateUncollateralizedLoanLimit {
-            user,
-            denom,
-            new_limit,
-        } => {
-            let user_addr = deps.api.addr_validate(&user)?;
-            uncollateralized_loan::update_uncollateralized_loan_limit(
-                deps, info, user_addr, denom, new_limit,
-            )
-        }
         ExecuteMsg::Deposit {
             account_id,
             on_behalf_of,
@@ -148,26 +138,6 @@ pub fn query(deps: Deps, env: Env, msg: QueryMsg) -> Result<Binary, ContractErro
             start_after,
             limit,
         } => to_json_binary(&query::query_markets(deps, start_after, limit)?),
-        QueryMsg::UncollateralizedLoanLimit {
-            user,
-            denom,
-        } => {
-            let user_addr = deps.api.addr_validate(&user)?;
-            to_json_binary(&query::query_uncollateralized_loan_limit(deps, user_addr, denom)?)
-        }
-        QueryMsg::UncollateralizedLoanLimits {
-            user,
-            start_after,
-            limit,
-        } => {
-            let user_addr = deps.api.addr_validate(&user)?;
-            to_json_binary(&query::query_uncollateralized_loan_limits(
-                deps,
-                user_addr,
-                start_after,
-                limit,
-            )?)
-        }
         QueryMsg::UserDebt {
             user,
             denom,

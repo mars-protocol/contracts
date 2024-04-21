@@ -66,14 +66,6 @@ pub struct ConfigResponse {
 }
 
 #[cw_serde]
-pub struct UncollateralizedLoanLimitResponse {
-    /// Asset denom
-    pub denom: String,
-    /// Uncollateralized loan limit in this asset
-    pub limit: Uint128,
-}
-
-#[cw_serde]
 pub struct UserDebtResponse {
     /// Asset denom
     pub denom: String,
