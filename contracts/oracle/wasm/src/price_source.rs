@@ -8,7 +8,7 @@ use cosmwasm_schema::cw_serde;
 use cosmwasm_std::{Addr, Decimal, Deps, Empty, Env, Uint128};
 use cw_storage_plus::Map;
 use mars_oracle_base::{
-    pricing,
+    lp_pricing,
     redemption_rate::{assert_rr_not_too_old, query_redemption_rate, RedemptionRate},
     ContractError, ContractResult, PriceSourceChecked, PriceSourceUnchecked,
 };
@@ -689,7 +689,7 @@ fn query_xyk_liquidity_token_price(
     let coin0 = pool.assets[0].to_coin()?;
     let coin1 = pool.assets[1].to_coin()?;
 
-    pricing::query_xyk_lp_price(
+    lp_pricing::query_xyk_lp_price(
         deps,
         env,
         config,

@@ -4,7 +4,7 @@ use cosmwasm_schema::cw_serde;
 use cosmwasm_std::{Addr, Decimal, Deps, Empty, Env, QuerierWrapper, StdResult};
 use cw_storage_plus::Map;
 use mars_oracle_base::{
-    pricing,
+    lp_pricing,
     redemption_rate::{assert_rr_not_too_old, query_redemption_rate, RedemptionRate},
     ContractError::{self, InvalidPrice},
     ContractResult, PriceSourceChecked, PriceSourceUnchecked,
@@ -624,7 +624,7 @@ impl OsmosisPriceSourceChecked {
         let coin1 = Pool::unwrap_coin(&pool.pool_assets[1].token)?;
         let total_shares = Pool::unwrap_coin(&pool.total_shares)?.amount;
 
-        pricing::query_xyk_lp_price(
+        lp_pricing::query_xyk_lp_price(
             deps,
             env,
             config,
