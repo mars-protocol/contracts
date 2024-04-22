@@ -156,12 +156,24 @@
           "update_credit_account": {
             "type": "object",
             "required": [
-              "account_id",
               "actions"
             ],
             "properties": {
               "account_id": {
-                "type": "string"
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "account_kind": {
+                "anyOf": [
+                  {
+                    "$ref": "#/definitions/AccountKind"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
               },
               "actions": {
                 "type": "array",
