@@ -5,6 +5,7 @@ use cosmwasm_std::{coins, testing::MockApi, Addr, Coin, Decimal, Empty, StdResul
 use cw721::TokensResponse;
 use cw721_base::{Action::TransferOwnership, Ownership};
 use cw_multi_test::{App, AppResponse, BankSudo, BasicApp, Executor, SudoMsg};
+use cw_paginate::PaginationResponse;
 use cw_vault_standard::{
     extensions::lockup::{LockupQueryMsg, UnlockingPosition},
     msg::{ExtensionQueryMsg, VaultStandardQueryMsg::VaultExtension},
@@ -527,6 +528,20 @@ impl MockEnv {
             self.rover.clone(),
             &QueryMsg::VaultUtilization {
                 vault: vault.clone(),
+            },
+        )
+    }
+
+    pub fn query_all_vault_utilizations(
+        &self,
+        start_after: Option<String>,
+        limit: Option<u32>,
+    ) -> StdResult<PaginationResponse<VaultUtilizationResponse>> {
+        self.app.wrap().query_wasm_smart(
+            self.rover.clone(),
+            &QueryMsg::AllVaultUtilizations {
+                start_after,
+                limit,
             },
         )
     }

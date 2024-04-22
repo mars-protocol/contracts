@@ -3,6 +3,7 @@ use std::{mem::take, str::FromStr};
 use anyhow::Result as AnyResult;
 use cosmwasm_std::{Addr, Decimal};
 use cw_multi_test::{App, AppResponse, BasicApp, Executor};
+use cw_paginate::PaginationResponse;
 use mars_owner::{OwnerResponse, OwnerUpdate};
 use mars_types::params::{
     AssetParams, AssetParamsUpdate, ConfigResponse, EmergencyUpdate, ExecuteMsg, InstantiateMsg,
@@ -176,6 +177,23 @@ impl MockEnv {
             .query_wasm_smart(
                 self.params_contract.clone(),
                 &QueryMsg::AllVaultConfigs {
+                    start_after,
+                    limit,
+                },
+            )
+            .unwrap()
+    }
+
+    pub fn query_all_vault_configs_v2(
+        &self,
+        start_after: Option<String>,
+        limit: Option<u32>,
+    ) -> PaginationResponse<VaultConfig> {
+        self.app
+            .wrap()
+            .query_wasm_smart(
+                self.params_contract.clone(),
+                &QueryMsg::AllVaultConfigsV2 {
                     start_after,
                     limit,
                 },

@@ -449,6 +449,12 @@ export type QueryMsg =
       }
     }
   | {
+      all_vault_utilizations: {
+        limit?: number | null
+        start_after?: string | null
+      }
+    }
+  | {
       positions: {
         account_id: string
       }
@@ -545,6 +551,17 @@ export interface VaultPositionResponseItem {
   account_id: string
   position: VaultPosition
 }
+export interface PaginationResponseForVaultUtilizationResponse {
+  data: VaultUtilizationResponse[]
+  metadata: Metadata
+}
+export interface VaultUtilizationResponse {
+  utilization: Coin
+  vault: VaultBaseForString
+}
+export interface Metadata {
+  has_more: boolean
+}
 export interface ConfigResponse {
   account_nft?: string | null
   health_contract: string
@@ -591,8 +608,4 @@ export interface CoinValue {
   amount: Uint128
   denom: string
   value: Uint128
-}
-export interface VaultUtilizationResponse {
-  utilization: Coin
-  vault: VaultBaseForString
 }

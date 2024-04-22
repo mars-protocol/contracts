@@ -1030,10 +1030,10 @@ dependencies = [
 
 [[package]]
 name = "cw-paginate"
-version = "0.2.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "add278617f6251be1a35c781eb0fbffd44f899d8bb4dc5a9e420273a90684c4e"
+version = "0.2.2"
+source = "git+https://github.com/mars-protocol/cw-plus-plus?rev=607be11#607be113819981e48cd965b198fc2b417e85554b"
 dependencies = [
+ "cosmwasm-schema",
  "cosmwasm-std",
  "cw-storage-plus 1.2.0",
  "serde",
@@ -2265,6 +2265,7 @@ version = "2.0.0"
 dependencies = [
  "cosmwasm-schema",
  "cosmwasm-std",
+ "cw-paginate",
  "cw-storage-plus 1.2.0",
  "cw-utils 1.0.3",
  "mars-types",
@@ -2398,6 +2399,7 @@ dependencies = [
  "cosmwasm-schema",
  "cosmwasm-std",
  "cw-multi-test",
+ "cw-paginate",
  "cw-storage-plus 1.2.0",
  "cw2 1.1.2",
  "mars-interest-rate",
@@ -2417,6 +2419,7 @@ dependencies = [
  "cosmwasm-schema",
  "cosmwasm-std",
  "cw-multi-test",
+ "cw-paginate",
  "cw-storage-plus 1.2.0",
  "cw-utils 1.0.3",
  "cw2 1.1.2",
@@ -2658,6 +2661,7 @@ dependencies = [
  "astroport 2.9.0",
  "cosmwasm-schema",
  "cosmwasm-std",
+ "cw-paginate",
  "cw-storage-plus 1.2.0",
  "cw-utils 1.0.3",
  "cw-vault-standard 0.4.0",

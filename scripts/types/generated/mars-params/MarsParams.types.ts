@@ -161,6 +161,12 @@ export type QueryMsg =
       }
     }
   | {
+      all_vault_configs_v2: {
+        limit?: number | null
+        start_after?: string | null
+      }
+    }
+  | {
       target_health_factor: {}
     }
   | {
@@ -208,6 +214,13 @@ export interface VaultConfigBaseForAddr {
   liquidation_threshold: Decimal
   max_loan_to_value: Decimal
   whitelisted: boolean
+}
+export interface PaginationResponseForVaultConfigBaseForAddr {
+  data: VaultConfigBaseForAddr[]
+  metadata: Metadata
+}
+export interface Metadata {
+  has_more: boolean
 }
 export interface ConfigResponse {
   address_provider: string

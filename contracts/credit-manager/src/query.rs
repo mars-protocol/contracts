@@ -1,8 +1,8 @@
 use cosmwasm_std::{Coin, Deps, Env, Order, StdResult};
-use cw_paginate::paginate_map;
+use cw_paginate::{paginate_map, PaginationResponse};
 use cw_storage_plus::Bound;
 use mars_types::{
-    adapters::vault::{VaultBase, VaultPosition, VaultPositionValue, VaultUnchecked},
+    adapters::vault::{Vault, VaultBase, VaultPosition, VaultPositionValue, VaultUnchecked},
     credit_manager::{
         Account, CoinBalanceResponseItem, ConfigResponse, DebtAmount, DebtShares, Positions,
         SharesResponseItem, VaultPositionResponseItem, VaultUtilizationResponse,
@@ -142,9 +142,54 @@ pub fn query_vault_utilization(
     unchecked: VaultUnchecked,
 ) -> ContractResult<VaultUtilizationResponse> {
     let vault = unchecked.check(deps.api)?;
+    let params = PARAMS.load(deps.storage)?;
+    let oracle = ORACLE.load(deps.storage)?;
+    let vault_config = params.query_vault_config(&deps.querier, &vault.address)?;
+
     Ok(VaultUtilizationResponse {
-        vault: vault.clone().into(),
-        utilization: vault_utilization_in_deposit_cap_denom(&deps, &vault, &env.contract.address)?,
+        vault: vault.into(),
+        utilization: vault_utilization_in_deposit_cap_denom(
+            &deps,
+            &oracle,
+            &vault_config,
+            &env.contract.address,
+        )?,
+    })
+}
+
+pub fn query_all_vault_utilizations(
+    deps: Deps,
+    env: Env,
+    start_after: Option<String>,
+    limit: Option<u32>,
+) -> ContractResult<PaginationResponse<VaultUtilizationResponse>> {
+    let params = PARAMS.load(deps.storage)?;
+    let oracle = ORACLE.load(deps.storage)?;
+    let vault_configs_response =
+        params.query_all_vault_configs_v2(&deps.querier, start_after, limit)?;
+
+    let vault_utilizations: ContractResult<Vec<VaultUtilizationResponse>> = vault_configs_response
+        .data
+        .iter()
+        .map(|vault_config| {
+            Ok(VaultUtilizationResponse {
+                vault: Vault {
+                    address: vault_config.addr.clone(),
+                }
+                .into(),
+                utilization: vault_utilization_in_deposit_cap_denom(
+                    &deps,
+                    &oracle,
+                    vault_config,
+                    &env.contract.address,
+                )?,
+            })
+        })
+        .collect();
+
+    Ok(PaginationResponse {
+        data: vault_utilizations?,
+        metadata: vault_configs_response.metadata,
     })
 }
 

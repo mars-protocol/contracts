@@ -17,8 +17,8 @@ use crate::{
     },
     migrations,
     query::{
-        query_all_asset_params, query_all_vault_configs, query_config, query_total_deposit,
-        query_vault_config,
+        query_all_asset_params, query_all_vault_configs, query_all_vault_configs_v2, query_config,
+        query_total_deposit, query_vault_config,
     },
     state::{ADDRESS_PROVIDER, ASSET_PARAMS, OWNER, TARGET_HEALTH_FACTOR},
 };
@@ -103,6 +103,10 @@ pub fn query(deps: Deps, env: Env, msg: QueryMsg) -> ContractResult<Binary> {
             start_after,
             limit,
         } => to_json_binary(&query_all_vault_configs(deps, start_after, limit)?),
+        QueryMsg::AllVaultConfigsV2 {
+            start_after,
+            limit,
+        } => to_json_binary(&query_all_vault_configs_v2(deps, start_after, limit)?),
         QueryMsg::TargetHealthFactor {} => {
             to_json_binary(&TARGET_HEALTH_FACTOR.load(deps.storage)?)
         }

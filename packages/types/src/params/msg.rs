@@ -58,6 +58,12 @@ pub enum QueryMsg {
         limit: Option<u32>,
     },
 
+    #[returns(cw_paginate::PaginationResponse<super::vault::VaultConfig>)]
+    AllVaultConfigsV2 {
+        start_after: Option<String>,
+        limit: Option<u32>,
+    },
+
     #[returns(Decimal)]
     TargetHealthFactor {},
 

@@ -33,6 +33,13 @@ pub enum QueryMsg {
     VaultUtilization {
         vault: VaultUnchecked,
     },
+    /// Enumerate the amounts the vaults have been utilized,
+    /// denominated in the same denom set in the vault config's deposit cap
+    #[returns(cw_paginate::PaginationResponse<VaultUtilizationResponse>)]
+    AllVaultUtilizations {
+        start_after: Option<String>,
+        limit: Option<u32>,
+    },
     /// All positions represented by token with value
     #[returns(Positions)]
     Positions {

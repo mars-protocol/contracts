@@ -1,4 +1,5 @@
 use cosmwasm_std::{Addr, BlockInfo, Deps, Env, Order, StdResult, Uint128};
+use cw_paginate::paginate_prefix_query;
 use cw_storage_plus::Bound;
 use mars_interest_rate::{
     get_scaled_debt_amount, get_scaled_liquidity_amount, get_underlying_debt_amount,
@@ -12,7 +13,6 @@ use mars_types::{
         UncollateralizedLoanLimitResponse, UserCollateralResponse, UserDebtResponse,
         UserHealthStatus, UserPositionResponse,
     },
-    Metadata,
 };
 
 use crate::{
@@ -200,46 +200,33 @@ pub fn query_user_collaterals_v2(
     let block_time = block.time.seconds();
 
     let start = start_after.map(|denom| Bound::ExclusiveRaw(denom.into_bytes()));
-    let limit = limit.unwrap_or(DEFAULT_LIMIT).min(MAX_LIMIT) as usize;
+    let limit = limit.unwrap_or(DEFAULT_LIMIT).min(MAX_LIMIT);
 
     let acc_id = account_id.unwrap_or("".to_string());
 
     let user_id = UserId::credit_manager(user_addr, acc_id);
     let user_id_key: UserIdKey = user_id.try_into()?;
 
-    let user_collaterals_res: Result<Vec<_>, ContractError> = COLLATERALS
-        .prefix(&user_id_key)
-        .range(deps.storage, start, None, Order::Ascending)
-        .take(limit + 1) // Fetch one extra item to determine if there are more
-        .map(|item| {
-            let (denom, collateral) = item?;
-
+    paginate_prefix_query(
+        &COLLATERALS,
+        deps.storage,
+        &user_id_key,
+        start,
+        Some(limit),
+        |denom, collateral| {
             let market = MARKETS.load(deps.storage, &denom)?;
 
             let amount_scaled = collateral.amount_scaled;
             let amount = get_underlying_liquidity_amount(amount_scaled, &market, block_time)?;
 
             Ok(UserCollateralResponse {
-                denom,
+                denom: denom.to_string(),
                 amount_scaled,
                 amount,
                 enabled: collateral.enabled,
             })
-        })
-        .collect();
-
-    let mut user_collaterals = user_collaterals_res?;
-    let has_more = user_collaterals.len() > limit;
-    if has_more {
-        user_collaterals.pop(); // Remove the extra item used for checking if there are more items
-    }
-
-    Ok(PaginatedUserCollateralResponse {
-        data: user_collaterals,
-        metadata: Metadata {
-            has_more,
         },
-    })
+    )
 }
 
 pub fn query_scaled_liquidity_amount(

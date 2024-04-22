@@ -35,6 +35,8 @@ import {
   HlsParamsBaseForAddr,
   ArrayOfVaultConfigBaseForAddr,
   VaultConfigBaseForAddr,
+  PaginationResponseForVaultConfigBaseForAddr,
+  Metadata,
   ConfigResponse,
   OwnerResponse,
   TotalDepositResponse,
@@ -59,6 +61,13 @@ export interface MarsParamsReadOnlyInterface {
     limit?: number
     startAfter?: string
   }) => Promise<ArrayOfVaultConfigBaseForAddr>
+  allVaultConfigsV2: ({
+    limit,
+    startAfter,
+  }: {
+    limit?: number
+    startAfter?: string
+  }) => Promise<PaginationResponseForVaultConfigBaseForAddr>
   targetHealthFactor: () => Promise<Decimal>
   totalDeposit: ({ denom }: { denom: string }) => Promise<TotalDepositResponse>
 }
@@ -75,6 +84,7 @@ export class MarsParamsQueryClient implements MarsParamsReadOnlyInterface {
     this.allAssetParams = this.allAssetParams.bind(this)
     this.vaultConfig = this.vaultConfig.bind(this)
     this.allVaultConfigs = this.allVaultConfigs.bind(this)
+    this.allVaultConfigsV2 = this.allVaultConfigsV2.bind(this)
     this.targetHealthFactor = this.targetHealthFactor.bind(this)
     this.totalDeposit = this.totalDeposit.bind(this)
   }
@@ -126,6 +136,20 @@ export class MarsParamsQueryClient implements MarsParamsReadOnlyInterface {
   }): Promise<ArrayOfVaultConfigBaseForAddr> => {
     return this.client.queryContractSmart(this.contractAddress, {
       all_vault_configs: {
+        limit,
+        start_after: startAfter,
+      },
+    })
+  }
+  allVaultConfigsV2 = async ({
+    limit,
+    startAfter,
+  }: {
+    limit?: number
+    startAfter?: string
+  }): Promise<PaginationResponseForVaultConfigBaseForAddr> => {
+    return this.client.queryContractSmart(this.contractAddress, {
+      all_vault_configs_v2: {
         limit,
         start_after: startAfter,
       },
