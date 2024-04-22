@@ -217,7 +217,11 @@ pub fn adjust_precision(
     })
 }
 
-pub fn validate_astroport_xyk_lp_pool(deps: &Deps, pair_address: &Addr) -> ContractResult<()> {
+pub fn validate_astroport_xyk_lp_pool(
+    deps: &Deps,
+    pair_address: &Addr,
+    price_sources: &Map<&str, WasmPriceSourceChecked>,
+) -> ContractResult<()> {
     let pair_info = query_astroport_pair_info(&deps.querier, pair_address)?;
     ensure_eq!(
         pair_info.pair_type,
@@ -239,6 +243,14 @@ pub fn validate_astroport_xyk_lp_pool(deps: &Deps, pair_address: &Addr) -> Contr
                 pair_denoms.len()
             ),
         });
+    }
+
+    for denom in pair_denoms.iter() {
+        if !price_sources.has(deps.storage, denom) {
+            return Err(ContractError::InvalidPriceSource {
+                reason: format!("missing price source for {}", denom),
+            });
+        }
     }
 
     Ok(())

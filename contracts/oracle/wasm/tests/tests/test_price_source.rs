@@ -928,6 +928,9 @@ pub fn validate_and_query_lsd_price_source(
 #[test_case(PairType::Xyk {}, &["ueth","udydx"], Some(Decimal::from_str("0.000000003195385").unwrap()), Some(Decimal::from_str("0.00000000000238175").unwrap()), DEFAULT_LIQ, &[18,18]; "XYK, 18:18 decimals")]
 #[test_case(PairType::Stable {  }, &["utia","ustia"], Some(Decimal::one()), Some(Decimal::one()), DEFAULT_LIQ, &[6,6] => panics "Invalid price source: expecting pair contract14 to be XYK pool; found stable"; "XYK required, found StableSwap")]
 #[test_case(PairType::Custom("concentrated".to_string()), &["utia","ustia"], Some(Decimal::one()), Some(Decimal::one()), [145692686804, 175998046105], &[6,6] => panics "Invalid price source: expecting pair contract14 to be XYK pool; found custom-concentrated"; "XYK required, found PCL")]
+#[test_case(PairType::Xyk {}, &["uatom","untrn"], None, None, DEFAULT_LIQ, &[6,6] => panics "Invalid price source: missing price source for uatom"; "XYK, missing price source for both assets")]
+#[test_case(PairType::Xyk {}, &["uatom","untrn"], None, Some(Decimal::one()), DEFAULT_LIQ, &[6,6] => panics "Invalid price source: missing price source for uatom"; "XYK, missing price source for first asset")]
+#[test_case(PairType::Xyk {}, &["uatom","untrn"], Some(Decimal::one()), None, DEFAULT_LIQ, &[6,6] => panics "Invalid price source: missing price source for untrn"; "XYK, missing price source for second asset")]
 pub fn test_validate_and_query_astroport_xyk_lp_price_source(
     pair_type: PairType,
     pair_denoms: &[&str; 2],
@@ -982,9 +985,6 @@ pub fn test_validate_and_query_astroport_xyk_lp_price_source(
     let pool_value_u128 = Uint128::try_from(pool_value_u256).unwrap();
     println!("total share: {}", pool.total_share);
     let expected_price = Decimal::from_ratio(pool_value_u128, pool.total_share);
-
-    // Assert that the expected price is not zero
-    assert_ne!(expected_price, Decimal::zero());
 
     let price_source = WasmPriceSourceUnchecked::XykLiquidityToken {
         pair_address: pair_address.clone(),
