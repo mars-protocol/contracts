@@ -227,7 +227,8 @@ where
         let withdraw_from_cm_msg = CosmosMsg::Wasm(WasmMsg::Execute {
             contract_addr: cm_addr.to_string(),
             msg: to_json_binary(&credit_manager::ExecuteMsg::UpdateCreditAccount {
-                account_id: account_id.clone(),
+                account_id: Some(account_id.clone()),
+                account_kind: None,
                 actions,
             })?,
             funds: vec![],

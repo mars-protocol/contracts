@@ -144,7 +144,8 @@ impl MockEnv {
             sender.clone(),
             self.rover.clone(),
             &ExecuteMsg::UpdateCreditAccount {
-                account_id: account_id.to_string(),
+                account_id: Some(account_id.to_string()),
+                account_kind: None,
                 actions,
             },
             send_funds,
