@@ -5,9 +5,10 @@ use std::{
 
 use astroport::{asset::PairInfo, factory::PairType, pair::TWAP_PRECISION, querier::simulate};
 use cosmwasm_schema::cw_serde;
-use cosmwasm_std::{Addr, Decimal, Decimal256, Deps, Empty, Env, Isqrt, Uint128, Uint256};
+use cosmwasm_std::{Addr, Decimal, Deps, Empty, Env, Uint128};
 use cw_storage_plus::Map;
 use mars_oracle_base::{
+    pricing,
     redemption_rate::{assert_rr_not_too_old, query_redemption_rate, RedemptionRate},
     ContractError, ContractResult, PriceSourceChecked, PriceSourceUnchecked,
 };
@@ -688,31 +689,16 @@ fn query_xyk_liquidity_token_price(
     let coin0 = pool.assets[0].to_coin()?;
     let coin1 = pool.assets[1].to_coin()?;
 
-    let coin0_price = price_sources.load(deps.storage, &coin0.denom)?.query_price(
+    pricing::query_xyk_lp_price(
         deps,
         env,
-        &coin0.denom,
-        config,
-        price_sources,
-        kind.clone(),
-    )?;
-    let coin1_price = price_sources.load(deps.storage, &coin1.denom)?.query_price(
-        deps,
-        env,
-        &coin1.denom,
         config,
         price_sources,
         kind,
-    )?;
-
-    let coin0_value = Uint256::from_uint128(coin0.amount) * Decimal256::from(coin0_price);
-    let coin1_value = Uint256::from_uint128(coin1.amount) * Decimal256::from(coin1_price);
-
-    // We need to use Uint256, because Uint128 * Uint128 may overflow the 128-bit limit
-    let pool_value_u256 = Uint256::from(2u8) * (coin0_value * coin1_value).isqrt();
-    let pool_value_u128 = Uint128::try_from(pool_value_u256)?;
-
-    Ok(Decimal::from_ratio(pool_value_u128, pool.total_share))
+        coin0,
+        coin1,
+        pool.total_share,
+    )
 }
 
 #[cfg(test)]
