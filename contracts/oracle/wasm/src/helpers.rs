@@ -2,11 +2,12 @@ use std::cmp::Ordering;
 
 use astroport::{
     asset::{Asset, AssetInfo, PairInfo},
-    pair::{CumulativePricesResponse, QueryMsg as PairQueryMsg},
+    factory::PairType,
+    pair::{CumulativePricesResponse, PoolResponse, QueryMsg as PairQueryMsg},
 };
 use cosmwasm_std::{
-    to_json_binary, Addr, Decimal, Deps, Env, QuerierWrapper, QueryRequest, StdResult, Uint128,
-    WasmQuery,
+    ensure_eq, to_json_binary, Addr, Decimal, Deps, Env, QuerierWrapper, QueryRequest, StdResult,
+    Uint128, WasmQuery,
 };
 use cw_storage_plus::Map;
 use mars_oracle_base::{ContractError, ContractResult, PriceSourceChecked};
@@ -20,6 +21,14 @@ pub fn query_astroport_pair_info(
     pair_contract: impl Into<String>,
 ) -> StdResult<PairInfo> {
     querier.query_wasm_smart(pair_contract, &PairQueryMsg::Pair {})
+}
+
+/// Queries the pair contract for the pool info.
+pub fn query_astroport_pool(
+    querier: &QuerierWrapper,
+    pair_contract: impl Into<String>,
+) -> StdResult<PoolResponse> {
+    querier.query_wasm_smart(pair_contract, &PairQueryMsg::Pool {})
 }
 
 /// Helper function to create an Astroport native token AssetInfo.
@@ -206,4 +215,31 @@ pub fn adjust_precision(
         Ordering::Greater => value
             .checked_div(Uint128::new(10_u128.pow((current_precision - new_precision) as u32)))?,
     })
+}
+
+pub fn validate_astroport_xyk_lp_pool(deps: &Deps, pair_address: &Addr) -> ContractResult<()> {
+    let pair_info = query_astroport_pair_info(&deps.querier, pair_address)?;
+    ensure_eq!(
+        pair_info.pair_type,
+        PairType::Xyk {},
+        ContractError::InvalidPriceSource {
+            reason: format!(
+                "expecting pair {} to be XYK pool; found {}",
+                pair_address, pair_info.pair_type
+            ),
+        }
+    );
+
+    let pair_denoms = get_astroport_pair_denoms(&pair_info)?;
+    if pair_denoms.len() != 2 {
+        return Err(ContractError::InvalidPriceSource {
+            reason: format!(
+                "expecting pair {} to contain exactly two coins; found {}",
+                pair_address,
+                pair_denoms.len()
+            ),
+        });
+    }
+
+    Ok(())
 }

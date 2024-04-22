@@ -5,7 +5,7 @@ use std::{
 
 use astroport::{asset::PairInfo, factory::PairType, pair::TWAP_PRECISION, querier::simulate};
 use cosmwasm_schema::cw_serde;
-use cosmwasm_std::{Addr, Decimal, Deps, Empty, Env, Uint128};
+use cosmwasm_std::{Addr, Decimal, Decimal256, Deps, Empty, Env, Isqrt, Uint128, Uint256};
 use cw_storage_plus::Map;
 use mars_oracle_base::{
     redemption_rate::{assert_rr_not_too_old, query_redemption_rate, RedemptionRate},
@@ -18,8 +18,9 @@ use crate::{
     helpers::{
         adjust_precision, astro_native_asset, get_astroport_pair_denoms,
         get_other_astroport_pair_denom, normalize_price, period_diff,
-        query_astroport_cumulative_price, query_astroport_pair_info, query_token_precision,
-        validate_astroport_pair_price_source,
+        query_astroport_cumulative_price, query_astroport_pair_info, query_astroport_pool,
+        query_token_precision, validate_astroport_pair_price_source,
+        validate_astroport_xyk_lp_pool,
     },
     state::{ASTROPORT_FACTORY, ASTROPORT_TWAP_SNAPSHOTS},
 };
@@ -115,6 +116,11 @@ pub enum WasmPriceSource<A> {
         /// Params to query redemption rate
         redemption_rate: RedemptionRate<A>,
     },
+    /// Astroport LP token (of an XYK pool) price quoted in uusd
+    XykLiquidityToken {
+        /// Address of the Astroport pair
+        pair_address: A,
+    },
 }
 
 #[cw_serde]
@@ -170,6 +176,7 @@ impl fmt::Display for WasmPriceSourceChecked {
                 } = redemption_rate;
                 format!("lsd:{transitive_denom}:{pair_address}:{window_size}:{tolerance}:{contract_addr}:{max_staleness}")
             },
+            WasmPriceSource::XykLiquidityToken { pair_address } => format!("xyk_liquidity_token:{pair_address}"),
         };
         write!(f, "{label}")
     }
@@ -311,6 +318,16 @@ impl PriceSourceUnchecked<WasmPriceSourceChecked, Empty> for WasmPriceSourceUnch
                     },
                 })
             }
+            WasmPriceSource::XykLiquidityToken {
+                pair_address,
+            } => {
+                let pair_address = deps.api.addr_validate(&pair_address)?;
+                validate_astroport_xyk_lp_pool(deps, &pair_address)?;
+
+                Ok(WasmPriceSourceChecked::AstroportSpot {
+                    pair_address,
+                })
+            }
         }
     }
 }
@@ -390,6 +407,16 @@ impl PriceSourceChecked<Empty> for WasmPriceSourceChecked {
                 redemption_rate,
                 config,
                 price_sources,
+                kind,
+            ),
+            WasmPriceSource::XykLiquidityToken {
+                pair_address,
+            } => query_xyk_liquidity_token_price(
+                deps,
+                env,
+                config,
+                price_sources,
+                pair_address,
                 kind,
             ),
         }
@@ -641,6 +668,51 @@ fn query_lsd_price(
     )?;
 
     min_price.checked_mul(transitive_price).map_err(Into::into)
+}
+
+/// The calculation of the value of liquidity token, see: https://blog.alphafinance.io/fair-lp-token-pricing/.
+/// This formulation avoids a potential sandwich attack that distorts asset prices by a flashloan.
+///
+/// NOTE: Price sources must exist for both assets in the pool.
+fn query_xyk_liquidity_token_price(
+    deps: &Deps,
+    env: &Env,
+    config: &Config,
+    price_sources: &Map<&str, WasmPriceSourceChecked>,
+    pair_address: &Addr,
+    kind: ActionKind,
+) -> ContractResult<Decimal> {
+    // XYK pool asserted during price source creation
+    let pool = query_astroport_pool(&deps.querier, pair_address)?;
+
+    let coin0 = pool.assets[0].to_coin()?;
+    let coin1 = pool.assets[1].to_coin()?;
+
+    let coin0_price = price_sources.load(deps.storage, &coin0.denom)?.query_price(
+        deps,
+        env,
+        &coin0.denom,
+        config,
+        price_sources,
+        kind.clone(),
+    )?;
+    let coin1_price = price_sources.load(deps.storage, &coin1.denom)?.query_price(
+        deps,
+        env,
+        &coin1.denom,
+        config,
+        price_sources,
+        kind,
+    )?;
+
+    let coin0_value = Uint256::from_uint128(coin0.amount) * Decimal256::from(coin0_price);
+    let coin1_value = Uint256::from_uint128(coin1.amount) * Decimal256::from(coin1_price);
+
+    // We need to use Uint256, because Uint128 * Uint128 may overflow the 128-bit limit
+    let pool_value_u256 = Uint256::from(2u8) * (coin0_value * coin1_value).isqrt();
+    let pool_value_u128 = Uint128::try_from(pool_value_u256)?;
+
+    Ok(Decimal::from_ratio(pool_value_u128, pool.total_share))
 }
 
 #[cfg(test)]
