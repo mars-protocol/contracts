@@ -1,9 +1,7 @@
 use cosmwasm_std::{coin, Addr, Decimal};
-use mars_red_bank::error::ContractError;
 use mars_testing::integration::mock_env::MockEnvBuilder;
 use mars_types::red_bank::UserHealthStatus;
 
-use super::helpers::assert_err;
 use crate::tests::helpers::{osmo_asset_params, usdc_asset_params};
 
 #[test]
@@ -48,10 +46,6 @@ fn deposit_and_withdraw_for_credit_account_works() {
             Some(account_id.clone()),
         )
         .unwrap();
-
-    // credit manager try to borrow if no credit line set
-    let error_res = red_bank.borrow(&mut mock_env, &credit_manager, "uusdc", 100000000);
-    assert_err(error_res, ContractError::BorrowAmountExceedsGivenCollateral {});
 
     // credit manager should be able to borrow
     let cm_usdc_borrow_amt = 100000000u128;
