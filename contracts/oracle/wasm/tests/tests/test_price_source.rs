@@ -4,7 +4,7 @@ use astroport::factory::PairType;
 use cosmwasm_std::{
     coin, from_json,
     testing::{mock_dependencies, mock_env},
-    Addr, Decimal, Empty, Uint128,
+    Addr, Decimal, Decimal256, Empty, Isqrt, Uint128, Uint256,
 };
 use cw_it::{
     astroport::{
@@ -116,6 +116,19 @@ fn display_lsd_price_source() {
         },
     };
     assert_eq!(ps.to_string(), "lsd:other_denom:astro_addr:101:16:redemption_addr:1234")
+}
+
+#[test]
+fn display_lp_token_price_source() {
+    let ps = WasmPriceSourceChecked::XykLiquidityToken {
+        pair_address: Addr::unchecked(
+            "neutron1e22zh5p8meddxjclevuhjmfj69jxfsa8uu3jvht72rv9d8lkhves6t8veq",
+        ),
+    };
+    assert_eq!(
+        ps.to_string(),
+        "xyk_liquidity_token:neutron1e22zh5p8meddxjclevuhjmfj69jxfsa8uu3jvht72rv9d8lkhves6t8veq"
+    )
 }
 
 #[test]
@@ -908,4 +921,79 @@ pub fn validate_and_query_lsd_price_source(
         .set_redemption_rate_metric(primary_denom, rr_value, block_time_sec, block_time_sec, admin) // block_height doesn't matter here
         .assert_redemption_rate(primary_ibc_denom, rr_value)
         .assert_price_almost_equal(primary_ibc_denom, expected_price, Decimal::percent(1));
+}
+
+#[test_case(PairType::Xyk {}, &["uatom","untrn"], Some(Decimal::from_str("8.86506356").unwrap()), Some(Decimal::from_str("0.97696221").unwrap()), [1171210862745u128, 12117922358503u128], &[6,6]; "XYK, 6:6 decimals")]
+#[test_case(PairType::Xyk {}, &["untrn","ueth"], Some(Decimal::from_str("0.85676231").unwrap()), Some(Decimal::from_str("0.000000003192778061").unwrap()), [291397962796u128, 65345494060528260316u128], &[6,18]; "XYK, 6:18 decimals")]
+#[test_case(PairType::Xyk {}, &["ueth","udydx"], Some(Decimal::from_str("0.000000003195385").unwrap()), Some(Decimal::from_str("0.00000000000238175").unwrap()), DEFAULT_LIQ, &[18,18]; "XYK, 18:18 decimals")]
+#[test_case(PairType::Stable {  }, &["utia","ustia"], Some(Decimal::one()), Some(Decimal::one()), DEFAULT_LIQ, &[6,6] => panics "Invalid price source: expecting pair contract14 to be XYK pool; found stable"; "XYK required, found StableSwap")]
+#[test_case(PairType::Custom("concentrated".to_string()), &["utia","ustia"], Some(Decimal::one()), Some(Decimal::one()), [145692686804, 175998046105], &[6,6] => panics "Invalid price source: expecting pair contract14 to be XYK pool; found custom-concentrated"; "XYK required, found PCL")]
+pub fn test_validate_and_query_astroport_xyk_lp_price_source(
+    pair_type: PairType,
+    pair_denoms: &[&str; 2],
+    primary_asset_price: Option<Decimal>,
+    other_asset_price: Option<Decimal>,
+    initial_liq: [u128; 2],
+    decimals: &[u8; 2],
+) {
+    let primary_denom = pair_denoms[0];
+    let other_denom = pair_denoms[1];
+    let lp_denom = format!("pair:{}-{}", pair_denoms[0], pair_denoms[1]);
+
+    let owned_runner = get_test_runner();
+    let runner = owned_runner.as_ref();
+    let admin = &runner
+        .init_account(&[
+            coin(DEFAULT_COIN_AMOUNT, primary_denom),
+            coin(DEFAULT_COIN_AMOUNT, other_denom),
+        ])
+        .unwrap();
+    let robot = WasmOracleTestRobot::new(&runner, get_contracts(&runner), admin, Some("uusd"));
+
+    let (pair_address, _lp_token_addr) = robot.create_astroport_pair(
+        pair_type.clone(),
+        &[native_info(primary_denom), native_info(other_denom)],
+        astro_init_params(&pair_type),
+        admin,
+        Some(&initial_liq),
+        Some(decimals),
+    );
+
+    let pool = robot.query_pool(&pair_address);
+    let coin0 = pool.assets[0].to_coin().unwrap();
+    let coin1 = pool.assets[1].to_coin().unwrap();
+    let mut coin0_value = Uint256::zero();
+    let mut coin1_value = Uint256::zero();
+
+    let mut other_assets_price_sources = vec![];
+    if let Some(price) = primary_asset_price {
+        other_assets_price_sources.push((primary_denom, fixed_source(price)));
+
+        coin0_value = Uint256::from_uint128(coin0.amount) * Decimal256::from(price);
+    }
+    if let Some(price) = other_asset_price {
+        other_assets_price_sources.push((other_denom, fixed_source(price)));
+
+        coin1_value = Uint256::from_uint128(coin1.amount) * Decimal256::from(price);
+    }
+
+    // Calculate expected price
+    let pool_value_u256 = Uint256::from(2u8) * (coin0_value * coin1_value).isqrt();
+    let pool_value_u128 = Uint128::try_from(pool_value_u256).unwrap();
+    println!("total share: {}", pool.total_share);
+    let expected_price = Decimal::from_ratio(pool_value_u128, pool.total_share);
+
+    // Assert that the expected price is not zero
+    assert_ne!(expected_price, Decimal::zero());
+
+    let price_source = WasmPriceSourceUnchecked::XykLiquidityToken {
+        pair_address: pair_address.clone(),
+    };
+
+    // Set price sources and assert that the price is as expected
+    robot
+        .set_price_sources(other_assets_price_sources, admin)
+        .set_price_source(&lp_denom, price_source.clone(), admin)
+        .assert_price_source(&lp_denom, price_source)
+        .assert_price_almost_equal(&lp_denom, expected_price, Decimal::percent(1));
 }

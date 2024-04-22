@@ -324,7 +324,7 @@ impl PriceSourceUnchecked<WasmPriceSourceChecked, Empty> for WasmPriceSourceUnch
                 let pair_address = deps.api.addr_validate(&pair_address)?;
                 validate_astroport_xyk_lp_pool(deps, &pair_address)?;
 
-                Ok(WasmPriceSourceChecked::AstroportSpot {
+                Ok(WasmPriceSourceChecked::XykLiquidityToken {
                     pair_address,
                 })
             }
