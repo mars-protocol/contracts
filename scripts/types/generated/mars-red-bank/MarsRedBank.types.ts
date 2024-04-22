@@ -34,13 +34,6 @@ export type ExecuteMsg =
       }
     }
   | {
-      update_uncollateralized_loan_limit: {
-        denom: string
-        new_limit: Uint128
-        user: string
-      }
-    }
-  | {
       deposit: {
         account_id?: string | null
         on_behalf_of?: string | null
@@ -135,19 +128,6 @@ export type QueryMsg =
       }
     }
   | {
-      uncollateralized_loan_limit: {
-        denom: string
-        user: string
-      }
-    }
-  | {
-      uncollateralized_loan_limits: {
-        limit?: number | null
-        start_after?: string | null
-        user: string
-      }
-    }
-  | {
       user_debt: {
         denom: string
         user: string
@@ -237,11 +217,6 @@ export interface Market {
   reserve_factor: Decimal
 }
 export type ArrayOfMarket = Market[]
-export interface UncollateralizedLoanLimitResponse {
-  denom: string
-  limit: Uint128
-}
-export type ArrayOfUncollateralizedLoanLimitResponse = UncollateralizedLoanLimitResponse[]
 export interface UserCollateralResponse {
   amount: Uint128
   amount_scaled: Uint128

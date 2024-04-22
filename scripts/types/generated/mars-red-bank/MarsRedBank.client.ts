@@ -21,8 +21,6 @@ import {
   ConfigResponse,
   Market,
   ArrayOfMarket,
-  UncollateralizedLoanLimitResponse,
-  ArrayOfUncollateralizedLoanLimitResponse,
   UserCollateralResponse,
   ArrayOfUserCollateralResponse,
   PaginationResponseForUserCollateralResponse,
@@ -43,22 +41,6 @@ export interface MarsRedBankReadOnlyInterface {
     limit?: number
     startAfter?: string
   }) => Promise<ArrayOfMarket>
-  uncollateralizedLoanLimit: ({
-    denom,
-    user,
-  }: {
-    denom: string
-    user: string
-  }) => Promise<UncollateralizedLoanLimitResponse>
-  uncollateralizedLoanLimits: ({
-    limit,
-    startAfter,
-    user,
-  }: {
-    limit?: number
-    startAfter?: string
-    user: string
-  }) => Promise<ArrayOfUncollateralizedLoanLimitResponse>
   userDebt: ({ denom, user }: { denom: string; user: string }) => Promise<UserDebtResponse>
   userDebts: ({
     limit,
@@ -141,8 +123,6 @@ export class MarsRedBankQueryClient implements MarsRedBankReadOnlyInterface {
     this.config = this.config.bind(this)
     this.market = this.market.bind(this)
     this.markets = this.markets.bind(this)
-    this.uncollateralizedLoanLimit = this.uncollateralizedLoanLimit.bind(this)
-    this.uncollateralizedLoanLimits = this.uncollateralizedLoanLimits.bind(this)
     this.userDebt = this.userDebt.bind(this)
     this.userDebts = this.userDebts.bind(this)
     this.userCollateral = this.userCollateral.bind(this)
@@ -179,37 +159,6 @@ export class MarsRedBankQueryClient implements MarsRedBankReadOnlyInterface {
       markets: {
         limit,
         start_after: startAfter,
-      },
-    })
-  }
-  uncollateralizedLoanLimit = async ({
-    denom,
-    user,
-  }: {
-    denom: string
-    user: string
-  }): Promise<UncollateralizedLoanLimitResponse> => {
-    return this.client.queryContractSmart(this.contractAddress, {
-      uncollateralized_loan_limit: {
-        denom,
-        user,
-      },
-    })
-  }
-  uncollateralizedLoanLimits = async ({
-    limit,
-    startAfter,
-    user,
-  }: {
-    limit?: number
-    startAfter?: string
-    user: string
-  }): Promise<ArrayOfUncollateralizedLoanLimitResponse> => {
-    return this.client.queryContractSmart(this.contractAddress, {
-      uncollateralized_loan_limits: {
-        limit,
-        start_after: startAfter,
-        user,
       },
     })
   }
@@ -429,20 +378,6 @@ export interface MarsRedBankInterface extends MarsRedBankReadOnlyInterface {
     memo?: string,
     _funds?: Coin[],
   ) => Promise<ExecuteResult>
-  updateUncollateralizedLoanLimit: (
-    {
-      denom,
-      newLimit,
-      user,
-    }: {
-      denom: string
-      newLimit: Uint128
-      user: string
-    },
-    fee?: number | StdFee | 'auto',
-    memo?: string,
-    _funds?: Coin[],
-  ) => Promise<ExecuteResult>
   deposit: (
     {
       accountId,
@@ -544,7 +479,6 @@ export class MarsRedBankClient extends MarsRedBankQueryClient implements MarsRed
     this.updateConfig = this.updateConfig.bind(this)
     this.initAsset = this.initAsset.bind(this)
     this.updateAsset = this.updateAsset.bind(this)
-    this.updateUncollateralizedLoanLimit = this.updateUncollateralizedLoanLimit.bind(this)
     this.deposit = this.deposit.bind(this)
     this.withdraw = this.withdraw.bind(this)
     this.borrow = this.borrow.bind(this)
@@ -639,35 +573,6 @@ export class MarsRedBankClient extends MarsRedBankQueryClient implements MarsRed
         update_asset: {
           denom,
           params,
-        },
-      },
-      fee,
-      memo,
-      _funds,
-    )
-  }
-  updateUncollateralizedLoanLimit = async (
-    {
-      denom,
-      newLimit,
-      user,
-    }: {
-      denom: string
-      newLimit: Uint128
-      user: string
-    },
-    fee: number | StdFee | 'auto' = 'auto',
-    memo?: string,
-    _funds?: Coin[],
-  ): Promise<ExecuteResult> => {
-    return await this.client.execute(
-      this.sender,
-      this.contractAddress,
-      {
-        update_uncollateralized_loan_limit: {
-          denom,
-          new_limit: newLimit,
-          user,
         },
       },
       fee,

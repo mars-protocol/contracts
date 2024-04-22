@@ -22,8 +22,6 @@ import {
   ConfigResponse,
   Market,
   ArrayOfMarket,
-  UncollateralizedLoanLimitResponse,
-  ArrayOfUncollateralizedLoanLimitResponse,
   UserCollateralResponse,
   ArrayOfUserCollateralResponse,
   PaginationResponseForUserCollateralResponse,
@@ -48,28 +46,6 @@ export const marsRedBankQueryKeys = {
     [{ ...marsRedBankQueryKeys.address(contractAddress)[0], method: 'market', args }] as const,
   markets: (contractAddress: string | undefined, args?: Record<string, unknown>) =>
     [{ ...marsRedBankQueryKeys.address(contractAddress)[0], method: 'markets', args }] as const,
-  uncollateralizedLoanLimit: (
-    contractAddress: string | undefined,
-    args?: Record<string, unknown>,
-  ) =>
-    [
-      {
-        ...marsRedBankQueryKeys.address(contractAddress)[0],
-        method: 'uncollateralized_loan_limit',
-        args,
-      },
-    ] as const,
-  uncollateralizedLoanLimits: (
-    contractAddress: string | undefined,
-    args?: Record<string, unknown>,
-  ) =>
-    [
-      {
-        ...marsRedBankQueryKeys.address(contractAddress)[0],
-        method: 'uncollateralized_loan_limits',
-        args,
-      },
-    ] as const,
   userDebt: (contractAddress: string | undefined, args?: Record<string, unknown>) =>
     [{ ...marsRedBankQueryKeys.address(contractAddress)[0], method: 'user_debt', args }] as const,
   userDebts: (contractAddress: string | undefined, args?: Record<string, unknown>) =>
@@ -416,52 +392,6 @@ export function useMarsRedBankUserDebtQuery<TData = UserDebtResponse>({
     { ...options, enabled: !!client && (options?.enabled != undefined ? options.enabled : true) },
   )
 }
-export interface MarsRedBankUncollateralizedLoanLimitsQuery<TData>
-  extends MarsRedBankReactQuery<ArrayOfUncollateralizedLoanLimitResponse, TData> {
-  args: {
-    limit?: number
-    startAfter?: string
-    user: string
-  }
-}
-export function useMarsRedBankUncollateralizedLoanLimitsQuery<
-  TData = ArrayOfUncollateralizedLoanLimitResponse,
->({ client, args, options }: MarsRedBankUncollateralizedLoanLimitsQuery<TData>) {
-  return useQuery<ArrayOfUncollateralizedLoanLimitResponse, Error, TData>(
-    marsRedBankQueryKeys.uncollateralizedLoanLimits(client?.contractAddress, args),
-    () =>
-      client
-        ? client.uncollateralizedLoanLimits({
-            limit: args.limit,
-            startAfter: args.startAfter,
-            user: args.user,
-          })
-        : Promise.reject(new Error('Invalid client')),
-    { ...options, enabled: !!client && (options?.enabled != undefined ? options.enabled : true) },
-  )
-}
-export interface MarsRedBankUncollateralizedLoanLimitQuery<TData>
-  extends MarsRedBankReactQuery<UncollateralizedLoanLimitResponse, TData> {
-  args: {
-    denom: string
-    user: string
-  }
-}
-export function useMarsRedBankUncollateralizedLoanLimitQuery<
-  TData = UncollateralizedLoanLimitResponse,
->({ client, args, options }: MarsRedBankUncollateralizedLoanLimitQuery<TData>) {
-  return useQuery<UncollateralizedLoanLimitResponse, Error, TData>(
-    marsRedBankQueryKeys.uncollateralizedLoanLimit(client?.contractAddress, args),
-    () =>
-      client
-        ? client.uncollateralizedLoanLimit({
-            denom: args.denom,
-            user: args.user,
-          })
-        : Promise.reject(new Error('Invalid client')),
-    { ...options, enabled: !!client && (options?.enabled != undefined ? options.enabled : true) },
-  )
-}
 export interface MarsRedBankMarketsQuery<TData>
   extends MarsRedBankReactQuery<ArrayOfMarket, TData> {
   args: {
@@ -673,31 +603,6 @@ export function useMarsRedBankDepositMutation(
 ) {
   return useMutation<ExecuteResult, Error, MarsRedBankDepositMutation>(
     ({ client, msg, args: { fee, memo, funds } = {} }) => client.deposit(msg, fee, memo, funds),
-    options,
-  )
-}
-export interface MarsRedBankUpdateUncollateralizedLoanLimitMutation {
-  client: MarsRedBankClient
-  msg: {
-    denom: string
-    newLimit: Uint128
-    user: string
-  }
-  args?: {
-    fee?: number | StdFee | 'auto'
-    memo?: string
-    funds?: Coin[]
-  }
-}
-export function useMarsRedBankUpdateUncollateralizedLoanLimitMutation(
-  options?: Omit<
-    UseMutationOptions<ExecuteResult, Error, MarsRedBankUpdateUncollateralizedLoanLimitMutation>,
-    'mutationFn'
-  >,
-) {
-  return useMutation<ExecuteResult, Error, MarsRedBankUpdateUncollateralizedLoanLimitMutation>(
-    ({ client, msg, args: { fee, memo, funds } = {} }) =>
-      client.updateUncollateralizedLoanLimit(msg, fee, memo, funds),
     options,
   )
 }
