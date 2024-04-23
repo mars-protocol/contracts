@@ -11,12 +11,14 @@ export type ExecuteMsg =
       provide_liquidity: {
         lp_token_out: string
         minimum_receive: Uint128
+        params?: ZapperParams | null
         recipient?: string | null
       }
     }
   | {
       withdraw_liquidity: {
         minimum_receive: Coin[]
+        params?: ZapperParams | null
         recipient?: string | null
       }
     }
@@ -24,6 +26,9 @@ export type ExecuteMsg =
       callback: CallbackMsg
     }
 export type Uint128 = string
+export type ZapperParams = {
+  astro: AstroParams
+}
 export type CallbackMsg = {
   return_coin: {
     balance_before: Coin
@@ -31,6 +36,9 @@ export type CallbackMsg = {
   }
 }
 export type Addr = string
+export interface AstroParams {
+  pair_addr: string
+}
 export interface Coin {
   amount: Uint128
   denom: string
@@ -41,11 +49,13 @@ export type QueryMsg =
       estimate_provide_liquidity: {
         coins_in: Coin[]
         lp_token_out: string
+        params?: ZapperParams | null
       }
     }
   | {
       estimate_withdraw_liquidity: {
         coin_in: Coin
+        params?: ZapperParams | null
       }
     }
 export type ArrayOfCoin = Coin[]

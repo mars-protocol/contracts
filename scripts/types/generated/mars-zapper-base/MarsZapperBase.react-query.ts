@@ -12,8 +12,10 @@ import {
   InstantiateMsg,
   ExecuteMsg,
   Uint128,
+  ZapperParams,
   CallbackMsg,
   Addr,
+  AstroParams,
   Coin,
   QueryMsg,
   ArrayOfCoin,
@@ -60,6 +62,7 @@ export interface MarsZapperBaseEstimateWithdrawLiquidityQuery<TData>
   extends MarsZapperBaseReactQuery<ArrayOfCoin, TData> {
   args: {
     coinIn: Coin
+    params?: ZapperParams
   }
 }
 export function useMarsZapperBaseEstimateWithdrawLiquidityQuery<TData = ArrayOfCoin>({
@@ -73,6 +76,7 @@ export function useMarsZapperBaseEstimateWithdrawLiquidityQuery<TData = ArrayOfC
       client
         ? client.estimateWithdrawLiquidity({
             coinIn: args.coinIn,
+            params: args.params,
           })
         : Promise.reject(new Error('Invalid client')),
     { ...options, enabled: !!client && (options?.enabled != undefined ? options.enabled : true) },
@@ -83,6 +87,7 @@ export interface MarsZapperBaseEstimateProvideLiquidityQuery<TData>
   args: {
     coinsIn: Coin[]
     lpTokenOut: string
+    params?: ZapperParams
   }
 }
 export function useMarsZapperBaseEstimateProvideLiquidityQuery<TData = Uint128>({
@@ -97,6 +102,7 @@ export function useMarsZapperBaseEstimateProvideLiquidityQuery<TData = Uint128>(
         ? client.estimateProvideLiquidity({
             coinsIn: args.coinsIn,
             lpTokenOut: args.lpTokenOut,
+            params: args.params,
           })
         : Promise.reject(new Error('Invalid client')),
     { ...options, enabled: !!client && (options?.enabled != undefined ? options.enabled : true) },
@@ -126,6 +132,7 @@ export interface MarsZapperBaseWithdrawLiquidityMutation {
   client: MarsZapperBaseClient
   msg: {
     minimumReceive: Coin[]
+    params?: ZapperParams
     recipient?: string
   }
   args?: {
@@ -151,6 +158,7 @@ export interface MarsZapperBaseProvideLiquidityMutation {
   msg: {
     lpTokenOut: string
     minimumReceive: Uint128
+    params?: ZapperParams
     recipient?: string
   }
   args?: {

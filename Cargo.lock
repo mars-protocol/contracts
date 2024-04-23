@@ -137,7 +137,9 @@ dependencies = [
 
 [[package]]
 name = "astroport"
-version = "4.0.0"
+version = "5.0.0-rc.1-tokenfactory"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "cdf6999cd2652543814f071f6e67c718ad4608607c90bc3bc89566b8a5985db3"
 dependencies = [
  "astroport-circular-buffer 0.2.0",
  "cosmos-sdk-proto 0.19.0",
@@ -167,10 +169,12 @@ dependencies = [
 [[package]]
 name = "astroport-circular-buffer"
 version = "0.2.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "31c7369d3c4126804f861620db2221c15b5fa7b7718f12180e265b087c933fb6"
 dependencies = [
  "cosmwasm-schema",
  "cosmwasm-std",
- "cw-storage-plus 1.2.0",
+ "cw-storage-plus 0.15.1",
  "thiserror",
 ]
 
@@ -2751,7 +2755,7 @@ dependencies = [
  "anyhow",
  "apollo-cw-asset",
  "apollo-utils",
- "astroport 4.0.0",
+ "astroport 5.0.0-rc.1-tokenfactory",
  "cosmwasm-std",
  "cw-dex",
  "cw-it",

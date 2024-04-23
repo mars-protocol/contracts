@@ -17,11 +17,11 @@ use mars_zapper_base::LpPool;
 
 impl LpPool for AstroportLpPool {
     fn get_pool_for_lp_token(
-        deps: Deps,
+        _deps: Deps,
         _lp_token_denom: &str,
         params: Option<ZapperParams>,
     ) -> Result<Box<dyn Pool>, CwDexError> {
-        let Some(ZapperParams::Astro(astro_params)) = params else {
+        let Some(ZapperParams::Astro(_astro_params)) = params else {
             return Err(CwDexError::Std(StdError::generic_err("Missing astro zapper params")));
         };
         // TODO: astro different Pool types, uncomment once we have the same version of astroport here and in apollo
@@ -77,8 +77,6 @@ impl AstroportLpPool {
     /// Arguments:
     /// - `lp_token`: Said LP token
     /// - `pair_addr`: The address of the pair contract associated with the pool
-    /// - `astroport_liquidity_manager`: The Astroport liquidity manager
-    ///   address.
     pub fn get_pool_for_lp_token(
         deps: Deps,
         lp_token: &AstroAssetInfo,
@@ -272,7 +270,7 @@ fn from_astro_to_apollo_assets(assets: &Vec<AstroAsset>) -> AssetList {
     asset_list
 }
 
-fn from_astro_to_apollo_assets_info(assets: &Vec<AstroAssetInfo>) -> Vec<AssetInfo> {
+fn from_astro_to_apollo_assets_info(assets: &[AstroAssetInfo]) -> Vec<AssetInfo> {
     assets.iter().map(|a| from_astro_to_apollo_asset_info(a.clone())).collect()
 }
 
