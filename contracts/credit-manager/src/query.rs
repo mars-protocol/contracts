@@ -65,6 +65,7 @@ pub fn query_config(deps: Deps) -> ContractResult<ConfigResponse> {
 pub fn query_positions(deps: Deps, account_id: &str) -> ContractResult<Positions> {
     Ok(Positions {
         account_id: account_id.to_string(),
+        account_kind: ACCOUNT_KINDS.load(deps.storage, account_id)?,
         deposits: query_coin_balances(deps, account_id)?,
         debts: query_debt_amounts(deps, account_id)?,
         lends: RED_BANK.load(deps.storage)?.query_all_lent(&deps.querier, account_id)?,

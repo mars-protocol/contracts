@@ -325,6 +325,7 @@
       "type": "object",
       "required": [
         "account_id",
+        "account_kind",
         "debts",
         "deposits",
         "lends",
@@ -333,6 +334,9 @@
       "properties": {
         "account_id": {
           "type": "string"
+        },
+        "account_kind": {
+          "$ref": "#/definitions/AccountKind"
         },
         "debts": {
           "type": "array",

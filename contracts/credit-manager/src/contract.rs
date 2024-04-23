@@ -131,8 +131,9 @@ pub fn query(deps: Deps, env: Env, msg: QueryMsg) -> ContractResult<Binary> {
 
 #[cfg_attr(not(feature = "library"), entry_point)]
 pub fn migrate(deps: DepsMut, env: Env, msg: MigrateMsg) -> ContractResult<Response> {
-    match msg {
-        MigrateMsg::V1_0_0ToV2_0_0(updates) => migrations::v2_0_0::migrate(deps, env, updates),
-        MigrateMsg::V2_0_2ToV2_0_3 {} => migrations::v2_0_3::migrate(deps),
-    }
+    Ok(Response::default())
+    // match msg {
+    //     MigrateMsg::V1_0_0ToV2_0_0(updates) => migrations::v2_0_0::migrate(deps, env, updates),
+    //     MigrateMsg::V2_0_2ToV2_0_3 {} => migrations::v2_0_3::migrate(deps),
+    // }
 }
