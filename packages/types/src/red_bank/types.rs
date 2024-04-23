@@ -1,7 +1,8 @@
 use cosmwasm_schema::cw_serde;
 use cosmwasm_std::{Decimal, Uint128};
+use cw_paginate::PaginationResponse;
 
-use crate::{red_bank::Market};
+use crate::red_bank::Market;
 
 /// Global configuration
 #[cw_serde]

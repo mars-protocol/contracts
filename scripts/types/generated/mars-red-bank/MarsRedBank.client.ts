@@ -20,15 +20,15 @@ import {
   QueryMsg,
   ConfigResponse,
   Market,
-  MarketResponse,
+  MarketV2Response,
   ArrayOfMarket,
-  ArrayOfMarketResponse,
+  PaginationResponseForMarketV2Response,
+  Metadata,
   UncollateralizedLoanLimitResponse,
   ArrayOfUncollateralizedLoanLimitResponse,
   UserCollateralResponse,
   ArrayOfUserCollateralResponse,
   PaginationResponseForUserCollateralResponse,
-  Metadata,
   UserDebtResponse,
   ArrayOfUserDebtResponse,
   UserHealthStatus,
@@ -38,7 +38,7 @@ export interface MarsRedBankReadOnlyInterface {
   contractAddress: string
   config: () => Promise<ConfigResponse>
   market: ({ denom }: { denom: string }) => Promise<Market>
-  marketV2: ({ denom }: { denom: string }) => Promise<MarketResponse>
+  marketV2: ({ denom }: { denom: string }) => Promise<MarketV2Response>
   markets: ({
     limit,
     startAfter,
@@ -52,7 +52,7 @@ export interface MarsRedBankReadOnlyInterface {
   }: {
     limit?: number
     startAfter?: string
-  }) => Promise<ArrayOfMarketResponse>
+  }) => Promise<PaginationResponseForMarketV2Response>
   uncollateralizedLoanLimit: ({
     denom,
     user,
@@ -180,7 +180,7 @@ export class MarsRedBankQueryClient implements MarsRedBankReadOnlyInterface {
       },
     })
   }
-  marketV2 = async ({ denom }: { denom: string }): Promise<MarketResponse> => {
+  marketV2 = async ({ denom }: { denom: string }): Promise<MarketV2Response> => {
     return this.client.queryContractSmart(this.contractAddress, {
       market_v2: {
         denom,
@@ -207,7 +207,7 @@ export class MarsRedBankQueryClient implements MarsRedBankReadOnlyInterface {
   }: {
     limit?: number
     startAfter?: string
-  }): Promise<ArrayOfMarketResponse> => {
+  }): Promise<PaginationResponseForMarketV2Response> => {
     return this.client.queryContractSmart(this.contractAddress, {
       markets_v2: {
         limit,

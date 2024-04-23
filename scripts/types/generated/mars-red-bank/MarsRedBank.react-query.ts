@@ -21,15 +21,15 @@ import {
   QueryMsg,
   ConfigResponse,
   Market,
-  MarketResponse,
+  MarketV2Response,
   ArrayOfMarket,
-  ArrayOfMarketResponse,
+  PaginationResponseForMarketV2Response,
+  Metadata,
   UncollateralizedLoanLimitResponse,
   ArrayOfUncollateralizedLoanLimitResponse,
   UserCollateralResponse,
   ArrayOfUserCollateralResponse,
   PaginationResponseForUserCollateralResponse,
-  Metadata,
   UserDebtResponse,
   ArrayOfUserDebtResponse,
   UserHealthStatus,
@@ -469,18 +469,18 @@ export function useMarsRedBankUncollateralizedLoanLimitQuery<
   )
 }
 export interface MarsRedBankMarketsV2Query<TData>
-  extends MarsRedBankReactQuery<ArrayOfMarketResponse, TData> {
+  extends MarsRedBankReactQuery<PaginationResponseForMarketV2Response, TData> {
   args: {
     limit?: number
     startAfter?: string
   }
 }
-export function useMarsRedBankMarketsV2Query<TData = ArrayOfMarketResponse>({
+export function useMarsRedBankMarketsV2Query<TData = PaginationResponseForMarketV2Response>({
   client,
   args,
   options,
 }: MarsRedBankMarketsV2Query<TData>) {
-  return useQuery<ArrayOfMarketResponse, Error, TData>(
+  return useQuery<PaginationResponseForMarketV2Response, Error, TData>(
     marsRedBankQueryKeys.marketsV2(client?.contractAddress, args),
     () =>
       client
@@ -517,17 +517,17 @@ export function useMarsRedBankMarketsQuery<TData = ArrayOfMarket>({
   )
 }
 export interface MarsRedBankMarketV2Query<TData>
-  extends MarsRedBankReactQuery<MarketResponse, TData> {
+  extends MarsRedBankReactQuery<MarketV2Response, TData> {
   args: {
     denom: string
   }
 }
-export function useMarsRedBankMarketV2Query<TData = MarketResponse>({
+export function useMarsRedBankMarketV2Query<TData = MarketV2Response>({
   client,
   args,
   options,
 }: MarsRedBankMarketV2Query<TData>) {
-  return useQuery<MarketResponse, Error, TData>(
+  return useQuery<MarketV2Response, Error, TData>(
     marsRedBankQueryKeys.marketV2(client?.contractAddress, args),
     () =>
       client

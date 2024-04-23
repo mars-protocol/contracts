@@ -247,12 +247,11 @@ export interface Market {
   liquidity_rate: Decimal
   reserve_factor: Decimal
 }
-export interface MarketResponse {
+export interface MarketV2Response {
   borrow_index: Decimal
   borrow_rate: Decimal
   collateral_total_scaled: Uint128
   collateral_underlying_amount: Uint128
-  collateralization_rate: Decimal
   debt_total_scaled: Uint128
   debt_underlying_amount: Uint128
   denom: string
@@ -261,9 +260,16 @@ export interface MarketResponse {
   liquidity_index: Decimal
   liquidity_rate: Decimal
   reserve_factor: Decimal
+  utilization_rate: Decimal
 }
 export type ArrayOfMarket = Market[]
-export type ArrayOfMarketResponse = MarketResponse[]
+export interface PaginationResponseForMarketV2Response {
+  data: MarketV2Response[]
+  metadata: Metadata
+}
+export interface Metadata {
+  has_more: boolean
+}
 export interface UncollateralizedLoanLimitResponse {
   denom: string
   limit: Uint128
@@ -279,9 +285,6 @@ export type ArrayOfUserCollateralResponse = UserCollateralResponse[]
 export interface PaginationResponseForUserCollateralResponse {
   data: UserCollateralResponse[]
   metadata: Metadata
-}
-export interface Metadata {
-  has_more: boolean
 }
 export interface UserDebtResponse {
   amount: Uint128

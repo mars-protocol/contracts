@@ -1328,14 +1328,13 @@
     },
     "market_v2": {
       "$schema": "http://json-schema.org/draft-07/schema#",
-      "title": "MarketResponse",
+      "title": "MarketV2Response",
       "type": "object",
       "required": [
         "borrow_index",
         "borrow_rate",
         "collateral_total_scaled",
         "collateral_underlying_amount",
-        "collateralization_rate",
         "debt_total_scaled",
         "debt_underlying_amount",
         "denom",
@@ -1343,7 +1342,8 @@
         "interest_rate_model",
         "liquidity_index",
         "liquidity_rate",
-        "reserve_factor"
+        "reserve_factor",
+        "utilization_rate"
       ],
       "properties": {
         "borrow_index": {
@@ -1372,9 +1372,6 @@
         },
         "collateral_underlying_amount": {
           "$ref": "#/definitions/Uint128"
-        },
-        "collateralization_rate": {
-          "$ref": "#/definitions/Decimal"
         },
         "debt_total_scaled": {
           "description": "Total debt scaled for the market's currency",
@@ -1428,6 +1425,9 @@
               "$ref": "#/definitions/Decimal"
             }
           ]
+        },
+        "utilization_rate": {
+          "$ref": "#/definitions/Decimal"
         }
       },
       "additionalProperties": false,
@@ -1642,11 +1642,24 @@
     },
     "markets_v2": {
       "$schema": "http://json-schema.org/draft-07/schema#",
-      "title": "Array_of_MarketResponse",
-      "type": "array",
-      "items": {
-        "$ref": "#/definitions/MarketResponse"
+      "title": "PaginationResponse_for_MarketV2Response",
+      "type": "object",
+      "required": [
+        "data",
+        "metadata"
+      ],
+      "properties": {
+        "data": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/MarketV2Response"
+          }
+        },
+        "metadata": {
+          "$ref": "#/definitions/Metadata"
+        }
       },
+      "additionalProperties": false,
       "definitions": {
         "Decimal": {
           "description": "A fixed-point decimal value with 18 fractional digits, i.e. Decimal(1_000_000_000_000_000_000) == 1.0\n\nThe greatest possible value that can be represented is 340282366920938463463.374607431768211455 (which is (2^128 - 1) / 10^18)",
@@ -1696,14 +1709,13 @@
           },
           "additionalProperties": false
         },
-        "MarketResponse": {
+        "MarketV2Response": {
           "type": "object",
           "required": [
             "borrow_index",
             "borrow_rate",
             "collateral_total_scaled",
             "collateral_underlying_amount",
-            "collateralization_rate",
             "debt_total_scaled",
             "debt_underlying_amount",
             "denom",
@@ -1711,7 +1723,8 @@
             "interest_rate_model",
             "liquidity_index",
             "liquidity_rate",
-            "reserve_factor"
+            "reserve_factor",
+            "utilization_rate"
           ],
           "properties": {
             "borrow_index": {
@@ -1740,9 +1753,6 @@
             },
             "collateral_underlying_amount": {
               "$ref": "#/definitions/Uint128"
-            },
-            "collateralization_rate": {
-              "$ref": "#/definitions/Decimal"
             },
             "debt_total_scaled": {
               "description": "Total debt scaled for the market's currency",
@@ -1796,6 +1806,21 @@
                   "$ref": "#/definitions/Decimal"
                 }
               ]
+            },
+            "utilization_rate": {
+              "$ref": "#/definitions/Decimal"
+            }
+          },
+          "additionalProperties": false
+        },
+        "Metadata": {
+          "type": "object",
+          "required": [
+            "has_more"
+          ],
+          "properties": {
+            "has_more": {
+              "type": "boolean"
             }
           },
           "additionalProperties": false

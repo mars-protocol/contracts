@@ -1,7 +1,5 @@
-use cosmwasm_std::{Addr, BlockInfo, Deps, Env, Order, StdResult, Uint128};
-use cw_paginate::paginate_prefix_query;
 use cosmwasm_std::{Addr, BlockInfo, Decimal, Deps, Env, Order, StdResult, Uint128};
-use cw_paginate::{paginate_map_query, Metadata, PaginationResponse};
+use cw_paginate::{paginate_map_query, paginate_prefix_query, PaginationResponse};
 use cw_storage_plus::Bound;
 use mars_interest_rate::{
     get_scaled_debt_amount, get_scaled_liquidity_amount, get_underlying_debt_amount,
