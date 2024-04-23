@@ -269,9 +269,10 @@ pub fn random_health_computer() -> impl Strategy<Value = HealthComputer> {
             random_vault_positions(vaults_data.clone()),
         )
             .prop_map(move |(kind, deposits, debts, lends, vaults)| HealthComputer {
-                kind,
+                kind: kind.clone(),
                 positions: Positions {
                     account_id: "123".to_string(),
+                    kind,
                     deposits,
                     debts,
                     lends,

@@ -1,7 +1,10 @@
 use cosmwasm_std::{coin, coins, Addr, Uint128};
 use cw_multi_test::{BankSudo, SudoMsg};
 use mars_credit_manager::error::ContractError;
-use mars_types::credit_manager::{Action::Deposit, CallbackMsg, ChangeExpected};
+use mars_types::{
+    credit_manager::{Action::Deposit, CallbackMsg, ChangeExpected},
+    health::AccountKind,
+};
 
 use super::helpers::{assert_err, uosmo_info, AccountToFund, MockEnv};
 
@@ -153,6 +156,7 @@ fn user_gets_rebalanced_down() {
 
     let position = mock.query_positions(&account_id);
     assert_eq!(position.deposits.len(), 1);
+    assert_eq!(position.kind, AccountKind::Default);
     assert_eq!(position.deposits.first().unwrap().denom, osmo_info.denom);
     assert_eq!(position.deposits.first().unwrap().amount.u128(), 100);
 }

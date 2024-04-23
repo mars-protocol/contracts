@@ -35,6 +35,7 @@ fn missing_borrow_denom_price_data() {
         kind: AccountKind::Default,
         positions: Positions {
             account_id: "123".to_string(),
+            kind: AccountKind::Default,
             deposits: vec![coin(1200, &umars.denom), coin(33, &udai.denom)],
             debts: vec![
                 DebtAmount {
@@ -82,6 +83,7 @@ fn missing_borrow_denom_params() {
         kind: AccountKind::Default,
         positions: Positions {
             account_id: "123".to_string(),
+            kind: AccountKind::Default,
             deposits: vec![coin(1200, &umars.denom), coin(33, &udai.denom)],
             debts: vec![
                 DebtAmount {
@@ -132,6 +134,7 @@ fn cannot_borrow_when_unhealthy() {
         kind: AccountKind::Default,
         positions: Positions {
             account_id: "123".to_string(),
+            kind: AccountKind::Default,
             deposits: vec![coin(1200, &umars.denom), coin(33, &udai.denom)],
             debts: vec![
                 DebtAmount {
@@ -212,6 +215,7 @@ fn hls_influences_max_borrow() {
         kind: AccountKind::Default,
         positions: Positions {
             account_id: "123".to_string(),
+            kind: AccountKind::Default,
             deposits: vec![coin(1200, &ustars.denom)],
             debts: vec![
                 DebtAmount {

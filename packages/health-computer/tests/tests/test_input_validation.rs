@@ -35,6 +35,7 @@ fn missing_price_data() {
         kind: AccountKind::Default,
         positions: Positions {
             account_id: "123".to_string(),
+            kind: AccountKind::Default,
             deposits: vec![coin(1200, &umars.denom), coin(33, &udai.denom)],
             debts: vec![
                 DebtAmount {
@@ -81,6 +82,7 @@ fn missing_params() {
         kind: AccountKind::Default,
         positions: Positions {
             account_id: "123".to_string(),
+            kind: AccountKind::Default,
             deposits: vec![coin(1200, &umars.denom), coin(33, &udai.denom)],
             debts: vec![
                 DebtAmount {
@@ -147,6 +149,7 @@ fn missing_market_data_for_vault_base_token() {
         kind: AccountKind::Default,
         positions: Positions {
             account_id: "123".to_string(),
+            kind: AccountKind::Default,
             deposits: vec![],
             debts: vec![],
             lends: vec![],
@@ -191,6 +194,7 @@ fn missing_vault_value() {
         kind: AccountKind::Default,
         positions: Positions {
             account_id: "123".to_string(),
+            kind: AccountKind::Default,
             deposits: vec![],
             debts: vec![],
             lends: vec![],
@@ -239,6 +243,7 @@ fn missing_vault_config() {
         kind: AccountKind::Default,
         positions: Positions {
             account_id: "123".to_string(),
+            kind: AccountKind::Default,
             deposits: vec![],
             debts: vec![],
             lends: vec![],
@@ -273,6 +278,7 @@ fn missing_hls_params() {
         kind: AccountKind::HighLeveredStrategy,
         positions: Positions {
             account_id: "123".to_string(),
+            kind: AccountKind::HighLeveredStrategy,
             deposits: vec![coin(1200, &umars.denom)],
             debts: vec![DebtAmount {
                 denom: umars.denom.clone(),

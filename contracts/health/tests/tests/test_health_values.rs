@@ -52,6 +52,7 @@ fn computes_correct_position_with_zero_assets() {
         account_id,
         &Positions {
             account_id: account_id.to_string(),
+            kind: AccountKind::Default,
             deposits: vec![],
             debts: vec![],
             lends: vec![],
@@ -85,6 +86,7 @@ fn adds_vault_base_denoms_to_oracle_and_red_bank() {
         account_id,
         &Positions {
             account_id: account_id.to_string(),
+            kind: AccountKind::Default,
             deposits: vec![],
             debts: vec![],
             lends: vec![],
@@ -208,6 +210,7 @@ fn whitelisted_coins_work() {
         account_id,
         &Positions {
             account_id: account_id.to_string(),
+            kind: AccountKind::Default,
             deposits: vec![Coin {
                 denom: umars.to_string(),
                 amount: deposit_amount,
@@ -264,6 +267,7 @@ fn vault_whitelist_affects_max_ltv() {
         account_id,
         &Positions {
             account_id: account_id.to_string(),
+            kind: AccountKind::Default,
             deposits: vec![],
             debts: vec![],
             lends: vec![],

@@ -35,6 +35,7 @@ fn missing_price_data() {
         kind: AccountKind::Default,
         positions: Positions {
             account_id: "123".to_string(),
+            kind: AccountKind::Default,
             deposits: vec![coin(1200, &umars.denom), coin(33, &udai.denom)],
             debts: vec![
                 DebtAmount {
@@ -81,6 +82,7 @@ fn missing_params() {
         kind: AccountKind::Default,
         positions: Positions {
             account_id: "123".to_string(),
+            kind: AccountKind::Default,
             deposits: vec![coin(1200, &umars.denom), coin(33, &udai.denom)],
             debts: vec![
                 DebtAmount {
@@ -121,6 +123,7 @@ fn deposit_not_present() {
         kind: AccountKind::Default,
         positions: Positions {
             account_id: "123".to_string(),
+            kind: AccountKind::Default,
             deposits: vec![],
             debts: vec![],
             lends: vec![],
@@ -163,6 +166,7 @@ fn blacklisted_assets_should_be_able_be_fully_withdrawn() {
         kind: AccountKind::Default,
         positions: Positions {
             account_id: "123".to_string(),
+            kind: AccountKind::Default,
             deposits: vec![coin(total_deposit.u128(), &umars.denom), coin(33, &udai.denom)],
             debts: vec![
                 DebtAmount {
@@ -216,6 +220,7 @@ fn zero_when_unhealthy() {
         kind: AccountKind::Default,
         positions: Positions {
             account_id: "123".to_string(),
+            kind: AccountKind::Default,
             deposits: vec![coin(1200, &umars.denom), coin(33, &udai.denom)],
             debts: vec![
                 DebtAmount {
@@ -261,6 +266,7 @@ fn no_debts() {
         kind: AccountKind::Default,
         positions: Positions {
             account_id: "123".to_string(),
+            kind: AccountKind::Default,
             deposits: vec![coin(deposit_amount.u128(), &ustars.denom)],
             debts: vec![],
             lends: vec![],
@@ -300,6 +306,7 @@ fn should_allow_max_withdraw() {
         kind: AccountKind::Default,
         positions: Positions {
             account_id: "123".to_string(),
+            kind: AccountKind::Default,
             deposits: vec![coin(1200, &umars.denom), coin(deposit_amount.u128(), &udai.denom)],
             debts: vec![DebtAmount {
                 denom: udai.denom.clone(),
@@ -373,6 +380,7 @@ fn hls_with_max_withdraw() {
         kind: AccountKind::Default,
         positions: Positions {
             account_id: "123".to_string(),
+            kind: AccountKind::Default,
             deposits: vec![coin(1200, &ustars.denom)],
             debts: vec![
                 DebtAmount {

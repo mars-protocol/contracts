@@ -32,6 +32,7 @@ fn hls_deposit() {
         kind: AccountKind::HighLeveredStrategy,
         positions: Positions {
             account_id: "123".to_string(),
+            kind: AccountKind::HighLeveredStrategy,
             deposits: vec![Coin {
                 denom: ustars.denom.clone(),
                 amount: deposit_amount,
@@ -121,6 +122,7 @@ fn hls_vault() {
         kind: AccountKind::HighLeveredStrategy,
         positions: Positions {
             account_id: "123".to_string(),
+            kind: AccountKind::HighLeveredStrategy,
             deposits: vec![coin(1200, &ustars.denom)],
             debts: vec![
                 DebtAmount {
@@ -181,6 +183,7 @@ fn hls_on_blacklisted_asset() {
         kind: AccountKind::HighLeveredStrategy,
         positions: Positions {
             account_id: "123".to_string(),
+            kind: AccountKind::HighLeveredStrategy,
             deposits: vec![Coin {
                 denom: ustars.denom.clone(),
                 amount: deposit_amount,
@@ -265,6 +268,7 @@ fn hls_on_blacklisted_vault() {
         kind: AccountKind::HighLeveredStrategy,
         positions: Positions {
             account_id: "123".to_string(),
+            kind: AccountKind::HighLeveredStrategy,
             deposits: vec![coin(1200, &ustars.denom)],
             debts: vec![
                 DebtAmount {
