@@ -21,7 +21,8 @@ pub enum ExecuteMsg {
     CreateCreditAccount(AccountKind),
     /// Update user's position on their credit account
     UpdateCreditAccount {
-        account_id: String,
+        account_id: Option<String>,
+        account_kind: Option<AccountKind>,
         actions: Vec<Action>,
     },
     /// Repay debt on behalf of an account, funded from wallet. Must send exactly one coin in message funds.

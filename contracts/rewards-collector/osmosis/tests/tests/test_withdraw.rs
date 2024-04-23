@@ -121,7 +121,8 @@ fn withdrawing_from_cm_successfully() {
         SubMsg::new(CosmosMsg::Wasm(WasmMsg::Execute {
             contract_addr: "credit_manager".to_string(),
             msg: to_json_binary(&credit_manager::ExecuteMsg::UpdateCreditAccount {
-                account_id,
+                account_id: Some(account_id),
+                account_kind: None,
                 actions
             })
             .unwrap(),
