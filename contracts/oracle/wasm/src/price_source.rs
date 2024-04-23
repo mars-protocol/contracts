@@ -671,10 +671,6 @@ fn query_lsd_price(
     min_price.checked_mul(transitive_price).map_err(Into::into)
 }
 
-/// The calculation of the value of liquidity token, see: https://blog.alphafinance.io/fair-lp-token-pricing/.
-/// This formulation avoids a potential sandwich attack that distorts asset prices by a flashloan.
-///
-/// NOTE: Price sources must exist for both assets in the pool.
 fn query_xyk_liquidity_token_price(
     deps: &Deps,
     env: &Env,
