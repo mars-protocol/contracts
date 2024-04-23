@@ -694,7 +694,7 @@ fn repay_on_behalf_of_credit_manager() {
         on_behalf_of: Some(another_user_addr.to_string()),
     };
     let error_res = execute(deps.as_mut(), env, info, msg).unwrap_err();
-    assert_eq!(error_res, ContractError::Mars(mars_types::error::MarsError::Unauthorized {}));
+    assert_eq!(error_res, ContractError::CannotRepayOnBehalfOfCreditManager {});
 }
 
 #[test]

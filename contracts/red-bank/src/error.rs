@@ -148,4 +148,10 @@ pub enum ContractError {
 
     #[error("{0}")]
     Guard(#[from] GuardError),
+
+    #[error("Cannot repay on behalf of credit manager")]
+    CannotRepayOnBehalfOfCreditManager {},
+
+    #[error("Cannot liquidate credit manager (use credit-manager contract liquidate function)")]
+    CannotLiquidateCreditManager {},
 }

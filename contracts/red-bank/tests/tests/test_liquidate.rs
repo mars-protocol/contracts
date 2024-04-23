@@ -64,7 +64,7 @@ fn cannot_liquidate_credit_manager() {
         "ujake",
         &[coin(1000, "uusdc")],
     );
-    assert_err(error_res, ContractError::Mars(mars_types::error::MarsError::Unauthorized {}));
+    assert_err(error_res, ContractError::CannotLiquidateCreditManager {});
 }
 
 #[test]

@@ -6,7 +6,6 @@ use mars_interest_rate::{
 use mars_liquidation::liquidation::calculate_liquidation_amounts;
 use mars_types::{
     address_provider::{self, MarsAddressType},
-    error::MarsError,
     keys::{UserId, UserIdKey},
 };
 use mars_utils::helpers::{build_send_asset_msg, option_string_to_addr};
@@ -67,7 +66,7 @@ pub fn liquidate(
 
     // Cannot liquidate credit manager users. They have own liquidation logic in credit-manager contract.
     if liquidatee_addr == credit_manager_addr {
-        return Err(ContractError::Mars(MarsError::Unauthorized {}));
+        return Err(ContractError::CannotLiquidateCreditManager {});
     };
 
     let user_id = UserId::credit_manager(liquidatee_addr.clone(), "".to_string());

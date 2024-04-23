@@ -1,9 +1,6 @@
 use cosmwasm_std::{Addr, DepsMut, Env, MessageInfo, Response, Uint128};
 use mars_interest_rate::{get_scaled_debt_amount, get_underlying_debt_amount};
-use mars_types::{
-    address_provider::{self, MarsAddressType},
-    error::MarsError,
-};
+use mars_types::address_provider::{self, MarsAddressType};
 use mars_utils::helpers::build_send_asset_msg;
 
 use crate::{
@@ -40,7 +37,7 @@ pub fn repay(
     let user = match on_behalf_of.as_ref() {
         // Cannot repay on behalf of credit-manager users. It creates accounting complexity for them.
         Some(address) if address == credit_manager_addr.as_str() => {
-            return Err(ContractError::Mars(MarsError::Unauthorized {}));
+            return Err(ContractError::CannotRepayOnBehalfOfCreditManager {});
         }
         Some(address) => {
             user_addr = deps.api.addr_validate(address)?;
