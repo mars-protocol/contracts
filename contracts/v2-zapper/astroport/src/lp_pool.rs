@@ -17,19 +17,17 @@ use mars_zapper_base::LpPool;
 
 impl LpPool for AstroportLpPool {
     fn get_pool_for_lp_token(
-        _deps: Deps,
+        deps: Deps,
         _lp_token_denom: &str,
         params: Option<ZapperParams>,
     ) -> Result<Box<dyn Pool>, CwDexError> {
-        let Some(ZapperParams::Astro(_astro_params)) = params else {
+        let Some(ZapperParams::Astro(astro_params)) = params else {
             return Err(CwDexError::Std(StdError::generic_err("Missing astro zapper params")));
         };
-        // TODO: astro different Pool types, uncomment once we have the same version of astroport here and in apollo
-        // Self::new(deps, deps.api.addr_validate(&astro_params.pair_addr)?).map(|p| {
-        //     let as_trait: Box<dyn Pool> = Box::new(p);
-        //     as_trait
-        // })
-        unimplemented!()
+        Ok(Self::new(deps, deps.api.addr_validate(&astro_params.pair_addr)?).map(|p| {
+            let as_trait: Box<dyn Pool> = Box::new(p);
+            as_trait
+        })?)
     }
 }
 
