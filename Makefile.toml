@@ -61,12 +61,12 @@ args = ["test", "--locked"]
 [tasks.unit-test]
 toolchain = "${RUST_VERSION}"
 command = "cargo"
-args = ["test", "--locked", "--workspace", "--exclude", "mars-integration-tests", "--exclude", "mars-swapper-astroport", "--exclude", "mars-oracle-wasm", "--exclude", "mars-swapper-osmosis"]
+args = ["test", "--locked", "--workspace", "--exclude", "mars-integration-tests", "--exclude", "mars-swapper-astroport", "--exclude", "mars-oracle-wasm", "--exclude", "mars-swapper-osmosis", "--exclude", "mars-zapper-osmosis"]
 
 [tasks.integration-test]
 toolchain = "${RUST_VERSION}"
 command = "cargo"
-args = ["test", "--locked", "-p", "mars-integration-tests", "-p", "mars-swapper-astroport", "-p", "mars-oracle-wasm", "-p", "mars-swapper-osmosis", "--test", "*"]
+args = ["test", "--locked", "-p", "mars-integration-tests", "-p", "mars-swapper-astroport", "-p", "mars-oracle-wasm", "-p", "mars-swapper-osmosis", "-p", "mars-zapper-osmosis", "--test", "*"]
 
 [tasks.fmt]
 toolchain = "nightly"
@@ -96,13 +96,13 @@ alias = "coverage-grcov-lcov"
 
 [tasks.all-actions]
 dependencies = [
-  "install-stable",
-  "install-nightly",
-  "fmt",
-  "clippy",
-  "build",
-  "test",
-  "audit",
-  "generate-all-schemas",
-  "rust-optimizer",
+    "install-stable",
+    "install-nightly",
+    "fmt",
+    "clippy",
+    "build",
+    "test",
+    "audit",
+    "generate-all-schemas",
+    "rust-optimizer",
 ]

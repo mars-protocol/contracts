@@ -144,10 +144,17 @@ pub fn query(deps: Deps, env: Env, msg: QueryMsg) -> Result<Binary, ContractErro
         QueryMsg::Market {
             denom,
         } => to_json_binary(&query::query_market(deps, denom)?),
+        QueryMsg::MarketV2 {
+            denom,
+        } => to_json_binary(&query::query_market_v2(deps, env, denom)?),
         QueryMsg::Markets {
             start_after,
             limit,
         } => to_json_binary(&query::query_markets(deps, start_after, limit)?),
+        QueryMsg::MarketsV2 {
+            start_after,
+            limit,
+        } => to_json_binary(&query::query_markets_v2(deps, env, start_after, limit)?),
         QueryMsg::UncollateralizedLoanLimit {
             user,
             denom,
