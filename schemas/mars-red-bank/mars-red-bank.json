@@ -1333,10 +1333,10 @@
       "required": [
         "borrow_index",
         "borrow_rate",
+        "collateral_total_amount",
         "collateral_total_scaled",
-        "collateral_underlying_amount",
+        "debt_total_amount",
         "debt_total_scaled",
-        "debt_underlying_amount",
         "denom",
         "indexes_last_updated",
         "interest_rate_model",
@@ -1362,6 +1362,9 @@
             }
           ]
         },
+        "collateral_total_amount": {
+          "$ref": "#/definitions/Uint128"
+        },
         "collateral_total_scaled": {
           "description": "Total collateral scaled for the market's currency",
           "allOf": [
@@ -1370,7 +1373,7 @@
             }
           ]
         },
-        "collateral_underlying_amount": {
+        "debt_total_amount": {
           "$ref": "#/definitions/Uint128"
         },
         "debt_total_scaled": {
@@ -1380,9 +1383,6 @@
               "$ref": "#/definitions/Uint128"
             }
           ]
-        },
-        "debt_underlying_amount": {
-          "$ref": "#/definitions/Uint128"
         },
         "denom": {
           "description": "Denom of the asset",
@@ -1714,10 +1714,10 @@
           "required": [
             "borrow_index",
             "borrow_rate",
+            "collateral_total_amount",
             "collateral_total_scaled",
-            "collateral_underlying_amount",
+            "debt_total_amount",
             "debt_total_scaled",
-            "debt_underlying_amount",
             "denom",
             "indexes_last_updated",
             "interest_rate_model",
@@ -1743,6 +1743,9 @@
                 }
               ]
             },
+            "collateral_total_amount": {
+              "$ref": "#/definitions/Uint128"
+            },
             "collateral_total_scaled": {
               "description": "Total collateral scaled for the market's currency",
               "allOf": [
@@ -1751,7 +1754,7 @@
                 }
               ]
             },
-            "collateral_underlying_amount": {
+            "debt_total_amount": {
               "$ref": "#/definitions/Uint128"
             },
             "debt_total_scaled": {
@@ -1761,9 +1764,6 @@
                   "$ref": "#/definitions/Uint128"
                 }
               ]
-            },
-            "debt_underlying_amount": {
-              "$ref": "#/definitions/Uint128"
             },
             "denom": {
               "description": "Denom of the asset",

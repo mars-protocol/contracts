@@ -250,10 +250,10 @@ export interface Market {
 export interface MarketV2Response {
   borrow_index: Decimal
   borrow_rate: Decimal
+  collateral_total_amount: Uint128
   collateral_total_scaled: Uint128
-  collateral_underlying_amount: Uint128
+  debt_total_amount: Uint128
   debt_total_scaled: Uint128
-  debt_underlying_amount: Uint128
   denom: string
   indexes_last_updated: number
   interest_rate_model: InterestRateModel
