@@ -8,7 +8,7 @@ use crate::{
     state::OWNER,
 };
 
-const FROM_VERSION: &str = "1.0.0";
+const FROM_VERSION: &str = "1.2.0";
 
 pub mod v1_state {
     use cosmwasm_schema::cw_serde;
