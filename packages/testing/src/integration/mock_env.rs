@@ -16,9 +16,8 @@ use mars_types::{
     },
     params::{AssetParams, AssetParamsUpdate},
     red_bank::{
-        self, CreateOrUpdateConfig, InitOrUpdateAssetParams, Market,
-        UncollateralizedLoanLimitResponse, UserCollateralResponse, UserDebtResponse,
-        UserPositionResponse,
+        self, CreateOrUpdateConfig, InitOrUpdateAssetParams, Market, UserCollateralResponse,
+        UserDebtResponse, UserPositionResponse,
     },
     rewards_collector,
 };
@@ -463,26 +462,6 @@ impl RedBank {
         )
     }
 
-    pub fn update_uncollateralized_loan_limit(
-        &self,
-        env: &mut MockEnv,
-        sender: &Addr,
-        user: &Addr,
-        denom: &str,
-        new_limit: Uint128,
-    ) -> AnyResult<AppResponse> {
-        env.app.execute_contract(
-            sender.clone(),
-            self.contract_addr.clone(),
-            &red_bank::ExecuteMsg::UpdateUncollateralizedLoanLimit {
-                user: user.to_string(),
-                denom: denom.to_string(),
-                new_limit,
-            },
-            &[],
-        )
-    }
-
     pub fn query_market(&self, env: &mut MockEnv, denom: &str) -> Market {
         env.app
             .wrap()
@@ -645,24 +624,6 @@ impl RedBank {
                 &red_bank::QueryMsg::ScaledDebtAmount {
                     denom: coin.denom,
                     amount: coin.amount,
-                },
-            )
-            .unwrap()
-    }
-
-    pub fn query_uncollateralized_loan_limit(
-        &self,
-        env: &mut MockEnv,
-        user: &Addr,
-        denom: &str,
-    ) -> UncollateralizedLoanLimitResponse {
-        env.app
-            .wrap()
-            .query_wasm_smart(
-                self.contract_addr.clone(),
-                &red_bank::QueryMsg::UncollateralizedLoanLimit {
-                    user: user.to_string(),
-                    denom: denom.to_string(),
                 },
             )
             .unwrap()

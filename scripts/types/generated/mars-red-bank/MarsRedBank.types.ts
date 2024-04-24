@@ -34,13 +34,6 @@ export type ExecuteMsg =
       }
     }
   | {
-      update_uncollateralized_loan_limit: {
-        denom: string
-        new_limit: Uint128
-        user: string
-      }
-    }
-  | {
       deposit: {
         account_id?: string | null
         on_behalf_of?: string | null
@@ -143,19 +136,6 @@ export type QueryMsg =
       markets_v2: {
         limit?: number | null
         start_after?: string | null
-      }
-    }
-  | {
-      uncollateralized_loan_limit: {
-        denom: string
-        user: string
-      }
-    }
-  | {
-      uncollateralized_loan_limits: {
-        limit?: number | null
-        start_after?: string | null
-        user: string
       }
     }
   | {
@@ -270,11 +250,6 @@ export interface PaginationResponseForMarketV2Response {
 export interface Metadata {
   has_more: boolean
 }
-export interface UncollateralizedLoanLimitResponse {
-  denom: string
-  limit: Uint128
-}
-export type ArrayOfUncollateralizedLoanLimitResponse = UncollateralizedLoanLimitResponse[]
 export interface UserCollateralResponse {
   amount: Uint128
   amount_scaled: Uint128

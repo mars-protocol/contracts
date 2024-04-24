@@ -9,10 +9,11 @@ use mars_interest_rate::{
 use mars_red_bank::{
     contract::execute,
     error::ContractError,
-    state::{DEBTS, MARKETS, UNCOLLATERALIZED_LOAN_LIMITS},
+    state::{DEBTS, MARKETS},
 };
 use mars_testing::{mock_env, mock_env_at_block_time, MockEnvParams};
 use mars_types::{
+    address_provider::MarsAddressType,
     params::{AssetParams, CmSettings, RedBankSettings},
     red_bank::{ExecuteMsg, Market},
 };
@@ -681,15 +682,11 @@ fn repay_with_refund_on_behalf_of() {
 }
 
 #[test]
-fn repay_uncollateralized_loan_on_behalf_of() {
+fn repay_on_behalf_of_credit_manager() {
     let mut deps = th_setup(&[]);
 
     let repayer_addr = Addr::unchecked("repayer");
-    let another_user_addr = Addr::unchecked("another_user");
-
-    UNCOLLATERALIZED_LOAN_LIMITS
-        .save(deps.as_mut().storage, (&another_user_addr, "somecoin"), &Uint128::new(1000u128))
-        .unwrap();
+    let another_user_addr = Addr::unchecked(MarsAddressType::CreditManager.to_string());
 
     let env = mock_env(MockEnvParams::default());
     let info = cosmwasm_std::testing::mock_info(repayer_addr.as_str(), &[coin(110000, "somecoin")]);
@@ -697,7 +694,7 @@ fn repay_uncollateralized_loan_on_behalf_of() {
         on_behalf_of: Some(another_user_addr.to_string()),
     };
     let error_res = execute(deps.as_mut(), env, info, msg).unwrap_err();
-    assert_eq!(error_res, ContractError::CannotRepayUncollateralizedLoanOnBehalfOf {});
+    assert_eq!(error_res, ContractError::CannotRepayOnBehalfOfCreditManager {});
 }
 
 #[test]

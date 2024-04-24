@@ -10,15 +10,15 @@ use mars_types::{
     keys::{UserId, UserIdKey},
     red_bank::{
         Collateral, ConfigResponse, Debt, Market, MarketV2Response,
-        PaginatedUserCollateralResponse, UncollateralizedLoanLimitResponse, UserCollateralResponse,
-        UserDebtResponse, UserHealthStatus, UserPositionResponse,
+        PaginatedUserCollateralResponse, UserCollateralResponse, UserDebtResponse,
+        UserHealthStatus, UserPositionResponse,
     },
 };
 
 use crate::{
     error::ContractError,
     health,
-    state::{COLLATERALS, CONFIG, DEBTS, MARKETS, OWNER, UNCOLLATERALIZED_LOAN_LIMITS},
+    state::{COLLATERALS, CONFIG, DEBTS, MARKETS, OWNER},
 };
 
 const DEFAULT_LIMIT: u32 = 10;
@@ -109,41 +109,6 @@ pub fn query_markets_v2(
             market,
         })
     })
-}
-
-pub fn query_uncollateralized_loan_limit(
-    deps: Deps,
-    user_addr: Addr,
-    denom: String,
-) -> StdResult<UncollateralizedLoanLimitResponse> {
-    let limit = UNCOLLATERALIZED_LOAN_LIMITS.may_load(deps.storage, (&user_addr, &denom))?;
-    Ok(UncollateralizedLoanLimitResponse {
-        denom,
-        limit: limit.unwrap_or_else(Uint128::zero),
-    })
-}
-
-pub fn query_uncollateralized_loan_limits(
-    deps: Deps,
-    user_addr: Addr,
-    start_after: Option<String>,
-    limit: Option<u32>,
-) -> StdResult<Vec<UncollateralizedLoanLimitResponse>> {
-    let start = start_after.map(|denom| Bound::ExclusiveRaw(denom.into_bytes()));
-    let limit = limit.unwrap_or(DEFAULT_LIMIT).min(MAX_LIMIT) as usize;
-
-    UNCOLLATERALIZED_LOAN_LIMITS
-        .prefix(&user_addr)
-        .range(deps.storage, start, None, Order::Ascending)
-        .take(limit)
-        .map(|item| {
-            let (denom, limit) = item?;
-            Ok(UncollateralizedLoanLimitResponse {
-                denom,
-                limit,
-            })
-        })
-        .collect()
 }
 
 pub fn query_user_debt(

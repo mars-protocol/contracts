@@ -89,9 +89,6 @@ pub enum ContractError {
     #[error("Borrow amount exceeds maximum allowed given current collateral value")]
     BorrowAmountExceedsGivenCollateral {},
 
-    #[error("Borrow amount exceeds uncollateralized loan limit given existing debt")]
-    BorrowAmountExceedsUncollateralizedLoanLimit {},
-
     #[error("Cannot repay 0 debt")]
     CannotRepayZeroDebt {},
 
@@ -100,9 +97,6 @@ pub enum ContractError {
 
     #[error("User cannot issue liquidation of own account")]
     CannotLiquidateSelf {},
-
-    #[error("User has a positive uncollateralized loan limit and thus cannot be liquidated")]
-    CannotLiquidateWhenPositiveUncollateralizedLoanLimit {},
 
     #[error("User can't be liquidated for asset {denom:?} not being used as collateral")]
     CannotLiquidateWhenCollateralUnset {
@@ -149,18 +143,15 @@ pub enum ContractError {
     #[error("User's health factor can't be less than 1 after disabling collateral")]
     InvalidHealthFactorAfterDisablingCollateral {},
 
-    #[error("Cannot update uncollateralized loan limit because user has collateralized debt")]
-    UserHasCollateralizedDebt {},
-
-    #[error("Cannot update uncollateralized loan limit because user has uncollateralized debt")]
-    UserHasUncollateralizedDebt {},
-
-    #[error("Cannot repay uncollateralized loan on behalf of another user")]
-    CannotRepayUncollateralizedLoanOnBehalfOf {},
-
     #[error("{0}")]
     Version(#[from] cw2::VersionError),
 
     #[error("{0}")]
     Guard(#[from] GuardError),
+
+    #[error("Cannot repay on behalf of credit manager")]
+    CannotRepayOnBehalfOfCreditManager {},
+
+    #[error("Cannot liquidate credit manager (use credit-manager contract liquidate function)")]
+    CannotLiquidateCreditManager {},
 }
