@@ -42,20 +42,22 @@ pub fn query_market_v2(deps: Deps, env: Env, denom: String) -> StdResult<MarketV
     let block_time = env.block.time.seconds();
     let market = MARKETS.load(deps.storage, &denom)?;
 
-    let collateral_underlying_amount =
+    let collateral_total_amount =
         get_underlying_liquidity_amount(market.collateral_total_scaled, &market, block_time)?;
 
-    let debt_underlying_amount =
+    let debt_total_amount =
         get_underlying_debt_amount(market.debt_total_scaled, &market, block_time)?;
 
+    let utilization_rate = if !collateral_total_amount.is_zero() {
+        Decimal::from_ratio(debt_total_amount, collateral_total_amount)
+    } else {
+        Decimal::zero()
+    };
+
     Ok(MarketV2Response {
-        collateral_underlying_amount,
-        debt_underlying_amount,
-        utilization_rate: if !collateral_underlying_amount.is_zero() {
-            Decimal::from_ratio(debt_underlying_amount, collateral_underlying_amount)
-        } else {
-            Decimal::zero()
-        },
+        collateral_total_amount,
+        debt_total_amount,
+        utilization_rate,
         market,
     })
 }
@@ -89,19 +91,21 @@ pub fn query_markets_v2(
     let limit = limit.unwrap_or(DEFAULT_LIMIT).min(MAX_LIMIT);
 
     paginate_map_query(&MARKETS, deps.storage, start, Some(limit), |_denom, market| {
-        let collateral_underlying_amount =
+        let collateral_total_amount =
             get_underlying_liquidity_amount(market.collateral_total_scaled, &market, block_time)?;
-        let debt_underlying_amount =
+        let debt_total_amount =
             get_underlying_debt_amount(market.debt_total_scaled, &market, block_time)?;
 
+        let utilization_rate = if !collateral_total_amount.is_zero() {
+            Decimal::from_ratio(debt_total_amount, collateral_total_amount)
+        } else {
+            Decimal::zero()
+        };
+
         Ok(MarketV2Response {
-            debt_underlying_amount,
-            collateral_underlying_amount,
-            utilization_rate: if !collateral_underlying_amount.is_zero() {
-                Decimal::from_ratio(debt_underlying_amount, collateral_underlying_amount)
-            } else {
-                Decimal::zero()
-            },
+            debt_total_amount,
+            collateral_total_amount,
+            utilization_rate,
             market,
         })
     })

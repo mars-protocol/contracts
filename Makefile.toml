@@ -1,6 +1,6 @@
 extend = [
-    { path = "schema.Makefile.toml" },
-    { path = "coverage_grcov.Makefile.toml" }
+  { path = "schema.Makefile.toml" },
+  { path = "coverage_grcov.Makefile.toml" }
 ]
 
 [config]

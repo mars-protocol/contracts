@@ -115,12 +115,10 @@ pub struct UserPositionResponse {
     pub health_status: UserHealthStatus,
 }
 
-pub type PaginatedMarketV2Response = PaginationResponse<MarketV2Response>;
-
 #[cw_serde]
 pub struct MarketV2Response {
-    pub collateral_underlying_amount: Uint128,
-    pub debt_underlying_amount: Uint128,
+    pub collateral_total_amount: Uint128,
+    pub debt_total_amount: Uint128,
     pub utilization_rate: Decimal,
 
     #[serde(flatten)]
