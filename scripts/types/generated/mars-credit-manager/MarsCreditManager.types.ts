@@ -32,7 +32,8 @@ export type ExecuteMsg =
     }
   | {
       update_credit_account: {
-        account_id: string
+        account_id?: string | null
+        account_kind?: AccountKind | null
         actions: Action[]
       }
     }

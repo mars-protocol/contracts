@@ -32,6 +32,7 @@ mod test_repay_from_wallet;
 mod test_swap;
 mod test_update_admin;
 mod test_update_config;
+mod test_update_credit_account_with_new_acc;
 mod test_update_nft_config;
 mod test_utilization_query;
 mod test_utilizations_all_query;

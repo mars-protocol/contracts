@@ -81,7 +81,8 @@ fn steal_user_funds(
         contract_addr: info.sender.to_string(),
         funds: vec![],
         msg: to_json_binary(&UpdateCreditAccount {
-            account_id: vault_credit_account, // Tests will require creating this credit account owned by vault
+            account_id: Some(vault_credit_account), // Tests will require creating this credit account owned by vault
+            account_kind: None,
             // Depositing user funds it was sent as its own
             actions: vec![Deposit(info.funds.first().unwrap().clone())],
         })?,

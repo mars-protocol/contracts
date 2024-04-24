@@ -608,7 +608,8 @@ export function useMarsCreditManagerRepayFromWalletMutation(
 export interface MarsCreditManagerUpdateCreditAccountMutation {
   client: MarsCreditManagerClient
   msg: {
-    accountId: string
+    accountId?: string
+    accountKind?: AccountKind
     actions: Action[]
   }
   args?: {

@@ -21,11 +21,13 @@ import {
   QueryMsg,
   ConfigResponse,
   Market,
+  MarketV2Response,
   ArrayOfMarket,
+  PaginationResponseForMarketV2Response,
+  Metadata,
   UserCollateralResponse,
   ArrayOfUserCollateralResponse,
   PaginationResponseForUserCollateralResponse,
-  Metadata,
   UserDebtResponse,
   ArrayOfUserDebtResponse,
   UserHealthStatus,
@@ -44,8 +46,12 @@ export const marsRedBankQueryKeys = {
     [{ ...marsRedBankQueryKeys.address(contractAddress)[0], method: 'config', args }] as const,
   market: (contractAddress: string | undefined, args?: Record<string, unknown>) =>
     [{ ...marsRedBankQueryKeys.address(contractAddress)[0], method: 'market', args }] as const,
+  marketV2: (contractAddress: string | undefined, args?: Record<string, unknown>) =>
+    [{ ...marsRedBankQueryKeys.address(contractAddress)[0], method: 'market_v2', args }] as const,
   markets: (contractAddress: string | undefined, args?: Record<string, unknown>) =>
     [{ ...marsRedBankQueryKeys.address(contractAddress)[0], method: 'markets', args }] as const,
+  marketsV2: (contractAddress: string | undefined, args?: Record<string, unknown>) =>
+    [{ ...marsRedBankQueryKeys.address(contractAddress)[0], method: 'markets_v2', args }] as const,
   userDebt: (contractAddress: string | undefined, args?: Record<string, unknown>) =>
     [{ ...marsRedBankQueryKeys.address(contractAddress)[0], method: 'user_debt', args }] as const,
   userDebts: (contractAddress: string | undefined, args?: Record<string, unknown>) =>
@@ -392,6 +398,30 @@ export function useMarsRedBankUserDebtQuery<TData = UserDebtResponse>({
     { ...options, enabled: !!client && (options?.enabled != undefined ? options.enabled : true) },
   )
 }
+export interface MarsRedBankMarketsV2Query<TData>
+  extends MarsRedBankReactQuery<PaginationResponseForMarketV2Response, TData> {
+  args: {
+    limit?: number
+    startAfter?: string
+  }
+}
+export function useMarsRedBankMarketsV2Query<TData = PaginationResponseForMarketV2Response>({
+  client,
+  args,
+  options,
+}: MarsRedBankMarketsV2Query<TData>) {
+  return useQuery<PaginationResponseForMarketV2Response, Error, TData>(
+    marsRedBankQueryKeys.marketsV2(client?.contractAddress, args),
+    () =>
+      client
+        ? client.marketsV2({
+            limit: args.limit,
+            startAfter: args.startAfter,
+          })
+        : Promise.reject(new Error('Invalid client')),
+    { ...options, enabled: !!client && (options?.enabled != undefined ? options.enabled : true) },
+  )
+}
 export interface MarsRedBankMarketsQuery<TData>
   extends MarsRedBankReactQuery<ArrayOfMarket, TData> {
   args: {
@@ -411,6 +441,28 @@ export function useMarsRedBankMarketsQuery<TData = ArrayOfMarket>({
         ? client.markets({
             limit: args.limit,
             startAfter: args.startAfter,
+          })
+        : Promise.reject(new Error('Invalid client')),
+    { ...options, enabled: !!client && (options?.enabled != undefined ? options.enabled : true) },
+  )
+}
+export interface MarsRedBankMarketV2Query<TData>
+  extends MarsRedBankReactQuery<MarketV2Response, TData> {
+  args: {
+    denom: string
+  }
+}
+export function useMarsRedBankMarketV2Query<TData = MarketV2Response>({
+  client,
+  args,
+  options,
+}: MarsRedBankMarketV2Query<TData>) {
+  return useQuery<MarketV2Response, Error, TData>(
+    marsRedBankQueryKeys.marketV2(client?.contractAddress, args),
+    () =>
+      client
+        ? client.marketV2({
+            denom: args.denom,
           })
         : Promise.reject(new Error('Invalid client')),
     { ...options, enabled: !!client && (options?.enabled != undefined ? options.enabled : true) },

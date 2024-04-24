@@ -140,11 +140,29 @@ impl MockEnv {
         actions: Vec<Action>,
         send_funds: &[Coin],
     ) -> AnyResult<AppResponse> {
+        self.update_credit_account_with_new_acc(
+            Some(account_id.to_string()),
+            None,
+            sender,
+            actions,
+            send_funds,
+        )
+    }
+
+    pub fn update_credit_account_with_new_acc(
+        &mut self,
+        account_id: Option<String>,
+        account_kind: Option<AccountKind>,
+        sender: &Addr,
+        actions: Vec<Action>,
+        send_funds: &[Coin],
+    ) -> AnyResult<AppResponse> {
         self.app.execute_contract(
             sender.clone(),
             self.rover.clone(),
             &ExecuteMsg::UpdateCreditAccount {
-                account_id: account_id.to_string(),
+                account_id,
+                account_kind,
                 actions,
             },
             send_funds,
@@ -266,7 +284,7 @@ impl MockEnv {
         Ok(self.get_account_id(res))
     }
 
-    fn get_account_id(&mut self, res: AppResponse) -> String {
+    pub fn get_account_id(&mut self, res: AppResponse) -> String {
         let attr: Vec<&String> = res
             .events
             .iter()

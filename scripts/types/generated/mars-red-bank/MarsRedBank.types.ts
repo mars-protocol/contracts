@@ -122,7 +122,18 @@ export type QueryMsg =
       }
     }
   | {
+      market_v2: {
+        denom: string
+      }
+    }
+  | {
       markets: {
+        limit?: number | null
+        start_after?: string | null
+      }
+    }
+  | {
+      markets_v2: {
         limit?: number | null
         start_after?: string | null
       }
@@ -216,7 +227,29 @@ export interface Market {
   liquidity_rate: Decimal
   reserve_factor: Decimal
 }
+export interface MarketV2Response {
+  borrow_index: Decimal
+  borrow_rate: Decimal
+  collateral_total_amount: Uint128
+  collateral_total_scaled: Uint128
+  debt_total_amount: Uint128
+  debt_total_scaled: Uint128
+  denom: string
+  indexes_last_updated: number
+  interest_rate_model: InterestRateModel
+  liquidity_index: Decimal
+  liquidity_rate: Decimal
+  reserve_factor: Decimal
+  utilization_rate: Decimal
+}
 export type ArrayOfMarket = Market[]
+export interface PaginationResponseForMarketV2Response {
+  data: MarketV2Response[]
+  metadata: Metadata
+}
+export interface Metadata {
+  has_more: boolean
+}
 export interface UserCollateralResponse {
   amount: Uint128
   amount_scaled: Uint128
@@ -227,9 +260,6 @@ export type ArrayOfUserCollateralResponse = UserCollateralResponse[]
 export interface PaginationResponseForUserCollateralResponse {
   data: UserCollateralResponse[]
   metadata: Metadata
-}
-export interface Metadata {
-  has_more: boolean
 }
 export interface UserDebtResponse {
   amount: Uint128

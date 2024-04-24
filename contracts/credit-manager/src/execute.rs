@@ -37,10 +37,10 @@ use crate::{
 };
 
 pub fn create_credit_account(
-    deps: DepsMut,
+    deps: &mut DepsMut,
     user: Addr,
     kind: AccountKind,
-) -> ContractResult<Response> {
+) -> ContractResult<(String, Response)> {
     let account_nft = ACCOUNT_NFT.load(deps.storage)?;
 
     let next_id = account_nft.query_next_id(&deps.querier)?;
@@ -54,23 +54,43 @@ pub fn create_credit_account(
         })?,
     });
 
-    Ok(Response::new()
+    let response = Response::new()
         .add_message(nft_mint_msg)
         .add_attribute("action", "create_credit_account")
-        .add_attribute("kind", kind.to_string()))
+        .add_attribute("kind", kind.to_string());
+
+    Ok((next_id, response))
 }
 
 pub fn dispatch_actions(
     mut deps: DepsMut,
     env: Env,
     info: MessageInfo,
-    account_id: &str,
+    account_id: Option<String>,
+    account_kind: Option<AccountKind>,
     actions: Vec<Action>,
 ) -> ContractResult<Response> {
-    assert_is_token_owner(&deps, &info.sender, account_id)?;
+    let mut response = Response::new();
+
+    let account_id = match account_id {
+        Some(acc_id) => {
+            assert_is_token_owner(&deps, &info.sender, &acc_id)?;
+            acc_id
+        }
+        None => {
+            let (acc_id, res) = create_credit_account(
+                &mut deps,
+                info.sender.clone(),
+                account_kind.unwrap_or(AccountKind::Default),
+            )?;
+            response = res;
+            acc_id
+        }
+    };
+    let account_id = &account_id;
+
     REENTRANCY_GUARD.try_lock(deps.storage)?;
 
-    let mut response = Response::new();
     let mut callbacks: Vec<CallbackMsg> = vec![];
     let mut received_coins = Coins::try_from(info.funds)?;
 

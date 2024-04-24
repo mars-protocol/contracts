@@ -330,9 +330,11 @@ export interface MarsCreditManagerInterface extends MarsCreditManagerReadOnlyInt
   updateCreditAccount: (
     {
       accountId,
+      accountKind,
       actions,
     }: {
-      accountId: string
+      accountId?: string
+      accountKind?: AccountKind
       actions: Action[]
     },
     fee?: number | StdFee | 'auto',
@@ -425,9 +427,11 @@ export class MarsCreditManagerClient
   updateCreditAccount = async (
     {
       accountId,
+      accountKind,
       actions,
     }: {
-      accountId: string
+      accountId?: string
+      accountKind?: AccountKind
       actions: Action[]
     },
     fee: number | StdFee | 'auto' = 'auto',
@@ -440,6 +444,7 @@ export class MarsCreditManagerClient
       {
         update_credit_account: {
           account_id: accountId,
+          account_kind: accountKind,
           actions,
         },
       },
