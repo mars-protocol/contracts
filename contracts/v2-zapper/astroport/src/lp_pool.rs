@@ -18,16 +18,24 @@ use mars_zapper_base::LpPool;
 impl LpPool for AstroportLpPool {
     fn get_pool_for_lp_token(
         deps: Deps,
-        _lp_token_denom: &str,
-        params: Option<ZapperParams>,
+        lp_token_denom: &str,
+        _params: Option<ZapperParams>,
     ) -> Result<Box<dyn Pool>, CwDexError> {
-        let Some(ZapperParams::Astro(astro_params)) = params else {
-            return Err(CwDexError::Std(StdError::generic_err("Missing astro zapper params")));
-        };
-        Ok(Self::new(deps, deps.api.addr_validate(&astro_params.pair_addr)?).map(|p| {
+        let pair_addr = extract_pair_address(&deps, lp_token_denom)?;
+        Ok(Self::new(deps, pair_addr).map(|p| {
             let as_trait: Box<dyn Pool> = Box::new(p);
             as_trait
         })?)
+    }
+}
+
+/// LP token denom structure: `factory/[pair_addr]/astroport/share`
+fn extract_pair_address(deps: &Deps, lp_token_denom: &str) -> Result<Addr, CwDexError> {
+    let parts: Vec<&str> = lp_token_denom.split('/').collect();
+    if parts.len() == 4 && parts[0] == "factory" && parts[2] == "astroport" && parts[3] == "share" {
+        Ok(deps.api.addr_validate(parts[1])?)
+    } else {
+        Err(CwDexError::Std(StdError::generic_err("No pair address found in LP token denom")))
     }
 }
 
