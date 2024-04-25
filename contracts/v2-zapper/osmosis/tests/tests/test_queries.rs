@@ -22,7 +22,6 @@ fn estimate_provide_liquidity_with_invalid_lp_token() {
             &QueryMsg::EstimateProvideLiquidity {
                 lp_token_out: "INVALID_POOL".to_string(),
                 coins_in: vec![coin(500_000, "uatom"), coin(2_000_000, "uosmo")],
-                params: None,
             },
         )
         .unwrap_err();
@@ -57,7 +56,6 @@ fn estimate_provide_liquidity_with_invalid_coins() {
         &QueryMsg::EstimateProvideLiquidity {
             lp_token_out: lp_token,
             coins_in: vec![],
-            params: None,
         },
     )
     .unwrap_err();
@@ -92,7 +90,6 @@ fn estimate_provide_liquidity_successfully() {
             &QueryMsg::EstimateProvideLiquidity {
                 lp_token_out: total_shares.denom,
                 coins_in: vec![coin(1_000_000, "uatom"), coin(2_000_000, "uosmo")],
-                params: None,
             },
         )
         .unwrap();
@@ -114,7 +111,6 @@ fn estimate_withdraw_liquidity_with_invalid_lp_token() {
             &contract_addr,
             &QueryMsg::EstimateWithdrawLiquidity {
                 coin_in: coin(500_000, "INVALID_POOL"),
-                params: None,
             },
         )
         .unwrap_err();
@@ -150,7 +146,6 @@ fn estimate_withdraw_liquidity_successfully() {
             &contract_addr,
             &QueryMsg::EstimateWithdrawLiquidity {
                 coin_in: coin(withdraw_amount.u128(), total_shares.denom),
-                params: None,
             },
         )
         .unwrap();

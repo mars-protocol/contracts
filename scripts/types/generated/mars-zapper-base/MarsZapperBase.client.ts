@@ -11,10 +11,8 @@ import {
   InstantiateMsg,
   ExecuteMsg,
   Uint128,
-  ZapperParams,
   CallbackMsg,
   Addr,
-  AstroParams,
   Coin,
   QueryMsg,
   ArrayOfCoin,
@@ -24,19 +22,11 @@ export interface MarsZapperBaseReadOnlyInterface {
   estimateProvideLiquidity: ({
     coinsIn,
     lpTokenOut,
-    params,
   }: {
     coinsIn: Coin[]
     lpTokenOut: string
-    params?: ZapperParams
   }) => Promise<Uint128>
-  estimateWithdrawLiquidity: ({
-    coinIn,
-    params,
-  }: {
-    coinIn: Coin
-    params?: ZapperParams
-  }) => Promise<ArrayOfCoin>
+  estimateWithdrawLiquidity: ({ coinIn }: { coinIn: Coin }) => Promise<ArrayOfCoin>
 }
 export class MarsZapperBaseQueryClient implements MarsZapperBaseReadOnlyInterface {
   client: CosmWasmClient
@@ -52,31 +42,21 @@ export class MarsZapperBaseQueryClient implements MarsZapperBaseReadOnlyInterfac
   estimateProvideLiquidity = async ({
     coinsIn,
     lpTokenOut,
-    params,
   }: {
     coinsIn: Coin[]
     lpTokenOut: string
-    params?: ZapperParams
   }): Promise<Uint128> => {
     return this.client.queryContractSmart(this.contractAddress, {
       estimate_provide_liquidity: {
         coins_in: coinsIn,
         lp_token_out: lpTokenOut,
-        params,
       },
     })
   }
-  estimateWithdrawLiquidity = async ({
-    coinIn,
-    params,
-  }: {
-    coinIn: Coin
-    params?: ZapperParams
-  }): Promise<ArrayOfCoin> => {
+  estimateWithdrawLiquidity = async ({ coinIn }: { coinIn: Coin }): Promise<ArrayOfCoin> => {
     return this.client.queryContractSmart(this.contractAddress, {
       estimate_withdraw_liquidity: {
         coin_in: coinIn,
-        params,
       },
     })
   }
@@ -88,12 +68,10 @@ export interface MarsZapperBaseInterface extends MarsZapperBaseReadOnlyInterface
     {
       lpTokenOut,
       minimumReceive,
-      params,
       recipient,
     }: {
       lpTokenOut: string
       minimumReceive: Uint128
-      params?: ZapperParams
       recipient?: string
     },
     fee?: number | StdFee | 'auto',
@@ -103,11 +81,9 @@ export interface MarsZapperBaseInterface extends MarsZapperBaseReadOnlyInterface
   withdrawLiquidity: (
     {
       minimumReceive,
-      params,
       recipient,
     }: {
       minimumReceive: Coin[]
-      params?: ZapperParams
       recipient?: string
     },
     fee?: number | StdFee | 'auto',
@@ -143,12 +119,10 @@ export class MarsZapperBaseClient
     {
       lpTokenOut,
       minimumReceive,
-      params,
       recipient,
     }: {
       lpTokenOut: string
       minimumReceive: Uint128
-      params?: ZapperParams
       recipient?: string
     },
     fee: number | StdFee | 'auto' = 'auto',
@@ -162,7 +136,6 @@ export class MarsZapperBaseClient
         provide_liquidity: {
           lp_token_out: lpTokenOut,
           minimum_receive: minimumReceive,
-          params,
           recipient,
         },
       },
@@ -174,11 +147,9 @@ export class MarsZapperBaseClient
   withdrawLiquidity = async (
     {
       minimumReceive,
-      params,
       recipient,
     }: {
       minimumReceive: Coin[]
-      params?: ZapperParams
       recipient?: string
     },
     fee: number | StdFee | 'auto' = 'auto',
@@ -191,7 +162,6 @@ export class MarsZapperBaseClient
       {
         withdraw_liquidity: {
           minimum_receive: minimumReceive,
-          params,
           recipient,
         },
       },

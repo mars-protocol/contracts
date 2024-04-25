@@ -12,14 +12,12 @@ use cosmwasm_std::{
     Response, StdError, StdResult, Uint128, WasmMsg, WasmQuery,
 };
 use cw_dex::{traits::Pool, CwDexError};
-use mars_types::zapper::ZapperParams;
 use mars_zapper_base::LpPool;
 
 impl LpPool for AstroportLpPool {
     fn get_pool_for_lp_token(
         deps: Deps,
         lp_token_denom: &str,
-        _params: Option<ZapperParams>,
     ) -> Result<Box<dyn Pool>, CwDexError> {
         let pair_addr = extract_pair_address(&deps, lp_token_denom)?;
         Ok(Self::new(deps, pair_addr).map(|p| {

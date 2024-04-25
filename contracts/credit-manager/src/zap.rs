@@ -48,7 +48,7 @@ pub fn provide_liquidity(
 
     // Estimate how much LP token will be received from zapper with applied slippage
     let estimated_min_receive =
-        zapper.estimate_provide_liquidity(&deps.querier, lp_token_out, &updated_coins_in, None)?;
+        zapper.estimate_provide_liquidity(&deps.querier, lp_token_out, &updated_coins_in)?;
     let estimated_min_receive_slippage =
         estimated_min_receive.checked_mul_floor(Decimal::one() - slippage)?;
 
@@ -56,7 +56,6 @@ pub fn provide_liquidity(
         &updated_coins_in,
         lp_token_out,
         estimated_min_receive_slippage,
-        None,
     )?;
 
     // After zap is complete, update account's LP token balance
@@ -104,7 +103,7 @@ pub fn withdraw_liquidity(
     decrement_coin_balance(deps.storage, account_id, &lp_token)?;
 
     // Estimate how much coins will be received from zapper with applied slippage
-    let estimated_coins_out = zapper.estimate_withdraw_liquidity(&deps.querier, &lp_token, None)?;
+    let estimated_coins_out = zapper.estimate_withdraw_liquidity(&deps.querier, &lp_token)?;
     let estimated_coins_out_slippage = estimated_coins_out
         .iter()
         .map(|c| {
@@ -116,7 +115,7 @@ pub fn withdraw_liquidity(
         })
         .collect::<Result<Vec<Coin>, CheckedMultiplyFractionError>>()?;
 
-    let unzap_msg = zapper.withdraw_liquidity_msg(&lp_token, estimated_coins_out_slippage, None)?;
+    let unzap_msg = zapper.withdraw_liquidity_msg(&lp_token, estimated_coins_out_slippage)?;
 
     // After unzap is complete, update account's coin balances
     let update_balances_msgs = update_balances_msgs(
@@ -142,13 +141,12 @@ pub fn estimate_provide_liquidity(
     coins_in: Vec<Coin>,
 ) -> ContractResult<Uint128> {
     let zapper = ZAPPER.load(deps.storage)?;
-    let estimate =
-        zapper.estimate_provide_liquidity(&deps.querier, lp_token_out, &coins_in, None)?;
+    let estimate = zapper.estimate_provide_liquidity(&deps.querier, lp_token_out, &coins_in)?;
     Ok(estimate)
 }
 
 pub fn estimate_withdraw_liquidity(deps: Deps, lp_token: Coin) -> ContractResult<Vec<Coin>> {
     let zapper = ZAPPER.load(deps.storage)?;
-    let estimate = zapper.estimate_withdraw_liquidity(&deps.querier, &lp_token, None)?;
+    let estimate = zapper.estimate_withdraw_liquidity(&deps.querier, &lp_token)?;
     Ok(estimate)
 }

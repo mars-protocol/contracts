@@ -23,7 +23,6 @@ fn provide_liquidity_with_invalid_lp_token() {
                 lp_token_out: "INVALID_POOL".to_string(),
                 recipient: None,
                 minimum_receive: Uint128::one(),
-                params: None,
             },
             &[coin(1_000_000, "uatom"), coin(2_000_000, "uosmo")],
             &signer,
@@ -57,7 +56,6 @@ fn provide_liquidity_with_invalid_coins() {
             lp_token_out: format!("gamm/pool/{pool_id}"),
             recipient: None,
             minimum_receive: Uint128::one(),
-            params: None,
         },
         &[],
         &signer,
@@ -96,7 +94,6 @@ fn provide_liquidity_with_min_not_received() {
             &QueryMsg::EstimateProvideLiquidity {
                 lp_token_out: pool_denom.clone(),
                 coins_in: coins_in.clone(),
-                params: None,
             },
         )
         .unwrap();
@@ -109,7 +106,6 @@ fn provide_liquidity_with_min_not_received() {
                 lp_token_out: pool_denom.clone(),
                 recipient: None,
                 minimum_receive: min_receive,
-                params: None,
             },
             &coins_in,
             user,
@@ -170,7 +166,6 @@ fn provide_liquidity_with_one_coin() {
             &QueryMsg::EstimateProvideLiquidity {
                 lp_token_out: pool_denom.clone(),
                 coins_in: coins_in.clone(),
-                params: None,
             },
         )
         .unwrap();
@@ -182,7 +177,6 @@ fn provide_liquidity_with_one_coin() {
             lp_token_out: pool_denom.clone(),
             recipient: None,
             minimum_receive: estimate_amount,
-            params: None,
         },
         &coins_in,
         &user,
@@ -247,7 +241,6 @@ fn provide_liquidity_with_two_balanced_coins() {
             &QueryMsg::EstimateProvideLiquidity {
                 lp_token_out: pool_denom.clone(),
                 coins_in: coins_in.clone(),
-                params: None,
             },
         )
         .unwrap();
@@ -259,7 +252,6 @@ fn provide_liquidity_with_two_balanced_coins() {
             lp_token_out: pool_denom.clone(),
             recipient: None,
             minimum_receive: estimate_amount,
-            params: None,
         },
         &coins_in,
         &user,
@@ -324,7 +316,6 @@ fn provide_liquidity_with_two_unbalanced_coins() {
             &QueryMsg::EstimateProvideLiquidity {
                 lp_token_out: pool_denom.clone(),
                 coins_in: coins_in.clone(),
-                params: None,
             },
         )
         .unwrap();
@@ -336,7 +327,6 @@ fn provide_liquidity_with_two_unbalanced_coins() {
             &contract_addr,
             &QueryMsg::EstimateWithdrawLiquidity {
                 coin_in: coin(estimate_amount.u128(), pool_denom.clone()),
-                params: None,
             },
         )
         .unwrap();
@@ -353,7 +343,6 @@ fn provide_liquidity_with_two_unbalanced_coins() {
             lp_token_out: pool_denom.clone(),
             recipient: None,
             minimum_receive: estimate_amount,
-            params: None,
         },
         &coins_in,
         &user,
@@ -421,7 +410,6 @@ fn provide_liquidity_with_different_recipient() {
             &QueryMsg::EstimateProvideLiquidity {
                 lp_token_out: pool_denom.clone(),
                 coins_in: coins_in.clone(),
-                params: None,
             },
         )
         .unwrap();
@@ -433,7 +421,6 @@ fn provide_liquidity_with_different_recipient() {
             lp_token_out: pool_denom.clone(),
             recipient: Some(recipient.address()),
             minimum_receive: estimate_amount,
-            params: None,
         },
         &coins_in,
         &user,

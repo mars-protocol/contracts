@@ -3,7 +3,7 @@ use cosmwasm_std::{
     to_json_binary, Addr, Api, Coin, CosmosMsg, QuerierWrapper, StdResult, Uint128, WasmMsg,
 };
 
-use crate::zapper::{ExecuteMsg, QueryMsg, ZapperParams};
+use crate::zapper::{ExecuteMsg, QueryMsg};
 
 #[cw_serde]
 pub struct ZapperBase<T>(T);
@@ -39,14 +39,12 @@ impl Zapper {
         querier: &QuerierWrapper,
         lp_token_out: &str,
         coins_in: &[Coin],
-        params: Option<ZapperParams>,
     ) -> StdResult<Uint128> {
         querier.query_wasm_smart(
             self.address().to_string(),
             &QueryMsg::EstimateProvideLiquidity {
                 lp_token_out: lp_token_out.to_string(),
                 coins_in: coins_in.to_vec(),
-                params,
             },
         )
     }
@@ -55,13 +53,11 @@ impl Zapper {
         &self,
         querier: &QuerierWrapper,
         lp_token: &Coin,
-        params: Option<ZapperParams>,
     ) -> StdResult<Vec<Coin>> {
         querier.query_wasm_smart(
             self.address().to_string(),
             &QueryMsg::EstimateWithdrawLiquidity {
                 coin_in: lp_token.clone(),
-                params,
             },
         )
     }
@@ -71,7 +67,6 @@ impl Zapper {
         coins_in: &[Coin],
         lp_token_out: &str,
         minimum_receive: Uint128,
-        params: Option<ZapperParams>,
     ) -> StdResult<CosmosMsg> {
         Ok(CosmosMsg::Wasm(WasmMsg::Execute {
             contract_addr: self.address().to_string(),
@@ -79,7 +74,6 @@ impl Zapper {
                 lp_token_out: lp_token_out.to_string(),
                 minimum_receive,
                 recipient: None,
-                params,
             })?,
             funds: coins_in.to_vec(),
         }))
@@ -89,14 +83,12 @@ impl Zapper {
         &self,
         lp_token: &Coin,
         minimum_receive: Vec<Coin>,
-        params: Option<ZapperParams>,
     ) -> StdResult<CosmosMsg> {
         Ok(CosmosMsg::Wasm(WasmMsg::Execute {
             contract_addr: self.address().to_string(),
             msg: to_json_binary(&ExecuteMsg::WithdrawLiquidity {
                 recipient: None,
                 minimum_receive,
-                params,
             })?,
             funds: vec![lp_token.clone()],
         }))

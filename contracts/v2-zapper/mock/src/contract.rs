@@ -73,11 +73,9 @@ pub fn query(deps: Deps, _env: Env, msg: QueryMsg) -> ContractResult<Binary> {
         QueryMsg::EstimateProvideLiquidity {
             lp_token_out,
             coins_in,
-            params: _,
         } => to_json_binary(&estimate_provide_liquidity(&deps, &lp_token_out, coins_in)?),
         QueryMsg::EstimateWithdrawLiquidity {
             coin_in,
-            params: _,
         } => to_json_binary(&estimate_withdraw_liquidity(deps.storage, &coin_in)?),
     };
     res.map_err(Into::into)

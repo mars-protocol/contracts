@@ -2,7 +2,6 @@ use std::str::FromStr;
 
 use cosmwasm_std::Deps;
 use cw_dex::{osmosis::OsmosisPool, traits::Pool, CwDexError};
-use mars_types::zapper::ZapperParams;
 use mars_zapper_base::LpPool;
 
 pub struct OsmosisLpPool {}
@@ -33,7 +32,6 @@ impl LpPool for OsmosisLpPool {
     fn get_pool_for_lp_token(
         deps: Deps,
         lp_token_denom: &str,
-        _params: Option<ZapperParams>,
     ) -> Result<Box<dyn Pool>, CwDexError> {
         Self::get_pool_for_lp_token(deps, lp_token_denom).map(|p| {
             let as_trait: Box<dyn Pool> = Box::new(p);

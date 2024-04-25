@@ -28,7 +28,6 @@ fn withdraw_liquidity_without_funds() {
             &ExecuteMsg::WithdrawLiquidity {
                 recipient: None,
                 minimum_receive: vec![],
-                params: None,
             },
             &[],
             &signer,
@@ -58,7 +57,6 @@ fn withdraw_liquidity_with_more_than_one_coin_sent() {
             &ExecuteMsg::WithdrawLiquidity {
                 recipient: None,
                 minimum_receive: vec![],
-                params: None,
             },
             &[coin(1_000_000, "gamm/pool/1"), coin(2_000_000, "ustars")],
             &signer,
@@ -87,7 +85,6 @@ fn withdraw_liquidity_with_invalid_lp_token() {
             &ExecuteMsg::WithdrawLiquidity {
                 recipient: None,
                 minimum_receive: vec![],
-                params: None,
             },
             &[coin(1_000_000, "ustars")],
             &signer,
@@ -130,7 +127,6 @@ fn withdraw_liquidity_does_not_meet_min_out() {
             lp_token_out: pool_denom.clone(),
             recipient: None,
             minimum_receive: Uint128::one(),
-            params: None,
         },
         &[coin(5_000_000, "uatom"), coin(10_000_000, "ustars")],
         user,
@@ -145,7 +141,6 @@ fn withdraw_liquidity_does_not_meet_min_out() {
             &ExecuteMsg::WithdrawLiquidity {
                 recipient: None,
                 minimum_receive: vec![coin(50_000_000, "uatom"), coin(10_000_000, "ustars")],
-                params: None,
             },
             &[coin(user_pool_balance, &pool_denom)],
             user,
@@ -197,7 +192,6 @@ fn withdraw_liquidity_successfully() {
             lp_token_out: pool_denom.clone(),
             recipient: None,
             minimum_receive: Uint128::one(),
-            params: None,
         },
         &[coin(5_000_000, "uatom"), coin(10_000_000, "ustars")],
         user,
@@ -214,7 +208,6 @@ fn withdraw_liquidity_successfully() {
             &contract_addr,
             &QueryMsg::EstimateWithdrawLiquidity {
                 coin_in: coin(user_pool_balance, &pool_denom),
-                params: None,
             },
         )
         .unwrap();
@@ -230,7 +223,6 @@ fn withdraw_liquidity_successfully() {
         &ExecuteMsg::WithdrawLiquidity {
             recipient: None,
             minimum_receive: vec![],
-            params: None,
         },
         &[coin(user_pool_balance, &pool_denom)],
         user,
@@ -292,7 +284,6 @@ fn withdraw_liquidity_with_different_recipient_successfully() {
             lp_token_out: pool_denom.clone(),
             recipient: None,
             minimum_receive: Uint128::one(),
-            params: None,
         },
         &[coin(5_000_000, "uatom"), coin(10_000_000, "ustars")],
         user,
@@ -314,7 +305,6 @@ fn withdraw_liquidity_with_different_recipient_successfully() {
             &contract_addr,
             &QueryMsg::EstimateWithdrawLiquidity {
                 coin_in: coin(user_pool_balance, &pool_denom),
-                params: None,
             },
         )
         .unwrap();
@@ -330,7 +320,6 @@ fn withdraw_liquidity_with_different_recipient_successfully() {
         &ExecuteMsg::WithdrawLiquidity {
             recipient: Some(recipient.address()),
             minimum_receive: vec![],
-            params: None,
         },
         &[coin(user_pool_balance, &pool_denom)],
         user,
