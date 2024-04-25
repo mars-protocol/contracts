@@ -75,6 +75,7 @@ export interface RedBankSettings {
 }
 export interface Positions {
   account_id: string
+  account_kind: AccountKind
   debts: DebtAmount[]
   deposits: Coin[]
   lends: Coin[]
