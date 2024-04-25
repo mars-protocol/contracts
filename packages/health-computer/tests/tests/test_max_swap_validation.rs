@@ -35,6 +35,8 @@ fn missing_price_data() {
         kind: AccountKind::Default,
         positions: Positions {
             account_id: "123".to_string(),
+            account_kind: AccountKind::Default,
+
             deposits: vec![coin(1200, &umars.denom), coin(33, &udai.denom)],
             debts: vec![
                 DebtAmount {
@@ -83,6 +85,8 @@ fn missing_params() {
         kind: AccountKind::Default,
         positions: Positions {
             account_id: "123".to_string(),
+            account_kind: AccountKind::Default,
+
             deposits: vec![coin(1200, &umars.denom), coin(33, &udai.denom)],
             debts: vec![
                 DebtAmount {
@@ -127,6 +131,8 @@ fn deposit_not_present() {
         kind: AccountKind::Default,
         positions: Positions {
             account_id: "123".to_string(),
+            account_kind: AccountKind::Default,
+
             deposits: vec![],
             debts: vec![],
             lends: vec![],
@@ -167,6 +173,8 @@ fn zero_when_unhealthy() {
         kind: AccountKind::Default,
         positions: Positions {
             account_id: "123".to_string(),
+            account_kind: AccountKind::Default,
+
             deposits: vec![coin(1200, &umars.denom), coin(33, &udai.denom)],
             debts: vec![
                 DebtAmount {
@@ -221,6 +229,8 @@ fn no_debts() {
         kind: AccountKind::Default,
         positions: Positions {
             account_id: "123".to_string(),
+            account_kind: AccountKind::Default,
+
             deposits: vec![coin(deposit_amount.u128(), &ustars.denom)],
             debts: vec![],
             lends: vec![],
@@ -262,6 +272,8 @@ fn should_allow_max_swap() {
         kind: AccountKind::Default,
         positions: Positions {
             account_id: "123".to_string(),
+            account_kind: AccountKind::Default,
+
             deposits: vec![coin(1200, &umars.denom), coin(deposit_amount.u128(), &udai.denom)],
             debts: vec![DebtAmount {
                 denom: udai.denom.clone(),
@@ -337,6 +349,8 @@ fn hls_with_max_withdraw() {
         kind: AccountKind::Default,
         positions: Positions {
             account_id: "123".to_string(),
+            account_kind: AccountKind::Default,
+
             deposits: vec![coin(1200, &ustars.denom)],
             debts: vec![
                 DebtAmount {
