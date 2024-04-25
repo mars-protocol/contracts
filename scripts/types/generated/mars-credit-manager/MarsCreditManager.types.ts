@@ -590,6 +590,7 @@ export interface RewardsCollector {
 export type ArrayOfCoin = Coin[]
 export interface Positions {
   account_id: string
+  account_kind: AccountKind
   debts: DebtAmount[]
   deposits: Coin[]
   lends: Coin[]
