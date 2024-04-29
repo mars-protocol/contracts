@@ -3,13 +3,13 @@ use cw_paginate::{paginate_map_query, PaginationResponse};
 use cw_storage_plus::Bound;
 use mars_interest_rate::get_underlying_liquidity_amount;
 use mars_types::{
-    address_provider::{self, MarsAddressType},
+    address_provider::{self, helpers::query_contract_addrs, MarsAddressType},
     params::{AssetParams, ConfigResponse, TotalDepositResponse, VaultConfig},
-    red_bank::{self, Market},
+    red_bank::{self, Market, MarketV2Response},
 };
 
 use crate::{
-    error::ContractError,
+    error::{ContractError, ContractResult},
     state::{ADDRESS_PROVIDER, ASSET_PARAMS, VAULT_CONFIGS},
 };
 
@@ -155,5 +155,58 @@ pub fn query_total_deposit(
         denom,
         amount,
         cap: asset_params.deposit_cap,
+    })
+}
+
+pub fn query_all_total_deposits_v2(
+    deps: Deps,
+    start_after: Option<String>,
+    limit: Option<u32>,
+) -> ContractResult<PaginationResponse<TotalDepositResponse>> {
+    let address_provider_addr = ADDRESS_PROVIDER.load(deps.storage)?;
+    let addresses = query_contract_addrs(
+        deps,
+        &address_provider_addr,
+        vec![MarsAddressType::RedBank, MarsAddressType::CreditManager],
+    )?;
+    let credit_manager_addr = &addresses[&MarsAddressType::CreditManager];
+    let red_bank_addr = &addresses[&MarsAddressType::RedBank];
+
+    let rb_deposits = deps.querier.query_wasm_smart::<PaginationResponse<MarketV2Response>>(
+        red_bank_addr,
+        &red_bank::QueryMsg::MarketsV2 {
+            start_after,
+            limit,
+        },
+    )?;
+
+    // amount of this asset deposited into Credit Manager
+    // this is simply the coin balance of the CM contract
+    // note that this way, we don't include LP tokens or vault positions
+    let cm_deposits = deps.querier.query_all_balances(credit_manager_addr)?;
+
+    let total_deposits: Vec<TotalDepositResponse> = rb_deposits
+        .data
+        .iter()
+        .map(|market| {
+            let denom = market.market.denom.clone();
+            let cm_deposit = cm_deposits
+                .iter()
+                .find(|coin| coin.denom == denom)
+                .map(|coin| coin.amount)
+                .unwrap_or_else(Uint128::zero);
+            let amount = market.collateral_total_amount.checked_add(cm_deposit)?;
+            let asset_params = ASSET_PARAMS.load(deps.storage, &denom)?;
+            Ok(TotalDepositResponse {
+                denom,
+                amount,
+                cap: asset_params.deposit_cap,
+            })
+        })
+        .collect::<StdResult<Vec<TotalDepositResponse>>>()?;
+
+    Ok(PaginationResponse {
+        data: total_deposits,
+        metadata: rb_deposits.metadata,
     })
 }

@@ -73,6 +73,14 @@ pub enum QueryMsg {
     TotalDeposit {
         denom: String,
     },
+
+    /// Compute the total amount deposited for paginated assets across Red Bank
+    /// and Credit Manager.
+    #[returns(cw_paginate::PaginationResponse<TotalDepositResponse>)]
+    AllTotalDepositsV2 {
+        start_after: Option<String>,
+        limit: Option<u32>,
+    },
 }
 
 #[cw_serde]

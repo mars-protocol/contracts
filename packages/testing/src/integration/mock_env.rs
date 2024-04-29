@@ -5,6 +5,7 @@ use std::{collections::HashMap, default::Default, mem::take, str::FromStr};
 use anyhow::Result as AnyResult;
 use cosmwasm_std::{coin, Addr, Coin, Decimal, Empty, StdResult, Uint128};
 use cw_multi_test::{App, AppResponse, BankSudo, BasicApp, Executor, SudoMsg};
+use cw_paginate::PaginationResponse;
 use mars_oracle_osmosis::OsmosisPriceSourceUnchecked;
 use mars_types::{
     address_provider::{self, MarsAddressType},
@@ -14,10 +15,11 @@ use mars_types::{
         ActionKind::{Default as ActionDefault, Liquidation},
         PriceResponse,
     },
-    params::{AssetParams, AssetParamsUpdate},
+    params::{AssetParams, AssetParamsUpdate, TotalDepositResponse},
     red_bank::{
-        self, CreateOrUpdateConfig, InitOrUpdateAssetParams, Market, UserCollateralResponse,
-        UserDebtResponse, UserPositionResponse,
+        self, CreateOrUpdateConfig, InitOrUpdateAssetParams, Market,
+        UserCollateralResponse, UserDebtResponse,
+        UserPositionResponse,
     },
     rewards_collector,
 };
@@ -474,6 +476,18 @@ impl RedBank {
             .unwrap()
     }
 
+    pub fn query_market_v2(&self, env: &mut MockEnv, denom: &str) -> MarketV2Response {
+        env.app
+            .wrap()
+            .query_wasm_smart(
+                self.contract_addr.clone(),
+                &red_bank::QueryMsg::MarketV2 {
+                    denom: denom.to_string(),
+                },
+            )
+            .unwrap()
+    }
+
     pub fn query_markets(&self, env: &mut MockEnv) -> HashMap<String, Market> {
         let res: Vec<Market> = env
             .app
@@ -682,6 +696,24 @@ impl Params {
                 self.contract_addr.clone(),
                 &mars_types::params::QueryMsg::AssetParams {
                     denom: denom.to_string(),
+                },
+            )
+            .unwrap()
+    }
+
+    pub fn all_total_deposits_v2(
+        &self,
+        env: &mut MockEnv,
+        start_after: Option<String>,
+        limit: Option<u32>,
+    ) -> PaginationResponse<TotalDepositResponse> {
+        env.app
+            .wrap()
+            .query_wasm_smart(
+                self.contract_addr.clone(),
+                &mars_types::params::QueryMsg::AllTotalDepositsV2 {
+                    start_after,
+                    limit,
                 },
             )
             .unwrap()
