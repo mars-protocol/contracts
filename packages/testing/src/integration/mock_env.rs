@@ -17,9 +17,8 @@ use mars_types::{
     },
     params::{AssetParams, AssetParamsUpdate, TotalDepositResponse},
     red_bank::{
-        self, CreateOrUpdateConfig, InitOrUpdateAssetParams, Market,
-        UserCollateralResponse, UserDebtResponse,
-        UserPositionResponse,
+        self, CreateOrUpdateConfig, InitOrUpdateAssetParams, Market, MarketV2Response,
+        UserCollateralResponse, UserDebtResponse, UserPositionResponse,
     },
     rewards_collector,
 };
