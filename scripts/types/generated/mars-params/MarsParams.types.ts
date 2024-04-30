@@ -174,6 +174,12 @@ export type QueryMsg =
         denom: string
       }
     }
+  | {
+      all_total_deposits_v2: {
+        limit?: number | null
+        start_after?: string | null
+      }
+    }
 export type HlsAssetTypeForAddr =
   | {
       coin: {
@@ -206,6 +212,18 @@ export interface HlsParamsBaseForAddr {
   liquidation_threshold: Decimal
   max_loan_to_value: Decimal
 }
+export interface PaginationResponseForTotalDepositResponse {
+  data: TotalDepositResponse[]
+  metadata: Metadata
+}
+export interface TotalDepositResponse {
+  amount: Uint128
+  cap: Uint128
+  denom: string
+}
+export interface Metadata {
+  has_more: boolean
+}
 export type ArrayOfVaultConfigBaseForAddr = VaultConfigBaseForAddr[]
 export interface VaultConfigBaseForAddr {
   addr: Addr
@@ -219,9 +237,6 @@ export interface PaginationResponseForVaultConfigBaseForAddr {
   data: VaultConfigBaseForAddr[]
   metadata: Metadata
 }
-export interface Metadata {
-  has_more: boolean
-}
 export interface ConfigResponse {
   address_provider: string
 }
@@ -231,9 +246,4 @@ export interface OwnerResponse {
   initialized: boolean
   owner?: string | null
   proposed?: string | null
-}
-export interface TotalDepositResponse {
-  amount: Uint128
-  cap: Uint128
-  denom: string
 }
