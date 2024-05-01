@@ -33,13 +33,14 @@ import {
   AssetParamsBaseForAddr,
   CmSettingsForAddr,
   HlsParamsBaseForAddr,
+  PaginationResponseForTotalDepositResponse,
+  TotalDepositResponse,
+  Metadata,
   ArrayOfVaultConfigBaseForAddr,
   VaultConfigBaseForAddr,
   PaginationResponseForVaultConfigBaseForAddr,
-  Metadata,
   ConfigResponse,
   OwnerResponse,
-  TotalDepositResponse,
 } from './MarsParams.types'
 export interface MarsParamsReadOnlyInterface {
   contractAddress: string
@@ -70,6 +71,13 @@ export interface MarsParamsReadOnlyInterface {
   }) => Promise<PaginationResponseForVaultConfigBaseForAddr>
   targetHealthFactor: () => Promise<Decimal>
   totalDeposit: ({ denom }: { denom: string }) => Promise<TotalDepositResponse>
+  allTotalDepositsV2: ({
+    limit,
+    startAfter,
+  }: {
+    limit?: number
+    startAfter?: string
+  }) => Promise<PaginationResponseForTotalDepositResponse>
 }
 export class MarsParamsQueryClient implements MarsParamsReadOnlyInterface {
   client: CosmWasmClient
@@ -87,6 +95,7 @@ export class MarsParamsQueryClient implements MarsParamsReadOnlyInterface {
     this.allVaultConfigsV2 = this.allVaultConfigsV2.bind(this)
     this.targetHealthFactor = this.targetHealthFactor.bind(this)
     this.totalDeposit = this.totalDeposit.bind(this)
+    this.allTotalDepositsV2 = this.allTotalDepositsV2.bind(this)
   }
 
   owner = async (): Promise<OwnerResponse> => {
@@ -164,6 +173,20 @@ export class MarsParamsQueryClient implements MarsParamsReadOnlyInterface {
     return this.client.queryContractSmart(this.contractAddress, {
       total_deposit: {
         denom,
+      },
+    })
+  }
+  allTotalDepositsV2 = async ({
+    limit,
+    startAfter,
+  }: {
+    limit?: number
+    startAfter?: string
+  }): Promise<PaginationResponseForTotalDepositResponse> => {
+    return this.client.queryContractSmart(this.contractAddress, {
+      all_total_deposits_v2: {
+        limit,
+        start_after: startAfter,
       },
     })
   }

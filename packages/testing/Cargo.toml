@@ -24,10 +24,12 @@ anyhow                         = { workspace = true }
 astroport                      = { workspace = true, optional = true }
 cosmwasm-std                   = { workspace = true }
 cosmwasm-schema                = { workspace = true }
+cw-paginate                    = { workspace = true }
 ica-oracle                     = { workspace = true }
 osmosis-std                    = { workspace = true }
 mars-address-provider          = { workspace = true }
 mars-incentives                = { workspace = true }
+mars-interest-rate             = { workspace = true }
 mars-mock-pyth                 = { workspace = true }
 mars-oracle-osmosis            = { workspace = true }
 mars-oracle-wasm               = { workspace = true }
