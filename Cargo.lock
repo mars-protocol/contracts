@@ -2482,6 +2482,7 @@ dependencies = [
  "cosmwasm-std",
  "cw2 1.1.2",
  "mars-rewards-collector-base",
+ "mars-testing",
  "mars-types",
  "neutron-sdk",
 ]
