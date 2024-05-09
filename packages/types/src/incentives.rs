@@ -10,8 +10,6 @@ pub struct Config {
     /// The maximum number of incentive denoms that can be whitelisted at any given time. This is
     /// a guard against accidentally whitelisting too many denoms, which could cause max gas errors.
     pub max_whitelisted_denoms: u8,
-    /// Mars Token Denom
-    pub mars_denom: String,
 }
 
 /// Incentive Metadata for a given incentive
@@ -89,8 +87,6 @@ pub struct InstantiateMsg {
     /// The maximum number of incentive denoms that can be whitelisted at any given time. This is
     /// a guard against accidentally whitelisting too many denoms, which could cause max gas errors.
     pub max_whitelisted_denoms: u8,
-    /// Mars Token Denom
-    pub mars_denom: String,
 }
 
 #[cw_serde]

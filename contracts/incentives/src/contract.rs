@@ -60,7 +60,6 @@ pub fn instantiate(
     let config = Config {
         address_provider: deps.api.addr_validate(&msg.address_provider)?,
         max_whitelisted_denoms: msg.max_whitelisted_denoms,
-        mars_denom: msg.mars_denom,
     };
     CONFIG.save(deps.storage, &config)?;
 
