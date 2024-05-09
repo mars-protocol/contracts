@@ -175,10 +175,7 @@ where
 
         // if route is not provided, use the default route from state
         let route = match route {
-            Some(route) => {
-                let route = R::from(route, config)?;
-                route
-            }
+            Some(route) => R::from(route, config)?,
             None => self.get_route(deps, &coin_in.denom, &denom_out)?,
         };
         route.estimate_exact_in_swap(&deps.querier, &env, &coin_in)
@@ -207,9 +204,7 @@ where
             Some(route) => {
                 let config = self.query_config(deps.as_ref())?;
 
-                let route = R::from(route, config)?;
-
-                route
+                R::from(route, config)?
             }
             None => self
                 .routes
