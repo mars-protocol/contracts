@@ -12,7 +12,7 @@ use crate::{
     state::{COLLATERALS, CONFIG, MARKETS, MIGRATION_GUARD, OWNER},
 };
 
-const FROM_VERSION: &str = "1.2.2";
+const FROM_VERSION: &str = "1.2.1";
 
 pub mod v1_state {
     use cosmwasm_schema::cw_serde;
