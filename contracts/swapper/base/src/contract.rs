@@ -177,7 +177,6 @@ where
         let route = match route {
             Some(route) => {
                 let route = R::from(route, config)?;
-                route.validate(&deps.querier, &coin_in.denom, &denom_out)?;
                 route
             }
             None => self.get_route(deps, &coin_in.denom, &denom_out)?,
@@ -209,7 +208,6 @@ where
                 let config = self.query_config(deps.as_ref())?;
 
                 let route = R::from(route, config)?;
-                route.validate(&deps.querier, &coin_in.denom, &denom_out)?;
 
                 route
             }
