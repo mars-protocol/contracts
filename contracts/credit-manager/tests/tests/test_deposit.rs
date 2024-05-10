@@ -149,16 +149,16 @@ fn can_deposit_not_allowed_assets() {
     )
     .unwrap();
 
-    // let res = mock.query_positions(&account_id);
-    // assert_eq!(res.deposits.len(), 2);
-    // assert_present(&res, &blacklisted_coin_info, blacklisted_coin.amount);
-    // assert_present(&res, &not_listed_coin_info, not_listed_coin.amount);
+    let res = mock.query_positions(&account_id);
+    assert_eq!(res.deposits.len(), 2);
+    assert_present(&res, &blacklisted_coin_info, blacklisted_coin.amount);
+    assert_present(&res, &not_listed_coin_info, not_listed_coin.amount);
 
-    // let coin = mock.query_balance(&mock.rover, &blacklisted_coin.denom);
-    // assert_eq!(coin.amount, blacklisted_coin.amount);
+    let coin = mock.query_balance(&mock.rover, &blacklisted_coin.denom);
+    assert_eq!(coin.amount, blacklisted_coin.amount);
 
-    // let coin = mock.query_balance(&mock.rover, &not_listed_coin.denom);
-    // assert_eq!(coin.amount, not_listed_coin.amount);
+    let coin = mock.query_balance(&mock.rover, &not_listed_coin.denom);
+    assert_eq!(coin.amount, not_listed_coin.amount);
 }
 
 #[test]
