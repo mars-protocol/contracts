@@ -107,10 +107,10 @@ fn missing_params() {
         vaults_data,
     };
 
-    let err: HealthError = h
+    let res = h
         .max_swap_amount_estimate(&umars.denom, &udai.denom, &SwapKind::Default, Decimal::zero())
-        .unwrap_err();
-    assert_eq!(err, HealthError::MissingParams(umars.denom));
+        .unwrap();
+    assert_eq!(res, Uint128::zero());
 }
 
 #[test]

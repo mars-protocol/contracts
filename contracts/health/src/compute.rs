@@ -43,6 +43,7 @@ pub fn compute_health(
         .chain(vault_base_token_denoms)
         .try_for_each(|denom| -> StdResult<()> {
             let params_opt = q.params.query_asset_params(&deps.querier, denom)?;
+            // If the asset is not supported, we skip it (both params and price)
             if let Some(params) = params_opt {
                 denoms_data.params.insert(denom.clone(), params);
 
