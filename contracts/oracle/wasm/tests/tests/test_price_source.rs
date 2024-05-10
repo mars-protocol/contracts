@@ -1,6 +1,6 @@
 use std::str::FromStr;
 
-use astroport::factory::PairType;
+use astroport::{factory::PairType, pair_concentrated::ConcentratedPoolParams};
 use cosmwasm_std::{
     coin, from_json,
     testing::{mock_dependencies, mock_env},
@@ -28,6 +28,7 @@ const ONE: Decimal = Decimal::one();
 const TWO: Decimal = Decimal::new(Uint128::new(2_000_000_000_000_000_000u128));
 const DEFAULT_LIQ: [u128; 2] = [10000000000000000000000u128, 1000000000000000000000u128];
 
+use mars_oracle_base::helpers::compute_pcl_lp_price;
 use mars_testing::{
     mock_env_at_block_time, mock_info,
     test_runner::get_test_runner,
@@ -926,8 +927,8 @@ pub fn validate_and_query_lsd_price_source(
 #[test_case(PairType::Xyk {}, &["uatom","untrn"], Some(Decimal::from_str("8.86506356").unwrap()), Some(Decimal::from_str("0.97696221").unwrap()), [1171210862745u128, 12117922358503u128], &[6,6]; "XYK, 6:6 decimals")]
 #[test_case(PairType::Xyk {}, &["untrn","ueth"], Some(Decimal::from_str("0.85676231").unwrap()), Some(Decimal::from_str("0.000000003192778061").unwrap()), [291397962796u128, 65345494060528260316u128], &[6,18]; "XYK, 6:18 decimals")]
 #[test_case(PairType::Xyk {}, &["ueth","udydx"], Some(Decimal::from_str("0.000000003195385").unwrap()), Some(Decimal::from_str("0.00000000000238175").unwrap()), DEFAULT_LIQ, &[18,18]; "XYK, 18:18 decimals")]
-#[test_case(PairType::Stable {  }, &["utia","ustia"], Some(Decimal::one()), Some(Decimal::one()), DEFAULT_LIQ, &[6,6] => panics "Invalid price source: expecting pair contract14 to be XYK pool; found stable"; "XYK required, found StableSwap")]
-#[test_case(PairType::Custom("concentrated".to_string()), &["utia","ustia"], Some(Decimal::one()), Some(Decimal::one()), [145692686804, 175998046105], &[6,6] => panics "Invalid price source: expecting pair contract14 to be XYK pool; found custom-concentrated"; "XYK required, found PCL")]
+#[test_case(PairType::Stable {  }, &["utia","ustia"], Some(Decimal::one()), Some(Decimal::one()), DEFAULT_LIQ, &[6,6] => panics "Invalid price source: expecting pair contract14 to be xyk pool; found stable"; "XYK required, found StableSwap")]
+#[test_case(PairType::Custom("concentrated".to_string()), &["utia","ustia"], Some(Decimal::one()), Some(Decimal::one()), [145692686804, 175998046105], &[6,6] => panics "Invalid price source: expecting pair contract14 to be xyk pool; found custom-concentrated"; "XYK required, found PCL")]
 #[test_case(PairType::Xyk {}, &["uatom","untrn"], None, None, DEFAULT_LIQ, &[6,6] => panics "Invalid price source: missing price source for uatom"; "XYK, missing price source for both assets")]
 #[test_case(PairType::Xyk {}, &["uatom","untrn"], None, Some(Decimal::one()), DEFAULT_LIQ, &[6,6] => panics "Invalid price source: missing price source for uatom"; "XYK, missing price source for first asset")]
 #[test_case(PairType::Xyk {}, &["uatom","untrn"], Some(Decimal::one()), None, DEFAULT_LIQ, &[6,6] => panics "Invalid price source: missing price source for untrn"; "XYK, missing price source for second asset")]
@@ -983,7 +984,6 @@ pub fn test_validate_and_query_astroport_xyk_lp_price_source(
     // Calculate expected price
     let pool_value_u256 = Uint256::from(2u8) * (coin0_value * coin1_value).isqrt();
     let pool_value_u128 = Uint128::try_from(pool_value_u256).unwrap();
-    println!("total share: {}", pool.total_share);
     let expected_price = Decimal::from_ratio(pool_value_u128, pool.total_share);
 
     let price_source = WasmPriceSourceUnchecked::XykLiquidityToken {
@@ -996,4 +996,92 @@ pub fn test_validate_and_query_astroport_xyk_lp_price_source(
         .set_price_source(&lp_denom, price_source.clone(), admin)
         .assert_price_source(&lp_denom, price_source)
         .assert_price_almost_equal(&lp_denom, expected_price, Decimal::percent(1));
+}
+
+#[test_case(PairType::Custom("concentrated".to_string()), &["uatom","untrn"], Some(Decimal::from_str("8.86506356").unwrap()), Some(Decimal::from_str("0.97696221").unwrap()), [1171210862745u128, 12117922358503u128], &[6,6]; "PCL, 6:6 decimals")]
+#[test_case(PairType::Custom("concentrated".to_string()), &["uatom","untrn"], Some(Decimal::from_str("821123123435412349.73564").unwrap()), Some(Decimal::from_str("0.97696221").unwrap()), [923752936745723845u128, 12117922358503u128], &[6,6]; "PCL, [6, 6] decimals Uint128 overflow)")]
+#[test_case(PairType::Custom("concentrated".to_string()), &["utia","untrn"], Some(Decimal::from_str("0.000000000000000585").unwrap()), Some(Decimal::from_str("0.97696221").unwrap()), [92347562936745723845u128, 12117922358503u128], &[18,6]; "PCL, [18, 6] decimals")]
+#[test_case(PairType::Custom("concentrated".to_string()), &["utia","ueth"], Some(Decimal::from_str("0.000000000000000995").unwrap()), Some(Decimal::from_str("000000000000021726").unwrap()), [234273649283746123784938u128, 3649283723446123784938u128], &[18,18]; "PCL, [18, 18] decimals")]
+#[test_case(PairType::Xyk{}, &["uatom","untrn"], Some(Decimal::from_str("8.86506356").unwrap()), Some(Decimal::from_str("0.97696221").unwrap()), [1171210862745u128, 12117922358503u128], &[6,6] => panics "Invalid price source: expecting pair contract14 to be custom-concentrated pool; found xyk"; "PCL required, found XYK")]
+#[test_case(PairType::Stable{}, &["uatom","untrn"], Some(Decimal::from_str("8.86506356").unwrap()), Some(Decimal::from_str("0.97696221").unwrap()), [1171210862745u128, 12117922358503u128], &[6,6] => panics "Invalid price source: expecting pair contract14 to be custom-concentrated pool; found stable"; "PCL required, found Stable")]
+#[test_case(PairType::Custom("concentrated".to_string()), &["uatom","untrn"], None, None, [1171210862745u128, 1171210862745u128], &[6,6] => panics "Invalid price source: missing price source for uatom"; "PCL, missing price source for both assets")]
+#[test_case(PairType::Custom("concentrated".to_string()), &["uatom","untrn"], None, Some(Decimal::one()), [1171210862745u128, 1171210862745u128], &[6,6] => panics "Invalid price source: missing price source for uatom"; "PCL, missing price source for first asset")]
+#[test_case(PairType::Custom("concentrated".to_string()), &["uatom","untrn"], Some(Decimal::one()), None, [1171210862745u128, 1171210862745u128], &[6,6] => panics "Invalid price source: missing price source for untrn"; "PCL, missing price source for second asset")]
+pub fn test_validate_and_query_astroport_pcl_lp_price_source(
+    pair_type: PairType,
+    pair_denoms: &[&str; 2],
+    coin0_price: Option<Decimal>,
+    coin1_price: Option<Decimal>,
+    initial_liq: [u128; 2],
+    decimals: &[u8; 2],
+) {
+    let primary_denom = pair_denoms[0];
+    let secondary_denom = pair_denoms[1];
+    let lp_denom = format!("pair:{}-{}", pair_denoms[0], pair_denoms[1]);
+
+    let owned_runner = get_test_runner();
+    let runner = owned_runner.as_ref();
+    let admin = &runner
+        .init_account(&[
+            coin(DEFAULT_COIN_AMOUNT, primary_denom),
+            coin(DEFAULT_COIN_AMOUNT, secondary_denom),
+        ])
+        .unwrap();
+
+    let robot = WasmOracleTestRobot::new(&runner, get_contracts(&runner), admin, Some("uusd"));
+
+    let (pair_address, _lp_token_addr) = robot.create_astroport_pair(
+        pair_type.clone(),
+        &[native_info(primary_denom), native_info(secondary_denom)],
+        astro_init_params(&pair_type),
+        admin,
+        Some(&initial_liq),
+        Some(decimals),
+    );
+
+    let mut other_assets_price_sources = vec![];
+    if let Some(price) = coin0_price {
+        other_assets_price_sources.push((primary_denom, fixed_source(price)));
+    }
+    if let Some(price) = coin1_price {
+        other_assets_price_sources.push((secondary_denom, fixed_source(price)));
+    }
+
+    let price_source = WasmPriceSourceUnchecked::PclLiquidityToken {
+        pair_address: pair_address.clone(),
+    };
+
+    // Validate the price sources
+    robot
+        .set_price_sources(other_assets_price_sources.clone(), admin)
+        .set_price_source(&lp_denom, price_source.clone(), admin)
+        .assert_price_source(&lp_denom, price_source.clone());
+
+    let pool = robot.query_pool(&pair_address);
+    let curve_invariant = robot.query_curve_invariant(&pair_address);
+    let pool_config = robot.query_astroport_config(&pair_address);
+
+    let pool_params = from_json::<ConcentratedPoolParams>(pool_config.params.unwrap()).unwrap();
+
+    let coin0 = pool.assets[0].to_coin().unwrap();
+    let coin1 = pool.assets[1].to_coin().unwrap();
+
+    let mut lp_token_price = Decimal::zero();
+
+    // Prices have been validated before, so both are defined
+    if let (Some(price0), Some(price1)) = (coin0_price, coin1_price) {
+        lp_token_price = compute_pcl_lp_price(
+            price0,
+            price1,
+            coin0.amount,
+            coin1.amount,
+            pool.total_share,
+            pool_params.price_scale,
+            curve_invariant,
+        )
+        .unwrap();
+    };
+
+    // Validate the queried price with the expected price
+    robot.assert_price(&lp_denom, lp_token_price);
 }

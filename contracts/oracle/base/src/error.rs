@@ -71,6 +71,9 @@ pub enum ContractError {
 
     #[error("Snapshots have the same cumulative price. This should never happen.")]
     InvalidCumulativePrice {},
+
+    #[error("Missing astroport pool params")]
+    MissingAstroportPoolParams {},
 }
 
 pub type ContractResult<T> = Result<T, ContractError>;
