@@ -91,7 +91,7 @@ pub fn query(deps: Deps, env: Env, msg: QueryMsg) -> ContractResult<Binary> {
         QueryMsg::Config {} => to_json_binary(&query_config(deps)?),
         QueryMsg::AssetParams {
             denom,
-        } => to_json_binary(&ASSET_PARAMS.load(deps.storage, &denom)?),
+        } => to_json_binary(&ASSET_PARAMS.may_load(deps.storage, &denom)?),
         QueryMsg::AllAssetParams {
             start_after,
             limit,
