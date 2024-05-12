@@ -76,6 +76,11 @@ export type WasmPriceSourceForString =
         pair_address: string
       }
     }
+  | {
+      pcl_liquidity_token: {
+        pair_address: string
+      }
+    }
 export type Decimal = string
 export type Identifier = string
 export type OwnerUpdate =
