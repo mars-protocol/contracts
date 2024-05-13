@@ -343,7 +343,7 @@ fn vault_whitelist_affects_max_ltv() {
 }
 
 #[test]
-fn not_supported_coins_work() {
+fn not_whitelisted_coins_work() {
     let mut mock = MockEnv::new().build().unwrap();
 
     let umars = "umars";
