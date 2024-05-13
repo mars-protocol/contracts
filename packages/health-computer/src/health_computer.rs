@@ -508,12 +508,7 @@ impl HealthComputer {
         let mut liquidation_threshold_adjusted_collateral = Uint128::zero();
 
         for c in coins {
-            let coin_price =
-                self.denoms_data.prices.get(&c.denom).ok_or(MissingPrice(c.denom.clone()))?;
-            let coin_value = c.amount.checked_mul_floor(*coin_price)?;
-            total_collateral_value = total_collateral_value.checked_add(coin_value)?;
-
-            let AssetParams {
+            let Some(AssetParams {
                 credit_manager:
                     CmSettings {
                         hls,
@@ -521,7 +516,16 @@ impl HealthComputer {
                     },
                 liquidation_threshold,
                 ..
-            } = self.denoms_data.params.get(&c.denom).ok_or(MissingParams(c.denom.clone()))?;
+            }) = self.denoms_data.params.get(&c.denom)
+            else {
+                // If the coin is not found (whitelisted), it is not considered for collateral
+                continue;
+            };
+
+            let coin_price =
+                self.denoms_data.prices.get(&c.denom).ok_or(MissingPrice(c.denom.clone()))?;
+            let coin_value = c.amount.checked_mul_floor(*coin_price)?;
+            total_collateral_value = total_collateral_value.checked_add(coin_value)?;
 
             let checked_max_ltv = self.get_coin_max_ltv(&c.denom)?;
 

@@ -35,7 +35,7 @@ pub enum QueryMsg {
     #[returns(super::msg::ConfigResponse)]
     Config {},
 
-    #[returns(super::asset::AssetParams)]
+    #[returns(Option<super::asset::AssetParams>)]
     AssetParams {
         denom: String,
     },

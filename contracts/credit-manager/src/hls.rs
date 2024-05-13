@@ -18,7 +18,10 @@ pub fn assert_hls_rules(deps: Deps, account_id: &str) -> ContractResult<Response
     }
 
     if let Some(debt) = positions.debts.first() {
-        let params = PARAMS.load(deps.storage)?.query_asset_params(&deps.querier, &debt.denom)?;
+        let params = PARAMS
+            .load(deps.storage)?
+            .query_asset_params(&deps.querier, &debt.denom)?
+            .ok_or(ContractError::AssetParamsNotFound(debt.denom.to_string()))?;
 
         // Rule #2: Debt denom must have HLS params set in the Mars-Param contract
         let Some(hls) = params.credit_manager.hls else {

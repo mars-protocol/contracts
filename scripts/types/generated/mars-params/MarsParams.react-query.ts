@@ -40,6 +40,7 @@ import {
   ArrayOfVaultConfigBaseForAddr,
   VaultConfigBaseForAddr,
   PaginationResponseForVaultConfigBaseForAddr,
+  NullableAssetParamsBaseForAddr,
   ConfigResponse,
   OwnerResponse,
 } from './MarsParams.types'
@@ -243,17 +244,17 @@ export function useMarsParamsAllAssetParamsQuery<TData = ArrayOfAssetParamsBaseF
   )
 }
 export interface MarsParamsAssetParamsQuery<TData>
-  extends MarsParamsReactQuery<AssetParamsBaseForAddr, TData> {
+  extends MarsParamsReactQuery<NullableAssetParamsBaseForAddr, TData> {
   args: {
     denom: string
   }
 }
-export function useMarsParamsAssetParamsQuery<TData = AssetParamsBaseForAddr>({
+export function useMarsParamsAssetParamsQuery<TData = NullableAssetParamsBaseForAddr>({
   client,
   args,
   options,
 }: MarsParamsAssetParamsQuery<TData>) {
-  return useQuery<AssetParamsBaseForAddr, Error, TData>(
+  return useQuery<NullableAssetParamsBaseForAddr, Error, TData>(
     marsParamsQueryKeys.assetParams(client?.contractAddress, args),
     () =>
       client

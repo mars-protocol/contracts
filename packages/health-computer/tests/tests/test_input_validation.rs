@@ -105,8 +105,27 @@ fn missing_params() {
         vaults_data,
     };
 
-    let err: HealthError = h.compute_health().unwrap_err();
-    assert_eq!(err, HealthError::MissingParams(umars.denom))
+    // If asset params is missing for a denom (in params contract), both price and params will be missing in denoms_data.
+    // For purpose of this test, we set the price for umars, but not the params.
+    let res = h.compute_health().unwrap();
+    // mars is not counted in the collateral because it has no params
+    let expected_ltv_collateral = Uint128::new(33)
+        .checked_mul_floor(udai.price)
+        .unwrap()
+        .checked_mul_floor(udai.params.max_loan_to_value)
+        .unwrap();
+    assert_eq!(res.max_ltv_adjusted_collateral, expected_ltv_collateral);
+    let expected_liq_collateral = Uint128::new(33)
+        .checked_mul_floor(udai.price)
+        .unwrap()
+        .checked_mul_floor(udai.params.liquidation_threshold)
+        .unwrap();
+    assert_eq!(res.liquidation_threshold_adjusted_collateral, expected_liq_collateral);
+    let udai_debt = Uint128::new(3100).checked_mul_ceil(udai.price).unwrap();
+    // mars is counted in the debt because it has a price
+    let umars_debt = Uint128::new(200).checked_mul_ceil(umars.price).unwrap();
+    let expected_debt = udai_debt + umars_debt;
+    assert_eq!(res.total_debt_value, expected_debt);
 }
 
 #[test]

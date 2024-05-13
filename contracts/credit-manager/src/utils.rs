@@ -66,7 +66,7 @@ pub fn query_nft_token_owner(deps: Deps, account_id: &str) -> ContractResult<Str
 pub fn assert_coin_is_whitelisted(deps: &mut DepsMut, denom: &str) -> ContractResult<()> {
     let params = PARAMS.load(deps.storage)?;
     match params.query_asset_params(&deps.querier, denom) {
-        Ok(p) if p.credit_manager.whitelisted => Ok(()),
+        Ok(Some(p)) if p.credit_manager.whitelisted => Ok(()),
         _ => Err(ContractError::NotWhitelisted(denom.to_string())),
     }
 }

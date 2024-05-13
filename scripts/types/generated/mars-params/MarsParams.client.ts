@@ -39,6 +39,7 @@ import {
   ArrayOfVaultConfigBaseForAddr,
   VaultConfigBaseForAddr,
   PaginationResponseForVaultConfigBaseForAddr,
+  NullableAssetParamsBaseForAddr,
   ConfigResponse,
   OwnerResponse,
 } from './MarsParams.types'
@@ -46,7 +47,7 @@ export interface MarsParamsReadOnlyInterface {
   contractAddress: string
   owner: () => Promise<OwnerResponse>
   config: () => Promise<ConfigResponse>
-  assetParams: ({ denom }: { denom: string }) => Promise<AssetParamsBaseForAddr>
+  assetParams: ({ denom }: { denom: string }) => Promise<NullableAssetParamsBaseForAddr>
   allAssetParams: ({
     limit,
     startAfter,
@@ -108,7 +109,7 @@ export class MarsParamsQueryClient implements MarsParamsReadOnlyInterface {
       config: {},
     })
   }
-  assetParams = async ({ denom }: { denom: string }): Promise<AssetParamsBaseForAddr> => {
+  assetParams = async ({ denom }: { denom: string }): Promise<NullableAssetParamsBaseForAddr> => {
     return this.client.queryContractSmart(this.contractAddress, {
       asset_params: {
         denom,

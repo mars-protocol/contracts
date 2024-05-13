@@ -6,7 +6,7 @@ use mars_types::params::TotalDepositResponse;
 use crate::{
     error::{ContractError, ContractResult},
     state::PARAMS,
-    utils::{assert_coin_is_whitelisted, increment_coin_balance},
+    utils::increment_coin_balance,
 };
 
 pub fn deposit(
@@ -16,8 +16,6 @@ pub fn deposit(
     coin: &Coin,
     received_coins: &mut Coins,
 ) -> ContractResult<Response> {
-    assert_coin_is_whitelisted(deps, &coin.denom)?;
-
     if coin.amount.is_zero() {
         return Ok(response);
     }
@@ -56,6 +54,12 @@ pub fn assert_deposit_caps(deps: Deps, denoms: BTreeSet<String>) -> ContractResu
     let mut response = Response::new().add_attribute("action", "callback/assert_deposit_caps");
 
     for denom in denoms {
+        // Asset is not found (not whitelisted) and it doesn't count towards the cap and Health Factor
+        let params_opt = params.query_asset_params(&deps.querier, &denom)?;
+        if params_opt.is_none() {
+            continue;
+        }
+
         let TotalDepositResponse {
             denom,
             amount,

@@ -11,9 +11,7 @@ use mars_types::{
     swapper::{OsmoRoute, OsmoSwap, SwapperRoute},
 };
 
-use super::helpers::{
-    assert_err, blacklisted_coin, uatom_info, uosmo_info, AccountToFund, MockEnv,
-};
+use super::helpers::{assert_err, uatom_info, uosmo_info, AccountToFund, MockEnv};
 
 #[test]
 fn only_token_owner_can_swap_for_account() {
@@ -52,31 +50,59 @@ fn only_token_owner_can_swap_for_account() {
 }
 
 #[test]
-fn denom_out_must_be_whitelisted() {
-    let blacklisted_coin = blacklisted_coin();
+fn denom_out_does_not_have_to_be_whitelisted() {
+    let atom_info = uatom_info();
+    let another_coin = uosmo_info();
 
     let user = Addr::unchecked("user");
-    let mut mock = MockEnv::new().set_params(&[blacklisted_coin.clone()]).build().unwrap();
-    let account_id = mock.create_credit_account(&user).unwrap();
+    let mut mock = MockEnv::new()
+        .set_params(&[atom_info.clone()])
+        .fund_account(AccountToFund {
+            addr: user.clone(),
+            funds: vec![Coin::new(10_000u128, atom_info.denom.clone())],
+        })
+        .build()
+        .unwrap();
 
-    let res = mock.update_credit_account(
+    let route = SwapperRoute::Osmo(OsmoRoute {
+        swaps: vec![OsmoSwap {
+            pool_id: 102,
+            to: another_coin.denom.clone(),
+        }],
+    });
+    let res =
+        mock.query_swap_estimate(&atom_info.to_coin(10_000), &another_coin.denom, route.clone());
+    assert_eq!(res.amount, MOCK_SWAP_RESULT);
+
+    let account_id = mock.create_credit_account(&user).unwrap();
+    mock.update_credit_account(
         &account_id,
         &user,
-        vec![SwapExactIn {
-            coin_in: blacklisted_coin.to_action_coin(10_000),
-            denom_out: "ujake".to_string(),
-            slippage: Decimal::from_atomics(6u128, 1).unwrap(),
-            route: Some(SwapperRoute::Osmo(OsmoRoute {
-                swaps: vec![OsmoSwap {
-                    pool_id: 101,
-                    to: "ujake".to_string(),
-                }],
-            })),
-        }],
-        &[],
-    );
+        vec![
+            Deposit(atom_info.to_coin(10_000)),
+            SwapExactIn {
+                coin_in: atom_info.to_action_coin(10_000),
+                denom_out: another_coin.denom.clone(),
+                slippage: Decimal::from_atomics(6u128, 1).unwrap(),
+                route: Some(route),
+            },
+        ],
+        &[atom_info.to_coin(10_000)],
+    )
+    .unwrap();
 
-    assert_err(res, ContractError::NotWhitelisted("ujake".to_string()))
+    // assert rover balance
+    let atom_balance = mock.query_balance(&mock.rover, &atom_info.denom).amount;
+    let osmo_balance = mock.query_balance(&mock.rover, &another_coin.denom).amount;
+    assert_eq!(atom_balance, Uint128::zero());
+    assert_eq!(osmo_balance, MOCK_SWAP_RESULT);
+
+    // assert account position
+    let position = mock.query_positions(&account_id);
+    assert_eq!(position.deposits.len(), 1);
+    let coin = position.deposits.first().unwrap();
+    assert_eq!(coin.denom, another_coin.denom);
+    assert_eq!(coin.amount, MOCK_SWAP_RESULT);
 }
 
 #[test]

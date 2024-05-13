@@ -237,6 +237,7 @@ export interface PaginationResponseForVaultConfigBaseForAddr {
   data: VaultConfigBaseForAddr[]
   metadata: Metadata
 }
+export type NullableAssetParamsBaseForAddr = AssetParamsBaseForAddr | null
 export interface ConfigResponse {
   address_provider: string
 }
