@@ -113,7 +113,7 @@ fn deposit_but_not_enough_funds() {
 }
 
 #[test]
-fn can_deposit_not_allowed_assets() {
+fn can_deposit_not_whitelisted_assets() {
     let blacklisted_coin_info = blacklisted_coin();
     let not_listed_coin_info = ujake_info();
     let blacklisted_coin = blacklisted_coin_info.to_coin(300);
