@@ -3,7 +3,7 @@ use mars_credit_manager::error::ContractError::{ExtraFundsReceived, FundsMismatc
 use mars_types::credit_manager::{Action, Positions};
 
 use super::helpers::{
-    assert_err, blacklisted_coin, uatom_info, ujake_info, uosmo_info, AccountToFund, CoinInfo,
+    assert_err, blacklisted_coin_info, uatom_info, ujake_info, uosmo_info, AccountToFund, CoinInfo,
     MockEnv,
 };
 
@@ -114,7 +114,7 @@ fn deposit_but_not_enough_funds() {
 
 #[test]
 fn can_deposit_not_whitelisted_assets() {
-    let blacklisted_coin_info = blacklisted_coin();
+    let blacklisted_coin_info = blacklisted_coin_info();
     let not_listed_coin_info = ujake_info();
     let blacklisted_coin = blacklisted_coin_info.to_coin(300);
     let not_listed_coin = not_listed_coin_info.to_coin(250);
