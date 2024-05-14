@@ -284,6 +284,24 @@ impl MockEnv {
         Ok(self.get_account_id(res))
     }
 
+    pub fn create_credit_account_v2(
+        &mut self,
+        sender: &Addr,
+        kind: AccountKind,
+        account_id: Option<String>,
+    ) -> AnyResult<String> {
+        let res = self.app.execute_contract(
+            sender.clone(),
+            self.rover.clone(),
+            &ExecuteMsg::CreateCreditAccountV2 {
+                kind,
+                account_id,
+            },
+            &[],
+        )?;
+        Ok(self.get_account_id(res))
+    }
+
     pub fn get_account_id(&mut self, res: AppResponse) -> String {
         let attr: Vec<&String> = res
             .events

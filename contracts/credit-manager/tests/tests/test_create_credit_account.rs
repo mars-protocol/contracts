@@ -67,3 +67,57 @@ fn after_create_returns_account_kind() {
     assert_eq!(position_1.account_kind, AccountKind::Default);
     assert_eq!(position_2.account_kind, AccountKind::HighLeveredStrategy);
 }
+
+#[test]
+fn create_credit_account_v2_success() {
+    let mut mock = MockEnv::new().build().unwrap();
+
+    // Double checking ownership by querying NFT account-nft for correct owner
+    let config = mock.query_config();
+
+    let user_1 = Addr::unchecked("user_1");
+    let account_id_1 = mock
+        .create_credit_account_v2(&user_1, AccountKind::Default, Some("Mars_Vault_1".to_string()))
+        .unwrap();
+
+    let owner_res: OwnerOfResponse = mock
+        .app
+        .wrap()
+        .query_wasm_smart(
+            config.account_nft.clone().unwrap(),
+            &NftQueryMsg::<Empty>::OwnerOf {
+                token_id: account_id_1.clone(),
+                include_expired: None,
+            },
+        )
+        .unwrap();
+
+    assert_eq!(user_1, owner_res.owner);
+    let position_1 = mock.query_positions(&account_id_1);
+    assert_eq!(position_1.account_kind, AccountKind::Default);
+
+    let user_2 = Addr::unchecked("user_2");
+    let account_id_2 = mock
+        .create_credit_account_v2(
+            &user_2,
+            AccountKind::HighLeveredStrategy,
+            Some("Mars_Vault_2".to_string()),
+        )
+        .unwrap();
+
+    let owner_res: OwnerOfResponse = mock
+        .app
+        .wrap()
+        .query_wasm_smart(
+            config.account_nft.unwrap(),
+            &NftQueryMsg::<Empty>::OwnerOf {
+                token_id: account_id_2.clone(),
+                include_expired: None,
+            },
+        )
+        .unwrap();
+
+    assert_eq!(user_2, owner_res.owner);
+    let position_2 = mock.query_positions(&account_id_2);
+    assert_eq!(position_2.account_kind, AccountKind::HighLeveredStrategy);
+}
