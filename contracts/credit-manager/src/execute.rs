@@ -51,6 +51,7 @@ pub fn create_credit_account(
         funds: vec![],
         msg: to_json_binary(&NftExecuteMsg::Mint {
             user: user.to_string(),
+            token_id: None,
         })?,
     });
 

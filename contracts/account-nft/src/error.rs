@@ -26,4 +26,9 @@ pub enum ContractError {
 
     #[error("{0}")]
     Version(#[from] cw2::VersionError),
+
+    #[error("Invalid token_id: {reason}")]
+    InvalidTokenId {
+        reason: String,
+    },
 }

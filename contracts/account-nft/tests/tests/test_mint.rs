@@ -70,6 +70,7 @@ fn only_minter_can_mint() {
         mock.nft_contract.clone(),
         &ExecuteMsg::Mint {
             user: bad_guy.into(),
+            token_id: None,
         },
         &[],
     );
