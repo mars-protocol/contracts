@@ -7,6 +7,7 @@ use mars_types::{
     account_nft::{ExecuteMsg, QueryMsg::OwnerOf},
     health::AccountKind,
 };
+use proptest::prelude::*;
 
 use super::helpers::{below_max_for_burn, MockEnv};
 
@@ -104,4 +105,57 @@ fn normal_base_cw721_actions_can_still_be_taken() {
         )
         .unwrap();
     assert_eq!(res.owner, rover_user_b.to_string())
+}
+
+#[test]
+fn invalid_custom_token_id_length() {
+    let mut mock = MockEnv::new().build().unwrap();
+    mock.assert_next_id("1");
+
+    let user = Addr::unchecked("user_abc");
+
+    let res = mock.mint_with_custom_token_id(&user, Some("abc".to_string()));
+    let err: ContractError = res.unwrap_err().downcast().unwrap();
+    assert_eq!(
+        err,
+        ContractError::InvalidTokenId {
+            reason: "token_id length should be between 4 and 15 chars".to_string()
+        }
+    );
+    mock.assert_next_id("1");
+
+    let res = mock.mint_with_custom_token_id(&user, Some("abcdefghijklmnop".to_string()));
+    let err: ContractError = res.unwrap_err().downcast().unwrap();
+    assert_eq!(
+        err,
+        ContractError::InvalidTokenId {
+            reason: "token_id length should be between 4 and 15 chars".to_string()
+        }
+    );
+    mock.assert_next_id("1");
+}
+
+proptest! {
+    #[test]
+    fn invalid_custom_token_id_characters(token_id in "[!@#$%^&*()-+]{4,15}") {
+        let mut mock = MockEnv::new().build().unwrap();
+        mock.assert_next_id("1");
+
+        let user = Addr::unchecked("user_abc");
+        let res = mock.mint_with_custom_token_id(&user, Some(token_id));
+        let err: ContractError = res.unwrap_err().downcast().unwrap();
+        prop_assert_eq!(err, ContractError::InvalidTokenId { reason: "token_id can contain only letters, numbers, and underscores".to_string() });
+        mock.assert_next_id("1");
+    }
+
+    #[test]
+    fn valid_custom_token_id(token_id in "[a-zA-Z0-9_]{4,15}") {
+        let mut mock = MockEnv::new().build().unwrap();
+        mock.assert_next_id("1");
+
+        let user = Addr::unchecked("user_abc");
+        let saved_token_id = mock.mint_with_custom_token_id(&user, Some(token_id.clone())).unwrap();
+        assert_eq!(saved_token_id, token_id);
+        mock.assert_next_id("1");
+    }
 }

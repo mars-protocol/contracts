@@ -18,6 +18,7 @@ use crate::{
     error::ContractError::{
         self, BaseError, BurnNotAllowed, CreditManagerContractNotSet, HealthContractNotSet,
     },
+    helpers::validate_token_id,
     state::{CONFIG, NEXT_ID},
 };
 
@@ -28,6 +29,7 @@ pub fn mint(
     token_id: Option<String>,
 ) -> Result<Response, ContractError> {
     let next_id = if let Some(ti) = token_id {
+        validate_token_id(&ti)?;
         ti
     } else {
         let next_id = NEXT_ID.load(deps.storage)?;

@@ -2124,6 +2124,7 @@ dependencies = [
  "mars-owner 2.0.0",
  "mars-rover",
  "mars-types",
+ "proptest",
  "serde_json",
  "thiserror",
 ]
