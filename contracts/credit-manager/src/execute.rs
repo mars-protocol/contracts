@@ -50,6 +50,13 @@ pub fn create_credit_account(
         account_nft.query_next_id(&deps.querier)?
     };
 
+    if let AccountKind::FundManager {
+        vault_addr,
+    } = &kind
+    {
+        deps.api.addr_validate(vault_addr)?;
+    }
+
     ACCOUNT_KINDS.save(deps.storage, &next_id, &kind)?;
 
     let nft_mint_msg = CosmosMsg::Wasm(WasmMsg::Execute {
