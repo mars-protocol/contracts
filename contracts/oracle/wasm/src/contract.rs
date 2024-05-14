@@ -28,7 +28,7 @@ pub mod entry {
     use mars_types::oracle::{ExecuteMsg, InstantiateMsg, QueryMsg};
 
     use super::*;
-    use crate::{state::ASTROPORT_FACTORY, WasmPriceSourceUnchecked};
+    use crate::{migrations, state::ASTROPORT_FACTORY, WasmPriceSourceUnchecked};
 
     #[entry_point]
     pub fn instantiate(
@@ -81,7 +81,7 @@ pub mod entry {
     }
 
     #[entry_point]
-    pub fn migrate(_deps: DepsMut, _env: Env, _msg: Empty) -> ContractResult<Response> {
-        Ok(Response::default())
+    pub fn migrate(deps: DepsMut, _env: Env, _msg: Empty) -> ContractResult<Response> {
+        migrations::v2_0_0::migrate(deps)
     }
 }

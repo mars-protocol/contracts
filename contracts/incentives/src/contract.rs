@@ -1,8 +1,8 @@
 #[cfg(not(feature = "library"))]
 use cosmwasm_std::entry_point;
 use cosmwasm_std::{
-    attr, to_json_binary, Addr, BankMsg, Binary, Coin, Coins, Decimal, Deps, DepsMut, Env, Event,
-    MessageInfo, Order, Response, StdError, StdResult, Uint128,
+    attr, to_json_binary, Addr, BankMsg, Binary, Coin, Coins, Decimal, Deps, DepsMut, Empty, Env,
+    Event, MessageInfo, Order, Response, StdError, StdResult, Uint128,
 };
 use cw2::set_contract_version;
 use cw_storage_plus::Bound;
@@ -12,7 +12,7 @@ use mars_types::{
     error::MarsError,
     incentives::{
         ActiveEmission, Config, ConfigResponse, EmissionResponse, ExecuteMsg, IncentiveState,
-        IncentiveStateResponse, InstantiateMsg, MigrateMsg, QueryMsg, WhitelistEntry,
+        IncentiveStateResponse, InstantiateMsg, QueryMsg, WhitelistEntry,
     },
     keys::{UserId, UserIdKey},
 };
@@ -60,7 +60,6 @@ pub fn instantiate(
     let config = Config {
         address_provider: deps.api.addr_validate(&msg.address_provider)?,
         max_whitelisted_denoms: msg.max_whitelisted_denoms,
-        mars_denom: msg.mars_denom,
     };
     CONFIG.save(deps.storage, &config)?;
 
@@ -781,6 +780,6 @@ pub fn query_emissions(
 /// MIGRATION
 
 #[cfg_attr(not(feature = "library"), entry_point)]
-pub fn migrate(deps: DepsMut, env: Env, msg: MigrateMsg) -> Result<Response, ContractError> {
+pub fn migrate(deps: DepsMut, env: Env, msg: Empty) -> Result<Response, ContractError> {
     migrations::v2_0_0::migrate(deps, env, msg)
 }

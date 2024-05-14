@@ -1,6 +1,7 @@
 use cosmwasm_std::{attr, testing::mock_env, Empty, Event};
 use cw2::{ContractVersion, VersionError};
-use mars_address_provider::{contract::migrate, error::ContractError};
+use mars_rewards_collector_base::ContractError;
+use mars_rewards_collector_neutron::entry::migrate;
 use mars_testing::mock_dependencies;
 
 #[test]
@@ -13,7 +14,7 @@ fn wrong_contract_name() {
     assert_eq!(
         err,
         ContractError::Version(VersionError::WrongContract {
-            expected: "crates.io:mars-address-provider".to_string(),
+            expected: "crates.io:mars-rewards-collector-neutron".to_string(),
             found: "contract_xyz".to_string()
         })
     );
@@ -22,8 +23,12 @@ fn wrong_contract_name() {
 #[test]
 fn wrong_contract_version() {
     let mut deps = mock_dependencies(&[]);
-    cw2::set_contract_version(deps.as_mut().storage, "crates.io:mars-address-provider", "4.1.0")
-        .unwrap();
+    cw2::set_contract_version(
+        deps.as_mut().storage,
+        "crates.io:mars-rewards-collector-neutron",
+        "4.1.0",
+    )
+    .unwrap();
 
     let err = migrate(deps.as_mut(), mock_env(), Empty {}).unwrap_err();
 
@@ -39,8 +44,12 @@ fn wrong_contract_version() {
 #[test]
 fn successful_migration() {
     let mut deps = mock_dependencies(&[]);
-    cw2::set_contract_version(deps.as_mut().storage, "crates.io:mars-address-provider", "1.2.0")
-        .unwrap();
+    cw2::set_contract_version(
+        deps.as_mut().storage,
+        "crates.io:mars-rewards-collector-neutron",
+        "1.2.0",
+    )
+    .unwrap();
 
     let res = migrate(deps.as_mut(), mock_env(), Empty {}).unwrap();
 
@@ -53,7 +62,7 @@ fn successful_migration() {
     );
 
     let new_contract_version = ContractVersion {
-        contract: "crates.io:mars-address-provider".to_string(),
+        contract: "crates.io:mars-rewards-collector-neutron".to_string(),
         version: "2.0.0".to_string(),
     };
     assert_eq!(cw2::get_contract_version(deps.as_ref().storage).unwrap(), new_contract_version);

@@ -1,7 +1,6 @@
 use cosmwasm_std::{Addr, DepsMut, MessageInfo, Order, Response, StdResult};
 use cw2::{assert_contract_version, set_contract_version};
 use cw_storage_plus::Bound;
-use mars_owner::OwnerInit;
 use mars_types::{
     keys::{UserId, UserIdKey},
     red_bank::{Config, Market, MigrateV1ToV2},
@@ -13,7 +12,7 @@ use crate::{
     state::{COLLATERALS, CONFIG, MARKETS, MIGRATION_GUARD, OWNER},
 };
 
-const FROM_VERSION: &str = "1.0.0";
+const FROM_VERSION: &str = "1.2.1";
 
 pub mod v1_state {
     use cosmwasm_schema::cw_serde;
@@ -21,26 +20,9 @@ pub mod v1_state {
     use cw_storage_plus::{Item, Map};
     use mars_types::red_bank::{Collateral, InterestRateModel};
 
-    pub const OWNER: Item<OwnerState> = Item::new("owner");
     pub const CONFIG: Item<Config> = Item::new("config");
     pub const MARKETS: Map<&str, Market> = Map::new("markets");
     pub const COLLATERALS: Map<(&Addr, &str), Collateral> = Map::new("collaterals");
-
-    #[cw_serde]
-    pub enum OwnerState {
-        B(OwnerSetNoneProposed),
-    }
-
-    #[cw_serde]
-    pub struct OwnerSetNoneProposed {
-        pub owner: Addr,
-    }
-
-    pub fn current_owner(state: OwnerState) -> Addr {
-        match state {
-            OwnerState::B(b) => b.owner,
-        }
-    }
 
     #[cw_serde]
     pub struct Config {
@@ -76,18 +58,6 @@ pub fn migrate(deps: DepsMut) -> Result<Response, ContractError> {
 
     // make sure we're migrating the correct contract and from the correct version
     assert_contract_version(deps.storage, &format!("crates.io:{CONTRACT_NAME}"), FROM_VERSION)?;
-
-    // Owner package updated, re-initializing
-    let old_owner_state = v1_state::OWNER.load(deps.storage)?;
-    let old_owner = v1_state::current_owner(old_owner_state);
-    v1_state::OWNER.remove(deps.storage);
-    OWNER.initialize(
-        deps.storage,
-        deps.api,
-        OwnerInit::SetInitialOwner {
-            owner: old_owner.to_string(),
-        },
-    )?;
 
     // Config package updated, re-initializing
     let old_config = v1_state::CONFIG.load(deps.storage)?;

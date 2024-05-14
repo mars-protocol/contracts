@@ -897,7 +897,6 @@ impl MockEnvBuilder {
                     address_provider: address_provider_addr.to_string(),
                     epoch_duration: 604800,
                     max_whitelisted_denoms: 10,
-                    mars_denom: "umars".to_string(),
                 },
                 &[],
                 "incentives",
