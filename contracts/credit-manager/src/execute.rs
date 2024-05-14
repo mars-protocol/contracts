@@ -82,7 +82,35 @@ pub fn dispatch_actions(
 
     let account_id = match account_id {
         Some(acc_id) => {
-            assert_is_token_owner(&deps, &info.sender, &acc_id)?;
+            let kind = get_account_kind(deps.storage, &acc_id)?;
+            match kind {
+                AccountKind::FundManager {
+                    vault_addr,
+                } if info.sender.to_string() != vault_addr => {
+                    assert_is_token_owner(&deps, &info.sender, &acc_id)?;
+
+                    let actions_not_allowed = actions.iter().any(|action| {
+                        matches!(
+                            action,
+                            Action::Deposit(..)
+                                | Action::Withdraw(..)
+                                | Action::RefundAllCoinBalances {}
+                        )
+                    });
+                    if actions_not_allowed {
+                        return Err(ContractError::Unauthorized {
+                            user: acc_id.to_string(),
+                            action: "deposit, withdraw, refund_all_coin_balances".to_string(),
+                        });
+                    }
+                }
+                AccountKind::FundManager {
+                    ..
+                } => {}
+                AccountKind::Default | AccountKind::HighLeveredStrategy => {
+                    assert_is_token_owner(&deps, &info.sender, &acc_id)?
+                }
+            }
             acc_id
         }
         None => {
