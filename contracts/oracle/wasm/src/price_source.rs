@@ -26,6 +26,7 @@ use crate::{
         query_astroport_pair_info, query_astroport_pool, query_token_precision,
         validate_astroport_lp_pool_for_type, validate_astroport_pair_price_source,
     },
+    lp_pricing::query_pcl_lp_price,
     state::{ASTROPORT_FACTORY, ASTROPORT_TWAP_SNAPSHOTS},
 };
 
@@ -756,7 +757,7 @@ fn query_pcl_liquidity_token_price(
 
     let curve_invariant = query_astroport_curve_invariant(&deps.querier, pair_address)?;
 
-    lp_pricing::query_pcl_lp_price(
+    query_pcl_lp_price(
         deps,
         env,
         config,

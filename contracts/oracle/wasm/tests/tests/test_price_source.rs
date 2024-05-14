@@ -19,6 +19,7 @@ use cw_storage_plus::Map;
 use mars_oracle_base::{redemption_rate::RedemptionRate, ContractError, PriceSourceUnchecked};
 use mars_oracle_wasm::{
     contract::entry::{self, execute},
+    helpers::compute_pcl_lp_price,
     AstroportTwap, WasmPriceSource, WasmPriceSourceChecked, WasmPriceSourceUnchecked,
 };
 use mars_types::oracle::{ExecuteMsg, PriceResponse, QueryMsg};
@@ -28,7 +29,6 @@ const ONE: Decimal = Decimal::one();
 const TWO: Decimal = Decimal::new(Uint128::new(2_000_000_000_000_000_000u128));
 const DEFAULT_LIQ: [u128; 2] = [10000000000000000000000u128, 1000000000000000000000u128];
 
-use mars_oracle_base::helpers::compute_pcl_lp_price;
 use mars_testing::{
     mock_env_at_block_time, mock_info,
     test_runner::get_test_runner,
@@ -1000,6 +1000,7 @@ pub fn test_validate_and_query_astroport_xyk_lp_price_source(
 
 #[test_case(PairType::Custom("concentrated".to_string()), &["uatom","untrn"], Some(Decimal::from_str("8.86506356").unwrap()), Some(Decimal::from_str("0.97696221").unwrap()), [1171210862745u128, 12117922358503u128], &[6,6]; "PCL, 6:6 decimals")]
 #[test_case(PairType::Custom("concentrated".to_string()), &["uatom","untrn"], Some(Decimal::from_str("821123123435412349.73564").unwrap()), Some(Decimal::from_str("0.97696221").unwrap()), [923752936745723845u128, 12117922358503u128], &[6,6]; "PCL, [6, 6] decimals Uint128 overflow)")]
+#[test_case(PairType::Custom("concentrated".to_string()), &["uatom","untrn"], Some(Decimal::from_str("0.000000000585").unwrap()), Some(Decimal::from_str("0.0000000097696221").unwrap()), [34567u128, 67891u128], &[6,6]; "PCL, [6, 6] decimals, rounding small numbers)")]
 #[test_case(PairType::Custom("concentrated".to_string()), &["utia","untrn"], Some(Decimal::from_str("0.000000000000000585").unwrap()), Some(Decimal::from_str("0.97696221").unwrap()), [92347562936745723845u128, 12117922358503u128], &[18,6]; "PCL, [18, 6] decimals")]
 #[test_case(PairType::Custom("concentrated".to_string()), &["utia","ueth"], Some(Decimal::from_str("0.000000000000000995").unwrap()), Some(Decimal::from_str("000000000000021726").unwrap()), [234273649283746123784938u128, 3649283723446123784938u128], &[18,18]; "PCL, [18, 18] decimals")]
 #[test_case(PairType::Xyk{}, &["uatom","untrn"], Some(Decimal::from_str("8.86506356").unwrap()), Some(Decimal::from_str("0.97696221").unwrap()), [1171210862745u128, 12117922358503u128], &[6,6] => panics "Invalid price source: expecting pair contract14 to be custom-concentrated pool; found xyk"; "PCL required, found XYK")]
@@ -1082,6 +1083,7 @@ pub fn test_validate_and_query_astroport_pcl_lp_price_source(
         .unwrap();
     };
 
+    print!("🔥 price {}", lp_token_price);
     // Validate the queried price with the expected price
     robot.assert_price(&lp_denom, lp_token_price);
 }
