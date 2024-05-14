@@ -82,35 +82,7 @@ pub fn dispatch_actions(
 
     let account_id = match account_id {
         Some(acc_id) => {
-            let kind = get_account_kind(deps.storage, &acc_id)?;
-            match kind {
-                AccountKind::FundManager {
-                    vault_addr,
-                } if info.sender.to_string() != vault_addr => {
-                    assert_is_token_owner(&deps, &info.sender, &acc_id)?;
-
-                    let actions_not_allowed = actions.iter().any(|action| {
-                        matches!(
-                            action,
-                            Action::Deposit(..)
-                                | Action::Withdraw(..)
-                                | Action::RefundAllCoinBalances {}
-                        )
-                    });
-                    if actions_not_allowed {
-                        return Err(ContractError::Unauthorized {
-                            user: acc_id.to_string(),
-                            action: "deposit, withdraw, refund_all_coin_balances".to_string(),
-                        });
-                    }
-                }
-                AccountKind::FundManager {
-                    ..
-                } => {}
-                AccountKind::Default | AccountKind::HighLeveredStrategy => {
-                    assert_is_token_owner(&deps, &info.sender, &acc_id)?
-                }
-            }
+            validate_account(&deps, &info, &acc_id, &actions)?;
             acc_id
         }
         None => {
@@ -367,6 +339,45 @@ pub fn dispatch_actions(
         .add_messages(callback_msgs)
         .add_attribute("action", "rover/execute/update_credit_account")
         .add_attribute("account_id", account_id.to_string()))
+}
+
+fn validate_account(
+    deps: &DepsMut,
+    info: &MessageInfo,
+    acc_id: &String,
+    actions: &Vec<Action>,
+) -> Result<(), ContractError> {
+    let kind = get_account_kind(deps.storage, acc_id)?;
+    Ok(match kind {
+        // Fund manager wallet can interact with the account managing the vault funds.
+        // This wallet can't deposit/withdraw from the account directly.
+        AccountKind::FundManager {
+            vault_addr,
+        } if info.sender.to_string() != vault_addr => {
+            assert_is_token_owner(deps, &info.sender, acc_id)?;
+
+            let actions_not_allowed = actions.iter().any(|action| {
+                matches!(
+                    action,
+                    Action::Deposit(..) | Action::Withdraw(..) | Action::RefundAllCoinBalances {}
+                )
+            });
+            if actions_not_allowed {
+                return Err(ContractError::Unauthorized {
+                    user: acc_id.to_string(),
+                    action: "deposit, withdraw, refund_all_coin_balances".to_string(),
+                });
+            }
+        }
+        // Fund manager vault can interact with the account managed by the fund manager wallet.
+        // This vault can use the account without any restrictions.
+        AccountKind::FundManager {
+            ..
+        } => {}
+        AccountKind::Default | AccountKind::HighLeveredStrategy => {
+            assert_is_token_owner(deps, &info.sender, acc_id)?
+        }
+    })
 }
 
 pub fn execute_callback(
