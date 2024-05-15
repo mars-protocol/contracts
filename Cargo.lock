@@ -256,7 +256,7 @@ dependencies = [
  "cosmwasm-std",
  "cw-storage-plus 1.2.0",
  "cw20 0.15.1",
- "cw20-base",
+ "cw20-base 0.15.1",
  "thiserror",
 ]
 
@@ -386,7 +386,7 @@ dependencies = [
  "cosmwasm-std",
  "cw2 0.15.1",
  "cw20 0.15.1",
- "cw20-base",
+ "cw20-base 0.15.1",
  "snafu",
 ]
 
@@ -1187,6 +1187,21 @@ dependencies = [
 ]
 
 [[package]]
+name = "cw-vault-token"
+version = "0.1.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "ead4f3aad0bf40c72cd1549f5803be1884ef4a9f6684542285243964c0851b85"
+dependencies = [
+ "cosmwasm-schema",
+ "cosmwasm-std",
+ "cw-utils 1.0.3",
+ "cw20 1.1.2",
+ "cw20-base 1.1.2",
+ "osmosis-std 0.14.0",
+ "thiserror",
+]
+
+[[package]]
 name = "cw1"
 version = "0.15.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1294,6 +1309,23 @@ dependencies = [
  "cw-utils 0.15.1",
  "cw2 0.15.1",
  "cw20 0.15.1",
+ "schemars",
+ "semver",
+ "serde",
+ "thiserror",
+]
+
+[[package]]
+name = "cw20-base"
+version = "1.1.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "17ad79e86ea3707229bf78df94e08732e8f713207b4a77b2699755596725e7d9"
+dependencies = [
+ "cosmwasm-schema",
+ "cosmwasm-std",
+ "cw-storage-plus 1.2.0",
+ "cw2 1.1.2",
+ "cw20 1.1.2",
  "schemars",
  "semver",
  "serde",
@@ -2757,6 +2789,25 @@ dependencies = [
 ]
 
 [[package]]
+name = "mars-vault"
+version = "2.0.0"
+dependencies = [
+ "cosmwasm-schema",
+ "cosmwasm-std",
+ "cw-storage-plus 1.2.0",
+ "cw-utils 1.0.3",
+ "cw-vault-standard 0.4.0",
+ "cw-vault-token",
+ "cw2 1.1.2",
+ "mars-owner 2.0.0",
+ "mars-types",
+ "osmosis-std 0.22.0",
+ "schemars",
+ "serde",
+ "thiserror",
+]
+
+[[package]]
 name = "mars-zapper-astroport"
 version = "2.0.0"
 dependencies = [
@@ -2964,6 +3015,22 @@ dependencies = [
 
 [[package]]
 name = "osmosis-std"
+version = "0.14.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "2fc0a9075efd64ed5a8be3bf134cbf1080570d68384f2ad58ffaac6c00d063fd"
+dependencies = [
+ "chrono",
+ "cosmwasm-std",
+ "osmosis-std-derive 0.13.2",
+ "prost 0.11.9",
+ "prost-types 0.11.9",
+ "schemars",
+ "serde",
+ "serde-cw-value",
+]
+
+[[package]]
+name = "osmosis-std"
 version = "0.16.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "75895e4db1a81ca29118e366365744f64314938327e4eedba8e6e462fb15e94f"
@@ -2992,6 +3059,18 @@ dependencies = [
  "schemars",
  "serde",
  "serde-cw-value",
+]
+
+[[package]]
+name = "osmosis-std-derive"
+version = "0.13.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "a455e262a6fdfd3914f3a4e11e6bc0ce491901cb9d507d7856d7ef6e129e90c6"
+dependencies = [
+ "itertools 0.10.5",
+ "proc-macro2",
+ "quote",
+ "syn 1.0.109",
 ]
 
 [[package]]

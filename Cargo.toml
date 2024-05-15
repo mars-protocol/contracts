@@ -13,6 +13,7 @@ members  = [
   "contracts/rewards-collector/*",
   "contracts/swapper/*",
   "contracts/v2-zapper/*",
+  "contracts/vault",
 
   # mock contracts
   "contracts/mock-credit-manager",
