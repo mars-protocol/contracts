@@ -18,7 +18,13 @@ use proptest::{
 };
 
 fn random_account_kind() -> impl Strategy<Value = AccountKind> {
-    prop_oneof![Just(AccountKind::Default), Just(AccountKind::HighLeveredStrategy)]
+    prop_oneof![
+        Just(AccountKind::Default),
+        Just(AccountKind::HighLeveredStrategy),
+        Just(AccountKind::FundManager {
+            vault_addr: "vault_addr".to_string()
+        })
+    ]
 }
 
 fn random_denom() -> impl Strategy<Value = String> {
