@@ -352,15 +352,15 @@ fn validate_account(
     deps: &DepsMut,
     info: &MessageInfo,
     acc_id: &String,
-    actions: &Vec<Action>,
+    actions: &[Action],
 ) -> Result<(), ContractError> {
     let kind = get_account_kind(deps.storage, acc_id)?;
-    Ok(match kind {
+    match kind {
         // Fund manager wallet can interact with the account managing the vault funds.
         // This wallet can't deposit/withdraw from the account directly.
         AccountKind::FundManager {
             vault_addr,
-        } if info.sender.to_string() != vault_addr => {
+        } if info.sender != vault_addr => {
             assert_is_token_owner(deps, &info.sender, acc_id)?;
 
             let actions_not_allowed = actions.iter().any(|action| {
@@ -384,7 +384,9 @@ fn validate_account(
         AccountKind::Default | AccountKind::HighLeveredStrategy => {
             assert_is_token_owner(deps, &info.sender, acc_id)?
         }
-    })
+    }
+
+    Ok(())
 }
 
 pub fn execute_callback(

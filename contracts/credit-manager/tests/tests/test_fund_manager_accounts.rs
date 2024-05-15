@@ -126,6 +126,49 @@ fn fund_manager_wallet_cannot_deposit_and_withdraw() {
 }
 
 #[test]
+fn addr_not_connected_to_fund_manager_acc_does_not_work() {
+    let coin_info = uosmo_info();
+
+    let random_addr = Addr::unchecked("random_addr");
+    let fund_manager_wallet = Addr::unchecked("fund_manager_wallet");
+    let fund_manager_vault = Addr::unchecked("fund_manager_vault");
+    let funded_amt = Uint128::new(10000);
+    let mut mock = MockEnv::new()
+        .set_params(&[coin_info.clone()])
+        .fund_account(AccountToFund {
+            addr: random_addr.clone(),
+            funds: coins(funded_amt.u128(), coin_info.denom.clone()),
+        })
+        .build()
+        .unwrap();
+    let account_id = mock
+        .create_credit_account_v2(
+            &fund_manager_wallet,
+            AccountKind::FundManager {
+                vault_addr: fund_manager_vault.to_string(),
+            },
+            None,
+        )
+        .unwrap();
+
+    // try to deposit from different addr
+    let deposit_amount = Uint128::new(234);
+    let res = mock.update_credit_account(
+        &account_id,
+        &random_addr,
+        vec![Action::Deposit(coin_info.to_coin(deposit_amount.u128()))],
+        &[Coin::new(deposit_amount.into(), coin_info.denom.clone())],
+    );
+    assert_err(
+        res,
+        ContractError::NotTokenOwner {
+            user: random_addr.to_string(),
+            account_id: account_id.to_string(),
+        },
+    );
+}
+
+#[test]
 fn fund_manager_wallet_can_work_on_behalf_of_vault() {
     let coin_info = uosmo_info();
 
