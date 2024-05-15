@@ -656,6 +656,7 @@ export function useMarsCreditManagerCreateCreditAccountV2Mutation(
 }
 export interface MarsCreditManagerCreateCreditAccountMutation {
   client: MarsCreditManagerClient
+  msg: AccountKind
   args?: {
     fee?: number | StdFee | 'auto'
     memo?: string
