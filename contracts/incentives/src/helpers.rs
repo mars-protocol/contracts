@@ -1,12 +1,18 @@
-use std::cmp::{max, min};
+use std::{
+    cmp::{max, min},
+    collections::HashMap,
+};
 
 use cosmwasm_std::{
-    coin, Addr, BlockInfo, Decimal, Deps, MessageInfo, Order, OverflowError, OverflowOperation,
-    QuerierWrapper, StdError, StdResult, Storage, Uint128,
+    coin, to_json_binary, Addr, BlockInfo, Coin, CosmosMsg, Decimal, Deps, MessageInfo, Order,
+    OverflowError, OverflowOperation, QuerierWrapper, StdError, StdResult, Storage, Uint128,
+    WasmMsg,
 };
+use cw_it::astroport::astroport_v3::incentives::ExecuteMsg;
 use cw_storage_plus::Bound;
 use mars_types::{
     address_provider::{self, MarsAddressType},
+    error::MarsError,
     incentives::IncentiveState,
     keys::{UserId, UserIdKey},
     red_bank,
@@ -14,8 +20,8 @@ use mars_types::{
 
 use crate::{
     state::{
-        EMISSIONS, EPOCH_DURATION, INCENTIVE_STATES, USER_ASSET_INDICES, USER_UNCLAIMED_REWARDS,
-        WHITELIST,
+        ASTROPORT_INCENTIVE_STATES, EMISSIONS, EPOCH_DURATION, INCENTIVE_STATES, TOTAL_LP_DEPOSITS,
+        USER_ASSET_INDICES, USER_ASTROPORT_INCENTIVE_STATES, USER_UNCLAIMED_REWARDS, WHITELIST,
     },
     ContractError,
 };
@@ -210,6 +216,86 @@ pub fn update_incentive_index(
     Ok(incentive_state)
 }
 
+/// Compute the incentive states for the lp based on the rewards given
+pub fn compute_updated_astroport_incentive_states(
+    storage: &dyn Storage,
+    pending_rewards: Vec<Coin>,
+    lp_denom: &str,
+) -> Result<HashMap<String, Decimal>, ContractError> {
+    let mut updated_incentives: HashMap<String, Decimal> = HashMap::new();
+    let total_lp_amount = TOTAL_LP_DEPOSITS.load(storage, &lp_denom).unwrap_or_default();
+
+    for reward in pending_rewards {
+        let reward_denom = reward.denom;
+
+        // We want to use our already updated index if it exists in memory.
+        // This allows us to combine multiple rewards of the same denom.
+        let previous_index = updated_incentives
+            .get(&reward_denom)
+            .and_then(|d| Some(*d))
+            // Otherwise we load from storage
+            .or_else(|| {
+                ASTROPORT_INCENTIVE_STATES
+                    .may_load(storage, (&lp_denom, &reward_denom))
+                    .unwrap_or_default()
+            })
+            .unwrap_or(Decimal::zero());
+
+        let updated_incentive =
+            compute_astroport_incentive_index(&previous_index, reward.amount, total_lp_amount)?;
+
+        updated_incentives.insert(reward_denom, updated_incentive);
+    }
+
+    Ok(updated_incentives)
+}
+
+pub fn calculate_rewards_from_astroport_incentive_state(
+    storage: &dyn Storage,
+    account_id: &str,
+    lp_coin: &Coin,
+    incentive_states: HashMap<String, Decimal>,
+) -> Result<Vec<Coin>, ContractError> {
+
+    let mut payables = vec![];
+    incentive_states
+        .iter()
+        .for_each(|(reward_denom, incentive_index)| {
+            let user_incentive_index = USER_ASTROPORT_INCENTIVE_STATES
+                .load(storage, (account_id, &lp_coin.denom, reward_denom))
+                .unwrap_or(Decimal::zero());
+
+            // Don't pay if already all paid up
+            if user_incentive_index != incentive_index {
+
+                let asset_accrued_rewards = compute_user_accrued_rewards(
+                    lp_coin.amount,
+                    user_incentive_index,
+                    *incentive_index,
+                );
+
+                // Add rewards to payments
+                if let Ok(rewards) = asset_accrued_rewards {
+                    payables.push(Coin {
+                        denom: reward_denom.to_string(),
+                        amount: rewards,
+                    })
+                }
+            }
+        });
+
+    Ok(payables)
+}
+
+pub fn compute_astroport_incentive_index(
+    previous_index: &Decimal,
+    claimed_rewards_amount: Uint128,
+    total_lp_amount: Uint128,
+) -> StdResult<Decimal> {
+    let new_index = previous_index + Decimal::from_ratio(claimed_rewards_amount, total_lp_amount);
+    Ok(new_index)
+}
+
 /// Computes the new incentive index for a given collateral denom and incentive denom tuple
 pub fn compute_incentive_index(
     previous_index: Decimal,
@@ -324,4 +410,28 @@ pub fn compute_user_unclaimed_rewards(
     }
 
     Ok(unclaimed_rewards)
+}
+
+pub fn assert_caller_is_credit_manager(
+    sender_addr: Addr,
+    credit_manager_addr: &Addr,
+) -> Result<(), ContractError> {
+    if sender_addr != credit_manager_addr {
+        return Err(ContractError::Mars(MarsError::Unauthorized {}));
+    };
+
+    Ok(())
+}
+
+pub fn claim_rewards_msg(
+    astroport_incentives_addr: &str,
+    lp_denom: &str,
+) -> Result<CosmosMsg, ContractError> {
+    Ok(CosmosMsg::Wasm(WasmMsg::Execute {
+        contract_addr: astroport_incentives_addr.to_string(),
+        funds: vec![],
+        msg: to_json_binary(&ExecuteMsg::ClaimRewards {
+            lp_tokens: vec![lp_denom.to_string()],
+        })?,
+    }))
 }

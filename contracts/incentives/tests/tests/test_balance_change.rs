@@ -4,8 +4,10 @@ use cosmwasm_std::{
     Addr, Decimal, Event, Response, Timestamp, Uint128,
 };
 use mars_incentives::{
-    contract::{execute, execute_balance_change, query_user_unclaimed_rewards},
+    contract::execute,
+    execute::execute_balance_change,
     helpers::{compute_incentive_index, compute_user_accrued_rewards},
+    query::query_user_unclaimed_rewards,
     state::{EMISSIONS, INCENTIVE_STATES, USER_ASSET_INDICES, USER_UNCLAIMED_REWARDS},
 };
 use mars_testing::MockEnvParams;
