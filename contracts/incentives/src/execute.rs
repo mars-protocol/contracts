@@ -321,6 +321,8 @@ pub fn execute_balance_change(
     Ok(Response::new().add_events(events))
 }
 
+// ASTROPORT INCENTIVES
+
 /// Fetch the new rewards from astroport, and update our global incentive states.
 fn claim_rewards_from_astro(
     deps: &mut DepsMut,
@@ -611,7 +613,6 @@ fn claim_astro_rewards_for_lp_position(
     let mut event = Event::new("mars/incentives/claimed_lp_rewards")
         .add_attribute("account_id", account_id.to_string());
 
-    // If we are staking, add a msg to claim our own rewards
     res = if staked_lp_amount != Uint128::zero() {
         let user_claimable_rewards =
             calculate_claimable_rewards(deps.storage, account_id, lp_denom, staked_lp_amount)?;
@@ -736,6 +737,8 @@ pub fn execute_claim_rewards(
 
     Ok(response)
 }
+
+// CONFIG
 
 pub fn execute_update_config(
     deps: DepsMut,

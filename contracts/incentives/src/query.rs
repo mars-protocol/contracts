@@ -138,8 +138,7 @@ pub fn query_lp_rewards_for_user(
         .range(deps.storage, start, None, Ascending)
         .take(limit)
         .map(|res: StdResult<(String, Uint128)>| {
-            // todo fix me
-            let (lp_denom, amount) = res.expect("Lp Postion does not exist");
+            let (lp_denom, amount) = res.expect("Lp Position does not exist");
             (
                 lp_denom.clone(),
                 query_lp_rewards_for_position(
@@ -151,9 +150,8 @@ pub fn query_lp_rewards_for_user(
                         denom: lp_denom,
                         amount,
                     },
-                    //TODO fix me
                 )
-                .expect(""),
+                .expect("LP Rewards query failed"),
             )
         })
         .collect();
