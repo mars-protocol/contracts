@@ -5,7 +5,12 @@ use cw2::set_contract_version;
 use mars_owner::{OwnerInit::SetInitialOwner, OwnerUpdate};
 use mars_types::incentives::{Config, ExecuteMsg, InstantiateMsg, MigrateMsg, QueryMsg};
 
-use crate::{astroport_incentives, config, error::ContractError, mars_incentives, migrations, query, state::{CONFIG, EPOCH_DURATION, MIGRATION_GUARD, OWNER}};
+use crate::{
+    astroport_incentives, config,
+    error::ContractError,
+    mars_incentives, migrations, query,
+    state::{CONFIG, EPOCH_DURATION, MIGRATION_GUARD, OWNER},
+};
 
 pub const CONTRACT_NAME: &str = env!("CARGO_PKG_NAME");
 pub const CONTRACT_VERSION: &str = env!("CARGO_PKG_VERSION");

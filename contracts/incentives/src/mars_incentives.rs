@@ -1,13 +1,27 @@
-use cosmwasm_std::{Addr, attr, BankMsg, Coin, Coins, Decimal, DepsMut, Env, Event, MessageInfo, Order, Response, StdError, StdResult, Uint128};
-use mars_types::error::MarsError;
-use mars_types::incentives::{IncentiveState, WhitelistEntry};
-use mars_types::keys::{UserId, UserIdKey};
+use cosmwasm_std::{
+    attr, Addr, BankMsg, Coin, Coins, Decimal, DepsMut, Env, Event, MessageInfo, Order, Response,
+    StdError, StdResult, Uint128,
+};
+use mars_types::{
+    error::MarsError,
+    incentives::{IncentiveState, WhitelistEntry},
+    keys::{UserId, UserIdKey},
+};
 use mars_utils::helpers::validate_native_denom;
-use crate::{ContractError, helpers, state};
-use crate::helpers::{compute_user_accrued_rewards, compute_user_unclaimed_rewards, update_incentive_index};
-use crate::query::query_red_bank_address;
-use crate::state::{CONFIG, EMISSIONS, EPOCH_DURATION, INCENTIVE_STATES, OWNER, USER_ASSET_INDICES, USER_UNCLAIMED_REWARDS, WHITELIST, WHITELIST_COUNT};
 
+use crate::{
+    helpers,
+    helpers::{
+        compute_user_accrued_rewards, compute_user_unclaimed_rewards, update_incentive_index,
+    },
+    query::query_red_bank_address,
+    state,
+    state::{
+        CONFIG, EMISSIONS, EPOCH_DURATION, INCENTIVE_STATES, OWNER, USER_ASSET_INDICES,
+        USER_UNCLAIMED_REWARDS, WHITELIST, WHITELIST_COUNT,
+    },
+    ContractError,
+};
 
 pub fn execute_claim_rewards(
     mut deps: DepsMut,

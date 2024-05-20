@@ -2,9 +2,13 @@ use cosmwasm_std::{DepsMut, Env, Event, MessageInfo, Order, Response, StdResult}
 use mars_owner::OwnerUpdate;
 use mars_types::incentives::WhitelistEntry;
 use mars_utils::helpers::{option_string_to_addr, validate_native_denom};
-use crate::{ContractError, helpers};
-use crate::helpers::update_incentive_index;
-use crate::state::{CONFIG, EMISSIONS, INCENTIVE_STATES, OWNER, WHITELIST, WHITELIST_COUNT};
+
+use crate::{
+    helpers,
+    helpers::update_incentive_index,
+    state::{CONFIG, EMISSIONS, INCENTIVE_STATES, OWNER, WHITELIST, WHITELIST_COUNT},
+    ContractError,
+};
 
 pub fn execute_update_config(
     deps: DepsMut,
@@ -38,7 +42,6 @@ pub fn update_owner(
 ) -> Result<Response, ContractError> {
     Ok(OWNER.update(deps, info, update)?)
 }
-
 
 pub fn execute_update_whitelist(
     mut deps: DepsMut,

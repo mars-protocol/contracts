@@ -1,15 +1,28 @@
 use std::collections::HashMap;
-use cosmwasm_std::{BankMsg, Coin, CosmosMsg, Decimal, DepsMut, Env, Event, MessageInfo, Response, StdResult, Storage, to_json_binary, Uint128, WasmMsg};
-use cosmwasm_std::Order::Ascending;
-use mars_types::address_provider;
-use mars_types::address_provider::MarsAddressType;
-use mars_types::error::MarsError;
-use mars_types::incentives::LpModification;
-use crate::ContractError;
-use crate::ContractError::NoStakedLp;
-use crate::helpers::{assert_caller_is_credit_manager, calculate_rewards_from_astroport_incentive_state, claim_rewards_msg, compute_updated_astroport_incentive_states};
-use crate::query::query_unclaimed_astroport_rewards;
-use crate::state::{ASTROPORT_INCENTIVE_STATES, CONFIG, LP_DEPOSITS, TOTAL_LP_DEPOSITS, USER_ASTROPORT_INCENTIVE_STATES};
+
+use astroport::incentives::ExecuteMsg;
+use cosmwasm_std::{
+    to_json_binary, BankMsg, Coin, CosmosMsg, Decimal, DepsMut, Env, Event, MessageInfo,
+    Order::Ascending, Response, StdResult, Storage, Uint128, WasmMsg,
+};
+use mars_types::{
+    address_provider, address_provider::MarsAddressType, error::MarsError,
+    incentives::LpModification,
+};
+
+use crate::{
+    helpers::{
+        assert_caller_is_credit_manager, calculate_rewards_from_astroport_incentive_state,
+        claim_rewards_msg, compute_updated_astroport_incentive_states,
+    },
+    query::query_unclaimed_astroport_rewards,
+    state::{
+        ASTROPORT_INCENTIVE_STATES, CONFIG, LP_DEPOSITS, TOTAL_LP_DEPOSITS,
+        USER_ASTROPORT_INCENTIVE_STATES,
+    },
+    ContractError,
+    ContractError::NoStakedLp,
+};
 
 /// Fetch the new rewards from astroport, and update our global incentive states.
 fn claim_rewards_from_astro(
@@ -25,11 +38,10 @@ fn claim_rewards_from_astro(
         astroport_incentives_addr,
         &lp_denom,
     )
-        .unwrap_or(vec![]);
+    .unwrap_or(vec![]);
 
     let res = update_lp_incentive_states(deps.storage, &lp_denom, &account_id, pending_rewards)?;
     let mut modification_event = Event::new("mars/incentives/claimed_astro_incentive_rewards");
-
 
     Ok(res.add_message(claim_rewards_msg(&astroport_incentives_addr, &lp_denom)?))
 }
@@ -123,7 +135,7 @@ fn update_user_lp_position(
             res.add_message(CosmosMsg::Wasm(WasmMsg::Execute {
                 contract_addr: astroport_incentives_addr.to_string(),
                 funds: vec![lp_coin],
-                msg: to_json_binary(&AstroExecuteMsg::Deposit {
+                msg: to_json_binary(&ExecuteMsg::Deposit {
                     recipient: Some(mars_incentives_addr.to_string()),
                 })?,
             }))
@@ -140,7 +152,7 @@ fn update_user_lp_position(
                 // Withdraw from astroport lp staking
                 CosmosMsg::Wasm(WasmMsg::Execute {
                     contract_addr: astroport_incentives_addr.to_string(),
-                    msg: to_json_binary(&AstroExecuteMsg::Withdraw {
+                    msg: to_json_binary(&ExecuteMsg::Withdraw {
                         lp_token: (&lp_coin.denom).to_string(),
                         amount: lp_coin.amount,
                     })?,
@@ -158,8 +170,8 @@ fn update_user_lp_position(
     let modification_event = Event::new("mars/incentives/update_user_lp_position")
         .add_attribute("action", modification)
         .add_attribute("account_id", account_id.to_string())
-        .add_attribute("lp_amount", lp_coin.amount)
-        .add_attribute("lp_denom", lp_coin.denom);
+        .add_attribute("lp_amount", &lp_coin.amount)
+        .add_attribute("lp_denom", &lp_coin.denom);
 
     Ok(res.add_event(modification_event))
 }
@@ -187,19 +199,14 @@ fn decrement_lp_deposit(
     account_id: &str,
     lp_coin: &Coin,
 ) -> Result<(), ContractError> {
-
     // Update user staked lp state
     LP_DEPOSITS.update(store, (&account_id, &lp_coin.denom), |existing| -> StdResult<_> {
-        Ok(existing
-            .expect("lp position should exist")
-            .checked_sub(lp_coin.amount)?)
+        Ok(existing.expect("lp position should exist").checked_sub(lp_coin.amount)?)
     })?;
 
     // Update total staked lp state
     TOTAL_LP_DEPOSITS.update(store, &lp_coin.denom, |existing| -> StdResult<_> {
-        Ok(existing
-            .expect("lp position total should exist")
-            .checked_add(lp_coin.amount)?)
+        Ok(existing.expect("lp position total should exist").checked_add(lp_coin.amount)?)
     })?;
 
     Ok(())
@@ -211,13 +218,11 @@ fn update_lp_incentive_states(
     account_id: &str,
     pending_rewards: Vec<Coin>,
 ) -> Result<Response, ContractError> {
-
     // Update our global indexes for each reward. We only accept native tokens, cw20 will be ignored
     let updated_incentives: HashMap<String, Decimal> =
         compute_updated_astroport_incentive_states(storage, pending_rewards, lp_denom)?;
 
     for (incentive_denom, updated_incentive) in updated_incentives.iter() {
-
         // Set user incentive to latest, as we claim every action
         USER_ASTROPORT_INCENTIVE_STATES.save(
             storage,
@@ -310,9 +315,7 @@ fn claim_astro_rewards_for_lp_position(
         });
 
         for coin in user_claimable_rewards {
-            event = event
-                .add_attribute("denom", coin.denom)
-                .add_attribute("amount", coin.amount);
+            event = event.add_attribute("denom", coin.denom).add_attribute("amount", coin.amount);
         }
 
         res.add_message(send_rewards_to_cm_msg)

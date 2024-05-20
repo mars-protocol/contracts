@@ -4,8 +4,12 @@ use cosmwasm_std::{
     Addr, Coin, Deps, DepsMut, Env, MemoryStorage, OwnedDeps, Response, Uint128,
 };
 use cw_it::astroport::astroport_v3::asset::{Asset, AssetInfo as AstroAssetInfo};
-use mars_incentives::{contract::execute, query, state::TOTAL_LP_DEPOSITS, ContractError};
-use mars_incentives::contract::query;
+use mars_incentives::{
+    contract::{execute, query},
+    query,
+    state::TOTAL_LP_DEPOSITS,
+    ContractError,
+};
 use mars_testing::{assert_eq_vec, MarsMockQuerier};
 use mars_types::incentives::{ExecuteMsg, QueryMsg};
 
@@ -58,13 +62,10 @@ fn unstake_for_user(
     account_id: String,
     lp_coin: Coin,
 ) -> Result<Response, ContractError> {
-    let info = mock_info(
-        sender,
-        &[]
-    );
+    let info = mock_info(sender, &[]);
     let msg = ExecuteMsg::UnstakeAstroLp {
         account_id,
-        lp_coin
+        lp_coin,
     };
 
     execute(deps.as_mut(), env, info, msg)
@@ -240,14 +241,14 @@ fn lp_lifecycle() {
     );
 
     // claim rewards, set as null
-    let claim_res =
-        claim_for_user(
-            &mut deps,
-            env.clone(),
-            credit_manager.as_str(),
-            user_a_id.to_string(),
-            lp_denom.to_string()
-        ).unwrap();
+    let claim_res = claim_for_user(
+        &mut deps,
+        env.clone(),
+        credit_manager.as_str(),
+        user_a_id.to_string(),
+        lp_denom.to_string(),
+    )
+    .unwrap();
 
     set_pending_astro_rewards(
         &mut deps,
@@ -321,8 +322,14 @@ fn lp_lifecycle() {
     );
 
     // test double stake
-    deposit_for_user(&mut deps, env.clone(), credit_manager.as_str(), user_b_id.to_string(), default_lp_coin.clone())
-        .unwrap();
+    deposit_for_user(
+        &mut deps,
+        env.clone(),
+        credit_manager.as_str(),
+        user_b_id.to_string(),
+        default_lp_coin.clone(),
+    )
+    .unwrap();
 
     set_pending_astro_rewards(
         &mut deps,
@@ -366,8 +373,9 @@ fn lp_lifecycle() {
         Coin {
             denom: lp_denom.to_string(),
             amount: Uint128::new(100u128),
-        }
-    ).unwrap();
+        },
+    )
+    .unwrap();
 
     // State:
     // - LP in incentives = 300 (user_a 100, user_b 200)
@@ -381,8 +389,6 @@ fn lp_lifecycle() {
         default_lp_coin.clone(),
         vec![],
     );
-
-
 }
 
 #[test]
@@ -405,7 +411,8 @@ fn assert_only_credit_manager() {
         "not_credit_manager",
         user_a_id.to_string(),
         Coin::new(100u128, lp_denom),
-    ).expect_err("Unauthorized");
+    )
+    .expect_err("Unauthorized");
 
     claim_for_user(
         &mut deps,
@@ -413,7 +420,8 @@ fn assert_only_credit_manager() {
         "not_credit_manager",
         user_a_id.to_string(),
         lp_denom.to_string(),
-    ).expect_err("Unauthorized");
+    )
+    .expect_err("Unauthorized");
 
     unstake_for_user(
         &mut deps,
@@ -421,5 +429,6 @@ fn assert_only_credit_manager() {
         "not_credit_manager",
         user_a_id.to_string(),
         Coin::new(100u128, lp_denom),
-    ).expect_err("Unauthorized");
+    )
+    .expect_err("Unauthorized");
 }

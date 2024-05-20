@@ -256,33 +256,29 @@ pub fn calculate_rewards_from_astroport_incentive_state(
     lp_coin: &Coin,
     incentive_states: HashMap<String, Decimal>,
 ) -> Result<Vec<Coin>, ContractError> {
-
     let mut payables = vec![];
-    incentive_states
-        .iter()
-        .for_each(|(reward_denom, incentive_index)| {
-            let user_incentive_index = USER_ASTROPORT_INCENTIVE_STATES
-                .load(storage, (account_id, &lp_coin.denom, reward_denom))
-                .unwrap_or(Decimal::zero());
+    incentive_states.iter().for_each(|(reward_denom, incentive_index)| {
+        let user_incentive_index = USER_ASTROPORT_INCENTIVE_STATES
+            .load(storage, (account_id, &lp_coin.denom, reward_denom))
+            .unwrap_or(Decimal::zero());
 
-            // Don't pay if already all paid up
-            if user_incentive_index != incentive_index {
+        // Don't pay if already all paid up
+        if user_incentive_index != incentive_index {
+            let asset_accrued_rewards = compute_user_accrued_rewards(
+                lp_coin.amount,
+                user_incentive_index,
+                *incentive_index,
+            );
 
-                let asset_accrued_rewards = compute_user_accrued_rewards(
-                    lp_coin.amount,
-                    user_incentive_index,
-                    *incentive_index,
-                );
-
-                // Add rewards to payments
-                if let Ok(rewards) = asset_accrued_rewards {
-                    payables.push(Coin {
-                        denom: reward_denom.to_string(),
-                        amount: rewards,
-                    })
-                }
+            // Add rewards to payments
+            if let Ok(rewards) = asset_accrued_rewards {
+                payables.push(Coin {
+                    denom: reward_denom.to_string(),
+                    amount: rewards,
+                })
             }
-        });
+        }
+    });
 
     Ok(payables)
 }
