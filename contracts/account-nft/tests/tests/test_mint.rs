@@ -135,6 +135,24 @@ fn invalid_custom_token_id_length() {
     mock.assert_next_id("1");
 }
 
+#[test]
+fn custom_token_id_can_not_be_same_as_automatically_generated() {
+    let mut mock = MockEnv::new().build().unwrap();
+    mock.assert_next_id("1");
+
+    let user = Addr::unchecked("user_abc");
+
+    let res = mock.mint_with_custom_token_id(&user, Some("12345".to_string()));
+    let err: ContractError = res.unwrap_err().downcast().unwrap();
+    assert_eq!(
+        err,
+        ContractError::InvalidTokenId {
+            reason: "token_id should contain at least one letter".to_string()
+        }
+    );
+    mock.assert_next_id("1");
+}
+
 proptest! {
     #[test]
     fn invalid_custom_token_id_characters(token_id in "[!@#$%^&*()-+]{4,15}") {
