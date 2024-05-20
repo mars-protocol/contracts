@@ -5,11 +5,7 @@ use cw2::set_contract_version;
 use mars_owner::{OwnerInit::SetInitialOwner, OwnerUpdate};
 use mars_types::incentives::{Config, ExecuteMsg, InstantiateMsg, MigrateMsg, QueryMsg};
 
-use crate::{
-    error::ContractError,
-    execute, migrations, query,
-    state::{CONFIG, EPOCH_DURATION, MIGRATION_GUARD, OWNER},
-};
+use crate::{astroport_incentives, config, error::ContractError, mars_incentives, migrations, query, state::{CONFIG, EPOCH_DURATION, MIGRATION_GUARD, OWNER}};
 
 pub const CONTRACT_NAME: &str = env!("CARGO_PKG_NAME");
 pub const CONTRACT_VERSION: &str = env!("CARGO_PKG_VERSION");
@@ -68,14 +64,14 @@ pub fn execute(
         ExecuteMsg::UpdateWhitelist {
             add_denoms,
             remove_denoms,
-        } => execute::execute_update_whitelist(deps, env, info, add_denoms, remove_denoms),
+        } => config::execute_update_whitelist(deps, env, info, add_denoms, remove_denoms),
         ExecuteMsg::SetAssetIncentive {
             collateral_denom,
             incentive_denom,
             emission_per_second,
             start_time,
             duration,
-        } => execute::execute_set_asset_incentive(
+        } => mars_incentives::execute_set_asset_incentive(
             deps,
             env,
             info,
@@ -93,7 +89,7 @@ pub fn execute(
             total_amount_scaled_before,
         } => {
             MIGRATION_GUARD.assert_unlocked(deps.storage)?;
-            execute::execute_balance_change(
+            mars_incentives::execute_balance_change(
                 deps,
                 env,
                 info,
@@ -111,7 +107,7 @@ pub fn execute(
             limit,
         } => {
             MIGRATION_GUARD.assert_unlocked(deps.storage)?;
-            execute::execute_claim_rewards(
+            mars_incentives::execute_claim_rewards(
                 deps,
                 env,
                 info,
@@ -124,15 +120,15 @@ pub fn execute(
         ExecuteMsg::StakeAstroLp {
             account_id,
             lp_coin,
-        } => execute::execute_stake_astro_lp(deps, env, info, account_id, lp_coin),
+        } => astroport_incentives::execute_stake_astro_lp(deps, env, info, account_id, lp_coin),
         ExecuteMsg::UnstakeAstroLp {
             account_id,
             lp_coin,
-        } => execute::execute_unstake_astro_lp(deps, env, info, account_id, lp_coin),
+        } => astroport_incentives::execute_unstake_astro_lp(deps, env, info, account_id, lp_coin),
         ExecuteMsg::ClaimAstroLpRewards {
             account_id,
             lp_denom,
-        } => execute::execute_claim_astro_rewards_for_lp_position(
+        } => astroport_incentives::execute_claim_astro_rewards_for_lp_position(
             deps,
             env,
             info,
@@ -142,14 +138,14 @@ pub fn execute(
         ExecuteMsg::UpdateConfig {
             address_provider,
             max_whitelisted_denoms,
-        } => Ok(execute::execute_update_config(
+        } => Ok(config::execute_update_config(
             deps,
             env,
             info,
             address_provider,
             max_whitelisted_denoms,
         )?),
-        ExecuteMsg::UpdateOwner(update) => execute::update_owner(deps, info, update),
+        ExecuteMsg::UpdateOwner(update) => config::update_owner(deps, info, update),
         ExecuteMsg::Migrate(msg) => migrations::v2_0_0::execute_migration(deps, info, msg),
     }
 }
