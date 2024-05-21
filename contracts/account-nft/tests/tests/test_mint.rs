@@ -166,8 +166,12 @@ proptest! {
         mock.assert_next_id("1");
     }
 
+    /// The regex pattern ensures that the string:
+    /// - starts with three characters (letters, digits, or underscores),
+    /// - contains at least one letter,
+    /// - can have up to 11 additional characters (letters, digits, or underscores) to fulfill the length requirement.
     #[test]
-    fn valid_custom_token_id(token_id in "[a-zA-Z0-9_]{4,15}") {
+    fn valid_custom_token_id(token_id in "[a-zA-Z0-9_]{3}[a-zA-Z][a-zA-Z0-9_]{0,11}") {
         let mut mock = MockEnv::new().build().unwrap();
         mock.assert_next_id("1");
 
