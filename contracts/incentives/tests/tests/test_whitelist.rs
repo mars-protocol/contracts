@@ -4,8 +4,8 @@ use cosmwasm_std::{
     Addr, Coin, Timestamp, Uint128,
 };
 use mars_incentives::{
+    mars_incentives::execute_balance_change,
     contract::execute,
-    execute::execute_balance_change,
     state::{EMISSIONS, WHITELIST_COUNT},
     ContractError,
 };

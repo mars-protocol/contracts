@@ -3,7 +3,7 @@ use cosmwasm_std::{
     testing::{mock_env, mock_info, MockApi},
     Addr, Coin, Deps, DepsMut, Env, MemoryStorage, OwnedDeps, Response, Uint128,
 };
-use cw_it::astroport::astroport_v3::asset::{Asset, AssetInfo as AstroAssetInfo};
+use cw_it::astroport::astroport_v3::asset::Asset;
 use mars_incentives::{
     contract::{execute, query},
     query,
@@ -79,6 +79,7 @@ fn assert_user_rewards(
     lp_coin: Coin,
     rewards: Vec<Coin>,
 ) {
+
     let actual_rewards = query::query_lp_rewards_for_position(
         deps,
         &env,
@@ -241,7 +242,7 @@ fn lp_lifecycle() {
     );
 
     // claim rewards, set as null
-    let claim_res = claim_for_user(
+    claim_for_user(
         &mut deps,
         env.clone(),
         credit_manager.as_str(),
@@ -387,7 +388,10 @@ fn lp_lifecycle() {
         astroport_incentives_addr.clone(),
         user_a_id,
         default_lp_coin.clone(),
-        vec![],
+        vec![Coin {
+            denom: "ibc/reward_1".to_string(),
+            amount: Uint128::new(50u128),
+        }]
     );
 }
 

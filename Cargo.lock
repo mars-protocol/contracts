@@ -122,7 +122,7 @@ version = "3.11.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "c001a7f97db88ffe6fc6cca97bbdbfe926e55599184921ff7e72cd47559440de"
 dependencies = [
- "astroport-circular-buffer",
+ "astroport-circular-buffer 0.1.0",
  "cosmwasm-schema",
  "cosmwasm-std",
  "cw-asset",
@@ -135,10 +135,41 @@ dependencies = [
 ]
 
 [[package]]
+name = "astroport"
+version = "5.0.0-rc.1-tokenfactory"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "cdf6999cd2652543814f071f6e67c718ad4608607c90bc3bc89566b8a5985db3"
+dependencies = [
+ "astroport-circular-buffer 0.2.0",
+ "cosmos-sdk-proto 0.19.0",
+ "cosmwasm-schema",
+ "cosmwasm-std",
+ "cw-asset",
+ "cw-storage-plus 1.2.0",
+ "cw-utils 1.0.3",
+ "cw20 1.1.2",
+ "itertools 0.12.1",
+ "prost 0.11.9",
+ "uint",
+]
+
+[[package]]
 name = "astroport-circular-buffer"
 version = "0.1.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "dac37467245383e7a6baeaaabc22dfd85a7b70ff5d693f757ba63bbc6e39d2c3"
+dependencies = [
+ "cosmwasm-schema",
+ "cosmwasm-std",
+ "cw-storage-plus 0.15.1",
+ "thiserror",
+]
+
+[[package]]
+name = "astroport-circular-buffer"
+version = "0.2.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "31c7369d3c4126804f861620db2221c15b5fa7b7718f12180e265b087c933fb6"
 dependencies = [
  "cosmwasm-schema",
  "cosmwasm-std",
@@ -718,13 +749,24 @@ checksum = "e496a50fda8aacccc86d7529e2c1e0892dbd0f898a6b5645b5561b89c3210efa"
 
 [[package]]
 name = "cosmos-sdk-proto"
+version = "0.19.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "73c9d2043a9e617b0d602fbc0a0ecd621568edbf3a9774890a6d562389bd8e1c"
+dependencies = [
+ "prost 0.11.9",
+ "prost-types 0.11.9",
+ "tendermint-proto 0.32.2",
+]
+
+[[package]]
+name = "cosmos-sdk-proto"
 version = "0.20.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "32560304ab4c365791fd307282f76637213d8083c1a98490c35159cd67852237"
 dependencies = [
  "prost 0.12.3",
  "prost-types 0.12.3",
- "tendermint-proto",
+ "tendermint-proto 0.34.1",
 ]
 
 [[package]]
@@ -734,7 +776,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "47126f5364df9387b9d8559dcef62e99010e1d4098f39eb3f7ee4b5c254e40ea"
 dependencies = [
  "bip32",
- "cosmos-sdk-proto",
+ "cosmos-sdk-proto 0.20.0",
  "ecdsa 0.16.8",
  "eyre",
  "k256 0.13.1",
@@ -2158,8 +2200,10 @@ dependencies = [
 name = "mars-incentives"
 version = "2.0.0"
 dependencies = [
+ "astroport 5.0.0-rc.1-tokenfactory",
  "cosmwasm-schema",
  "cosmwasm-std",
+ "cw-it",
  "cw-storage-plus 1.2.0",
  "cw2 1.1.2",
  "mars-owner 2.0.0",
@@ -2795,7 +2839,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "46f60e477bd71007d9ff78ae020ec1c6b3b47798578af6151429434d86472efc"
 dependencies = [
  "bech32",
- "cosmos-sdk-proto",
+ "cosmos-sdk-proto 0.20.0",
  "cosmwasm-schema",
  "cosmwasm-std",
  "prost 0.12.3",
@@ -2805,7 +2849,7 @@ dependencies = [
  "serde",
  "serde-json-wasm 1.0.1",
  "speedate",
- "tendermint-proto",
+ "tendermint-proto 0.34.1",
  "thiserror",
 ]
 
@@ -4168,7 +4212,7 @@ dependencies = [
  "signature 2.1.0",
  "subtle",
  "subtle-encoding",
- "tendermint-proto",
+ "tendermint-proto 0.34.1",
  "time",
  "zeroize",
 ]
@@ -4185,6 +4229,24 @@ dependencies = [
  "tendermint",
  "toml",
  "url",
+]
+
+[[package]]
+name = "tendermint-proto"
+version = "0.32.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "c0cec054567d16d85e8c3f6a3139963d1a66d9d3051ed545d31562550e9bcc3d"
+dependencies = [
+ "bytes",
+ "flex-error",
+ "num-derive",
+ "num-traits",
+ "prost 0.11.9",
+ "prost-types 0.11.9",
+ "serde",
+ "serde_bytes",
+ "subtle-encoding",
+ "time",
 ]
 
 [[package]]
@@ -4228,7 +4290,7 @@ dependencies = [
  "subtle-encoding",
  "tendermint",
  "tendermint-config",
- "tendermint-proto",
+ "tendermint-proto 0.34.1",
  "thiserror",
  "time",
  "tokio",

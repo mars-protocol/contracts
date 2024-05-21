@@ -169,9 +169,7 @@ fn update_user_lp_position(
 
     let modification_event = Event::new("mars/incentives/update_user_lp_position")
         .add_attribute("action", modification)
-        .add_attribute("account_id", account_id.to_string())
-        .add_attribute("lp_amount", &lp_coin.amount)
-        .add_attribute("lp_denom", &lp_coin.denom);
+        .add_attribute("account_id", account_id.to_string());
 
     Ok(res.add_event(modification_event))
 }
@@ -307,16 +305,16 @@ fn claim_astro_rewards_for_lp_position(
     res = if staked_lp_amount != Uint128::zero() {
         let user_claimable_rewards =
             calculate_claimable_rewards(deps.storage, account_id, lp_denom, staked_lp_amount)?;
-
+        
+        for coin in &user_claimable_rewards {
+            event = event.add_attribute("denom", (&coin.denom).to_string()).add_attribute("amount", (&coin.amount).to_string());
+        }
+        
         // Send the claimed rewards to the credit manager
         let send_rewards_to_cm_msg = CosmosMsg::Bank(BankMsg::Send {
             to_address: credit_manager_addr.to_string(),
             amount: user_claimable_rewards,
         });
-
-        for coin in user_claimable_rewards {
-            event = event.add_attribute("denom", coin.denom).add_attribute("amount", coin.amount);
-        }
 
         res.add_message(send_rewards_to_cm_msg)
     } else {
