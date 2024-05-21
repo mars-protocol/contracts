@@ -65,7 +65,13 @@ export type ExecuteMsg =
   | {
       callback: CallbackMsg
     }
-export type AccountKind = 'default' | 'high_levered_strategy'
+export type AccountKind =
+  | ('default' | 'high_levered_strategy')
+  | {
+      fund_manager: {
+        vault_addr: string
+      }
+    }
 export type Action =
   | {
       deposit: Coin

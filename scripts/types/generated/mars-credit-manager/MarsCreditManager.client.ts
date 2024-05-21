@@ -323,6 +323,7 @@ export interface MarsCreditManagerInterface extends MarsCreditManagerReadOnlyInt
   contractAddress: string
   sender: string
   createCreditAccount: (
+    accountKind: AccountKind,
     fee?: number | StdFee | 'auto',
     memo?: string,
     _funds?: Coin[],
@@ -422,6 +423,7 @@ export class MarsCreditManagerClient
   }
 
   createCreditAccount = async (
+    accountKind: AccountKind,
     fee: number | StdFee | 'auto' = 'auto',
     memo?: string,
     _funds?: Coin[],
@@ -430,7 +432,7 @@ export class MarsCreditManagerClient
       this.sender,
       this.contractAddress,
       {
-        create_credit_account: {},
+        create_credit_account: accountKind,
       },
       fee,
       memo,

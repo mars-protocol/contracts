@@ -2,6 +2,7 @@ use cosmwasm_std::{Addr, Empty};
 use cw721::OwnerOfResponse;
 use cw721_base::QueryMsg as NftQueryMsg;
 use mars_types::health::AccountKind;
+use test_case::test_case;
 
 use super::helpers::MockEnv;
 
@@ -68,17 +69,20 @@ fn after_create_returns_account_kind() {
     assert_eq!(position_2.account_kind, AccountKind::HighLeveredStrategy);
 }
 
-#[test]
-fn create_credit_account_v2_success() {
+#[test_case("Mars_default", AccountKind::Default; "create Default account")]
+#[test_case("Mars_HLS", AccountKind::HighLeveredStrategy; "create HLS account")]
+#[test_case("Mars_Vault", AccountKind::FundManager { vault_addr: "vault_addr_123".to_string() }; "create FundManager account")]
+fn create_credit_account_v2(custom_account_id: &str, account_kind: AccountKind) {
     let mut mock = MockEnv::new().build().unwrap();
 
     // Double checking ownership by querying NFT account-nft for correct owner
     let config = mock.query_config();
 
-    let user_1 = Addr::unchecked("user_1");
-    let account_id_1 = mock
-        .create_credit_account_v2(&user_1, AccountKind::Default, Some("Mars_Vault_1".to_string()))
+    let user = Addr::unchecked("user_123");
+    let account_id = mock
+        .create_credit_account_v2(&user, account_kind.clone(), Some(custom_account_id.to_string()))
         .unwrap();
+    assert_eq!(account_id, custom_account_id.to_string());
 
     let owner_res: OwnerOfResponse = mock
         .app
@@ -86,38 +90,13 @@ fn create_credit_account_v2_success() {
         .query_wasm_smart(
             config.account_nft.clone().unwrap(),
             &NftQueryMsg::<Empty>::OwnerOf {
-                token_id: account_id_1.clone(),
+                token_id: account_id.clone(),
                 include_expired: None,
             },
         )
         .unwrap();
 
-    assert_eq!(user_1, owner_res.owner);
-    let position_1 = mock.query_positions(&account_id_1);
-    assert_eq!(position_1.account_kind, AccountKind::Default);
-
-    let user_2 = Addr::unchecked("user_2");
-    let account_id_2 = mock
-        .create_credit_account_v2(
-            &user_2,
-            AccountKind::HighLeveredStrategy,
-            Some("Mars_Vault_2".to_string()),
-        )
-        .unwrap();
-
-    let owner_res: OwnerOfResponse = mock
-        .app
-        .wrap()
-        .query_wasm_smart(
-            config.account_nft.unwrap(),
-            &NftQueryMsg::<Empty>::OwnerOf {
-                token_id: account_id_2.clone(),
-                include_expired: None,
-            },
-        )
-        .unwrap();
-
-    assert_eq!(user_2, owner_res.owner);
-    let position_2 = mock.query_positions(&account_id_2);
-    assert_eq!(position_2.account_kind, AccountKind::HighLeveredStrategy);
+    assert_eq!(user, owner_res.owner);
+    let position = mock.query_positions(&account_id);
+    assert_eq!(position.account_kind, account_kind);
 }
