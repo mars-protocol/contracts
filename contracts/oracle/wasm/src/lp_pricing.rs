@@ -3,7 +3,10 @@ use cw_storage_plus::Map;
 use mars_oracle_base::{ContractResult, PriceSourceChecked};
 use mars_types::oracle::{ActionKind, Config};
 
-use crate::helpers::compute_pcl_lp_price;
+use crate::{
+    helpers::{compute_pcl_lp_price, query_token_precision},
+    state::ASTROPORT_FACTORY,
+};
 
 #[allow(clippy::too_many_arguments)]
 pub fn query_pcl_lp_price<P: PriceSourceChecked<Empty>>(
@@ -36,9 +39,15 @@ pub fn query_pcl_lp_price<P: PriceSourceChecked<Empty>>(
         kind,
     )?;
 
+    let astroport_factory = ASTROPORT_FACTORY.load(deps.storage)?;
+    let coin0_decimals = query_token_precision(&deps.querier, &astroport_factory, &coin0.denom)?;
+    let coin1_decimals = query_token_precision(&deps.querier, &astroport_factory, &coin1.denom)?;
+
     compute_pcl_lp_price(
-        coin0_price,
-        coin1_price,
+        coin0_decimals,
+        coin1_decimals,
+        &coin0_price,
+        &coin1_price,
         coin0.amount,
         coin1.amount,
         total_shares,

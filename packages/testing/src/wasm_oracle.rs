@@ -229,10 +229,18 @@ impl<'a> WasmOracleTestRobot<'a> {
         tolerance: Decimal,
     ) -> &Self {
         let price = self.query_price(denom);
-        println!("price: {:?}", price);
-        println!("expected_price: {:?}", expected_price);
         assert_almost_equal(price.price, expected_price, tolerance);
         assert_eq!(price.denom, denom);
+        self
+    }
+
+    pub fn assert_prices_almost_equal(
+        &self,
+        price0: Decimal,
+        price1: Decimal,
+        tolerance: Decimal,
+    ) -> &Self {
+        assert_almost_equal(price0, price1, tolerance);
         self
     }
 

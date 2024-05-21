@@ -11,7 +11,7 @@ use astroport::{
 };
 use cosmwasm_std::{
     ensure_eq, to_json_binary, Addr, Decimal, Decimal256, Deps, Env, QuerierWrapper, QueryRequest,
-    StdResult, Uint128, Uint256, WasmQuery,
+    StdResult, Uint128, WasmQuery,
 };
 use cw_storage_plus::Map;
 use mars_oracle_base::{ContractError, ContractResult, PriceSourceChecked};
@@ -276,17 +276,46 @@ pub fn validate_astroport_lp_pool_for_type(
 }
 
 pub fn compute_pcl_lp_price(
-    coin0_price: Decimal,
-    coin1_price: Decimal,
+    coin0_decimals: u8,
+    coin1_decimals: u8,
+    coin0_price: &Decimal, // This is the price per whole unit
+    coin1_price: &Decimal,
     coin0_amount: Uint128,
     coin1_amount: Uint128,
     total_shares: Uint128,
     price_scale: Decimal,
     curve_invariant: Decimal256,
 ) -> ContractResult<Decimal> {
-    // Price is the Pyth oracle price of coin0 in terms of coin1
-    let price = coin0_price.checked_div(coin1_price)?;
+    let lp_price_model = compute_pcl_lp_price_model(
+        coin0_price,
+        coin1_price,
+        total_shares,
+        price_scale,
+        curve_invariant,
+    )?;
 
+    let lp_price_real = compute_pcl_lp_price_real(
+        coin0_decimals,
+        coin1_decimals,
+        coin0_amount,
+        coin1_amount,
+        coin0_price,
+        coin1_price,
+        total_shares,
+    )?;
+
+    let pcl_lp_price = min(lp_price_model, lp_price_real);
+
+    Ok(pcl_lp_price)
+}
+
+pub fn compute_pcl_lp_price_model(
+    coin0_price: &Decimal,
+    coin1_price: &Decimal,
+    total_shares: Uint128,
+    price_scale: Decimal,
+    curve_invariant: Decimal256,
+) -> ContractResult<Decimal> {
     // xcp represents the virtual value of the pool
     // xcp = curve_invariant / (2 * sqrt(price_scale))
     let xcp = curve_invariant.checked_div(
@@ -302,23 +331,37 @@ pub fn compute_pcl_lp_price(
     // lp_price_model = 2 * virtual_price * sqrt(price)
     let lp_price_model_256 = Decimal256::from_str("2")?
         .checked_mul(virtual_price)?
-        .checked_mul(Decimal256::from(price).sqrt())?;
+        .checked_mul(Decimal256::from(coin0_price.checked_mul(*coin1_price)?.sqrt()))?;
     let lp_price_model = Decimal::try_from(lp_price_model_256)?;
 
-    // Need to use Uint256 because coin0_amount * price + coin1_amount may overflow the 128-bit limit
+    Ok(lp_price_model)
+}
+
+pub fn compute_pcl_lp_price_real(
+    coin0_decimals: u8,
+    coin1_decimals: u8,
+    coin0_amount: Uint128,
+    coin1_amount: Uint128,
+    coin0_price: &Decimal,
+    coin1_price: &Decimal,
+    total_shares: Uint128,
+) -> ContractResult<Decimal> {
+    // As the oracle returns prices for whole units, we need to adjust the amount to the correct
+    // precision before calculating the real TVL.
+    let coin0_amount_adjusted =
+        Decimal::from_ratio(coin0_amount, 10_u128.pow((coin0_decimals) as u32));
+    let coin1_amount_adjusted =
+        Decimal::from_ratio(coin1_amount, 10_u128.pow((coin1_decimals) as u32));
+
+    // Need to use Decimal256 because coin0_amount * price + coin1_amount may overflow the Decimal limit
     // E.g. 1000 BTC + 21000 ETH in a pool, with a price of 65000 and 3000:
     // price = 650 / 0.0000000000003 = 1_267_000_000_000_000
-    // 1_000_000_000_000 * 1_267_000_000_000_000 + 21_000_000_000_000_000_000_000 > Uint128::MAX
-    let tvl_real =
-        Uint256::from(coin0_amount) * Decimal256::from(price) + Uint256::from(coin1_amount);
-    let lp_price_real_256 = Decimal256::checked_from_ratio(tvl_real, total_shares)?;
+    // 1_000_000_000_000 * 1_267_000_000_000_000 + 21_000_000_000_000_000_000_000 > Decimal::MAX
+    let tvl_real = Decimal256::from(coin0_amount_adjusted) * Decimal256::from(*coin0_price)
+        + Decimal256::from(coin1_amount_adjusted) * Decimal256::from(*coin1_price);
+
+    let lp_price_real_256 = tvl_real.checked_div(Decimal256::from_ratio(total_shares, 1u128))?;
     let lp_price_real = Decimal::try_from(lp_price_real_256)?;
 
-    let pcl_lp_price = min(lp_price_model, lp_price_real);
-
-    // Oracle prices need ot be denominated in usd. As the PCL calculations happen with coin1
-    // as the denominator, this needs to be converted to USD.
-    let pcl_lp_price_usd = pcl_lp_price.checked_mul(coin1_price)?;
-
-    Ok(pcl_lp_price_usd)
+    Ok(lp_price_real)
 }
