@@ -40,10 +40,16 @@ pub fn create_credit_account(
     deps: &mut DepsMut,
     user: Addr,
     kind: AccountKind,
+    account_id: Option<String>,
 ) -> ContractResult<(String, Response)> {
     let account_nft = ACCOUNT_NFT.load(deps.storage)?;
 
-    let next_id = account_nft.query_next_id(&deps.querier)?;
+    let next_id = if let Some(ai) = account_id.clone() {
+        ai
+    } else {
+        account_nft.query_next_id(&deps.querier)?
+    };
+
     ACCOUNT_KINDS.save(deps.storage, &next_id, &kind)?;
 
     let nft_mint_msg = CosmosMsg::Wasm(WasmMsg::Execute {
@@ -51,13 +57,15 @@ pub fn create_credit_account(
         funds: vec![],
         msg: to_json_binary(&NftExecuteMsg::Mint {
             user: user.to_string(),
+            token_id: account_id,
         })?,
     });
 
     let response = Response::new()
         .add_message(nft_mint_msg)
         .add_attribute("action", "create_credit_account")
-        .add_attribute("kind", kind.to_string());
+        .add_attribute("kind", kind.to_string())
+        .add_attribute("account_id", next_id.clone());
 
     Ok((next_id, response))
 }
@@ -82,6 +90,7 @@ pub fn dispatch_actions(
                 &mut deps,
                 info.sender.clone(),
                 account_kind.unwrap_or(AccountKind::Default),
+                None,
             )?;
             response = res;
             acc_id

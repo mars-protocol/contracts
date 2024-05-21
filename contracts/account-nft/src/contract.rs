@@ -61,7 +61,8 @@ pub fn execute(
     match msg {
         ExecuteMsg::Mint {
             user,
-        } => mint(deps, info, &user),
+            token_id,
+        } => mint(deps, info, &user, token_id),
         ExecuteMsg::UpdateConfig {
             updates,
         } => update_config(deps, info, updates),
