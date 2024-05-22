@@ -170,10 +170,14 @@ impl TryFrom<osmosis_std::shim::Any> for Pool {
                 }));
             }
 
-            return Err(StdError::parse_err(
-                "Pool",
-                "Failed to parse CosmWasm pool instantiate message.",
-            ));
+            // There could be many versions of the CosmWasm pool. Every time a new version is released,
+            // we need to add a new `if` block here to handle the new version. Instead of doing that,
+            // we can just return only CosmWasm pool with pool id and let the caller handle it.
+            // The caller can then query the pool contract to get the pool asset configs (if needed).
+            return Ok(Pool::CosmWasm(CosmWasmPool {
+                id: pool.pool_id,
+                pool_asset_configs: vec![],
+            }));
         }
 
         Err(StdError::parse_err(
@@ -553,7 +557,7 @@ mod tests {
     }
 
     #[test]
-    fn cosmwasm_pool_error_handled() {
+    fn unknown_cosmwasm_pool_handled() {
         let msg = InstantiateMsg {
             pool_asset_denoms: vec![
                 "ibc/D189335C6E4A68B513C10AB227BF1C1D38C746766278BA3EEB4FB14124F1D858".to_string(),
@@ -568,11 +572,9 @@ mod tests {
         };
 
         let any_pool = cosmwasm_pool.to_any();
-        let pool: Result<Pool, StdError> = any_pool.try_into();
+        let pool: Pool = any_pool.try_into().unwrap();
 
-        assert_eq!(
-            pool.unwrap_err(),
-            StdError::parse_err("Pool", "Failed to parse CosmWasm pool instantiate message.",)
-        );
+        assert_eq!(cosmwasm_pool.pool_id, pool.get_pool_id());
+        assert_eq!(Vec::<String>::new(), pool.get_pool_denoms());
     }
 }
