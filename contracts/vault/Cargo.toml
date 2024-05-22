@@ -33,3 +33,10 @@ serde             = { workspace = true }
 thiserror         = { workspace = true }
 cw-vault-token    = "0.1.0"
 osmosis-std       = { workspace = true }
+
+[dev-dependencies]
+anyhow        = { workspace = true }
+cw-multi-test = { workspace = true, features = ["cosmwasm_1_1"] }
+mars-testing  = { workspace = true }
+test-case     = { workspace = true }
+regex         = { version = "1.7.3" }
