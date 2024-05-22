@@ -122,5 +122,5 @@ pub struct EstimateExactInSwapResponse {
 #[cw_serde]
 pub enum MigrateMsg {
     V1_0_0ToV2_0_0 {},
-    V2_0_1ToV2_0_2 {},
+    V2_0_2ToV2_0_3 {},
 }
