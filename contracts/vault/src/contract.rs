@@ -33,19 +33,6 @@ pub fn instantiate(
     // initialize contract version info
     cw2::set_contract_version(deps.storage, CONTRACT_NAME, CONTRACT_VERSION)?;
 
-    // Validate that 10 ntrn for vault token creation are sent
-    // let ntrn_amount = info
-    //     .funds
-    //     .iter()
-    //     .find(|coin| coin.denom == "untrn")
-    //     .map(|coin| coin.amount)
-    //     .unwrap_or_default();
-    // if ntrn_amount < Uint128::new(10_000_000) {
-    //     return Err(ContractError::from(
-    //         "A minimum of 10_000_000 untrn must be sent to create the vault token",
-    //     ));
-    // }
-
     // initialize contract ownership info
     OWNER.initialize(
         deps.storage,
@@ -89,8 +76,8 @@ pub fn execute(
         } => execute::deposit(deps, env, &info, recipient),
         ExecuteMsg::Redeem {
             recipient,
-            amount,
-        } => execute::redeem(deps, env, &info, amount, recipient),
+            amount: _, // don't care about amount, use funds data
+        } => execute::redeem(deps, env, &info, recipient),
         ExecuteMsg::VaultExtension(msg) => match msg {
             ExtensionExecuteMsg::BindCreditManagerAccount {
                 account_id,

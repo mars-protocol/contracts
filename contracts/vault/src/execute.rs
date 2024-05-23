@@ -18,6 +18,12 @@ pub fn bind_credit_manager_account(
     let credit_manager = CREDIT_MANAGER.load(deps.storage)?;
     ensure_eq!(info.sender, credit_manager, ContractError::NotCreditManager {});
 
+    // only one binding allowed
+    let cm_acc_id = CREDIT_MANAGER_ACC_ID.may_load(deps.storage)?;
+    if cm_acc_id.is_some() {
+        return Err(ContractError::CreditManagerAccountExists {});
+    }
+
     CREDIT_MANAGER_ACC_ID.save(deps.storage, &account_id)?;
 
     let event = Event::new("vault/bind_credit_manager_account")
@@ -31,22 +37,27 @@ pub fn deposit(
     info: &MessageInfo,
     recipient: Option<String>,
 ) -> Result<Response, ContractError> {
+    let cm_addr = CREDIT_MANAGER.load(deps.storage)?;
+    let Some(cm_acc_id) = CREDIT_MANAGER_ACC_ID.may_load(deps.storage)? else {
+        // bind credit manager account first
+        return Err(ContractError::CreditManagerAccountNotFound {});
+    };
+
     // unwrap recipient or use caller's address
     let vault_token_recipient =
         recipient.map_or(Ok(info.sender.clone()), |r| deps.api.addr_validate(&r))?;
 
+    // load state
     let base_vault = NtrnBaseVault::default();
     let base_token = base_vault.base_token.load(deps.storage)?.to_string();
+    let vault_token = base_vault.vault_token.load(deps.storage)?;
+    let total_staked_amount = base_vault.total_staked_base_tokens.load(deps.storage)?;
 
     // check that only the expected base token was sent
     let amount = cw_utils::must_pay(info, &base_token)?;
 
-    // load state
-    let vault_token = base_vault.vault_token.load(deps.storage)?;
-    let total_staked_amount = base_vault.total_staked_base_tokens.load(deps.storage)?;
-    let vault_token_supply = vault_token.query_total_supply(deps.as_ref())?;
-
     // calculate vault tokens
+    let vault_token_supply = vault_token.query_total_supply(deps.as_ref())?;
     let vault_tokens =
         base_vault.calculate_vault_tokens(amount, total_staked_amount, vault_token_supply)?;
 
@@ -54,18 +65,6 @@ pub fn deposit(
     base_vault
         .total_staked_base_tokens
         .save(deps.storage, &total_staked_amount.checked_add(amount)?)?;
-
-    let event = Event::new("vault/deposit").add_attributes(vec![
-        attr("action", "mint_vault_tokens"),
-        attr("recipient", vault_token_recipient.to_string()),
-        attr("mint_amount", vault_tokens),
-    ]);
-
-    let cm_addr = CREDIT_MANAGER.load(deps.storage)?;
-    let Some(cm_acc_id) = CREDIT_MANAGER_ACC_ID.may_load(deps.storage)? else {
-        // bind credit manager account first
-        return Err(ContractError::CreditManagerAccountNotFound {});
-    };
 
     let coin_deposited = Coin {
         denom: base_token,
@@ -82,6 +81,12 @@ pub fn deposit(
         funds: vec![coin_deposited],
     });
 
+    let event = Event::new("vault/deposit").add_attributes(vec![
+        attr("action", "mint_vault_tokens"),
+        attr("recipient", vault_token_recipient.to_string()),
+        attr("mint_amount", vault_tokens),
+    ]);
+
     Ok(vault_token
         .mint(deps, &env, &vault_token_recipient, vault_tokens)?
         .add_message(deposit_to_cm)
@@ -92,7 +97,6 @@ pub fn redeem(
     mut deps: DepsMut,
     env: Env,
     info: &MessageInfo,
-    vault_token_amount: Uint128,
     recipient: Option<String>,
 ) -> Result<Response, ContractError> {
     let cm_addr = CREDIT_MANAGER.load(deps.storage)?;
@@ -104,22 +108,16 @@ pub fn redeem(
     // unwrap recipient or use caller's address
     let recipient = recipient.map_or(Ok(info.sender.clone()), |x| deps.api.addr_validate(&x))?;
 
+    // load state
     let base_vault = NtrnBaseVault::default();
     let base_token = base_vault.base_token.load(deps.storage)?;
+    let vault_token = base_vault.vault_token.load(deps.storage)?;
+
+    // check that only the expected vault token was sent
+    let vault_token_amount = cw_utils::must_pay(info, &vault_token.to_string())?;
 
     let (tokens_to_withdraw, burn_res) =
         base_vault.burn_vault_tokens_for_base_tokens(deps.branch(), &env, vault_token_amount)?;
-
-    // TODO: Is this needed?
-    // Send unstaked base tokes to recipient
-    // let send_res = base_vault.send_base_tokens(deps, &recipient, tokens_to_withdraw)?;
-
-    let event = Event::new("vault/redeem").add_attributes(vec![
-        attr("action", "burn_vault_tokens"),
-        attr("recipient", recipient.clone()),
-        attr("vault_token_amount", vault_token_amount),
-        attr("lp_tokens_to_withdraw", tokens_to_withdraw),
-    ]);
 
     let mut actions = vec![];
 
@@ -149,6 +147,13 @@ pub fn redeem(
         })?,
         funds: vec![],
     });
+
+    let event = Event::new("vault/redeem").add_attributes(vec![
+        attr("action", "burn_vault_tokens"),
+        attr("recipient", recipient.clone()),
+        attr("vault_token_amount", vault_token_amount),
+        attr("lp_tokens_to_withdraw", tokens_to_withdraw),
+    ]);
 
     Ok(burn_res.add_message(withdraw_from_cm).add_event(event))
 }

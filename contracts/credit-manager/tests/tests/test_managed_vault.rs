@@ -126,6 +126,31 @@ fn only_credit_manager_can_bind_account() {
 }
 
 #[test]
+fn only_one_binding_allowed() {
+    let fund_manager = Addr::unchecked("fund-manager");
+    let mut mock = MockEnv::new()
+        .fund_account(AccountToFund {
+            addr: fund_manager.clone(),
+            funds: vec![coin(1_000_000_000, "untrn")],
+        })
+        .build()
+        .unwrap();
+    let credit_manager = mock.rover.clone();
+
+    let managed_vault_addr = deploy_managed_vault(&mut mock.app, &fund_manager, &credit_manager);
+
+    execute_bind_credit_manager_account(&mut mock, &credit_manager, &managed_vault_addr, "2024")
+        .unwrap();
+    let res = execute_bind_credit_manager_account(
+        &mut mock,
+        &credit_manager,
+        &managed_vault_addr,
+        "2025",
+    );
+    assert_vault_err(res, mars_vault::error::ContractError::CreditManagerAccountExists {});
+}
+
+#[test]
 fn deposit_invalid_funds() {
     let fund_manager = Addr::unchecked("fund-manager");
     let user = Addr::unchecked("user");
@@ -143,6 +168,8 @@ fn deposit_invalid_funds() {
     let credit_manager = mock.rover.clone();
 
     let managed_vault_addr = deploy_managed_vault(&mut mock.app, &fund_manager, &credit_manager);
+    execute_bind_credit_manager_account(&mut mock, &credit_manager, &managed_vault_addr, "2024")
+        .unwrap();
 
     let res = execute_deposit(
         &mut mock,
@@ -218,9 +245,10 @@ fn deposit_if_credit_manager_account_not_binded() {
 }
 
 #[test]
-fn deposit_succeded() {
+fn deposit_and_redeem_succeded() {
     let fund_manager = Addr::unchecked("fund-manager");
     let user = Addr::unchecked("user");
+    let user_funded_amt = Uint128::new(1_000_000_000);
     let mut mock = MockEnv::new()
         .fund_account(AccountToFund {
             addr: fund_manager.clone(),
@@ -228,7 +256,7 @@ fn deposit_succeded() {
         })
         .fund_account(AccountToFund {
             addr: user.clone(),
-            funds: vec![coin(1_000_000_000, "uusdc")],
+            funds: vec![coin(user_funded_amt.u128(), "uusdc")],
         })
         .build()
         .unwrap();
@@ -265,12 +293,16 @@ fn deposit_succeded() {
     )
     .unwrap();
 
+    // check base token balance after deposit
+    let user_base_token_balance = mock.query_balance(&user, "uusdc").amount;
+    assert_eq!(user_base_token_balance, user_funded_amt - deposited_amt);
+
     // there should be vault tokens for the user now
     let vault_token_balance = mock.query_balance(&managed_vault_addr, &vault_token).amount;
     assert!(vault_token_balance.is_zero());
-    let vault_token_balance = mock.query_balance(&user, &vault_token).amount;
-    assert!(!vault_token_balance.is_zero());
-    assert_eq!(vault_token_balance, deposited_amt * Uint128::new(1_000_000));
+    let user_vault_token_balance = mock.query_balance(&user, &vault_token).amount;
+    assert!(!user_vault_token_balance.is_zero());
+    assert_eq!(user_vault_token_balance, deposited_amt * Uint128::new(1_000_000));
 
     // there should be a deposit in Fund Manager's account
     let res = mock.query_positions(&account_id);
@@ -278,6 +310,124 @@ fn deposit_succeded() {
     let assets_res = res.deposits.first().unwrap();
     assert_eq!(assets_res.amount, deposited_amt);
     assert_eq!(assets_res.denom, "uusdc".to_string());
+
+    execute_redeem(
+        &mut mock,
+        &user,
+        &managed_vault_addr,
+        Uint128::zero(), // we don't care about the amount, we are using the funds
+        None,
+        &[coin(user_vault_token_balance.u128(), vault_token.clone())],
+    )
+    .unwrap();
+
+    // there shouldn't be any vault tokens after redeem
+    let vault_token_balance = mock.query_balance(&managed_vault_addr, &vault_token).amount;
+    assert!(vault_token_balance.is_zero());
+    let vault_token_balance = mock.query_balance(&user, &vault_token).amount;
+    assert!(vault_token_balance.is_zero());
+
+    // check base token balance after redeem
+    let user_base_token_balance = mock.query_balance(&user, "uusdc").amount;
+    assert_eq!(user_base_token_balance, user_funded_amt);
+
+    // check Fund Manager's account after redeem
+    let res = mock.query_positions(&account_id);
+    assert!(res.deposits.is_empty());
+}
+
+#[test]
+fn redeem_invalid_funds() {
+    let fund_manager = Addr::unchecked("fund-manager");
+    let user = Addr::unchecked("user");
+    let mut mock = MockEnv::new()
+        .fund_account(AccountToFund {
+            addr: fund_manager.clone(),
+            funds: vec![coin(1_000_000_000, "untrn")],
+        })
+        .fund_account(AccountToFund {
+            addr: user.clone(),
+            funds: vec![coin(1_000_000_000, "untrn"), coin(1_000_000_000, "uusdc")],
+        })
+        .build()
+        .unwrap();
+    let credit_manager = mock.rover.clone();
+
+    let managed_vault_addr = deploy_managed_vault(&mut mock.app, &fund_manager, &credit_manager);
+    execute_bind_credit_manager_account(&mut mock, &credit_manager, &managed_vault_addr, "2024")
+        .unwrap();
+
+    let res = execute_redeem(
+        &mut mock,
+        &user,
+        &managed_vault_addr,
+        Uint128::zero(), // we don't care about the amount, we are using the funds
+        None,
+        &[],
+    );
+    assert_vault_err(
+        res,
+        mars_vault::error::ContractError::Payment(cw_utils::PaymentError::NoFunds {}),
+    );
+
+    let res = execute_redeem(
+        &mut mock,
+        &user,
+        &managed_vault_addr,
+        Uint128::zero(), // we don't care about the amount, we are using the funds
+        None,
+        &[coin(1_001, "untrn"), coin(1_002, "uusdc")],
+    );
+    assert_vault_err(
+        res,
+        mars_vault::error::ContractError::Payment(cw_utils::PaymentError::MultipleDenoms {}),
+    );
+
+    let res = execute_redeem(
+        &mut mock,
+        &user,
+        &managed_vault_addr,
+        Uint128::zero(), // we don't care about the amount, we are using the funds
+        None,
+        &[coin(1_001, "untrn")],
+    );
+    assert_vault_err(
+        res,
+        mars_vault::error::ContractError::Payment(cw_utils::PaymentError::MissingDenom(
+            "factory/contract10/vault".to_string(),
+        )),
+    );
+}
+
+#[test]
+fn redeem_if_credit_manager_account_not_binded() {
+    let fund_manager = Addr::unchecked("fund-manager");
+    let user = Addr::unchecked("user");
+    let mut mock = MockEnv::new()
+        .fund_account(AccountToFund {
+            addr: fund_manager.clone(),
+            funds: vec![coin(1_000_000_000, "untrn")],
+        })
+        .fund_account(AccountToFund {
+            addr: user.clone(),
+            funds: vec![coin(1_000_000_000, "vault")],
+        })
+        .build()
+        .unwrap();
+    let credit_manager = mock.rover.clone();
+
+    let managed_vault_addr = deploy_managed_vault(&mut mock.app, &fund_manager, &credit_manager);
+
+    let deposited_amt = Uint128::new(123_000_000);
+    let res = execute_redeem(
+        &mut mock,
+        &user,
+        &managed_vault_addr,
+        Uint128::zero(), // we don't care about the amount, we are using the funds
+        None,
+        &[coin(deposited_amt.u128(), "vault")],
+    );
+    assert_vault_err(res, mars_vault::error::ContractError::CreditManagerAccountNotFound {});
 }
 
 fn query_vault_info(mock_env: &MockEnv, vault: &Addr) -> VaultInfoResponseExt {
@@ -319,6 +469,25 @@ fn execute_deposit(
         sender.clone(),
         vault.clone(),
         &ExecuteMsg::Deposit {
+            amount,
+            recipient,
+        },
+        funds,
+    )
+}
+
+fn execute_redeem(
+    mock_env: &mut MockEnv,
+    sender: &Addr,
+    vault: &Addr,
+    amount: Uint128,
+    recipient: Option<String>,
+    funds: &[Coin],
+) -> AnyResult<AppResponse> {
+    mock_env.app.execute_contract(
+        sender.clone(),
+        vault.clone(),
+        &ExecuteMsg::Redeem {
             amount,
             recipient,
         },

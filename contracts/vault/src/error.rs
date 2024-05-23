@@ -42,6 +42,9 @@ pub enum ContractError {
 
     #[error("Credit Manager account not found")]
     CreditManagerAccountNotFound {},
+
+    #[error("Credit Manager account exists. Only one binding allowed.")]
+    CreditManagerAccountExists {},
 }
 
 pub type ContractResult<T> = Result<T, ContractError>;
