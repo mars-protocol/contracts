@@ -20,8 +20,8 @@ use mars_types::{
 
 use crate::{
     state::{
-        ASTROPORT_INCENTIVE_STATES, EMISSIONS, EPOCH_DURATION, INCENTIVE_STATES, TOTAL_LP_DEPOSITS,
-        USER_ASSET_INDICES, USER_ASTROPORT_INCENTIVE_STATES, USER_UNCLAIMED_REWARDS, WHITELIST,
+        ASTRO_INCENTIVE_STATES, EMISSIONS, EPOCH_DURATION, INCENTIVE_STATES, ASTRO_TOTAL_LP_DEPOSITS,
+        USER_ASSET_INDICES, USER_ASTRO_INCENTIVE_STATES, USER_UNCLAIMED_REWARDS, WHITELIST,
     },
     ContractError,
 };
@@ -223,7 +223,7 @@ pub fn compute_updated_astroport_incentive_states(
     lp_denom: &str,
 ) -> Result<HashMap<String, Decimal>, ContractError> {
     let mut updated_incentives: HashMap<String, Decimal> = HashMap::new();
-    let total_lp_amount = TOTAL_LP_DEPOSITS.load(storage, &lp_denom).unwrap_or_default();
+    let total_lp_amount = ASTRO_TOTAL_LP_DEPOSITS.may_load(storage, &lp_denom)?.unwrap_or_default();
 
     for reward in pending_rewards {
         let reward_denom = reward.denom;
@@ -235,9 +235,9 @@ pub fn compute_updated_astroport_incentive_states(
             .and_then(|d| Some(*d))
             // Otherwise we load from storage
             .or_else(|| {
-                ASTROPORT_INCENTIVE_STATES
-                    .may_load(storage, (&lp_denom, &reward_denom))
-                    .unwrap_or_default()
+                ASTRO_INCENTIVE_STATES
+                    .may_load(storage, (&lp_denom, &reward_denom)).ok()?
+
             })
             .unwrap_or(Decimal::zero());
 
@@ -257,28 +257,26 @@ pub fn calculate_rewards_from_astroport_incentive_state(
     incentive_states: HashMap<String, Decimal>,
 ) -> Result<Vec<Coin>, ContractError> {
     let mut payables = vec![];
-    incentive_states.iter().for_each(|(reward_denom, incentive_index)| {
-        let user_incentive_index = USER_ASTROPORT_INCENTIVE_STATES
-            .load(storage, (account_id, &lp_coin.denom, reward_denom))
+    for (reward_denom, incentive_index) in incentive_states.iter() {
+        let user_incentive_index = USER_ASTRO_INCENTIVE_STATES
+            .may_load(storage, (account_id, &lp_coin.denom, reward_denom))?
             .unwrap_or(Decimal::zero());
 
-        // Don't pay if already all paid up
+        // Don't claim if already claimed
         if user_incentive_index != incentive_index {
-            let asset_accrued_rewards = compute_user_accrued_rewards(
+            let rewards = compute_user_accrued_rewards(
                 lp_coin.amount,
                 user_incentive_index,
                 *incentive_index,
-            );
+            )?;
 
             // Add rewards to payments
-            if let Ok(rewards) = asset_accrued_rewards {
-                payables.push(Coin {
-                    denom: reward_denom.to_string(),
-                    amount: rewards,
-                })
-            }
+            payables.push(Coin {
+                denom: reward_denom.to_string(),
+                amount: rewards,
+            })
         }
-    });
+    }
 
     Ok(payables)
 }

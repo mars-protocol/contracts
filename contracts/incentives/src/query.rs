@@ -21,8 +21,8 @@ use crate::{
     },
     state,
     state::{
-        ASTROPORT_INCENTIVE_STATES, CONFIG, DEFAULT_LIMIT, EMISSIONS, EPOCH_DURATION,
-        INCENTIVE_STATES, LP_DEPOSITS, MAX_LIMIT, OWNER, WHITELIST, WHITELIST_COUNT,
+        ASTRO_INCENTIVE_STATES, CONFIG, DEFAULT_LIMIT, EMISSIONS, EPOCH_DURATION,
+        INCENTIVE_STATES, ASTRO_USER_LP_DEPOSITS, MAX_LIMIT, OWNER, WHITELIST, WHITELIST_COUNT,
     },
     ContractError,
 };
@@ -133,7 +133,7 @@ pub fn query_lp_rewards_for_user(
         None => None,
     };
 
-    let lp_deposits = LP_DEPOSITS
+    let lp_deposits = ASTRO_USER_LP_DEPOSITS
         .prefix(user_id_key)
         .range(deps.storage, start, None, Ascending)
         .take(limit)
@@ -168,7 +168,7 @@ pub fn query_lp_rewards_for_position(
     deps: Deps,
     env: &Env,
     astroport_incentives_addr: &Addr,
-    user_id_key: &str,
+    account_id: &str,
     lp_coin: &Coin,
 ) -> Result<Vec<Coin>, ContractError> {
     let lp_denom = &lp_coin.denom;
@@ -185,7 +185,7 @@ pub fn query_lp_rewards_for_position(
     let incentives_to_update =
         compute_updated_astroport_incentive_states(deps.storage, pending_rewards, lp_denom)?;
 
-    let mut incentive_states: HashMap<String, Decimal> = ASTROPORT_INCENTIVE_STATES
+    let mut incentive_states: HashMap<String, Decimal> = ASTRO_INCENTIVE_STATES
         .prefix(lp_denom)
         .range(deps.storage, None, None, Ascending)
         .collect::<StdResult<HashMap<String, Decimal>>>()?;
@@ -195,7 +195,7 @@ pub fn query_lp_rewards_for_position(
 
     let reward_coins = calculate_rewards_from_astroport_incentive_state(
         deps.storage,
-        user_id_key,
+        account_id,
         lp_coin,
         incentive_states,
     )?;
@@ -324,7 +324,7 @@ pub fn query_user_lp_position(
     )?;
 
     // query the position
-    let amount = LP_DEPOSITS.may_load(deps.storage, (&account_id, &denom))?.ok_or(
+    let amount = ASTRO_USER_LP_DEPOSITS.may_load(deps.storage, (&account_id, &denom))?.ok_or(
         ContractError::NoStakedLp {
             account_id: account_id.clone(),
             denom: denom.clone(),
@@ -368,7 +368,7 @@ pub fn query_user_lp_positions(
 
     let min = start_after_denom.as_ref().map(|denom| Bound::exclusive(denom.as_str()));
     let limit = limit.unwrap_or(DEFAULT_LIMIT).min(MAX_LIMIT) as usize;
-    let deposits = LP_DEPOSITS
+    let deposits = ASTRO_USER_LP_DEPOSITS
         .prefix(&account_id)
         .range(deps.storage, min, None, Order::Ascending)
         .take(limit)

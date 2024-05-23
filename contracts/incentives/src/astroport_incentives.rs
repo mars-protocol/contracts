@@ -6,7 +6,7 @@ use cosmwasm_std::{
     Order::Ascending, Response, StdResult, Storage, Uint128, WasmMsg,
 };
 use mars_types::{
-    address_provider, address_provider::MarsAddressType, error::MarsError,
+    address_provider::{self, helpers::query_contract_addrs, MarsAddressType}, error::MarsError,
     incentives::LpModification,
 };
 
@@ -17,8 +17,8 @@ use crate::{
     },
     query::query_unclaimed_astroport_rewards,
     state::{
-        ASTROPORT_INCENTIVE_STATES, CONFIG, LP_DEPOSITS, TOTAL_LP_DEPOSITS,
-        USER_ASTROPORT_INCENTIVE_STATES,
+        ASTRO_INCENTIVE_STATES, CONFIG, ASTRO_USER_LP_DEPOSITS, ASTRO_TOTAL_LP_DEPOSITS,
+        USER_ASTRO_INCENTIVE_STATES,
     },
     ContractError,
     ContractError::NoStakedLp,
@@ -37,8 +37,7 @@ fn claim_rewards_from_astro(
         &mars_incentives_addr,
         astroport_incentives_addr,
         &lp_denom,
-    )
-    .unwrap_or(vec![]);
+    )?;
 
     let res = update_lp_incentive_states(deps.storage, &lp_denom, &account_id, pending_rewards)?;
     let mut modification_event = Event::new("mars/incentives/claimed_astro_incentive_rewards");
@@ -54,7 +53,7 @@ pub fn execute_unstake_astro_lp(
     lp_coin: Coin,
 ) -> Result<Response, ContractError> {
     let config = CONFIG.load(deps.storage)?;
-    let addresses = address_provider::helpers::query_contract_addrs(
+    let addresses = query_contract_addrs(
         deps.as_ref(),
         &config.address_provider,
         vec![MarsAddressType::AstroportIncentives, MarsAddressType::CreditManager],
@@ -82,7 +81,7 @@ pub fn execute_stake_astro_lp(
 ) -> Result<Response, ContractError> {
     let config = CONFIG.load(deps.storage)?;
 
-    let addresses = address_provider::helpers::query_contract_addrs(
+    let addresses = query_contract_addrs(
         deps.as_ref(),
         &config.address_provider,
         vec![MarsAddressType::AstroportIncentives, MarsAddressType::CreditManager],
@@ -94,9 +93,9 @@ pub fn execute_stake_astro_lp(
         &mut deps,
         &account_id,
         lp_coin,
-        &addresses[&MarsAddressType::AstroportIncentives].as_str(),
-        &env.contract.address.to_string(),
-        &addresses[&MarsAddressType::CreditManager].to_string(),
+        addresses[&MarsAddressType::AstroportIncentives].as_str(),
+        env.contract.address.as_str(),
+        addresses[&MarsAddressType::CreditManager].as_str(),
         LpModification::Deposit,
     )
 }
@@ -110,7 +109,7 @@ fn update_user_lp_position(
     credit_manager_addr: &str,
     modification: LpModification,
 ) -> Result<Response, ContractError> {
-    let staked_lp_amount = LP_DEPOSITS
+    let staked_lp_amount = ASTRO_USER_LP_DEPOSITS
         .may_load(deps.storage, (&account_id, &lp_coin.denom))?
         .unwrap_or(Uint128::zero());
 
@@ -156,7 +155,7 @@ fn update_user_lp_position(
                         lp_token: (&lp_coin.denom).to_string(),
                         amount: lp_coin.amount,
                     })?,
-                    funds: vec![lp_coin.clone()],
+                    funds: vec![],
                 }),
                 // Send lp_coins to credit manager
                 CosmosMsg::Bank(BankMsg::Send {
@@ -180,12 +179,12 @@ fn increment_lp_deposit(
     lp_coin: &Coin,
 ) -> Result<(), ContractError> {
     // Update user staked lp state
-    LP_DEPOSITS.update(store, (&account_id, &lp_coin.denom), |existing| -> StdResult<_> {
+    ASTRO_USER_LP_DEPOSITS.update(store, (&account_id, &lp_coin.denom), |existing| -> StdResult<_> {
         Ok(existing.unwrap_or_default().checked_add(lp_coin.amount)?)
     })?;
 
     // Update total staked lp state
-    TOTAL_LP_DEPOSITS.update(store, &lp_coin.denom, |existing| -> StdResult<_> {
+    ASTRO_TOTAL_LP_DEPOSITS.update(store, &lp_coin.denom, |existing| -> StdResult<_> {
         Ok(existing.unwrap_or_default().checked_add(lp_coin.amount)?)
     })?;
 
@@ -198,13 +197,19 @@ fn decrement_lp_deposit(
     lp_coin: &Coin,
 ) -> Result<(), ContractError> {
     // Update user staked lp state
-    LP_DEPOSITS.update(store, (&account_id, &lp_coin.denom), |existing| -> StdResult<_> {
-        Ok(existing.expect("lp position should exist").checked_sub(lp_coin.amount)?)
+    ASTRO_USER_LP_DEPOSITS.update(store, (&account_id, &lp_coin.denom), |existing| -> StdResult<_> {
+        Ok(existing
+            .ok_or(ContractError::NoStakedLp { 
+                account_id: account_id.to_string(), 
+                denom: lp_coin.denom.clone() })?
+            .checked_sub(lp_coin.amount)?)
     })?;
 
     // Update total staked lp state
-    TOTAL_LP_DEPOSITS.update(store, &lp_coin.denom, |existing| -> StdResult<_> {
-        Ok(existing.expect("lp position total should exist").checked_add(lp_coin.amount)?)
+    ASTRO_TOTAL_LP_DEPOSITS.update(store, &lp_coin.denom, |existing| -> StdResult<_> {
+        Ok(existing
+            .ok_or(ContractError::NoDeposits { denom: lp_coin.denom.clone() })?
+            .checked_add(lp_coin.amount)?)
     })?;
 
     Ok(())
@@ -222,13 +227,13 @@ fn update_lp_incentive_states(
 
     for (incentive_denom, updated_incentive) in updated_incentives.iter() {
         // Set user incentive to latest, as we claim every action
-        USER_ASTROPORT_INCENTIVE_STATES.save(
+        USER_ASTRO_INCENTIVE_STATES.save(
             storage,
             (&account_id, &lp_denom, &incentive_denom),
             &updated_incentive,
         )?;
         // Store latest state
-        ASTROPORT_INCENTIVE_STATES.save(
+        ASTRO_INCENTIVE_STATES.save(
             storage,
             (&lp_denom, &incentive_denom),
             &updated_incentive,
@@ -247,7 +252,7 @@ pub fn execute_claim_astro_rewards_for_lp_position(
 ) -> Result<Response, ContractError> {
     let config = CONFIG.load(deps.storage)?;
 
-    let addresses = address_provider::helpers::query_contract_addrs(
+    let addresses = query_contract_addrs(
         deps.as_ref(),
         &config.address_provider,
         vec![MarsAddressType::AstroportIncentives, MarsAddressType::CreditManager],
@@ -263,7 +268,7 @@ pub fn execute_claim_astro_rewards_for_lp_position(
     }
 
     let staked_lp_amount =
-        LP_DEPOSITS.may_load(deps.storage, (&account_id, &lp_denom))?.ok_or(NoStakedLp {
+        ASTRO_USER_LP_DEPOSITS.may_load(deps.storage, (&account_id, &lp_denom))?.ok_or(NoStakedLp {
             account_id: account_id.to_string(),
             denom: lp_denom.to_string(),
         })?;
@@ -307,7 +312,7 @@ fn claim_astro_rewards_for_lp_position(
             calculate_claimable_rewards(deps.storage, account_id, lp_denom, staked_lp_amount)?;
         
         for coin in &user_claimable_rewards {
-            event = event.add_attribute("denom", (&coin.denom).to_string()).add_attribute("amount", (&coin.amount).to_string());
+            event = event.add_attribute("denom", coin.denom.to_string()).add_attribute("amount", coin.amount.to_string());
         }
         
         // Send the claimed rewards to the credit manager
@@ -335,7 +340,7 @@ fn calculate_claimable_rewards(
         denom: lp_denom.to_string(),
     };
 
-    let lp_incentive_states: HashMap<String, Decimal> = ASTROPORT_INCENTIVE_STATES
+    let lp_incentive_states: HashMap<String, Decimal> = ASTRO_INCENTIVE_STATES
         .prefix(lp_denom)
         .range(storage, None, None, Ascending)
         .collect::<StdResult<HashMap<String, Decimal>>>()?;
