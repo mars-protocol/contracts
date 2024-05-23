@@ -24,7 +24,12 @@ pub struct InstantiateMsg {
 }
 
 #[cw_serde]
-pub enum ExtensionExecuteMsg {}
+pub enum ExtensionExecuteMsg {
+    /// Bind Credit Manager account id to the vault
+    BindCreditManagerAccount {
+        account_id: String,
+    },
+}
 
 #[cw_serde]
 pub enum ExtensionQueryMsg {

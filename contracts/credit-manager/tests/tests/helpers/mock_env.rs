@@ -1,7 +1,7 @@
 use std::{default::Default, str::FromStr};
 
 use anyhow::Result as AnyResult;
-use cosmwasm_std::{coins, testing::MockApi, Addr, Coin, Decimal, Empty, StdResult, Uint128};
+use cosmwasm_std::{coin, coins, testing::MockApi, Addr, Coin, Decimal, Empty, StdResult, Uint128};
 use cw721::TokensResponse;
 use cw721_base::{Action::TransferOwnership, Ownership};
 use cw_multi_test::{no_init, AppResponse, BankSudo, BasicAppBuilder, Executor, SudoMsg};
@@ -64,13 +64,14 @@ use mars_types::{
         QueryMsg::EstimateExactInSwap, SwapperRoute,
     },
 };
+use mars_vault::msg::InstantiateMsg as ManagedVaultInstantiateMsg;
 use mars_zapper_mock::msg::{InstantiateMsg as ZapperInstantiateMsg, LpConfig};
 
 use super::{
     lp_token_info, mock_account_nft_contract, mock_address_provider_contract, mock_health_contract,
-    mock_incentives_contract, mock_oracle_contract, mock_params_contract, mock_red_bank_contract,
-    mock_rover_contract, mock_swapper_contract, mock_v2_zapper_contract, mock_vault_contract,
-    AccountToFund, CoinInfo, VaultTestInfo,
+    mock_incentives_contract, mock_managed_vault_contract, mock_oracle_contract,
+    mock_params_contract, mock_red_bank_contract, mock_rover_contract, mock_swapper_contract,
+    mock_v2_zapper_contract, mock_vault_contract, AccountToFund, CoinInfo, VaultTestInfo,
 };
 
 pub const DEFAULT_RED_BANK_COIN_BALANCE: Uint128 = Uint128::new(1_000_000);
@@ -1457,4 +1458,24 @@ fn propose_new_nft_minter(
         expiry: None,
     });
     app.execute_contract(old_minter.clone(), nft_contract, &proposal_msg, &[]).unwrap();
+}
+
+pub fn deploy_managed_vault(app: &mut CustomApp, sender: &Addr, credit_manager: &Addr) -> Addr {
+    let contract_code_id = app.store_code(mock_managed_vault_contract());
+    app.instantiate_contract(
+        contract_code_id,
+        sender.clone(),
+        &ManagedVaultInstantiateMsg {
+            base_token: "uusdc".to_string(),
+            vault_token_subdenom: "vault".to_string(),
+            title: None,
+            subtitle: None,
+            description: None,
+            credit_manager: credit_manager.to_string(),
+        },
+        &[coin(10_000_000, "untrn")], // Token Factory fee for minting new denom. Configured in the Token Factory module in `mars-testing` package.
+        "mock-managed-vault",
+        None,
+    )
+    .unwrap()
 }

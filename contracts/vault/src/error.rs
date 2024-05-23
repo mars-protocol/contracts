@@ -42,6 +42,9 @@ pub enum ContractError {
 
     #[error("{0}")]
     Generic(String),
+
+    #[error("Caller is not the Credit Manager contract")]
+    NotCreditManager {},
 }
 
 pub type ContractResult<T> = Result<T, ContractError>;

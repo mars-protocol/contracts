@@ -8,7 +8,10 @@ use crate::{
     base_vault::BaseVault,
     error::ContractResult,
     execute,
-    msg::{self, ExecuteMsg, InstantiateMsg, QueryMsg, VaultInfoResponseExt},
+    msg::{
+        ExecuteMsg, ExtensionExecuteMsg, ExtensionQueryMsg, InstantiateMsg, QueryMsg,
+        VaultInfoResponseExt,
+    },
     state::{CREDIT_MANAGER, DESCRIPTION, FOUND_MANAGER_ACC_ID, OWNER, SUBTITLE, TITLE},
     token_factory::TokenFactoryDenom,
 };
@@ -88,9 +91,11 @@ pub fn execute(
             recipient,
             amount,
         } => execute::redeem(deps, env, &info, amount, recipient),
-        ExecuteMsg::VaultExtension(_msg) => {
-            unimplemented!()
-        }
+        ExecuteMsg::VaultExtension(msg) => match msg {
+            ExtensionExecuteMsg::BindCreditManagerAccount {
+                account_id,
+            } => execute::bind_credit_manager_account(deps, &info, account_id),
+        },
     }
 }
 
@@ -129,7 +134,7 @@ pub fn query(deps: Deps, _env: Env, msg: QueryMsg) -> ContractResult<Binary> {
             amount,
         } => to_json_binary(&base_vault.query_simulate_withdraw(deps, amount)?),
         QueryMsg::VaultExtension(msg) => match msg {
-            msg::ExtensionQueryMsg::VaultInfo => {
+            ExtensionQueryMsg::VaultInfo => {
                 let vault_token = base_vault.vault_token.load(deps.storage)?;
                 let base_token = base_vault.base_token.load(deps.storage)?;
                 to_json_binary(&VaultInfoResponseExt {

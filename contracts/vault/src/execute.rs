@@ -1,6 +1,6 @@
 use cosmwasm_std::{
-    attr, to_json_binary, Coin, CosmosMsg, Deps, DepsMut, Env, Event, MessageInfo, Response,
-    StdError, StdResult, Uint128, WasmMsg,
+    attr, ensure_eq, to_json_binary, Coin, CosmosMsg, Deps, DepsMut, Env, Event, MessageInfo,
+    Response, StdError, StdResult, Uint128, WasmMsg,
 };
 use mars_types::credit_manager::{self, Action, ActionCoin, Positions, QueryMsg};
 
@@ -9,6 +9,21 @@ use crate::{
     error::ContractError,
     state::{CREDIT_MANAGER, FOUND_MANAGER_ACC_ID},
 };
+
+pub fn bind_credit_manager_account(
+    deps: DepsMut,
+    info: &MessageInfo,
+    account_id: String,
+) -> Result<Response, ContractError> {
+    let credit_manager = CREDIT_MANAGER.load(deps.storage)?;
+    ensure_eq!(info.sender, credit_manager, ContractError::NotCreditManager {});
+
+    FOUND_MANAGER_ACC_ID.save(deps.storage, &account_id)?;
+
+    let event = Event::new("vault/bind_credit_manager_account")
+        .add_attributes(vec![attr("account_id", account_id)]);
+    Ok(Response::new().add_event(event))
+}
 
 pub fn deposit(
     deps: DepsMut,
@@ -49,7 +64,7 @@ pub fn deposit(
         .save(deps.storage, &total_staked_amount.checked_add(amount)?)?;
 
     let event = Event::new("vault/execute_staking").add_attributes(vec![
-        attr("action", "execute_callback_mint_vault_token"),
+        attr("action", "execute_mint_vault_token"),
         attr("recipient", vault_token_recipient.to_string()),
         attr("mint_amount", vault_tokens),
     ]);
