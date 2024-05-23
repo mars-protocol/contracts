@@ -95,6 +95,12 @@ pub fn redeem(
     vault_token_amount: Uint128,
     recipient: Option<String>,
 ) -> Result<Response, ContractError> {
+    let cm_addr = CREDIT_MANAGER.load(deps.storage)?;
+    let Some(cm_acc_id) = CREDIT_MANAGER_ACC_ID.may_load(deps.storage)? else {
+        // bind credit manager account first
+        return Err(ContractError::CreditManagerAccountNotFound {});
+    };
+
     // unwrap recipient or use caller's address
     let recipient = recipient.map_or(Ok(info.sender.clone()), |x| deps.api.addr_validate(&x))?;
 
@@ -115,9 +121,6 @@ pub fn redeem(
         attr("lp_tokens_to_withdraw", tokens_to_withdraw),
     ]);
 
-    let cm_addr = CREDIT_MANAGER.load(deps.storage)?;
-    let cm_acc_id = CREDIT_MANAGER_ACC_ID.load(deps.storage)?;
-
     let mut actions = vec![];
 
     let amount_to_unlend =
@@ -128,14 +131,14 @@ pub fn redeem(
             amount: credit_manager::ActionAmount::Exact(amount_to_unlend),
         }));
     }
-    // TODO: Withdraw to wallet
-    // actions.push(Action::WithdrawToWallet {
-    //     coin: ActionCoin {
-    //         denom: base_token,
-    //         amount: credit_manager::ActionAmount::Exact(tokens_to_withdraw),
-    //     },
-    //     recipient: recipient.to_string(),
-    // });
+
+    actions.push(Action::WithdrawToWallet {
+        coin: ActionCoin {
+            denom: base_token,
+            amount: credit_manager::ActionAmount::Exact(tokens_to_withdraw),
+        },
+        recipient: recipient.to_string(),
+    });
 
     let withdraw_from_cm = CosmosMsg::Wasm(WasmMsg::Execute {
         contract_addr: cm_addr.to_string(),

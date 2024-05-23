@@ -125,6 +125,11 @@ pub enum Action {
     Deposit(Coin),
     /// Withdraw coin of specified denom and amount
     Withdraw(ActionCoin),
+    /// Withdraw coin of specified denom and amount to a wallet address
+    WithdrawToWallet {
+        coin: ActionCoin,
+        recipient: String,
+    },
     /// Borrow coin of specified amount from Red Bank
     Borrow(Coin),
     /// Lend coin to the Red Bank

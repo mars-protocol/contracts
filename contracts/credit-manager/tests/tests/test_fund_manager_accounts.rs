@@ -48,7 +48,7 @@ fn fund_manager_wallet_cannot_deposit_and_withdraw() {
         res,
         ContractError::Unauthorized {
             user: account_id.to_string(),
-            action: "deposit, withdraw, refund_all_coin_balances".to_string(),
+            action: "deposit, withdraw, refund_all_coin_balances, withdraw_to_wallet".to_string(),
         },
     );
 
@@ -66,7 +66,7 @@ fn fund_manager_wallet_cannot_deposit_and_withdraw() {
         res,
         ContractError::Unauthorized {
             user: account_id.to_string(),
-            action: "deposit, withdraw, refund_all_coin_balances".to_string(),
+            action: "deposit, withdraw, refund_all_coin_balances, withdraw_to_wallet".to_string(),
         },
     );
 
@@ -81,7 +81,28 @@ fn fund_manager_wallet_cannot_deposit_and_withdraw() {
         res,
         ContractError::Unauthorized {
             user: account_id.to_string(),
-            action: "deposit, withdraw, refund_all_coin_balances".to_string(),
+            action: "deposit, withdraw, refund_all_coin_balances, withdraw_to_wallet".to_string(),
+        },
+    );
+
+    // withdraw_to_wallet not allowed
+    let res = mock.update_credit_account(
+        &account_id,
+        &fund_manager_wallet,
+        vec![Action::WithdrawToWallet {
+            coin: ActionCoin {
+                denom: coin_info.denom.clone(),
+                amount: ActionAmount::AccountBalance,
+            },
+            recipient: "wallet".to_string(),
+        }],
+        &[],
+    );
+    assert_err(
+        res,
+        ContractError::Unauthorized {
+            user: account_id.to_string(),
+            action: "deposit, withdraw, refund_all_coin_balances, withdraw_to_wallet".to_string(),
         },
     );
 
@@ -96,6 +117,13 @@ fn fund_manager_wallet_cannot_deposit_and_withdraw() {
                 amount: ActionAmount::AccountBalance,
             }),
             Action::RefundAllCoinBalances {},
+            Action::WithdrawToWallet {
+                coin: ActionCoin {
+                    denom: coin_info.denom.clone(),
+                    amount: ActionAmount::AccountBalance,
+                },
+                recipient: "wallet".to_string(),
+            },
         ],
         &[Coin::new(deposit_amount.into(), coin_info.denom.clone())],
     );
@@ -103,7 +131,7 @@ fn fund_manager_wallet_cannot_deposit_and_withdraw() {
         res,
         ContractError::Unauthorized {
             user: account_id.to_string(),
-            action: "deposit, withdraw, refund_all_coin_balances".to_string(),
+            action: "deposit, withdraw, refund_all_coin_balances, withdraw_to_wallet".to_string(),
         },
     );
 
@@ -125,7 +153,7 @@ fn fund_manager_wallet_cannot_deposit_and_withdraw() {
         res,
         ContractError::Unauthorized {
             user: account_id.to_string(),
-            action: "deposit, withdraw, refund_all_coin_balances".to_string(),
+            action: "deposit, withdraw, refund_all_coin_balances, withdraw_to_wallet".to_string(),
         },
     );
 }

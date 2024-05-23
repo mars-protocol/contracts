@@ -179,6 +179,14 @@ pub fn dispatch_actions(
                 coin,
                 recipient: info.sender.clone(),
             }),
+            Action::WithdrawToWallet {
+                coin,
+                recipient,
+            } => callbacks.push(CallbackMsg::Withdraw {
+                account_id: account_id.to_string(),
+                coin,
+                recipient: deps.api.addr_validate(&recipient)?,
+            }),
             Action::Borrow(coin) => callbacks.push(CallbackMsg::Borrow {
                 account_id: account_id.to_string(),
                 coin,
@@ -380,13 +388,17 @@ fn validate_account(
             let actions_not_allowed = actions.iter().any(|action| {
                 matches!(
                     action,
-                    Action::Deposit(..) | Action::Withdraw(..) | Action::RefundAllCoinBalances {}
+                    Action::Deposit(..)
+                        | Action::Withdraw(..)
+                        | Action::RefundAllCoinBalances {}
+                        | Action::WithdrawToWallet { .. }
                 )
             });
             if actions_not_allowed {
                 return Err(ContractError::Unauthorized {
                     user: acc_id.to_string(),
-                    action: "deposit, withdraw, refund_all_coin_balances".to_string(),
+                    action: "deposit, withdraw, refund_all_coin_balances, withdraw_to_wallet"
+                        .to_string(),
                 });
             }
         }

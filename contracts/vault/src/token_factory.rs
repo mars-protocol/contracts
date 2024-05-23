@@ -62,7 +62,7 @@ impl TokenFactoryDenom {
         .into();
 
         let init_event =
-            Event::new("vault-token/instantiate").add_attribute("denom", self.to_string());
+            Event::new("vault_token/instantiate").add_attribute("denom", self.to_string());
 
         Ok(Response::new().add_message(init_msg).add_event(init_event))
     }
@@ -84,7 +84,7 @@ impl TokenFactoryDenom {
         }
         .into();
 
-        let event = Event::new("vault-token/mint").add_attributes(vec![
+        let event = Event::new("vault_token/mint").add_attributes(vec![
             attr("denom", self.to_string()),
             attr("amount", amount.to_string()),
             attr("recipient", recipient.to_string()),
@@ -104,7 +104,7 @@ impl TokenFactoryDenom {
         }
         .into();
 
-        let event = Event::new("vault-token/burn").add_attributes(vec![
+        let event = Event::new("vault_token/burn").add_attributes(vec![
             attr("denom", self.to_string()),
             attr("amount", amount.to_string()),
         ]);
