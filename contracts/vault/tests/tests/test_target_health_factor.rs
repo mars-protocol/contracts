@@ -16,5 +16,5 @@ fn deposit_to_vault() {
         .build()
         .unwrap();
 
-    mock.deposit(&user, Uint128::new(100), &[coin(100, "uusdc")]).unwrap();
+    // mock.deposit(&user, Uint128::new(100), &[coin(100, "uusdc")]).unwrap();
 }

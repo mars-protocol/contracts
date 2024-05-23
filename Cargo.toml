@@ -77,6 +77,7 @@ neutron-sdk        = "0.8.0"
 osmosis-std        = "0.22.0"
 prost              = { version = "0.12.3", default-features = false }
 pyth-sdk-cw        = "1.2.0"
+regex              = "1.10.4"
 schemars           = "0.8.16"
 serde              = { version = "1.0.197", default-features = false }
 serde_json         = "1.0.114"
