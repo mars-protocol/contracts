@@ -103,11 +103,11 @@ impl<'a> BaseVault<'a> {
         let total_staked_amount = self.total_staked_base_tokens.load(deps.storage)?;
         let vault_token_supply = vault_token.query_total_supply(deps.as_ref())?;
 
-        // Calculate how many base tokens the given amount of vault tokens represents
+        // calculate base tokens based on the given amount of vault tokens
         let base_tokens =
             self.calculate_base_tokens(vault_tokens, total_staked_amount, vault_token_supply)?;
 
-        // Update total staked amount
+        // update total staked amount
         self.total_staked_base_tokens
             .save(deps.storage, &total_staked_amount.checked_sub(base_tokens)?)?;
 
@@ -117,7 +117,6 @@ impl<'a> BaseVault<'a> {
                 attr("received_base_token_amount", base_tokens),
             ]);
 
-        // Return calculated amount of base_tokens and message to burn vault tokens
         Ok((base_tokens, vault_token.burn(deps, env, vault_tokens)?.add_event(event)))
     }
 

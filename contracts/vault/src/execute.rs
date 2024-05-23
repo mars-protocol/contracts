@@ -7,7 +7,7 @@ use mars_types::credit_manager::{self, Action, ActionCoin, Positions, QueryMsg};
 use crate::{
     contract::NtrnBaseVault,
     error::ContractError,
-    state::{CREDIT_MANAGER, FOUND_MANAGER_ACC_ID},
+    state::{CREDIT_MANAGER, CREDIT_MANAGER_ACC_ID},
 };
 
 pub fn bind_credit_manager_account(
@@ -18,7 +18,7 @@ pub fn bind_credit_manager_account(
     let credit_manager = CREDIT_MANAGER.load(deps.storage)?;
     ensure_eq!(info.sender, credit_manager, ContractError::NotCreditManager {});
 
-    FOUND_MANAGER_ACC_ID.save(deps.storage, &account_id)?;
+    CREDIT_MANAGER_ACC_ID.save(deps.storage, &account_id)?;
 
     let event = Event::new("vault/bind_credit_manager_account")
         .add_attributes(vec![attr("account_id", account_id)]);
@@ -29,51 +29,46 @@ pub fn deposit(
     deps: DepsMut,
     env: Env,
     info: &MessageInfo,
-    amount: Uint128,
     recipient: Option<String>,
 ) -> Result<Response, ContractError> {
-    // Unwrap recipient or use caller's address
+    // unwrap recipient or use caller's address
     let vault_token_recipient =
-        recipient.map_or(Ok(info.sender.clone()), |x| deps.api.addr_validate(&x))?;
+        recipient.map_or(Ok(info.sender.clone()), |r| deps.api.addr_validate(&r))?;
 
     let base_vault = NtrnBaseVault::default();
+    let base_token = base_vault.base_token.load(deps.storage)?.to_string();
 
-    // Check that only the expected amount of base token was sent
-    if info.funds.len() > 1 {
-        return Err(ContractError::UnexpectedFunds {
-            expected: vec![Coin {
-                denom: base_vault.base_token.load(deps.storage)?.to_string(),
-                amount,
-            }],
-            actual: info.funds.clone(),
-        });
-    }
+    // check that only the expected base token was sent
+    let amount = cw_utils::must_pay(info, &base_token)?;
 
-    // Load state
+    // load state
     let vault_token = base_vault.vault_token.load(deps.storage)?;
     let total_staked_amount = base_vault.total_staked_base_tokens.load(deps.storage)?;
     let vault_token_supply = vault_token.query_total_supply(deps.as_ref())?;
 
-    // Calculate how many base tokens the given amount of vault tokens represents
+    // calculate vault tokens
     let vault_tokens =
         base_vault.calculate_vault_tokens(amount, total_staked_amount, vault_token_supply)?;
 
-    // Update total staked amount
+    // update total staked amount
     base_vault
         .total_staked_base_tokens
         .save(deps.storage, &total_staked_amount.checked_add(amount)?)?;
 
-    let event = Event::new("vault/execute_staking").add_attributes(vec![
-        attr("action", "execute_mint_vault_token"),
+    let event = Event::new("vault/deposit").add_attributes(vec![
+        attr("action", "mint_vault_tokens"),
         attr("recipient", vault_token_recipient.to_string()),
         attr("mint_amount", vault_tokens),
     ]);
 
     let cm_addr = CREDIT_MANAGER.load(deps.storage)?;
-    let cm_acc_id = FOUND_MANAGER_ACC_ID.load(deps.storage)?;
+    let Some(cm_acc_id) = CREDIT_MANAGER_ACC_ID.may_load(deps.storage)? else {
+        // bind credit manager account first
+        return Err(ContractError::CreditManagerAccountNotFound {});
+    };
 
     let coin_deposited = Coin {
-        denom: base_vault.base_token.load(deps.storage)?.to_string(),
+        denom: base_token,
         amount,
     };
 
@@ -87,7 +82,6 @@ pub fn deposit(
         funds: vec![coin_deposited],
     });
 
-    // Return Response with message to mint vault tokens
     Ok(vault_token
         .mint(deps, &env, &vault_token_recipient, vault_tokens)?
         .add_message(deposit_to_cm)
@@ -101,7 +95,7 @@ pub fn redeem(
     vault_token_amount: Uint128,
     recipient: Option<String>,
 ) -> Result<Response, ContractError> {
-    // Unwrap recipient or use caller's address
+    // unwrap recipient or use caller's address
     let recipient = recipient.map_or(Ok(info.sender.clone()), |x| deps.api.addr_validate(&x))?;
 
     let base_vault = NtrnBaseVault::default();
@@ -114,15 +108,15 @@ pub fn redeem(
     // Send unstaked base tokes to recipient
     // let send_res = base_vault.send_base_tokens(deps, &recipient, tokens_to_withdraw)?;
 
-    let event = Event::new("vault/execute_redeem").add_attributes(vec![
-        attr("action", "execute_callback_redeem"),
+    let event = Event::new("vault/redeem").add_attributes(vec![
+        attr("action", "burn_vault_tokens"),
         attr("recipient", recipient.clone()),
         attr("vault_token_amount", vault_token_amount),
-        attr("lp_tokens_to_unstake", tokens_to_withdraw),
+        attr("lp_tokens_to_withdraw", tokens_to_withdraw),
     ]);
 
     let cm_addr = CREDIT_MANAGER.load(deps.storage)?;
-    let cm_acc_id = FOUND_MANAGER_ACC_ID.load(deps.storage)?;
+    let cm_acc_id = CREDIT_MANAGER_ACC_ID.load(deps.storage)?;
 
     let mut actions = vec![];
 
@@ -156,32 +150,13 @@ pub fn redeem(
     Ok(burn_res.add_message(withdraw_from_cm).add_event(event))
 }
 
-pub fn merge_responses(responses: Vec<Response>) -> Response {
-    let mut merged = Response::default();
-    for response in responses {
-        merged = merged
-            .add_attributes(response.attributes)
-            .add_events(response.events)
-            .add_submessages(response.messages);
-        // merge data
-        if let Some(data) = response.data {
-            if merged.data.is_none() {
-                merged.data = Some(data);
-            } else {
-                panic!("Cannot merge multiple responses with data");
-            }
-        }
-    }
-    merged
-}
-
-pub fn get_amount_to_unlend(
+fn get_amount_to_unlend(
     deps: Deps,
     base_token: String,
     withraw_amount: Uint128,
 ) -> Result<Uint128, ContractError> {
     let cm_addr = CREDIT_MANAGER.load(deps.storage)?;
-    let cm_acc_id = FOUND_MANAGER_ACC_ID.load(deps.storage)?;
+    let cm_acc_id = CREDIT_MANAGER_ACC_ID.load(deps.storage)?;
 
     let postions: StdResult<Positions> = deps.querier.query_wasm_smart(
         cm_addr,

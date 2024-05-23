@@ -12,7 +12,7 @@ use crate::{
         ExecuteMsg, ExtensionExecuteMsg, ExtensionQueryMsg, InstantiateMsg, QueryMsg,
         VaultInfoResponseExt,
     },
-    state::{CREDIT_MANAGER, DESCRIPTION, FOUND_MANAGER_ACC_ID, OWNER, SUBTITLE, TITLE},
+    state::{CREDIT_MANAGER, CREDIT_MANAGER_ACC_ID, DESCRIPTION, OWNER, SUBTITLE, TITLE},
     token_factory::TokenFactoryDenom,
 };
 
@@ -84,9 +84,9 @@ pub fn execute(
 ) -> ContractResult<Response> {
     match msg {
         ExecuteMsg::Deposit {
-            amount,
+            amount: _, // don't care about amount, use funds data
             recipient,
-        } => execute::deposit(deps, env, &info, amount, recipient),
+        } => execute::deposit(deps, env, &info, recipient),
         ExecuteMsg::Redeem {
             recipient,
             amount,
@@ -144,7 +144,7 @@ pub fn query(deps: Deps, _env: Env, msg: QueryMsg) -> ContractResult<Binary> {
                     subtitle: SUBTITLE.may_load(deps.storage)?,
                     description: DESCRIPTION.may_load(deps.storage)?,
                     credit_manager: CREDIT_MANAGER.load(deps.storage)?,
-                    fund_manager_account_id: FOUND_MANAGER_ACC_ID.may_load(deps.storage)?,
+                    fund_manager_account_id: CREDIT_MANAGER_ACC_ID.may_load(deps.storage)?,
                 })
             }
         },

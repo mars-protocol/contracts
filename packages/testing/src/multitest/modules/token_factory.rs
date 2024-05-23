@@ -214,7 +214,7 @@ impl TokenFactory {
 
         // Mint through BankKeeper sudo method
         let mint_msg = BankSudo::Mint {
-            to_address: sender.to_string(),
+            to_address: msg.mint_to_address.clone(),
             amount: vec![Coin {
                 denom: denom.clone(),
                 amount,
@@ -227,7 +227,7 @@ impl TokenFactory {
         res.data = Some(data.into());
         res.events.push(
             Event::new("tf_mint")
-                .add_attribute("mint_to_address", "sender")
+                .add_attribute("mint_to_address", msg.mint_to_address.to_string())
                 .add_attribute("amount", amount.to_string()),
         );
         Ok(res)

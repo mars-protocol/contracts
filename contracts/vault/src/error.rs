@@ -1,5 +1,5 @@
 use cosmwasm_std::{
-    CheckedFromRatioError, CheckedMultiplyFractionError, CheckedMultiplyRatioError, Coin,
+    CheckedFromRatioError, CheckedMultiplyFractionError, CheckedMultiplyRatioError,
     DecimalRangeExceeded, DivideByZeroError, OverflowError, StdError,
 };
 use cw_utils::PaymentError;
@@ -34,17 +34,14 @@ pub enum ContractError {
     #[error(transparent)]
     Payment(#[from] PaymentError),
 
-    #[error("Unexpected funds sent. Expected: {expected:?}, Actual: {actual:?}")]
-    UnexpectedFunds {
-        expected: Vec<Coin>,
-        actual: Vec<Coin>,
-    },
-
     #[error("{0}")]
     Generic(String),
 
     #[error("Caller is not the Credit Manager contract")]
     NotCreditManager {},
+
+    #[error("Credit Manager account not found")]
+    CreditManagerAccountNotFound {},
 }
 
 pub type ContractResult<T> = Result<T, ContractError>;
