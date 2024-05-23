@@ -31,7 +31,6 @@ mars-types        = { workspace = true }
 schemars          = { workspace = true }
 serde             = { workspace = true }
 thiserror         = { workspace = true }
-cw-vault-token    = "0.1.0"
 osmosis-std       = { workspace = true }
 
 [dev-dependencies]

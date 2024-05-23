@@ -9,16 +9,9 @@ use osmosis_std::types::{
     osmosis::tokenfactory::v1beta1::{MsgBurn, MsgCreateDenom, MsgMint},
 };
 
-// use self::msg::{MsgBurn, MsgCreateDenom, MsgMint};
-
 #[cw_serde]
 /// Representation of a native token created using the Token Factory.
-/// The denom of the token will be `factory/{owner}/{subdenom}`. If this token
-/// has not yet been created, the `instantiate` function must first be called
-/// and its response included in the transaction. If the token has already been
-/// created an [`TokenFactoryDenom`] object can be created directly
-/// using [`TokenFactoryDenom::new`] or [`TokenFactoryDenom::from_native_denom`]. Note
-/// that currently only the creator of the denom can mint or burn it.
+/// The denom of the token will be `factory/{owner}/{subdenom}`.
 pub struct TokenFactoryDenom {
     /// Creator and owner of the denom. Only this address can mint and burn
     /// tokens.
@@ -29,7 +22,6 @@ pub struct TokenFactoryDenom {
 }
 
 impl TokenFactoryDenom {
-    /// Creates a new [`TokenFactoryDenom`] obj instance
     pub const fn new(owner: String, subdenom: String) -> Self {
         Self {
             owner,
@@ -37,11 +29,6 @@ impl TokenFactoryDenom {
         }
     }
 
-    /// Create an [`TokenFactoryDenom`] from a string. `denom` must be the full denom
-    /// of the token, in the format `factory/{owner}/{subdenom}`.
-    ///
-    /// ## Errors
-    /// Will return [`StdError`] if `denom` does not follow the required format.
     pub fn from_native_denom(denom: &str) -> StdResult<Self> {
         let parts: Vec<_> = denom.split('/').collect();
 

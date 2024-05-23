@@ -93,6 +93,12 @@ export type Action =
       withdraw: ActionCoin
     }
   | {
+      withdraw_to_wallet: {
+        coin: ActionCoin
+        recipient: string
+      }
+    }
+  | {
       borrow: Coin
     }
   | {
