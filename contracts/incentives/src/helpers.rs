@@ -406,17 +406,6 @@ pub fn compute_user_unclaimed_rewards(
     Ok(unclaimed_rewards)
 }
 
-pub fn assert_caller_is_credit_manager(
-    sender_addr: Addr,
-    credit_manager_addr: &Addr,
-) -> Result<(), ContractError> {
-    if sender_addr != credit_manager_addr {
-        return Err(ContractError::Mars(MarsError::Unauthorized {}));
-    };
-
-    Ok(())
-}
-
 pub fn claim_rewards_msg(
     astroport_incentives_addr: &str,
     lp_denom: &str,

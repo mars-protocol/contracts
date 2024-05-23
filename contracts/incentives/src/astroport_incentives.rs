@@ -12,7 +12,7 @@ use mars_types::{
 
 use crate::{
     helpers::{
-        assert_caller_is_credit_manager, calculate_rewards_from_astroport_incentive_state,
+        calculate_rewards_from_astroport_incentive_state,
         claim_rewards_msg, compute_updated_astroport_incentive_states,
     },
     query::query_unclaimed_astroport_rewards,
@@ -59,7 +59,11 @@ pub fn execute_unstake_astro_lp(
         vec![MarsAddressType::AstroportIncentives, MarsAddressType::CreditManager],
     )?;
 
-    assert_caller_is_credit_manager(info.sender, &addresses[&MarsAddressType::CreditManager])?;
+    ensure_eq!(
+        info.sender,
+        &addresses[&MarsAddressType::CreditManager],
+        ContractError::Mars(MarsError::Unauthorized {})
+    );
 
     update_user_lp_position(
         &mut deps,
@@ -87,7 +91,11 @@ pub fn execute_stake_astro_lp(
         vec![MarsAddressType::AstroportIncentives, MarsAddressType::CreditManager],
     )?;
 
-    assert_caller_is_credit_manager(info.sender, &addresses[&MarsAddressType::CreditManager])?;
+    ensure_eq!(
+        info.sender,
+        &addresses[&MarsAddressType::CreditManager],
+        ContractError::Mars(MarsError::Unauthorized {})
+    );
 
     update_user_lp_position(
         &mut deps,
@@ -262,10 +270,12 @@ pub fn execute_claim_astro_rewards_for_lp_position(
 
     // To prevent configuration errors, we fetch address from current contract instead of address_provider
     let mars_incentives_addr = env.contract.address.to_string();
-
-    if info.sender != credit_manager_addr {
-        return Err(ContractError::Mars(MarsError::Unauthorized {}));
-    }
+    
+    ensure_eq!(
+        info.sender,
+        &addresses[&MarsAddressType::CreditManager],
+        ContractError::Mars(MarsError::Unauthorized {})
+    );
 
     let staked_lp_amount =
         ASTRO_USER_LP_DEPOSITS.may_load(deps.storage, (&account_id, &lp_denom))?.ok_or(NoStakedLp {
