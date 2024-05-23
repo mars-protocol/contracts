@@ -14,11 +14,13 @@ pub struct InstantiateMsg {
     /// "factory/{vault_contract}/{vault_token_subdenom}".
     pub vault_token_subdenom: String,
 
-    pub fund_manager_account_id: String,
-
+    /// Optional metadata
     pub title: Option<String>,
     pub subtitle: Option<String>,
     pub description: Option<String>,
+
+    /// Credit Manager contract address
+    pub credit_manager: String,
 }
 
 #[cw_serde]
@@ -37,7 +39,14 @@ pub struct VaultInfoResponseExt {
     /// Vault token denom
     pub vault_token: String,
 
+    /// Optional metadata
     pub title: Option<String>,
     pub subtitle: Option<String>,
     pub description: Option<String>,
+
+    /// Credit Manager contract address
+    pub credit_manager: String,
+
+    /// Fund Manager account id
+    pub fund_manager_account_id: Option<String>,
 }

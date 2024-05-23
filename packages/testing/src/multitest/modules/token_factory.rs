@@ -99,7 +99,7 @@ impl TokenFactory {
 
 impl Default for TokenFactory {
     fn default() -> Self {
-        Self::new("factory", 32, 16, 59 + 16, "10000000uosmo")
+        Self::new("factory", 32, 16, 59 + 16, "10000000untrn")
     }
 }
 
@@ -154,11 +154,11 @@ impl TokenFactory {
         }
 
         // Charge denom creation fee
-        // let fee = coin_from_sdk_string(&self.denom_creation_fee)?;
-        // let fee_msg = BankMsg::Burn {
-        //     amount: vec![fee],
-        // };
-        // router.execute(api, storage, block, sender, fee_msg.into())?;
+        let fee = coin_from_sdk_string(&self.denom_creation_fee)?;
+        let fee_msg = BankMsg::Burn {
+            amount: vec![fee],
+        };
+        router.execute(api, storage, block, sender, fee_msg.into())?;
 
         let create_denom_response = MsgCreateDenomResponse {
             new_token_denom: denom.clone(),

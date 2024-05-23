@@ -1,7 +1,7 @@
 use cosmwasm_std::{
     entry_point, to_json_binary, Binary, Deps, DepsMut, Env, MessageInfo, Response,
 };
-use cw_vault_standard::VaultStandardInfoResponse;
+use cw_vault_standard::{VaultInfoResponse, VaultStandardInfoResponse};
 use mars_owner::OwnerInit;
 
 use crate::{
@@ -30,9 +30,18 @@ pub fn instantiate(
     // initialize contract version info
     cw2::set_contract_version(deps.storage, CONTRACT_NAME, CONTRACT_VERSION)?;
 
-    let base_vault = NtrnBaseVault::default();
-
-    CREDIT_MANAGER.save(deps.storage, &info.sender.to_string())?;
+    // Validate that 10 ntrn for vault token creation are sent
+    // let ntrn_amount = info
+    //     .funds
+    //     .iter()
+    //     .find(|coin| coin.denom == "untrn")
+    //     .map(|coin| coin.amount)
+    //     .unwrap_or_default();
+    // if ntrn_amount < Uint128::new(10_000_000) {
+    //     return Err(ContractError::from(
+    //         "A minimum of 10_000_000 untrn must be sent to create the vault token",
+    //     ));
+    // }
 
     // initialize contract ownership info
     OWNER.initialize(
@@ -43,23 +52,9 @@ pub fn instantiate(
         },
     )?;
 
-    // Validate that 1 ntrn for vault token creation are sent
-    // let ntrn_amount = info
-    //     .funds
-    //     .iter()
-    //     .find(|coin| coin.denom == "untrn")
-    //     .map(|coin| coin.amount)
-    //     .unwrap_or_default();
-    // if ntrn_amount < Uint128::new(1_000_000) {
-    //     return Err(ContractError::from(
-    //         "A minimum of 1_000_000 untrn must be sent to create the vault token",
-    //     ));
-    // }
+    let credit_manager = deps.api.addr_validate(&msg.credit_manager)?;
+    CREDIT_MANAGER.save(deps.storage, &credit_manager.to_string())?;
 
-    let vault_token =
-        TokenFactoryDenom::new(env.contract.address.to_string(), msg.vault_token_subdenom);
-
-    FOUND_MANAGER_ACC_ID.save(deps.storage, &msg.fund_manager_account_id)?;
     if let Some(tit) = msg.title {
         TITLE.save(deps.storage, &tit)?;
     }
@@ -69,6 +64,10 @@ pub fn instantiate(
     if let Some(desc) = msg.description {
         DESCRIPTION.save(deps.storage, &desc)?;
     }
+
+    let base_vault = NtrnBaseVault::default();
+    let vault_token =
+        TokenFactoryDenom::new(env.contract.address.to_string(), msg.vault_token_subdenom);
 
     Ok(base_vault.init(deps, msg.base_token, vault_token)?)
 }
@@ -108,12 +107,9 @@ pub fn query(deps: Deps, _env: Env, msg: QueryMsg) -> ContractResult<Binary> {
             let vault_token = base_vault.vault_token.load(deps.storage)?;
             let base_token = base_vault.base_token.load(deps.storage)?;
 
-            to_json_binary(&VaultInfoResponseExt {
+            to_json_binary(&VaultInfoResponse {
                 base_token: base_token.to_string(),
                 vault_token: vault_token.to_string(),
-                title: TITLE.may_load(deps.storage)?,
-                subtitle: SUBTITLE.may_load(deps.storage)?,
-                description: DESCRIPTION.may_load(deps.storage)?,
             })
         }
         QueryMsg::PreviewDeposit {
@@ -142,6 +138,8 @@ pub fn query(deps: Deps, _env: Env, msg: QueryMsg) -> ContractResult<Binary> {
                     title: TITLE.may_load(deps.storage)?,
                     subtitle: SUBTITLE.may_load(deps.storage)?,
                     description: DESCRIPTION.may_load(deps.storage)?,
+                    credit_manager: CREDIT_MANAGER.load(deps.storage)?,
+                    fund_manager_account_id: FOUND_MANAGER_ACC_ID.may_load(deps.storage)?,
                 })
             }
         },
