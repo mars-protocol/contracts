@@ -1,17 +1,17 @@
 /// Modified based on the original file from the cw-it repository:
 /// https://github.com/apollodao/cw-it/blob/master/src/multi_test/modules/token_factory.rs
 /// It uses different functions input arguments types and newer versions of the dependencies.
-use std::{fmt::Debug, mem::take, str::FromStr};
+use std::{fmt::Debug, str::FromStr};
 
 use anyhow::{bail, Result as AnyResult};
 use cosmwasm_std::{
-    from_json, testing::MockApi, Addr, Api, BankMsg, BankQuery, Binary, BlockInfo, Coin, CustomMsg,
-    CustomQuery, Decimal, Empty, Event, GovMsg, IbcMsg, IbcQuery, MemoryStorage, Querier,
-    QueryRequest, Storage, SupplyResponse, Uint128,
+    from_json, testing::MockApi, Addr, Api, BankMsg, BankQuery, Binary, BlockInfo, Coin,
+    CustomQuery, Empty, Event, GovMsg, IbcMsg, IbcQuery, MemoryStorage, Querier, QueryRequest,
+    Storage, SupplyResponse, Uint128,
 };
 use cw_multi_test::{
-    no_init, App, AppResponse, BankKeeper, BankSudo, BasicApp, BasicAppBuilder, CosmosRouter,
-    DistributionKeeper, Executor, FailingModule, StakeKeeper, Stargate, SudoMsg, WasmKeeper,
+    App, AppResponse, BankKeeper, BankSudo, CosmosRouter, DistributionKeeper, FailingModule,
+    StakeKeeper, Stargate, WasmKeeper,
 };
 use osmosis_std::types::osmosis::tokenfactory::v1beta1::{
     MsgBurn, MsgBurnResponse, MsgCreateDenom, MsgCreateDenomResponse, MsgMint, MsgMintResponse,
@@ -32,8 +32,6 @@ pub type CustomApp = App<
     FailingModule<GovMsg, Empty, Empty>,
     TokenFactory,
 >;
-
-struct StargateKeeper;
 
 impl Stargate for TokenFactory {
     fn execute<ExecC, QueryC>(

@@ -89,7 +89,7 @@ tsify              = "0.4.5"
 wasm-bindgen       = "0.2.91"
 
 # dev-dependencies
-cw-multi-test     = "0.20.0"
+cw-multi-test     = { version = "0.20.0", features = ["cosmwasm_1_1"] }
 cw-it             = "0.3.0"
 osmosis-test-tube = "22.1.0"
 proptest          = "1.4.0"
@@ -124,6 +124,7 @@ mars-rover-health              = { path = "./contracts/health" }
 mars-swapper-astroport         = { path = "./contracts/swapper/astroport" }
 mars-swapper-base              = { path = "./contracts/swapper/base" }
 mars-swapper-osmosis           = { path = "./contracts/swapper/osmosis" }
+mars-vault                     = { path = "./contracts/vault" }
 mars-zapper-base               = { path = "./contracts/v2-zapper/base" }
 
 # mocks

@@ -1,10 +1,10 @@
-use std::{default::Default, mem::take, str::FromStr};
+use std::{default::Default, str::FromStr};
 
 use anyhow::Result as AnyResult;
 use cosmwasm_std::{coins, testing::MockApi, Addr, Coin, Decimal, Empty, StdResult, Uint128};
 use cw721::TokensResponse;
 use cw721_base::{Action::TransferOwnership, Ownership};
-use cw_multi_test::{App, AppResponse, BankSudo, BasicApp, Executor, SudoMsg};
+use cw_multi_test::{no_init, AppResponse, BankSudo, BasicAppBuilder, Executor, SudoMsg};
 use cw_paginate::PaginationResponse;
 use cw_vault_standard::{
     extensions::lockup::{LockupQueryMsg, UnlockingPosition},
@@ -17,6 +17,7 @@ use mars_mock_vault::{
     contract::DEFAULT_VAULT_TOKEN_PREFUND, msg::InstantiateMsg as VaultInstantiateMsg,
 };
 use mars_owner::OwnerUpdate;
+use mars_testing::multitest::modules::token_factory::{CustomApp, TokenFactory};
 use mars_types::{
     account_nft::{
         ExecuteMsg as NftExecuteMsg, InstantiateMsg as NftInstantiateMsg, NftConfigUpdates,
@@ -75,7 +76,7 @@ use super::{
 pub const DEFAULT_RED_BANK_COIN_BALANCE: Uint128 = Uint128::new(1_000_000);
 
 pub struct MockEnv {
-    pub app: BasicApp,
+    pub app: CustomApp,
     pub rover: Addr,
     pub mars_oracle: Addr,
     pub health_contract: HealthContract,
@@ -84,7 +85,7 @@ pub struct MockEnv {
 }
 
 pub struct MockEnvBuilder {
-    pub app: BasicApp,
+    pub app: CustomApp,
     pub owner: Option<Addr>,
     pub emergency_owner: Option<Addr>,
     pub vault_configs: Option<Vec<VaultTestInfo>>,
@@ -107,8 +108,11 @@ pub struct MockEnvBuilder {
 #[allow(clippy::new_ret_no_self)]
 impl MockEnv {
     pub fn new() -> MockEnvBuilder {
+        let tf_default = TokenFactory::default();
+        let app = BasicAppBuilder::new().with_stargate(tf_default).build(no_init);
+
         MockEnvBuilder {
-            app: App::default(),
+            app,
             owner: None,
             emergency_owner: None,
             vault_configs: None,
@@ -779,7 +783,7 @@ impl MockEnv {
 }
 
 impl MockEnvBuilder {
-    pub fn build(&mut self) -> AnyResult<MockEnv> {
+    pub fn build(mut self) -> AnyResult<MockEnv> {
         let rover = self.get_rover()?;
         self.set_emergency_owner(&rover);
 
@@ -810,7 +814,7 @@ impl MockEnvBuilder {
         self.deploy_vaults();
 
         Ok(MockEnv {
-            app: take(&mut self.app),
+            app: self.app,
             rover,
             mars_oracle: mars_oracle.address().clone(),
             health_contract,
@@ -1342,77 +1346,77 @@ impl MockEnvBuilder {
     // Setter functions
     //--------------------------------------------------------------------------------------------------
 
-    pub fn fund_account(&mut self, account: AccountToFund) -> &mut Self {
+    pub fn fund_account(mut self, account: AccountToFund) -> Self {
         self.accounts_to_fund.push(account);
         self
     }
 
-    pub fn owner(&mut self, owner: &str) -> &mut Self {
+    pub fn owner(mut self, owner: &str) -> Self {
         self.owner = Some(Addr::unchecked(owner));
         self
     }
 
-    pub fn vault_configs(&mut self, vault_configs: &[VaultTestInfo]) -> &mut Self {
+    pub fn vault_configs(mut self, vault_configs: &[VaultTestInfo]) -> Self {
         self.vault_configs = Some(vault_configs.to_vec());
         self
     }
 
-    pub fn set_params(&mut self, coins: &[CoinInfo]) -> &mut Self {
+    pub fn set_params(mut self, coins: &[CoinInfo]) -> Self {
         self.coin_params = Some(coins.to_vec());
         self
     }
 
-    pub fn params_contract(&mut self, params: &str) -> &mut Self {
+    pub fn params_contract(mut self, params: &str) -> Self {
         self.params = Some(Params::new(Addr::unchecked(params)));
         self
     }
 
-    pub fn health_contract(&mut self, health: &str) -> &mut Self {
+    pub fn health_contract(mut self, health: &str) -> Self {
         self.health_contract = Some(HealthContract::new(Addr::unchecked(health)));
         self
     }
 
-    pub fn red_bank(&mut self, red_bank: &str) -> &mut Self {
+    pub fn red_bank(mut self, red_bank: &str) -> Self {
         self.red_bank = Some(RedBankUnchecked::new(red_bank.to_string()));
         self
     }
 
-    pub fn oracle(&mut self, addr: &str) -> &mut Self {
+    pub fn oracle(mut self, addr: &str) -> Self {
         self.oracle = Some(OracleBase::new(Addr::unchecked(addr)));
         self
     }
 
-    pub fn params(&mut self, addr: &str) -> &mut Self {
+    pub fn params(mut self, addr: &str) -> Self {
         self.params = Some(Params::new(Addr::unchecked(addr)));
         self
     }
 
-    pub fn no_nft_contract(&mut self) -> &mut Self {
+    pub fn no_nft_contract(mut self) -> Self {
         self.deploy_nft_contract = false;
         self
     }
 
-    pub fn no_nft_contract_minter(&mut self) -> &mut Self {
+    pub fn no_nft_contract_minter(mut self) -> Self {
         self.set_nft_contract_minter = false;
         self
     }
 
-    pub fn target_health_factor(&mut self, thf: Decimal) -> &mut Self {
+    pub fn target_health_factor(mut self, thf: Decimal) -> Self {
         self.target_health_factor = Some(thf);
         self
     }
 
-    pub fn max_unlocking_positions(&mut self, max: u128) -> &mut Self {
+    pub fn max_unlocking_positions(mut self, max: u128) -> Self {
         self.max_unlocking_positions = Some(Uint128::new(max));
         self
     }
 
-    pub fn max_slippage(&mut self, max: Decimal) -> &mut Self {
+    pub fn max_slippage(mut self, max: Decimal) -> Self {
         self.max_slippage = Some(max);
         self
     }
 
-    pub fn evil_vault(&mut self, credit_account: &str) -> &mut Self {
+    pub fn evil_vault(mut self, credit_account: &str) -> Self {
         self.evil_vault = Some(credit_account.to_string());
         self
     }
@@ -1422,7 +1426,7 @@ impl MockEnvBuilder {
 // Shared utils between MockBuilder & MockEnv
 //--------------------------------------------------------------------------------------------------
 
-fn deploy_nft_contract(app: &mut App, minter: &Addr) -> Addr {
+fn deploy_nft_contract(app: &mut CustomApp, minter: &Addr) -> Addr {
     let nft_contract_code_id = app.store_code(mock_account_nft_contract());
     app.instantiate_contract(
         nft_contract_code_id,
@@ -1442,7 +1446,12 @@ fn deploy_nft_contract(app: &mut App, minter: &Addr) -> Addr {
     .unwrap()
 }
 
-fn propose_new_nft_minter(app: &mut App, nft_contract: Addr, old_minter: &Addr, new_minter: &Addr) {
+fn propose_new_nft_minter(
+    app: &mut CustomApp,
+    nft_contract: Addr,
+    old_minter: &Addr,
+    new_minter: &Addr,
+) {
     let proposal_msg: NftExecuteMsg = NftExecuteMsg::UpdateOwnership(TransferOwnership {
         new_owner: new_minter.into(),
         expiry: None,
