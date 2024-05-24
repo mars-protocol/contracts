@@ -999,11 +999,11 @@ pub fn test_validate_and_query_astroport_xyk_lp_price_source(
         .assert_price_almost_equal(&lp_denom, expected_price, Decimal::percent(1));
 }
 
-#[test_case(PairType::Custom("concentrated".to_string()), &["uatom","untrn"], Some(Decimal::from_str("8.86506356").unwrap()), Some(Decimal::from_str("0.97696221").unwrap()), [1171210862745u128, 12117922358503u128], &[6,6], Some(Decimal::from_str("0.000005885858336").unwrap()), Some(Decimal::from_str("0.000005894944618").unwrap()); "PCL, 6:6 decimals")]
-#[test_case(PairType::Custom("concentrated".to_string()), &["uatom","untrn"], Some(Decimal::from_str("821123123435412349.73564").unwrap()), Some(Decimal::from_str("0.97696221").unwrap()), [923752936745723845u128, 12117922358503u128], &[6,6], Some(Decimal::from_str("1791.319359").unwrap()), Some(Decimal::from_str("225997634181761").unwrap()); "PCL, [6, 6] decimals Uint128 overflow)")]
-#[test_case(PairType::Custom("concentrated".to_string()), &["uatom","untrn"], Some(Decimal::from_str("0.000000000585").unwrap()), Some(Decimal::from_str("0.0000000097696221").unwrap()), [34567u128, 67891u128], &[6,6], Some(Decimal::from_str("0.000000000000004472").unwrap()), Some(Decimal::from_str("0.000000000000014109").unwrap()); "PCL, [6, 6] decimals, rounding small numbers)")]
-#[test_case(PairType::Custom("concentrated".to_string()), &["utia","untrn"], Some(Decimal::from_str("3000").unwrap()), Some(Decimal::from_str("0.97696221").unwrap()), [92347562936745723845u128, 12117922358503u128], &[18,6], Some(Decimal::from_str("0.0001082753274").unwrap()), Some(Decimal::from_str("0.0003608549464").unwrap()); "PCL, [18, 6] decimals")]
-#[test_case(PairType::Custom("concentrated".to_string()), &["utia","ueth"], Some(Decimal::from_str("237864").unwrap()), Some(Decimal::from_str("1987234").unwrap()), [234273649283746123784938u128, 3649283723446123784938u128], &[18,18], Some(Decimal::from_str("1.37505116730912000").unwrap()), Some(Decimal::from_str("2.151969141367610000").unwrap()); "PCL, [18, 18] decimals")]
+#[test_case(PairType::Custom("concentrated".to_string()), &["uatom","untrn"], Some(Decimal::from_str("8.86506356").unwrap()), Some(Decimal::from_str("0.97696221").unwrap()), [1171210862745u128, 12117922358503u128], &[6,6], Some(Decimal::from_str("5.88585833583172000").unwrap()), Some(Decimal::from_str("5.89494461787180000").unwrap()); "PCL, 6:6 decimals")]
+#[test_case(PairType::Custom("concentrated".to_string()), &["uatom","untrn"], Some(Decimal::from_str("821123123435412349.73564").unwrap()), Some(Decimal::from_str("0.97696221").unwrap()), [923752936745723845u128, 12117922358503u128], &[6,6], Some(Decimal::from_str("1791319358").unwrap()), Some(Decimal::from_str("225997634181761000000").unwrap()); "PCL, [6, 6] decimals Uint128 overflow)")]
+#[test_case(PairType::Custom("concentrated".to_string()), &["uatom","untrn"], Some(Decimal::from_str("0.000000000585").unwrap()), Some(Decimal::from_str("0.0000000097696221").unwrap()), [34567u128, 67891u128], &[6,6], Some(Decimal::from_str("0.00000000478137514").unwrap()), Some(Decimal::from_str("0.00000001410918211").unwrap()); "PCL, [6, 6] decimals, rounding small numbers)")]
+#[test_case(PairType::Custom("concentrated".to_string()), &["udydx","untrn"], Some(Decimal::from_str("3000").unwrap()), Some(Decimal::from_str("0.97696221").unwrap()), [92347562936745723845u128, 12117922358503u128], &[18,6], Some(Decimal::from_str("108275327").unwrap()), Some(Decimal::from_str("8251396252898.20").unwrap()); "PCL, [18, 6] decimals")]
+#[test_case(PairType::Custom("concentrated".to_string()), &["udydx","ueth"], Some(Decimal::from_str("0.000000000002095907").unwrap()), Some(Decimal::from_str("0.000000003705405005").unwrap()), [230049283723446123784938u128,  134273643746123784938u128], &[18,18], Some(Decimal::from_str("176.25191391713600000").unwrap()), Some(Decimal::from_str("175.98").unwrap()); "PCL, [18, 18] decimals")]
 #[test_case(PairType::Xyk{}, &["uatom","untrn"], Some(Decimal::from_str("8.86506356").unwrap()), Some(Decimal::from_str("0.97696221").unwrap()), [1171210862745u128, 12117922358503u128], &[6,6], None, None => panics "Invalid price source: expecting pair contract14 to be custom-concentrated pool; found xyk"; "PCL required, found XYK")]
 #[test_case(PairType::Stable{}, &["uatom","untrn"], Some(Decimal::from_str("8.86506356").unwrap()), Some(Decimal::from_str("0.97696221").unwrap()), [1171210862745u128, 12117922358503u128], &[6,6], None, None => panics "Invalid price source: expecting pair contract14 to be custom-concentrated pool; found stable"; "PCL required, found Stable")]
 #[test_case(PairType::Custom("concentrated".to_string()), &["uatom","untrn"], None, None, [1171210862745u128, 1171210862745u128], &[6,6], None, None => panics "Invalid price source: missing price source for uatom"; "PCL, missing price source for both assets")]
@@ -1092,6 +1092,8 @@ pub fn test_validate_and_query_astroport_pcl_lp_price_source(
         lp_price_model = compute_pcl_lp_price_model(
             &price0,
             &price1,
+            decimals[0],
+            decimals[1],
             pool.total_share,
             pool_params.price_scale,
             curve_invariant,
@@ -1099,8 +1101,6 @@ pub fn test_validate_and_query_astroport_pcl_lp_price_source(
         .unwrap();
 
         lp_price_real = compute_pcl_lp_price_real(
-            decimals[0],
-            decimals[1],
             coin0_amount,
             coin1_amount,
             &price0,

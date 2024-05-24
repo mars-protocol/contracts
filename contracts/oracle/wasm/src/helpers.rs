@@ -289,14 +289,14 @@ pub fn compute_pcl_lp_price(
     let lp_price_model = compute_pcl_lp_price_model(
         coin0_price,
         coin1_price,
+        coin0_decimals,
+        coin1_decimals,
         total_shares,
         price_scale,
         curve_invariant,
     )?;
 
     let lp_price_real = compute_pcl_lp_price_real(
-        coin0_decimals,
-        coin1_decimals,
         coin0_amount,
         coin1_amount,
         coin0_price,
@@ -312,6 +312,8 @@ pub fn compute_pcl_lp_price(
 pub fn compute_pcl_lp_price_model(
     coin0_price: &Decimal,
     coin1_price: &Decimal,
+    coin0_decimals: u8,
+    coin1_decimals: u8,
     total_shares: Uint128,
     price_scale: Decimal,
     curve_invariant: Decimal256,
@@ -327,38 +329,36 @@ pub fn compute_pcl_lp_price_model(
     // virtual_price = xcp / total_shares
     let virtual_price = xcp.checked_div(Decimal256::from_ratio(total_shares, 1u128))?;
 
+    // The curve_invariant is calculated with amounts scaled by Astroport, e.g. 1e18 ueth is stored as 1 eth.
+    // So we need to scale the prices accordingly, so that they represent the price of 1 whole unit.
+    let coin0_price_scaled =
+        Decimal256::from(*coin0_price) * Decimal256::from_str("10")?.pow(u32::from(coin0_decimals));
+    let coin1_price_scaled =
+        Decimal256::from(*coin1_price) * Decimal256::from_str("10")?.pow(u32::from(coin1_decimals));
+
     // LP price according to the model
-    // lp_price_model = 2 * virtual_price * sqrt(price)
+    // lp_price_model = 2 * virtual_price * sqrt(coin0_price * coin1_price)
     let lp_price_model_256 = Decimal256::from_str("2")?
         .checked_mul(virtual_price)?
-        .checked_mul(Decimal256::from(coin0_price.checked_mul(*coin1_price)?.sqrt()))?;
+        .checked_mul(coin0_price_scaled.checked_mul(coin1_price_scaled)?.sqrt())?;
     let lp_price_model = Decimal::try_from(lp_price_model_256)?;
 
     Ok(lp_price_model)
 }
 
 pub fn compute_pcl_lp_price_real(
-    coin0_decimals: u8,
-    coin1_decimals: u8,
     coin0_amount: Uint128,
     coin1_amount: Uint128,
     coin0_price: &Decimal,
     coin1_price: &Decimal,
     total_shares: Uint128,
 ) -> ContractResult<Decimal> {
-    // As the oracle returns prices for whole units, we need to adjust the amount to the correct
-    // precision before calculating the real TVL.
-    let coin0_amount_adjusted =
-        Decimal::from_ratio(coin0_amount, 10_u128.pow((coin0_decimals) as u32));
-    let coin1_amount_adjusted =
-        Decimal::from_ratio(coin1_amount, 10_u128.pow((coin1_decimals) as u32));
-
     // Need to use Decimal256 because coin0_amount * price + coin1_amount may overflow the Decimal limit
     // E.g. 1000 BTC + 21000 ETH in a pool, with a price of 65000 and 3000:
     // price = 650 / 0.0000000000003 = 1_267_000_000_000_000
     // 1_000_000_000_000 * 1_267_000_000_000_000 + 21_000_000_000_000_000_000_000 > Decimal::MAX
-    let tvl_real = Decimal256::from(coin0_amount_adjusted) * Decimal256::from(*coin0_price)
-        + Decimal256::from(coin1_amount_adjusted) * Decimal256::from(*coin1_price);
+    let tvl_real = Decimal256::from_ratio(coin0_amount, 1u128) * Decimal256::from(*coin0_price)
+        + Decimal256::from_ratio(coin1_amount, 1u128) * Decimal256::from(*coin1_price);
 
     let lp_price_real_256 = tvl_real.checked_div(Decimal256::from_ratio(total_shares, 1u128))?;
     let lp_price_real = Decimal::try_from(lp_price_real_256)?;
