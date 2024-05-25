@@ -1,11 +1,11 @@
 use cosmwasm_std::{
     attr, ensure_eq, to_json_binary, Coin, CosmosMsg, Deps, DepsMut, Env, Event, MessageInfo,
-    Response, StdError, StdResult, Uint128, WasmMsg,
+    Response, StdError, Uint128, WasmMsg,
 };
-use mars_types::credit_manager::{self, Action, ActionCoin, Positions, QueryMsg};
+use mars_types::credit_manager::{self, Action, ActionAmount, ActionCoin, Positions, QueryMsg};
 
 use crate::{
-    contract::NtrnBaseVault,
+    contract::Vault,
     error::ContractError,
     state::{CREDIT_MANAGER, CREDIT_MANAGER_ACC_ID},
 };
@@ -48,10 +48,10 @@ pub fn deposit(
         recipient.map_or(Ok(info.sender.clone()), |r| deps.api.addr_validate(&r))?;
 
     // load state
-    let base_vault = NtrnBaseVault::default();
-    let base_token = base_vault.base_token.load(deps.storage)?.to_string();
-    let vault_token = base_vault.vault_token.load(deps.storage)?;
-    let total_staked_amount = base_vault.total_staked_base_tokens.load(deps.storage)?;
+    let vault = Vault::default();
+    let base_token = vault.base_token.load(deps.storage)?.to_string();
+    let vault_token = vault.vault_token.load(deps.storage)?;
+    let total_staked_amount = vault.total_staked_base_tokens.load(deps.storage)?;
 
     // check that only the expected base token was sent
     let amount = cw_utils::must_pay(info, &base_token)?;
@@ -59,12 +59,10 @@ pub fn deposit(
     // calculate vault tokens
     let vault_token_supply = vault_token.query_total_supply(deps.as_ref())?;
     let vault_tokens =
-        base_vault.calculate_vault_tokens(amount, total_staked_amount, vault_token_supply)?;
+        vault.calculate_vault_tokens(amount, total_staked_amount, vault_token_supply)?;
 
     // update total staked amount
-    base_vault
-        .total_staked_base_tokens
-        .save(deps.storage, &total_staked_amount.checked_add(amount)?)?;
+    vault.total_staked_base_tokens.save(deps.storage, &total_staked_amount.checked_add(amount)?)?;
 
     let coin_deposited = Coin {
         denom: base_token,
@@ -109,15 +107,15 @@ pub fn redeem(
     let recipient = recipient.map_or(Ok(info.sender.clone()), |x| deps.api.addr_validate(&x))?;
 
     // load state
-    let base_vault = NtrnBaseVault::default();
-    let base_token = base_vault.base_token.load(deps.storage)?;
-    let vault_token = base_vault.vault_token.load(deps.storage)?;
+    let vault = Vault::default();
+    let base_token = vault.base_token.load(deps.storage)?;
+    let vault_token = vault.vault_token.load(deps.storage)?;
 
     // check that only the expected vault token was sent
     let vault_token_amount = cw_utils::must_pay(info, &vault_token.to_string())?;
 
     let (tokens_to_withdraw, burn_res) =
-        base_vault.burn_vault_tokens_for_base_tokens(deps.branch(), &env, vault_token_amount)?;
+        vault.burn_vault_tokens_for_base_tokens(deps.branch(), &env, vault_token_amount)?;
 
     let mut actions = vec![];
 
@@ -133,7 +131,7 @@ pub fn redeem(
     actions.push(Action::WithdrawToWallet {
         coin: ActionCoin {
             denom: base_token,
-            amount: credit_manager::ActionAmount::Exact(tokens_to_withdraw),
+            amount: ActionAmount::Exact(tokens_to_withdraw),
         },
         recipient: recipient.to_string(),
     });
@@ -166,25 +164,25 @@ fn get_amount_to_unlend(
     let cm_addr = CREDIT_MANAGER.load(deps.storage)?;
     let cm_acc_id = CREDIT_MANAGER_ACC_ID.load(deps.storage)?;
 
-    let postions: StdResult<Positions> = deps.querier.query_wasm_smart(
+    let positions: Positions = deps.querier.query_wasm_smart(
         cm_addr,
         &QueryMsg::Positions {
             account_id: cm_acc_id,
         },
-    );
-    let postions = postions?;
-    let base_token_deposited = postions
+    )?;
+    let base_token_deposited = positions
         .deposits
         .iter()
         .filter(|d| d.denom == base_token)
         .map(|d| d.amount)
         .sum::<Uint128>();
-    let base_token_lend =
-        postions.lends.iter().filter(|d| d.denom == base_token).map(|d| d.amount).sum::<Uint128>();
 
     if withraw_amount <= base_token_deposited {
         return Ok(Uint128::zero());
     }
+
+    let base_token_lend =
+        positions.lends.iter().filter(|d| d.denom == base_token).map(|d| d.amount).sum::<Uint128>();
 
     let left_amount_to_unlend = withraw_amount - base_token_deposited;
     if left_amount_to_unlend <= base_token_lend {

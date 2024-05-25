@@ -21,7 +21,7 @@ pub const CONTRACT_VERSION: &str = env!("CARGO_PKG_VERSION");
 
 const VAULT_STANDARD_VERSION: u16 = 1;
 
-pub type NtrnBaseVault<'a> = BaseVault<'a>;
+pub type Vault<'a> = BaseVault<'a>;
 
 #[entry_point]
 pub fn instantiate(
@@ -55,7 +55,7 @@ pub fn instantiate(
         DESCRIPTION.save(deps.storage, &desc)?;
     }
 
-    let base_vault = NtrnBaseVault::default();
+    let base_vault = Vault::default();
     let vault_token =
         TokenFactoryDenom::new(env.contract.address.to_string(), msg.vault_token_subdenom);
 
@@ -88,7 +88,7 @@ pub fn execute(
 
 #[entry_point]
 pub fn query(deps: Deps, _env: Env, msg: QueryMsg) -> ContractResult<Binary> {
-    let base_vault = NtrnBaseVault::default();
+    let base_vault = Vault::default();
 
     match msg {
         QueryMsg::VaultStandardInfo {} => to_json_binary(&VaultStandardInfoResponse {
