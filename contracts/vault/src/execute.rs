@@ -199,16 +199,8 @@ pub fn redeem(
     let (tokens_to_withdraw, burn_res) =
         vault.burn_vault_tokens_for_base_tokens(deps.branch(), &env, vault_token_amount)?;
 
-    let mut actions = vec![];
-
-    let amount_to_unlend =
-        get_amount_to_unlend(deps.as_ref(), base_token.clone(), tokens_to_withdraw)?;
-    if !amount_to_unlend.is_zero() {
-        actions.push(Action::Reclaim(ActionCoin {
-            denom: base_token.clone(),
-            amount: credit_manager::ActionAmount::Exact(amount_to_unlend),
-        }));
-    }
+    let mut actions =
+        prepare_lend_and_borrow_actions(deps.as_ref(), base_token.clone(), tokens_to_withdraw)?;
 
     actions.push(Action::WithdrawToWallet {
         coin: ActionCoin {
@@ -238,11 +230,11 @@ pub fn redeem(
     Ok(burn_res.add_message(withdraw_from_cm).add_event(event))
 }
 
-fn get_amount_to_unlend(
+fn prepare_lend_and_borrow_actions(
     deps: Deps,
     base_token: String,
     withraw_amount: Uint128,
-) -> Result<Uint128, ContractError> {
+) -> Result<Vec<Action>, ContractError> {
     let cm_addr = CREDIT_MANAGER.load(deps.storage)?;
     let cm_acc_id = VAULT_ACC_ID.load(deps.storage)?;
 
@@ -260,18 +252,34 @@ fn get_amount_to_unlend(
         .sum::<Uint128>();
 
     if withraw_amount <= base_token_deposited {
-        return Ok(Uint128::zero());
+        return Ok(vec![]);
     }
 
     let base_token_lend =
         positions.lends.iter().filter(|d| d.denom == base_token).map(|d| d.amount).sum::<Uint128>();
 
+    let mut actions = vec![];
+
     let left_amount_to_unlend = withraw_amount - base_token_deposited;
     if left_amount_to_unlend <= base_token_lend {
-        Ok(left_amount_to_unlend)
+        actions.push(Action::Reclaim(ActionCoin {
+            denom: base_token.clone(),
+            amount: credit_manager::ActionAmount::Exact(left_amount_to_unlend),
+        }));
     } else {
-        Err(StdError::generic_err("Not enough base token to withdraw").into())
+        actions.push(Action::Reclaim(ActionCoin {
+            denom: base_token.clone(),
+            amount: credit_manager::ActionAmount::Exact(base_token_lend),
+        }));
+
+        let amount_to_borrow = left_amount_to_unlend - base_token_lend;
+        actions.push(Action::Borrow(Coin {
+            denom: base_token.clone(),
+            amount: amount_to_borrow,
+        }));
     }
+
+    Ok(actions)
 }
 
 pub fn total_base_token_in_account(deps: Deps) -> Result<Uint128, ContractError> {
