@@ -45,6 +45,14 @@ pub enum ContractError {
 
     #[error("Vault account exists. Only one binding allowed between Credit Manager and Vault contracts.")]
     VaultAccountExists {},
+
+    #[error("{reason:?}")]
+    InvalidAmount {
+        reason: String,
+    },
+
+    #[error("Unlocked positions not found")]
+    UnlockedPositionsNotFound {},
 }
 
 pub type ContractResult<T> = Result<T, ContractError>;

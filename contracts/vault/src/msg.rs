@@ -1,5 +1,7 @@
 use cosmwasm_schema::cw_serde;
+use cosmwasm_std::Uint128;
 use cw_vault_standard::{VaultStandardExecuteMsg, VaultStandardQueryMsg};
+use mars_types::adapters::{health::HealthContractUnchecked, oracle::OracleUnchecked};
 
 pub type ExecuteMsg = VaultStandardExecuteMsg<ExtensionExecuteMsg>;
 
@@ -21,6 +23,14 @@ pub struct InstantiateMsg {
 
     /// Credit Manager contract address
     pub credit_manager: String,
+    /// Oracle contract address
+    pub oracle: OracleUnchecked,
+    /// Health contract address
+    pub health: HealthContractUnchecked,
+
+    /// Stakers need to wait a cooldown period before being able to withdraw USDC from the vault.
+    /// Value defined in seconds.
+    pub cooldown_period: u64,
 }
 
 #[cw_serde]
@@ -29,11 +39,23 @@ pub enum ExtensionExecuteMsg {
     BindCreditManagerAccount {
         account_id: String,
     },
+
+    /// Unlock liquidity from the vault. This will inform Fund Manager about requested funds.
+    /// The unlocked tokens will have to wait a cooldown period before they can be withdrawn.
+    Unlock {
+        /// The amount of vault tokens to unlock
+        amount: Uint128,
+    },
 }
 
 #[cw_serde]
 pub enum ExtensionQueryMsg {
     VaultInfo,
+
+    UserUnlocks {
+        /// The address of the user to query
+        user_address: String,
+    },
 }
 
 #[cw_serde]
@@ -54,4 +76,22 @@ pub struct VaultInfoResponseExt {
 
     /// Vault account id
     pub vault_account_id: Option<String>,
+}
+
+/// Unlock state for a single user
+#[cw_serde]
+#[derive(Default)]
+pub struct UnlockState {
+    pub created_at: u64,
+    pub cooldown_end: u64,
+    pub vault_tokens: Uint128,
+}
+
+#[cw_serde]
+#[derive(Default)]
+pub struct VaultUnlock {
+    pub created_at: u64,
+    pub cooldown_end: u64,
+    pub vault_tokens: Uint128,
+    pub base_tokens: Uint128,
 }

@@ -12,7 +12,11 @@ use crate::{
         ExecuteMsg, ExtensionExecuteMsg, ExtensionQueryMsg, InstantiateMsg, QueryMsg,
         VaultInfoResponseExt,
     },
-    state::{CREDIT_MANAGER, DESCRIPTION, OWNER, SUBTITLE, TITLE, VAULT_ACC_ID},
+    query,
+    state::{
+        COOLDOWN_PERIOD, CREDIT_MANAGER, DESCRIPTION, HEALTH, ORACLE, OWNER, SUBTITLE, TITLE,
+        VAULT_ACC_ID,
+    },
     token_factory::TokenFactoryDenom,
 };
 
@@ -45,6 +49,9 @@ pub fn instantiate(
     let credit_manager = deps.api.addr_validate(&msg.credit_manager)?;
     CREDIT_MANAGER.save(deps.storage, &credit_manager.to_string())?;
 
+    ORACLE.save(deps.storage, &msg.oracle.check(deps.api)?)?;
+    HEALTH.save(deps.storage, &msg.health.check(deps.api)?)?;
+
     if let Some(title) = msg.title {
         TITLE.save(deps.storage, &title)?;
     }
@@ -54,6 +61,8 @@ pub fn instantiate(
     if let Some(desc) = msg.description {
         DESCRIPTION.save(deps.storage, &desc)?;
     }
+
+    COOLDOWN_PERIOD.save(deps.storage, &msg.cooldown_period)?;
 
     let base_vault = Vault::default();
     let vault_token =
@@ -82,6 +91,9 @@ pub fn execute(
             ExtensionExecuteMsg::BindCreditManagerAccount {
                 account_id,
             } => execute::bind_credit_manager_account(deps, &info, account_id),
+            ExtensionExecuteMsg::Unlock {
+                amount,
+            } => execute::unlock(deps, env, &info, amount),
         },
     }
 }
@@ -133,6 +145,12 @@ pub fn query(deps: Deps, _env: Env, msg: QueryMsg) -> ContractResult<Binary> {
                     credit_manager: CREDIT_MANAGER.load(deps.storage)?,
                     vault_account_id: VAULT_ACC_ID.may_load(deps.storage)?,
                 })
+            }
+            ExtensionQueryMsg::UserUnlocks {
+                user_address,
+            } => {
+                let user_addr = deps.api.addr_validate(&user_address)?;
+                to_json_binary(&query::unlocks(deps, user_addr)?)
             }
         },
     }
