@@ -4,7 +4,9 @@ use cosmwasm_std::{
 };
 use cw_storage_plus::Item;
 
-use crate::token_factory::TokenFactoryDenom;
+use crate::{
+    error::ContractError, execute::total_base_token_in_account, token_factory::TokenFactoryDenom,
+};
 
 pub const DEFAULT_VAULT_TOKENS_PER_STAKED_BASE_TOKEN: Uint128 = Uint128::new(1_000_000);
 
@@ -98,9 +100,9 @@ impl<'a> BaseVault<'a> {
         deps: DepsMut,
         env: &Env,
         vault_tokens: Uint128,
-    ) -> Result<(Uint128, Response), StdError> {
+    ) -> Result<(Uint128, Response), ContractError> {
         let vault_token = self.vault_token.load(deps.storage)?;
-        let total_staked_amount = self.total_staked_base_tokens.load(deps.storage)?;
+        let total_staked_amount = total_base_token_in_account(deps.as_ref())?;
         let vault_token_supply = vault_token.query_total_supply(deps.as_ref())?;
 
         // calculate base tokens based on the given amount of vault tokens
@@ -130,21 +132,27 @@ impl<'a> BaseVault<'a> {
         vault_token.query_balance(deps, address)
     }
 
-    pub fn query_simulate_deposit(&self, deps: Deps, amount: Uint128) -> StdResult<Uint128> {
+    pub fn query_simulate_deposit(
+        &self,
+        deps: Deps,
+        amount: Uint128,
+    ) -> Result<Uint128, ContractError> {
         let vault_token_supply = self.vault_token.load(deps.storage)?.query_total_supply(deps)?;
-        let total_staked_amount = self.total_staked_base_tokens.load(deps.storage)?;
-        self.calculate_vault_tokens(amount, total_staked_amount, vault_token_supply)
-            .map_err(Into::into)
+        let total_staked_amount = total_base_token_in_account(deps)?;
+        Ok(self.calculate_vault_tokens(amount, total_staked_amount, vault_token_supply)?)
     }
 
-    pub fn query_simulate_withdraw(&self, deps: Deps, amount: Uint128) -> StdResult<Uint128> {
+    pub fn query_simulate_withdraw(
+        &self,
+        deps: Deps,
+        amount: Uint128,
+    ) -> Result<Uint128, ContractError> {
         let vault_token_supply = self.vault_token.load(deps.storage)?.query_total_supply(deps)?;
-        let total_staked_amount = self.total_staked_base_tokens.load(deps.storage)?;
-        self.calculate_base_tokens(amount, total_staked_amount, vault_token_supply)
-            .map_err(Into::into)
+        let total_staked_amount = total_base_token_in_account(deps)?;
+        Ok(self.calculate_base_tokens(amount, total_staked_amount, vault_token_supply)?)
     }
 
-    pub fn query_total_assets(&self, deps: Deps) -> StdResult<Uint128> {
-        self.total_staked_base_tokens.load(deps.storage)
+    pub fn query_total_assets(&self, deps: Deps) -> Result<Uint128, ContractError> {
+        total_base_token_in_account(deps)
     }
 }

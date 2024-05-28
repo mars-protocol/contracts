@@ -102,7 +102,7 @@ pub fn unlock(
     info: &MessageInfo,
     amount: Uint128,
 ) -> Result<Response, ContractError> {
-    if VAULT_ACC_ID.may_load(deps.storage)?.is_some() {
+    if VAULT_ACC_ID.may_load(deps.storage)?.is_none() {
         // bind credit manager account first
         return Err(ContractError::VaultAccountNotFound {});
     };

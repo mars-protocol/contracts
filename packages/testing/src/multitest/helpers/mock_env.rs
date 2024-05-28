@@ -1,7 +1,9 @@
 use std::{default::Default, str::FromStr};
 
 use anyhow::Result as AnyResult;
-use cosmwasm_std::{coin, coins, testing::MockApi, Addr, Coin, Decimal, Empty, StdResult, Uint128};
+use cosmwasm_std::{
+    coin, coins, testing::MockApi, Addr, Coin, Decimal, Empty, StdResult, Timestamp, Uint128,
+};
 use cw721::TokensResponse;
 use cw721_base::{Action::TransferOwnership, Ownership};
 use cw_multi_test::{no_init, AppResponse, BankSudo, BasicAppBuilder, Executor, SudoMsg};
@@ -132,6 +134,32 @@ impl MockEnv {
             health_contract: None,
             evil_vault: None,
         }
+    }
+
+    pub fn increment_by_blocks(&mut self, num_of_blocks: u64) {
+        self.app.update_block(|block| {
+            block.height += num_of_blocks;
+            // assume block time = 6 sec
+            block.time = block.time.plus_seconds(num_of_blocks * 6);
+        })
+    }
+
+    pub fn increment_by_time(&mut self, seconds: u64) {
+        self.app.update_block(|block| {
+            block.height += seconds / 6;
+            // assume block time = 6 sec
+            block.time = block.time.plus_seconds(seconds);
+        })
+    }
+
+    pub fn set_block_time(&mut self, seconds: u64) {
+        self.app.update_block(|block| {
+            block.time = Timestamp::from_seconds(seconds);
+        })
+    }
+
+    pub fn query_block_time(&self) -> u64 {
+        self.app.block_info().time.seconds()
     }
 
     //--------------------------------------------------------------------------------------------------
