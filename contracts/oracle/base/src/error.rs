@@ -1,6 +1,6 @@
 use cosmwasm_std::{
-    CheckedFromRatioError, CheckedMultiplyFractionError, CheckedMultiplyRatioError,
-    ConversionOverflowError, DecimalRangeExceeded, DivideByZeroError, OverflowError, StdError,
+    CheckedFromRatioError, CheckedMultiplyRatioError, ConversionOverflowError,
+    DecimalRangeExceeded, DivideByZeroError, OverflowError, StdError,
 };
 use mars_owner::OwnerError;
 use mars_utils::error::ValidationError;
@@ -28,9 +28,6 @@ pub enum ContractError {
 
     #[error("{0}")]
     CheckedMultiplyRatio(#[from] CheckedMultiplyRatioError),
-
-    #[error("{0}")]
-    CheckedMultiplyFraction(#[from] CheckedMultiplyFractionError),
 
     #[error("{0}")]
     CheckedFromRatio(#[from] CheckedFromRatioError),
@@ -74,9 +71,6 @@ pub enum ContractError {
 
     #[error("Snapshots have the same cumulative price. This should never happen.")]
     InvalidCumulativePrice {},
-
-    #[error("Missing astroport pool params")]
-    MissingAstroportPoolParams {},
 }
 
 pub type ContractResult<T> = Result<T, ContractError>;

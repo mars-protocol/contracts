@@ -518,28 +518,6 @@
               }
             },
             "additionalProperties": false
-          },
-          {
-            "type": "object",
-            "required": [
-              "pcl_liquidity_token"
-            ],
-            "properties": {
-              "pcl_liquidity_token": {
-                "type": "object",
-                "required": [
-                  "pair_address"
-                ],
-                "properties": {
-                  "pair_address": {
-                    "description": "Address of the Astroport pair",
-                    "type": "string"
-                  }
-                },
-                "additionalProperties": false
-              }
-            },
-            "additionalProperties": false
           }
         ]
       }
