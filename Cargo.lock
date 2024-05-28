@@ -2248,10 +2248,8 @@ dependencies = [
 name = "mars-interest-rate"
 version = "2.0.0"
 dependencies = [
- "cosmwasm-schema",
  "cosmwasm-std",
  "mars-types",
- "mars-utils 2.0.0",
 ]
 
 [[package]]
@@ -2271,16 +2269,13 @@ dependencies = [
  "cosmwasm-schema",
  "cosmwasm-std",
  "cw-storage-plus 1.2.0",
- "cw-utils 1.0.3",
  "mars-types",
- "thiserror",
 ]
 
 [[package]]
 name = "mars-mock-incentives"
 version = "2.0.0"
 dependencies = [
- "cosmwasm-schema",
  "cosmwasm-std",
  "cw-storage-plus 1.2.0",
  "mars-types",
@@ -2300,7 +2295,6 @@ dependencies = [
 name = "mars-mock-pyth"
 version = "2.0.0"
 dependencies = [
- "cosmwasm-schema",
  "cosmwasm-std",
  "pyth-sdk-cw",
 ]
@@ -2590,7 +2584,6 @@ dependencies = [
  "mars-params",
  "mars-rover-health-computer",
  "mars-types",
- "thiserror",
 ]
 
 [[package]]
@@ -2600,11 +2593,9 @@ dependencies = [
  "console_error_panic_hook",
  "cosmwasm-schema",
  "cosmwasm-std",
- "cw-vault-standard 0.4.0",
  "mars-types",
  "proptest",
  "schemars",
- "serde",
  "serde_json",
  "tsify",
  "wasm-bindgen",
@@ -2684,11 +2675,20 @@ dependencies = [
  "cw-it",
  "cw-multi-test",
  "cw-paginate",
+ "cw-utils 1.0.3",
+ "cw-vault-standard 0.4.0",
+ "cw721 0.18.0",
+ "cw721-base 0.18.0",
  "ica-oracle",
+ "mars-account-nft",
  "mars-address-provider",
+ "mars-credit-manager",
  "mars-incentives",
- "mars-interest-rate",
+ "mars-mock-incentives",
+ "mars-mock-oracle",
  "mars-mock-pyth",
+ "mars-mock-red-bank",
+ "mars-mock-vault",
  "mars-oracle-osmosis",
  "mars-oracle-wasm",
  "mars-osmosis",
@@ -2696,8 +2696,12 @@ dependencies = [
  "mars-params",
  "mars-red-bank",
  "mars-rewards-collector-osmosis",
+ "mars-rover-health",
  "mars-swapper-astroport",
+ "mars-swapper-mock",
  "mars-types",
+ "mars-vault",
+ "mars-zapper-mock",
  "osmosis-std 0.22.0",
  "prost 0.12.3",
  "pyth-sdk-cw",
@@ -2710,7 +2714,6 @@ dependencies = [
 name = "mars-types"
 version = "2.0.0"
 dependencies = [
- "astroport 2.9.0",
  "cosmwasm-schema",
  "cosmwasm-std",
  "cw-paginate",
@@ -2719,12 +2722,8 @@ dependencies = [
  "cw-vault-standard 0.4.0",
  "cw721 0.18.0",
  "cw721-base 0.18.0",
- "mars-osmosis",
  "mars-owner 2.0.0",
  "mars-utils 2.0.0",
- "osmosis-std 0.22.0",
- "schemars",
- "serde",
  "serde-json-wasm 1.0.1",
  "strum 0.26.1",
  "thiserror",
@@ -2777,8 +2776,6 @@ dependencies = [
  "mars-testing",
  "mars-types",
  "osmosis-std 0.22.0",
- "schemars",
- "serde",
  "test-case",
  "thiserror",
 ]

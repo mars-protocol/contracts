@@ -24,13 +24,22 @@ anyhow                         = { workspace = true }
 astroport                      = { workspace = true, optional = true }
 cosmwasm-std                   = { workspace = true }
 cosmwasm-schema                = { workspace = true }
+cw721                          = { workspace = true }
+cw721-base                     = { workspace = true }
+cw-utils                       = { workspace = true }
 cw-paginate                    = { workspace = true }
+cw-vault-standard              = { workspace = true }
 ica-oracle                     = { workspace = true }
 osmosis-std                    = { workspace = true }
+mars-account-nft               = { workspace = true }
 mars-address-provider          = { workspace = true }
+mars-credit-manager            = { workspace = true }
 mars-incentives                = { workspace = true }
-mars-interest-rate             = { workspace = true }
+mars-mock-incentives           = { workspace = true }
+mars-mock-oracle               = { workspace = true }
 mars-mock-pyth                 = { workspace = true }
+mars-mock-red-bank             = { workspace = true }
+mars-mock-vault                = { workspace = true }
 mars-oracle-osmosis            = { workspace = true }
 mars-oracle-wasm               = { workspace = true }
 mars-osmosis                   = { workspace = true }
@@ -38,8 +47,12 @@ mars-owner                     = { workspace = true }
 mars-params                    = { workspace = true }
 mars-red-bank                  = { workspace = true }
 mars-rewards-collector-osmosis = { workspace = true }
+mars-rover-health              = { workspace = true }
 mars-swapper-astroport         = { workspace = true }
+mars-swapper-mock              = { workspace = true }
 mars-types                     = { workspace = true }
+mars-vault                     = { workspace = true }
+mars-zapper-mock               = { workspace = true }
 prost                          = { workspace = true }
 pyth-sdk-cw                    = { workspace = true }
 regex                          = { workspace = true }
