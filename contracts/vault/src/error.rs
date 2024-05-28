@@ -40,11 +40,11 @@ pub enum ContractError {
     #[error("Caller is not the Credit Manager contract")]
     NotCreditManager {},
 
-    #[error("Credit Manager account not found")]
-    CreditManagerAccountNotFound {},
+    #[error("Vault account not found")]
+    VaultAccountNotFound {},
 
-    #[error("Credit Manager account exists. Only one binding allowed.")]
-    CreditManagerAccountExists {},
+    #[error("Vault account exists. Only one binding allowed between Credit Manager and Vault contracts.")]
+    VaultAccountExists {},
 }
 
 pub type ContractResult<T> = Result<T, ContractError>;

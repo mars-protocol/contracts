@@ -7,7 +7,7 @@ use mars_types::credit_manager::{self, Action, ActionAmount, ActionCoin, Positio
 use crate::{
     contract::Vault,
     error::ContractError,
-    state::{CREDIT_MANAGER, CREDIT_MANAGER_ACC_ID},
+    state::{CREDIT_MANAGER, VAULT_ACC_ID},
 };
 
 pub fn bind_credit_manager_account(
@@ -19,12 +19,12 @@ pub fn bind_credit_manager_account(
     ensure_eq!(info.sender, credit_manager, ContractError::NotCreditManager {});
 
     // only one binding allowed
-    let cm_acc_id = CREDIT_MANAGER_ACC_ID.may_load(deps.storage)?;
-    if cm_acc_id.is_some() {
-        return Err(ContractError::CreditManagerAccountExists {});
+    let vault_acc_id = VAULT_ACC_ID.may_load(deps.storage)?;
+    if vault_acc_id.is_some() {
+        return Err(ContractError::VaultAccountExists {});
     }
 
-    CREDIT_MANAGER_ACC_ID.save(deps.storage, &account_id)?;
+    VAULT_ACC_ID.save(deps.storage, &account_id)?;
 
     let event = Event::new("vault/bind_credit_manager_account")
         .add_attributes(vec![attr("account_id", account_id)]);
@@ -38,9 +38,9 @@ pub fn deposit(
     recipient: Option<String>,
 ) -> Result<Response, ContractError> {
     let cm_addr = CREDIT_MANAGER.load(deps.storage)?;
-    let Some(cm_acc_id) = CREDIT_MANAGER_ACC_ID.may_load(deps.storage)? else {
+    let Some(vault_acc_id) = VAULT_ACC_ID.may_load(deps.storage)? else {
         // bind credit manager account first
-        return Err(ContractError::CreditManagerAccountNotFound {});
+        return Err(ContractError::VaultAccountNotFound {});
     };
 
     // unwrap recipient or use caller's address
@@ -72,7 +72,7 @@ pub fn deposit(
     let deposit_to_cm = CosmosMsg::Wasm(WasmMsg::Execute {
         contract_addr: cm_addr.to_string(),
         msg: to_json_binary(&credit_manager::ExecuteMsg::UpdateCreditAccount {
-            account_id: Some(cm_acc_id.clone()),
+            account_id: Some(vault_acc_id.clone()),
             account_kind: None,
             actions: vec![Action::Deposit(coin_deposited.clone())],
         })?,
@@ -98,9 +98,9 @@ pub fn redeem(
     recipient: Option<String>,
 ) -> Result<Response, ContractError> {
     let cm_addr = CREDIT_MANAGER.load(deps.storage)?;
-    let Some(cm_acc_id) = CREDIT_MANAGER_ACC_ID.may_load(deps.storage)? else {
+    let Some(vault_acc_id) = VAULT_ACC_ID.may_load(deps.storage)? else {
         // bind credit manager account first
-        return Err(ContractError::CreditManagerAccountNotFound {});
+        return Err(ContractError::VaultAccountNotFound {});
     };
 
     // unwrap recipient or use caller's address
@@ -139,7 +139,7 @@ pub fn redeem(
     let withdraw_from_cm = CosmosMsg::Wasm(WasmMsg::Execute {
         contract_addr: cm_addr.to_string(),
         msg: to_json_binary(&credit_manager::ExecuteMsg::UpdateCreditAccount {
-            account_id: Some(cm_acc_id.clone()),
+            account_id: Some(vault_acc_id.clone()),
             account_kind: None,
             actions,
         })?,
@@ -162,7 +162,7 @@ fn get_amount_to_unlend(
     withraw_amount: Uint128,
 ) -> Result<Uint128, ContractError> {
     let cm_addr = CREDIT_MANAGER.load(deps.storage)?;
-    let cm_acc_id = CREDIT_MANAGER_ACC_ID.load(deps.storage)?;
+    let cm_acc_id = VAULT_ACC_ID.load(deps.storage)?;
 
     let positions: Positions = deps.querier.query_wasm_smart(
         cm_addr,

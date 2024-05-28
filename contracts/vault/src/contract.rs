@@ -12,7 +12,7 @@ use crate::{
         ExecuteMsg, ExtensionExecuteMsg, ExtensionQueryMsg, InstantiateMsg, QueryMsg,
         VaultInfoResponseExt,
     },
-    state::{CREDIT_MANAGER, CREDIT_MANAGER_ACC_ID, DESCRIPTION, OWNER, SUBTITLE, TITLE},
+    state::{CREDIT_MANAGER, DESCRIPTION, OWNER, SUBTITLE, TITLE, VAULT_ACC_ID},
     token_factory::TokenFactoryDenom,
 };
 
@@ -45,8 +45,8 @@ pub fn instantiate(
     let credit_manager = deps.api.addr_validate(&msg.credit_manager)?;
     CREDIT_MANAGER.save(deps.storage, &credit_manager.to_string())?;
 
-    if let Some(tit) = msg.title {
-        TITLE.save(deps.storage, &tit)?;
+    if let Some(title) = msg.title {
+        TITLE.save(deps.storage, &title)?;
     }
     if let Some(subtitle) = msg.subtitle {
         SUBTITLE.save(deps.storage, &subtitle)?;
@@ -131,7 +131,7 @@ pub fn query(deps: Deps, _env: Env, msg: QueryMsg) -> ContractResult<Binary> {
                     subtitle: SUBTITLE.may_load(deps.storage)?,
                     description: DESCRIPTION.may_load(deps.storage)?,
                     credit_manager: CREDIT_MANAGER.load(deps.storage)?,
-                    fund_manager_account_id: CREDIT_MANAGER_ACC_ID.may_load(deps.storage)?,
+                    vault_account_id: VAULT_ACC_ID.may_load(deps.storage)?,
                 })
             }
         },

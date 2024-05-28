@@ -52,6 +52,6 @@ pub struct VaultInfoResponseExt {
     /// Credit Manager contract address
     pub credit_manager: String,
 
-    /// Fund Manager account id
-    pub fund_manager_account_id: Option<String>,
+    /// Vault account id
+    pub vault_account_id: Option<String>,
 }

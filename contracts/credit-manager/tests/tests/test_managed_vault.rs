@@ -34,7 +34,7 @@ fn instantiate_with_empty_metadata() {
             subtitle: None,
             description: None,
             credit_manager: credit_manager.to_string(),
-            fund_manager_account_id: None,
+            vault_account_id: None,
         }
     )
 }
@@ -81,7 +81,7 @@ fn instantiate_with_metadata() {
             subtitle: Some("random subTITLE".to_string()),
             description: Some("The vault manages others money !!!".to_string()),
             credit_manager: credit_manager.to_string(),
-            fund_manager_account_id: None,
+            vault_account_id: None,
         }
     )
 }
@@ -120,7 +120,7 @@ fn only_credit_manager_can_bind_account() {
             subtitle: None,
             description: None,
             credit_manager: credit_manager.to_string(),
-            fund_manager_account_id: Some("2024".to_string()),
+            vault_account_id: Some("2024".to_string()),
         }
     )
 }
@@ -147,7 +147,7 @@ fn only_one_binding_allowed() {
         &managed_vault_addr,
         "2025",
     );
-    assert_vault_err(res, mars_vault::error::ContractError::CreditManagerAccountExists {});
+    assert_vault_err(res, mars_vault::error::ContractError::VaultAccountExists {});
 }
 
 #[test]
@@ -241,7 +241,7 @@ fn deposit_if_credit_manager_account_not_binded() {
         None,
         &[coin(deposited_amt.u128(), "uusdc")],
     );
-    assert_vault_err(res, mars_vault::error::ContractError::CreditManagerAccountNotFound {});
+    assert_vault_err(res, mars_vault::error::ContractError::VaultAccountNotFound {});
 }
 
 #[test]
@@ -427,7 +427,7 @@ fn redeem_if_credit_manager_account_not_binded() {
         None,
         &[coin(deposited_amt.u128(), "vault")],
     );
-    assert_vault_err(res, mars_vault::error::ContractError::CreditManagerAccountNotFound {});
+    assert_vault_err(res, mars_vault::error::ContractError::VaultAccountNotFound {});
 }
 
 fn query_vault_info(mock_env: &MockEnv, vault: &Addr) -> VaultInfoResponseExt {
