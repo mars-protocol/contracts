@@ -8,6 +8,7 @@
     "type": "object",
     "required": [
       "base_token",
+      "cooldown_period",
       "credit_manager",
       "vault_token_subdenom"
     ],
@@ -15,6 +16,12 @@
       "base_token": {
         "description": "The base token denom that will be used for the native vault token, e.g. uusdc.",
         "type": "string"
+      },
+      "cooldown_period": {
+        "description": "Stakers need to wait a cooldown period before being able to withdraw USDC from the vault. Value defined in seconds.",
+        "type": "integer",
+        "format": "uint64",
+        "minimum": 0.0
       },
       "credit_manager": {
         "description": "Credit Manager contract address",
@@ -151,6 +158,33 @@
                 "properties": {
                   "account_id": {
                     "type": "string"
+                  }
+                },
+                "additionalProperties": false
+              }
+            },
+            "additionalProperties": false
+          },
+          {
+            "description": "Unlock liquidity from the vault. This will inform Fund Manager about requested funds. The unlocked tokens will have to wait a cooldown period before they can be withdrawn.",
+            "type": "object",
+            "required": [
+              "unlock"
+            ],
+            "properties": {
+              "unlock": {
+                "type": "object",
+                "required": [
+                  "amount"
+                ],
+                "properties": {
+                  "amount": {
+                    "description": "The amount of vault tokens to unlock",
+                    "allOf": [
+                      {
+                        "$ref": "#/definitions/Uint128"
+                      }
+                    ]
                   }
                 },
                 "additionalProperties": false
@@ -351,9 +385,35 @@
     ],
     "definitions": {
       "ExtensionQueryMsg": {
-        "type": "string",
-        "enum": [
-          "vault_info"
+        "oneOf": [
+          {
+            "type": "string",
+            "enum": [
+              "vault_info"
+            ]
+          },
+          {
+            "type": "object",
+            "required": [
+              "user_unlocks"
+            ],
+            "properties": {
+              "user_unlocks": {
+                "type": "object",
+                "required": [
+                  "user_address"
+                ],
+                "properties": {
+                  "user_address": {
+                    "description": "The address of the user to query",
+                    "type": "string"
+                  }
+                },
+                "additionalProperties": false
+              }
+            },
+            "additionalProperties": false
+          }
         ]
       },
       "Uint128": {
