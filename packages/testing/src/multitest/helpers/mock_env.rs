@@ -17,7 +17,6 @@ use mars_mock_vault::{
     contract::DEFAULT_VAULT_TOKEN_PREFUND, msg::InstantiateMsg as VaultInstantiateMsg,
 };
 use mars_owner::OwnerUpdate;
-use mars_testing::multitest::modules::token_factory::{CustomApp, TokenFactory};
 use mars_types::{
     account_nft::{
         ExecuteMsg as NftExecuteMsg, InstantiateMsg as NftInstantiateMsg, NftConfigUpdates,
@@ -73,6 +72,7 @@ use super::{
     mock_params_contract, mock_red_bank_contract, mock_rover_contract, mock_swapper_contract,
     mock_v2_zapper_contract, mock_vault_contract, AccountToFund, CoinInfo, VaultTestInfo,
 };
+use crate::multitest::modules::token_factory::{CustomApp, TokenFactory};
 
 pub const DEFAULT_RED_BANK_COIN_BALANCE: Uint128 = Uint128::new(1_000_000);
 

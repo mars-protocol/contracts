@@ -1,4 +1,4 @@
-mod helpers;
+use mars_testing::multitest::helpers;
 
 mod test_borrow;
 mod test_claim_rewards;

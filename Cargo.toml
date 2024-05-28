@@ -110,6 +110,7 @@ mars-utils                 = { path = "./packages/utils" }
 # contracts
 mars-account-nft               = { path = "./contracts/account-nft" }
 mars-address-provider          = { path = "./contracts/address-provider" }
+mars-credit-manager            = { path = "./contracts/credit-manager" }
 mars-incentives                = { path = "./contracts/incentives" }
 mars-mock-pyth                 = { path = "./contracts/mock-pyth" }
 mars-oracle-base               = { path = "./contracts/oracle/base" }
