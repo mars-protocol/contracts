@@ -2691,7 +2691,6 @@ dependencies = [
  "mars-mock-vault",
  "mars-oracle-osmosis",
  "mars-oracle-wasm",
- "mars-osmosis",
  "mars-owner 2.0.0",
  "mars-params",
  "mars-red-bank",

@@ -42,7 +42,6 @@ mars-mock-red-bank             = { workspace = true }
 mars-mock-vault                = { workspace = true }
 mars-oracle-osmosis            = { workspace = true }
 mars-oracle-wasm               = { workspace = true }
-mars-osmosis                   = { workspace = true }
 mars-owner                     = { workspace = true }
 mars-params                    = { workspace = true }
 mars-red-bank                  = { workspace = true }
