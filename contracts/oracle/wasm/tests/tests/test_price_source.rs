@@ -19,7 +19,6 @@ use cw_storage_plus::Map;
 use mars_oracle_base::{redemption_rate::RedemptionRate, ContractError, PriceSourceUnchecked};
 use mars_oracle_wasm::{
     contract::entry::{self, execute},
-    helpers::compute_pcl_lp_price,
     AstroportTwap, WasmPriceSource, WasmPriceSourceChecked, WasmPriceSourceUnchecked,
 };
 use mars_types::oracle::{ExecuteMsg, PriceResponse, QueryMsg};
@@ -29,7 +28,9 @@ const ONE: Decimal = Decimal::one();
 const TWO: Decimal = Decimal::new(Uint128::new(2_000_000_000_000_000_000u128));
 const DEFAULT_LIQ: [u128; 2] = [10000000000000000000000u128, 1000000000000000000000u128];
 
-use mars_oracle_wasm::helpers::{compute_pcl_lp_price_model, compute_pcl_lp_price_real};
+use mars_oracle_wasm::lp_pricing::{
+    compute_pcl_lp_price, compute_pcl_lp_price_model, compute_pcl_lp_price_real,
+};
 use mars_testing::{
     mock_env_at_block_time, mock_info,
     test_runner::get_test_runner,
@@ -1079,8 +1080,8 @@ pub fn test_validate_and_query_astroport_pcl_lp_price_source(
         lp_token_price = compute_pcl_lp_price(
             decimals[0],
             decimals[1],
-            &price0,
-            &price1,
+            price0,
+            price1,
             coin0_amount,
             coin1_amount,
             pool.total_share,
@@ -1090,8 +1091,8 @@ pub fn test_validate_and_query_astroport_pcl_lp_price_source(
         .unwrap();
 
         lp_price_model = compute_pcl_lp_price_model(
-            &price0,
-            &price1,
+            price0,
+            price1,
             decimals[0],
             decimals[1],
             pool.total_share,
@@ -1100,14 +1101,9 @@ pub fn test_validate_and_query_astroport_pcl_lp_price_source(
         )
         .unwrap();
 
-        lp_price_real = compute_pcl_lp_price_real(
-            coin0_amount,
-            coin1_amount,
-            &price0,
-            &price1,
-            pool.total_share,
-        )
-        .unwrap();
+        lp_price_real =
+            compute_pcl_lp_price_real(coin0_amount, coin1_amount, price0, price1, pool.total_share)
+                .unwrap();
     };
 
     // Validate the queried price with the expected price
