@@ -56,18 +56,15 @@ pub fn deposit(
     let vault = Vault::default();
     let base_token = vault.base_token.load(deps.storage)?.to_string();
     let vault_token = vault.vault_token.load(deps.storage)?;
-    let total_staked_amount = vault.total_staked_base_tokens.load(deps.storage)?;
 
     // check that only the expected base token was sent
     let amount = cw_utils::must_pay(info, &base_token)?;
 
     // calculate vault tokens
+    let total_staked_amount = total_base_token_in_account(deps.as_ref())?;
     let vault_token_supply = vault_token.query_total_supply(deps.as_ref())?;
     let vault_tokens =
         vault.calculate_vault_tokens(amount, total_staked_amount, vault_token_supply)?;
-
-    // update total staked amount
-    vault.total_staked_base_tokens.save(deps.storage, &total_staked_amount.checked_add(amount)?)?;
 
     let coin_deposited = Coin {
         denom: base_token,

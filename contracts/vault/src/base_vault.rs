@@ -16,9 +16,6 @@ pub struct BaseVault<'a> {
 
     /// The token that is depositable to the vault
     pub base_token: Item<'a, String>,
-
-    /// The total number of base tokens held by the vault
-    pub total_staked_base_tokens: Item<'a, Uint128>,
 }
 
 impl Default for BaseVault<'_> {
@@ -26,7 +23,6 @@ impl Default for BaseVault<'_> {
         BaseVault {
             vault_token: Item::new("vault_token"),
             base_token: Item::new("base_token"),
-            total_staked_base_tokens: Item::new("total_staked_base_tokens"),
         }
     }
 }
@@ -40,7 +36,6 @@ impl<'a> BaseVault<'a> {
     ) -> StdResult<Response> {
         self.vault_token.save(deps.storage, &vault_token)?;
         self.base_token.save(deps.storage, &base_token)?;
-        self.total_staked_base_tokens.save(deps.storage, &Uint128::zero())?;
 
         vault_token.instantiate()
     }
@@ -108,10 +103,6 @@ impl<'a> BaseVault<'a> {
         // calculate base tokens based on the given amount of vault tokens
         let base_tokens =
             self.calculate_base_tokens(vault_tokens, total_staked_amount, vault_token_supply)?;
-
-        // update total staked amount
-        self.total_staked_base_tokens
-            .save(deps.storage, &total_staked_amount.checked_sub(base_tokens)?)?;
 
         let event =
             Event::new("base_vault/burn_vault_tokens_for_base_tokens").add_attributes(vec![
