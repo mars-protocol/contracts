@@ -389,6 +389,32 @@
             "additionalProperties": false
           },
           {
+            "description": "Withdraw coin of specified denom and amount to a wallet address",
+            "type": "object",
+            "required": [
+              "withdraw_to_wallet"
+            ],
+            "properties": {
+              "withdraw_to_wallet": {
+                "type": "object",
+                "required": [
+                  "coin",
+                  "recipient"
+                ],
+                "properties": {
+                  "coin": {
+                    "$ref": "#/definitions/ActionCoin"
+                  },
+                  "recipient": {
+                    "type": "string"
+                  }
+                },
+                "additionalProperties": false
+              }
+            },
+            "additionalProperties": false
+          },
+          {
             "description": "Borrow coin of specified amount from Red Bank",
             "type": "object",
             "required": [

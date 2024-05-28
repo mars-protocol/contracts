@@ -22,6 +22,7 @@ mod test_liquidate_guard;
 mod test_liquidate_lend;
 mod test_liquidate_vault;
 mod test_liquidation_pricing;
+mod test_managed_vault;
 mod test_migration_v2;
 mod test_no_health_check;
 mod test_reclaim;

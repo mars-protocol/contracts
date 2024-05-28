@@ -9,6 +9,7 @@ use mars_types::{
     health::AccountKind,
     oracle::ActionKind,
 };
+use mars_vault::msg::{ExecuteMsg, ExtensionExecuteMsg};
 
 use crate::{
     borrow::borrow,
@@ -50,15 +51,7 @@ pub fn create_credit_account(
         account_nft.query_next_id(&deps.querier)?
     };
 
-    if let AccountKind::FundManager {
-        vault_addr,
-    } = &kind
-    {
-        deps.api.addr_validate(vault_addr)?;
-    }
-
-    ACCOUNT_KINDS.save(deps.storage, &next_id, &kind)?;
-
+    let mut msgs = vec![];
     let nft_mint_msg = CosmosMsg::Wasm(WasmMsg::Execute {
         contract_addr: account_nft.address().into(),
         funds: vec![],
@@ -67,9 +60,30 @@ pub fn create_credit_account(
             token_id: account_id,
         })?,
     });
+    msgs.push(nft_mint_msg);
+
+    if let AccountKind::FundManager {
+        vault_addr,
+    } = &kind
+    {
+        let vault = deps.api.addr_validate(vault_addr)?;
+
+        let bind_msg = CosmosMsg::Wasm(WasmMsg::Execute {
+            contract_addr: vault.into(),
+            funds: vec![],
+            msg: to_json_binary(&ExecuteMsg::VaultExtension(
+                ExtensionExecuteMsg::BindCreditManagerAccount {
+                    account_id: next_id.clone(),
+                },
+            ))?,
+        });
+        msgs.push(bind_msg);
+    }
+
+    ACCOUNT_KINDS.save(deps.storage, &next_id, &kind)?;
 
     let response = Response::new()
-        .add_message(nft_mint_msg)
+        .add_messages(msgs)
         .add_attribute("action", "create_credit_account")
         .add_attribute("kind", kind.to_string())
         .add_attribute("account_id", next_id.clone());
@@ -164,6 +178,14 @@ pub fn dispatch_actions(
                 account_id: account_id.to_string(),
                 coin,
                 recipient: info.sender.clone(),
+            }),
+            Action::WithdrawToWallet {
+                coin,
+                recipient,
+            } => callbacks.push(CallbackMsg::Withdraw {
+                account_id: account_id.to_string(),
+                coin,
+                recipient: deps.api.addr_validate(&recipient)?,
             }),
             Action::Borrow(coin) => callbacks.push(CallbackMsg::Borrow {
                 account_id: account_id.to_string(),
@@ -366,13 +388,17 @@ fn validate_account(
             let actions_not_allowed = actions.iter().any(|action| {
                 matches!(
                     action,
-                    Action::Deposit(..) | Action::Withdraw(..) | Action::RefundAllCoinBalances {}
+                    Action::Deposit(..)
+                        | Action::Withdraw(..)
+                        | Action::RefundAllCoinBalances {}
+                        | Action::WithdrawToWallet { .. }
                 )
             });
             if actions_not_allowed {
                 return Err(ContractError::Unauthorized {
                     user: acc_id.to_string(),
-                    action: "deposit, withdraw, refund_all_coin_balances".to_string(),
+                    action: "deposit, withdraw, refund_all_coin_balances, withdraw_to_wallet"
+                        .to_string(),
                 });
             }
         }

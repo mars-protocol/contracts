@@ -1,7 +1,8 @@
 use cosmwasm_std::{Addr, Decimal, Empty, Uint128};
-use cw_multi_test::{BasicApp, Executor};
+use cw_multi_test::Executor;
 use mars_credit_manager::error::ContractError;
 use mars_mock_oracle::msg::{CoinPrice, InstantiateMsg as OracleInstantiateMsg};
+use mars_testing::multitest::modules::token_factory::CustomApp;
 use mars_types::{
     adapters::{
         health::HealthContractUnchecked, incentives::IncentivesUnchecked, oracle::OracleUnchecked,
@@ -216,7 +217,7 @@ fn update_config_does_nothing_when_nothing_is_passed() {
     assert_eq!(new_config.health_contract, original_config.health_contract);
 }
 
-fn deploy_new_oracle(app: &mut BasicApp) -> OracleUnchecked {
+fn deploy_new_oracle(app: &mut CustomApp) -> OracleUnchecked {
     let contract_code_id = app.store_code(mock_oracle_contract());
     let addr = app
         .instantiate_contract(
@@ -244,7 +245,7 @@ fn deploy_new_oracle(app: &mut BasicApp) -> OracleUnchecked {
     OracleUnchecked::new(addr.to_string())
 }
 
-fn deploy_new_red_bank(app: &mut BasicApp) -> RedBankUnchecked {
+fn deploy_new_red_bank(app: &mut CustomApp) -> RedBankUnchecked {
     let contract_code_id = app.store_code(mock_red_bank_contract());
     let addr = app
         .instantiate_contract(
