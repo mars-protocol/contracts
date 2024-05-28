@@ -102,7 +102,10 @@ pub fn unlock(
     info: &MessageInfo,
     amount: Uint128,
 ) -> Result<Response, ContractError> {
-    let current_time = env.block.time.seconds();
+    if VAULT_ACC_ID.may_load(deps.storage)?.is_some() {
+        // bind credit manager account first
+        return Err(ContractError::VaultAccountNotFound {});
+    };
 
     // cannot unlock zero vault tokens
     if amount.is_zero() {
@@ -124,6 +127,7 @@ pub fn unlock(
     }
 
     // add new unlock request
+    let current_time = env.block.time.seconds();
     let cooldown_period = COOLDOWN_PERIOD.load(deps.storage)?;
     let cooldown_end = current_time + cooldown_period;
     UNLOCKS.update(deps.storage, info.sender.to_string(), |maybe_unlocks| {
@@ -160,6 +164,14 @@ pub fn redeem(
     // unwrap recipient or use caller's address
     let recipient = recipient.map_or(Ok(info.sender.clone()), |x| deps.api.addr_validate(&x))?;
 
+    // load state
+    let vault = Vault::default();
+    let base_token = vault.base_token.load(deps.storage)?;
+    let vault_token = vault.vault_token.load(deps.storage)?;
+
+    // check that only the expected base token was sent
+    let vault_token_amount = cw_utils::must_pay(info, &vault_token.to_string())?;
+
     let unlocks = UNLOCKS.load(deps.storage, recipient.to_string())?;
 
     // find all unlocked positions
@@ -183,13 +195,7 @@ pub fn redeem(
     let total_unlocked_vault_tokens =
         unlocked.into_iter().map(|us| us.vault_tokens).sum::<Uint128>();
 
-    // load state
-    let vault = Vault::default();
-    let base_token = vault.base_token.load(deps.storage)?;
-    let vault_token = vault.vault_token.load(deps.storage)?;
-
-    // check that only the expected vault token was sent
-    let vault_token_amount = cw_utils::must_pay(info, &vault_token.to_string())?;
+    // check that the total unlocked vault tokens match the provided vault tokens
     if vault_token_amount != total_unlocked_vault_tokens {
         return Err(ContractError::InvalidAmount {
             reason: "provided vault tokens do not match total unlocked vault tokens".to_string(),

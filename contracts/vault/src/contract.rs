@@ -3,6 +3,10 @@ use cosmwasm_std::{
 };
 use cw_vault_standard::{VaultInfoResponse, VaultStandardInfoResponse};
 use mars_owner::OwnerInit;
+use mars_types::{
+    adapters::{health::HealthContractBase, oracle::OracleBase},
+    credit_manager::{ConfigResponse, QueryMsg as CreditManagerQueryMsg},
+};
 
 use crate::{
     base_vault::BaseVault,
@@ -49,8 +53,13 @@ pub fn instantiate(
     let credit_manager = deps.api.addr_validate(&msg.credit_manager)?;
     CREDIT_MANAGER.save(deps.storage, &credit_manager.to_string())?;
 
-    ORACLE.save(deps.storage, &msg.oracle.check(deps.api)?)?;
-    HEALTH.save(deps.storage, &msg.health.check(deps.api)?)?;
+    let config: ConfigResponse = deps
+        .querier
+        .query_wasm_smart(credit_manager.to_string(), &CreditManagerQueryMsg::Config {})?;
+    let oracle = OracleBase::new(config.oracle);
+    let health = HealthContractBase::new(config.health_contract);
+    ORACLE.save(deps.storage, &oracle.check(deps.api)?)?;
+    HEALTH.save(deps.storage, &health.check(deps.api)?)?;
 
     if let Some(title) = msg.title {
         TITLE.save(deps.storage, &title)?;
@@ -144,6 +153,7 @@ pub fn query(deps: Deps, _env: Env, msg: QueryMsg) -> ContractResult<Binary> {
                     description: DESCRIPTION.may_load(deps.storage)?,
                     credit_manager: CREDIT_MANAGER.load(deps.storage)?,
                     vault_account_id: VAULT_ACC_ID.may_load(deps.storage)?,
+                    cooldown_period: COOLDOWN_PERIOD.load(deps.storage)?,
                 })
             }
             ExtensionQueryMsg::UserUnlocks {

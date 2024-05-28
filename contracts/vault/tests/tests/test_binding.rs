@@ -42,6 +42,7 @@ fn only_credit_manager_can_bind_account() {
             description: None,
             credit_manager: credit_manager.to_string(),
             vault_account_id: Some("2024".to_string()),
+            cooldown_period: 60
         }
     )
 }

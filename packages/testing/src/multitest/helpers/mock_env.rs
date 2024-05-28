@@ -1472,6 +1472,7 @@ pub fn deploy_managed_vault(app: &mut CustomApp, sender: &Addr, credit_manager: 
             subtitle: None,
             description: None,
             credit_manager: credit_manager.to_string(),
+            cooldown_period: 60,
         },
         &[coin(10_000_000, "untrn")], // Token Factory fee for minting new denom. Configured in the Token Factory module in `mars-testing` package.
         "mock-managed-vault",

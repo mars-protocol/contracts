@@ -1,7 +1,6 @@
 use cosmwasm_schema::cw_serde;
 use cosmwasm_std::Uint128;
 use cw_vault_standard::{VaultStandardExecuteMsg, VaultStandardQueryMsg};
-use mars_types::adapters::{health::HealthContractUnchecked, oracle::OracleUnchecked};
 
 pub type ExecuteMsg = VaultStandardExecuteMsg<ExtensionExecuteMsg>;
 
@@ -23,10 +22,6 @@ pub struct InstantiateMsg {
 
     /// Credit Manager contract address
     pub credit_manager: String,
-    /// Oracle contract address
-    pub oracle: OracleUnchecked,
-    /// Health contract address
-    pub health: HealthContractUnchecked,
 
     /// Stakers need to wait a cooldown period before being able to withdraw USDC from the vault.
     /// Value defined in seconds.
@@ -76,6 +71,10 @@ pub struct VaultInfoResponseExt {
 
     /// Vault account id
     pub vault_account_id: Option<String>,
+
+    /// Stakers need to wait a cooldown period before being able to withdraw USDC from the vault.
+    /// Value defined in seconds.
+    pub cooldown_period: u64,
 }
 
 /// Unlock state for a single user

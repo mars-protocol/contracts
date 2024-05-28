@@ -30,6 +30,7 @@ fn instantiate_with_empty_metadata() {
             description: None,
             credit_manager: credit_manager.to_string(),
             vault_account_id: None,
+            cooldown_period: 60
         }
     )
 }
@@ -59,6 +60,7 @@ fn instantiate_with_metadata() {
                 subtitle: Some("random subTITLE".to_string()),
                 description: Some("The vault manages others money !!!".to_string()),
                 credit_manager: credit_manager.to_string(),
+                cooldown_period: 8521,
             },
             &[coin(10_000_000, "untrn")], // Token Factory fee for minting new denom. Configured in the Token Factory module in `mars-testing` package.
             "mock-managed-vault",
@@ -77,6 +79,7 @@ fn instantiate_with_metadata() {
             description: Some("The vault manages others money !!!".to_string()),
             credit_manager: credit_manager.to_string(),
             vault_account_id: None,
+            cooldown_period: 8521,
         }
     )
 }
