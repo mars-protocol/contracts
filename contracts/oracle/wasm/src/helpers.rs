@@ -3,11 +3,12 @@ use std::cmp::Ordering;
 use astroport::{
     asset::{Asset, AssetInfo, PairInfo},
     factory::PairType,
-    pair::{CumulativePricesResponse, PoolResponse, QueryMsg as PairQueryMsg},
+    pair::{ConfigResponse, CumulativePricesResponse, PoolResponse, QueryMsg as PairQueryMsg},
+    pair_concentrated::QueryMsg as ConcentratedPairQueryMsg,
 };
 use cosmwasm_std::{
-    ensure_eq, to_json_binary, Addr, Decimal, Deps, Env, QuerierWrapper, QueryRequest, StdResult,
-    Uint128, WasmQuery,
+    ensure_eq, to_json_binary, Addr, Decimal, Decimal256, Deps, Env, QuerierWrapper, QueryRequest,
+    StdResult, Uint128, WasmQuery,
 };
 use cw_storage_plus::Map;
 use mars_oracle_base::{ContractError, ContractResult, PriceSourceChecked};
@@ -29,6 +30,20 @@ pub fn query_astroport_pool(
     pair_contract: impl Into<String>,
 ) -> StdResult<PoolResponse> {
     querier.query_wasm_smart(pair_contract, &PairQueryMsg::Pool {})
+}
+
+pub fn query_astroport_config(
+    querier: &QuerierWrapper,
+    pair_contract: impl Into<String>,
+) -> StdResult<ConfigResponse> {
+    querier.query_wasm_smart(pair_contract, &PairQueryMsg::Config {})
+}
+
+pub fn query_astroport_curve_invariant(
+    querier: &QuerierWrapper,
+    pair_contract: impl Into<String>,
+) -> StdResult<Decimal256> {
+    querier.query_wasm_smart(pair_contract, &ConcentratedPairQueryMsg::ComputeD {})
 }
 
 /// Helper function to create an Astroport native token AssetInfo.
@@ -217,19 +232,20 @@ pub fn adjust_precision(
     })
 }
 
-pub fn validate_astroport_xyk_lp_pool(
+pub fn validate_astroport_lp_pool_for_type(
     deps: &Deps,
     pair_address: &Addr,
     price_sources: &Map<&str, WasmPriceSourceChecked>,
+    pair_type: PairType,
 ) -> ContractResult<()> {
     let pair_info = query_astroport_pair_info(&deps.querier, pair_address)?;
     ensure_eq!(
         pair_info.pair_type,
-        PairType::Xyk {},
+        pair_type,
         ContractError::InvalidPriceSource {
             reason: format!(
-                "expecting pair {} to be XYK pool; found {}",
-                pair_address, pair_info.pair_type
+                "expecting pair {} to be {} pool; found {}",
+                pair_address, pair_type, pair_info.pair_type
             ),
         }
     );
