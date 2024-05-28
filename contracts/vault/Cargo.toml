@@ -28,8 +28,6 @@ cw-utils          = { workspace = true }
 cw-vault-standard = { workspace = true }
 mars-owner        = { workspace = true }
 mars-types        = { workspace = true }
-schemars          = { workspace = true }
-serde             = { workspace = true }
 thiserror         = { workspace = true }
 osmosis-std       = { workspace = true }
 
