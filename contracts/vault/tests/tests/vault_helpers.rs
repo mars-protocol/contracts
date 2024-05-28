@@ -123,6 +123,19 @@ pub fn query_convert_to_assets(mock_env: &MockEnv, vault: &Addr, vault_tokens: U
         .unwrap()
 }
 
+pub fn query_convert_to_shares(mock_env: &MockEnv, vault: &Addr, base_tokens: Uint128) -> Uint128 {
+    mock_env
+        .app
+        .wrap()
+        .query_wasm_smart(
+            vault.to_string(),
+            &QueryMsg::ConvertToShares {
+                amount: base_tokens,
+            },
+        )
+        .unwrap()
+}
+
 pub fn assert_vault_err(res: AnyResult<AppResponse>, err: mars_vault::error::ContractError) {
     match res {
         Ok(_) => panic!("Result was not an error"),

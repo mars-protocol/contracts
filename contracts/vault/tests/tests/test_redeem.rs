@@ -1,3 +1,5 @@
+use std::str::FromStr;
+
 use cosmwasm_std::{coin, Addr, Decimal, Uint128};
 use mars_mock_oracle::msg::CoinPrice;
 use mars_testing::multitest::helpers::{uosmo_info, CoinInfo};
@@ -7,6 +9,7 @@ use mars_types::{
     oracle::ActionKind,
     params::LiquidationBonus,
 };
+use test_case::test_case;
 
 use super::{
     helpers::{AccountToFund, MockEnv},
@@ -17,7 +20,7 @@ use super::{
 };
 use crate::tests::{
     helpers::deploy_managed_vault,
-    vault_helpers::{query_convert_to_assets, query_vault_info},
+    vault_helpers::{query_convert_to_assets, query_convert_to_shares, query_vault_info},
 };
 
 #[test]
@@ -248,8 +251,20 @@ fn redeem_invalid_unlocked_amount() {
     );
 }
 
-#[test]
-fn redeem_succeded() {
+#[test_case(12_000_000_000, Decimal::zero(), Decimal::from_str("0.5").unwrap(), 2000000000, 4000000001, 0, 0; "redeem from deposit only if no lend")]
+#[test_case(12_000_000_000, Decimal::from_str("0.25").unwrap(), Decimal::from_str("0.5").unwrap(), 2_000_000_000, 1_000_000_001, 3_000_000_001, 0; "redeem from deposit if lend")]
+#[test_case(12_000_000_000, Decimal::from_str("0.25").unwrap(), Decimal::from_str("0.5").unwrap(), 4_000_000_000, 0, 2_000_000_002, 0; "redeem from deposit and lend")]
+#[test_case(12_000_000_000, Decimal::from_str("0.25").unwrap(), Decimal::from_str("0.5").unwrap(), 6_500_000_000, 0, 0, 499999999; "redeem from deposit, lend and debt")]
+#[test_case(12_000_000_000, Decimal::from_str("0.25").unwrap(), Decimal::from_str("0.5").unwrap(), 7_000_000_000, 0, 0, 0 => panics "Actions resulted in exceeding maximum allowed loan-to-value."; "redeem more than HF limit")]
+fn redeem_succeded(
+    deposited_amt: u128,
+    lend_percent: Decimal,
+    swap_percent: Decimal,
+    requested_base_tokens: u128,
+    expected_deposit_amt: u128,
+    expected_lend_amt: u128,
+    expected_debt_amt: u128,
+) {
     let uusdc_info = uusdc_info();
     let uosmo_info = uosmo_info();
 
@@ -297,12 +312,6 @@ fn redeem_succeded() {
     let vault_info_res = query_vault_info(&mock, &managed_vault_addr);
     let vault_token = vault_info_res.vault_token;
 
-    // there shouldn't be any vault tokens
-    let vault_token_balance = mock.query_balance(&managed_vault_addr, &vault_token).amount;
-    assert!(vault_token_balance.is_zero());
-    let vault_token_balance = mock.query_balance(&user, &vault_token).amount;
-    assert!(vault_token_balance.is_zero());
-
     let fund_acc_id = mock
         .create_credit_account_v2(
             &fund_manager,
@@ -313,7 +322,7 @@ fn redeem_succeded() {
         )
         .unwrap();
 
-    let deposited_amt = Uint128::new(10_246_200_000);
+    let deposited_amt = Uint128::new(deposited_amt);
     execute_deposit(
         &mut mock,
         &user,
@@ -326,40 +335,22 @@ fn redeem_succeded() {
 
     // check base token balance after deposit
     let user_base_token_balance_after_deposit = mock.query_balance(&user, "uusdc").amount;
-    assert_eq!(user_base_token_balance_after_deposit, user_funded_amt - deposited_amt);
 
-    // there should be vault tokens for the user now
-    let vault_token_balance = mock.query_balance(&managed_vault_addr, &vault_token).amount;
-    assert!(vault_token_balance.is_zero());
-    let user_vault_token_balance = mock.query_balance(&user, &vault_token).amount;
-    assert!(!user_vault_token_balance.is_zero());
-    assert_eq!(user_vault_token_balance, deposited_amt * Uint128::new(1_000_000));
-
-    // there should be a deposit in Fund Manager's account
-    let res = mock.query_positions(&fund_acc_id);
-    assert_eq!(res.deposits.len(), 1);
-    let assets_res = res.deposits.first().unwrap();
-    assert_eq!(assets_res.amount, deposited_amt);
-    assert_eq!(assets_res.denom, "uusdc".to_string());
-
-    // lend 25% of the deposit and swap 50% of the deposit
-    let lend_amt = deposited_amt.multiply_ratio(1u128, 4u128);
-    let swap_amt = deposited_amt.multiply_ratio(1u128, 2u128);
-    mock.update_credit_account(
-        &fund_acc_id,
-        &fund_manager,
-        vec![
-            Action::Lend(uusdc_info.to_action_coin(lend_amt.u128())),
-            Action::SwapExactIn {
-                coin_in: uusdc_info.to_action_coin(swap_amt.u128()),
-                denom_out: uosmo_info.denom.clone(),
-                slippage: Decimal::from_atomics(6u128, 1).unwrap(),
-                route: None,
-            },
-        ],
-        &[],
-    )
-    .unwrap();
+    let mut actions = vec![];
+    if !lend_percent.is_zero() {
+        // lend 25% of the deposit
+        let lend_amt = deposited_amt.mul_floor(lend_percent);
+        actions.push(Action::Lend(uusdc_info.to_action_coin(lend_amt.u128())));
+    }
+    // swap 50% of the deposit
+    let swap_amt = deposited_amt.mul_floor(swap_percent);
+    actions.push(Action::SwapExactIn {
+        coin_in: uusdc_info.to_action_coin(swap_amt.u128()),
+        denom_out: uosmo_info.denom.clone(),
+        slippage: Decimal::from_atomics(6u128, 1).unwrap(),
+        route: None,
+    });
+    mock.update_credit_account(&fund_acc_id, &fund_manager, actions, &[]).unwrap();
     // Half of uusdc is swapped to uosmo (amount = MOCK_SWAP_RESULT from mocked swapper).
     // Let's update the price of uosmo to be worth more than original uusdc amount.
     mock.price_change(CoinPrice {
@@ -368,10 +359,17 @@ fn redeem_succeded() {
         price: Decimal::from_atomics(1_200_000u128, 0).unwrap(),
     });
 
-    // unlock 50% of the vault tokens
+    // unlock vault tokens
     let user_vault_token_balance = mock.query_balance(&user, &vault_token).amount;
-    let unlock_vault_tokens = user_vault_token_balance.multiply_ratio(1u128, 2u128);
+    let requested_base_tokens = Uint128::new(requested_base_tokens);
+    let unlock_vault_tokens =
+        query_convert_to_shares(&mock, &managed_vault_addr, requested_base_tokens);
     execute_unlock(&mut mock, &user, &managed_vault_addr, unlock_vault_tokens, &[]).unwrap();
+
+    // recalculate the amount of base tokens to be redeemed
+    let unlock_base_tokens =
+        query_convert_to_assets(&mock, &managed_vault_addr, unlock_vault_tokens);
+    assert_eq!(unlock_base_tokens, requested_base_tokens - Uint128::one()); // rounding issue when doing back and forth conversion
 
     // move time forward to pass cooldown period
     mock.increment_by_time(vault_info_res.cooldown_period + 1);
@@ -386,10 +384,6 @@ fn redeem_succeded() {
     )
     .unwrap();
 
-    // calculate the amount of base tokens to be redeemed
-    let unlock_base_tokens =
-        query_convert_to_assets(&mock, &managed_vault_addr, unlock_vault_tokens);
-
     // there shouldn't be any vault tokens after redeem
     let vault_token_balance = mock.query_balance(&managed_vault_addr, &vault_token).amount;
     assert!(vault_token_balance.is_zero());
@@ -401,8 +395,18 @@ fn redeem_succeded() {
     assert_eq!(user_base_token_balance, user_base_token_balance_after_deposit + unlock_base_tokens);
 
     // check Fund Manager's account after redeem
-    let _res = mock.query_positions(&fund_acc_id);
-    // assert!(res.deposits.is_empty());
+    let res = mock.query_positions(&fund_acc_id);
+    let pos_deposit =
+        res.deposits.iter().find(|d| d.denom == "uusdc").map(|d| d.amount).unwrap_or_default();
+    assert_eq!(pos_deposit.u128(), expected_deposit_amt);
+    let pos_lend =
+        res.lends.iter().find(|d| d.denom == "uusdc").map(|d| d.amount).unwrap_or_default();
+    assert_eq!(pos_lend.u128(), expected_lend_amt);
+    let pos_debt =
+        res.debts.iter().find(|d| d.denom == "uusdc").map(|d| d.amount).unwrap_or_default();
+    assert_eq!(pos_debt.u128(), expected_debt_amt);
+
+    assert!(res.vaults.is_empty());
 }
 
 pub fn uusdc_info() -> CoinInfo {
