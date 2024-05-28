@@ -172,7 +172,7 @@ pub fn redeem(
     // check that only the expected base token was sent
     let vault_token_amount = cw_utils::must_pay(info, &vault_token.to_string())?;
 
-    let unlocks = UNLOCKS.load(deps.storage, recipient.to_string())?;
+    let unlocks = UNLOCKS.may_load(deps.storage, recipient.to_string())?.unwrap_or_default();
 
     // find all unlocked positions
     let current_time = env.block.time.seconds();
