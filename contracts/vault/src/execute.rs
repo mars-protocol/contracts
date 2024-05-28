@@ -236,28 +236,32 @@ pub fn redeem(
     Ok(burn_res.add_message(withdraw_from_cm).add_event(event))
 }
 
+/// Prepare lend and borrow actions to redeem the desired base token balance.
+/// If there is enough base token deposited, no actions are needed.
+/// If there is not enough base token deposited, it will try to reclaim the lent base token first.
+/// If there is still not enough base token deposited, it will borrow the remaining amount.
 fn prepare_lend_and_borrow_actions(
     deps: Deps,
     base_token: String,
     withraw_amount: Uint128,
 ) -> Result<Vec<Action>, ContractError> {
     let cm_addr = CREDIT_MANAGER.load(deps.storage)?;
-    let cm_acc_id = VAULT_ACC_ID.load(deps.storage)?;
+    let vault_acc_id = VAULT_ACC_ID.load(deps.storage)?;
 
     let positions: Positions = deps.querier.query_wasm_smart(
         cm_addr,
         &QueryMsg::Positions {
-            account_id: cm_acc_id,
+            account_id: vault_acc_id,
         },
     )?;
-    let base_token_deposited = positions
+    let base_token_deposit = positions
         .deposits
         .iter()
         .filter(|d| d.denom == base_token)
         .map(|d| d.amount)
         .sum::<Uint128>();
 
-    if withraw_amount <= base_token_deposited {
+    if withraw_amount <= base_token_deposit {
         return Ok(vec![]);
     }
 
@@ -266,24 +270,30 @@ fn prepare_lend_and_borrow_actions(
 
     let mut actions = vec![];
 
-    let left_amount_to_unlend = withraw_amount - base_token_deposited;
-    if left_amount_to_unlend <= base_token_lend {
-        actions.push(Action::Reclaim(ActionCoin {
-            denom: base_token.clone(),
-            amount: credit_manager::ActionAmount::Exact(left_amount_to_unlend),
-        }));
-    } else {
-        actions.push(Action::Reclaim(ActionCoin {
-            denom: base_token.clone(),
-            amount: credit_manager::ActionAmount::Exact(base_token_lend),
-        }));
+    let mut left_amount_to_withdraw = withraw_amount - base_token_deposit;
+    if !base_token_lend.is_zero() {
+        if left_amount_to_withdraw <= base_token_lend {
+            actions.push(Action::Reclaim(ActionCoin {
+                denom: base_token.clone(),
+                amount: credit_manager::ActionAmount::Exact(left_amount_to_withdraw),
+            }));
 
-        let amount_to_borrow = left_amount_to_unlend - base_token_lend;
-        actions.push(Action::Borrow(Coin {
-            denom: base_token.clone(),
-            amount: amount_to_borrow,
-        }));
+            return Ok(actions);
+        } else {
+            // reclaim all lent base token
+            actions.push(Action::Reclaim(ActionCoin {
+                denom: base_token.clone(),
+                amount: credit_manager::ActionAmount::Exact(base_token_lend),
+            }));
+
+            left_amount_to_withdraw -= base_token_lend
+        }
     }
+
+    actions.push(Action::Borrow(Coin {
+        denom: base_token.clone(),
+        amount: left_amount_to_withdraw,
+    }));
 
     Ok(actions)
 }

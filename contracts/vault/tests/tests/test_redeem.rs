@@ -1,5 +1,3 @@
-use std::str::FromStr;
-
 use cosmwasm_std::{coin, Addr, Decimal, Uint128};
 use mars_mock_oracle::msg::CoinPrice;
 use mars_testing::multitest::helpers::{uosmo_info, CoinInfo};
@@ -251,20 +249,24 @@ fn redeem_invalid_unlocked_amount() {
     );
 }
 
-#[test_case(12_000_000_000, Decimal::zero(), Decimal::from_str("0.5").unwrap(), 2000000000, 4000000001, 0, 0; "redeem from deposit only if no lend")]
-#[test_case(12_000_000_000, Decimal::from_str("0.25").unwrap(), Decimal::from_str("0.5").unwrap(), 2_000_000_000, 1_000_000_001, 3_000_000_001, 0; "redeem from deposit if lend")]
-#[test_case(12_000_000_000, Decimal::from_str("0.25").unwrap(), Decimal::from_str("0.5").unwrap(), 4_000_000_000, 0, 2_000_000_002, 0; "redeem from deposit and lend")]
-#[test_case(12_000_000_000, Decimal::from_str("0.25").unwrap(), Decimal::from_str("0.5").unwrap(), 6_500_000_000, 0, 0, 499999999; "redeem from deposit, lend and debt")]
-#[test_case(12_000_000_000, Decimal::from_str("0.25").unwrap(), Decimal::from_str("0.5").unwrap(), 7_000_000_000, 0, 0, 0 => panics "Actions resulted in exceeding maximum allowed loan-to-value."; "redeem more than HF limit")]
+/// There are rounding errors when converting back and forth between base tokens and vault tokens so there could be a difference of 1 base token.
+/// Also, there could be yield simulated for lend and debt - +1 to lend and -1 to debt.
+#[test_case(2_000_000_000, 0, 2_000_000_000, 1, 0, 0; "redeem from deposit if no lend, dust left")]
+#[test_case(2_000_000_000, 0, 2_000_000_001, 0, 0, 0; "redeem from deposit if no lend")]
+#[test_case(2_000_000_000, 1_000_000_000, 500_000_000, 1_500_000_001, 1_000_000_001, 0; "redeem from deposit if lend available")]
+#[test_case(2_000_000_000, 1_000_000_000, 2_200_000_000, 0, 800_000_002, 0; "redeem from deposit and lend")]
+#[test_case(2_000_000_000, 1_000_000_000, 3_200_000_000, 0, 0, 199_999_999; "redeem from deposit, lend and debt")]
+#[test_case(5_000_000_000, 2_000_000_000, 7_800_000_000, 0, 0, 0 => panics "Actions resulted in exceeding maximum allowed loan-to-value."; "redeem more than HF limit")]
 fn redeem_succeded(
-    deposited_amt: u128,
-    lend_percent: Decimal,
-    swap_percent: Decimal,
+    deposit_amt: u128,
+    lend_amt: u128,
     requested_base_tokens: u128,
     expected_deposit_amt: u128,
     expected_lend_amt: u128,
     expected_debt_amt: u128,
 ) {
+    let swap_amt = deposit_amt;
+
     let uusdc_info = uusdc_info();
     let uosmo_info = uosmo_info();
 
@@ -322,41 +324,42 @@ fn redeem_succeded(
         )
         .unwrap();
 
-    let deposited_amt = Uint128::new(deposited_amt);
+    let mut fund_acc_amt = deposit_amt;
+
+    let mut actions = vec![];
+    if lend_amt != 0 {
+        actions.push(Action::Lend(uusdc_info.to_action_coin(lend_amt)));
+        fund_acc_amt += lend_amt;
+    }
+    actions.push(Action::SwapExactIn {
+        coin_in: uusdc_info.to_action_coin(swap_amt),
+        denom_out: uosmo_info.denom.clone(),
+        slippage: Decimal::from_atomics(6u128, 1).unwrap(),
+        route: None,
+    });
+    fund_acc_amt += swap_amt;
+
+    let fund_acc_amt = Uint128::new(fund_acc_amt);
     execute_deposit(
         &mut mock,
         &user,
         &managed_vault_addr,
         Uint128::zero(), // we don't care about the amount, we are using the funds
         None,
-        &[coin(deposited_amt.u128(), "uusdc")],
+        &[coin(fund_acc_amt.u128(), "uusdc")],
     )
     .unwrap();
 
     // check base token balance after deposit
     let user_base_token_balance_after_deposit = mock.query_balance(&user, "uusdc").amount;
 
-    let mut actions = vec![];
-    if !lend_percent.is_zero() {
-        // lend 25% of the deposit
-        let lend_amt = deposited_amt.mul_floor(lend_percent);
-        actions.push(Action::Lend(uusdc_info.to_action_coin(lend_amt.u128())));
-    }
-    // swap 50% of the deposit
-    let swap_amt = deposited_amt.mul_floor(swap_percent);
-    actions.push(Action::SwapExactIn {
-        coin_in: uusdc_info.to_action_coin(swap_amt.u128()),
-        denom_out: uosmo_info.denom.clone(),
-        slippage: Decimal::from_atomics(6u128, 1).unwrap(),
-        route: None,
-    });
     mock.update_credit_account(&fund_acc_id, &fund_manager, actions, &[]).unwrap();
     // Half of uusdc is swapped to uosmo (amount = MOCK_SWAP_RESULT from mocked swapper).
     // Let's update the price of uosmo to be worth more than original uusdc amount.
     mock.price_change(CoinPrice {
         pricing: ActionKind::Default,
         denom: uosmo_info.denom,
-        price: Decimal::from_atomics(1_200_000u128, 0).unwrap(),
+        price: Decimal::from_atomics(1_000_000u128, 0).unwrap(),
     });
 
     // unlock vault tokens
