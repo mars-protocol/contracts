@@ -2162,6 +2162,7 @@ dependencies = [
  "mars-account-nft",
  "mars-address-provider",
  "mars-liquidation",
+ "mars-mock-astroport-incentives",
  "mars-mock-incentives",
  "mars-mock-oracle",
  "mars-mock-red-bank",
@@ -2258,6 +2259,19 @@ version = "1.0.0"
 dependencies = [
  "cosmwasm-std",
  "mars-health 2.0.0",
+ "mars-types",
+ "thiserror",
+]
+
+[[package]]
+name = "mars-mock-astroport-incentives"
+version = "2.0.0"
+dependencies = [
+ "astroport 5.0.0-rc.1-tokenfactory",
+ "cosmwasm-schema",
+ "cosmwasm-std",
+ "cw-storage-plus 1.2.0",
+ "cw-utils 1.0.3",
  "mars-types",
  "thiserror",
 ]

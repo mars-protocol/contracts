@@ -3,7 +3,7 @@ use cosmwasm_std::{
     to_json_binary, Addr, Api, Coin, CosmosMsg, QuerierWrapper, StdResult, WasmMsg,
 };
 
-use crate::incentives::{ExecuteMsg, QueryMsg};
+use crate::incentives::{ExecuteMsg, QueryMsg, StakedLpPositionResponse};
 
 #[cw_serde]
 pub struct IncentivesUnchecked(String);
@@ -56,6 +56,39 @@ impl Incentives {
         }))
     }
 
+    pub fn claim_lp_rewards_msg(&self, account_id: &str, lp_denom: &str) -> StdResult<CosmosMsg> {
+        Ok(CosmosMsg::Wasm(WasmMsg::Execute {
+            contract_addr: self.addr.to_string(),
+            msg: to_json_binary(&ExecuteMsg::ClaimAstroLpRewards {
+                account_id: account_id.to_string(),
+                lp_denom: lp_denom.to_string(),
+            })?,
+            funds: vec![],
+        }))
+    }
+
+    pub fn stake_astro_lp_msg(&self, account_id: &str, lp_coin: Coin) -> StdResult<CosmosMsg> {
+        Ok(CosmosMsg::Wasm(WasmMsg::Execute {
+            contract_addr: self.addr.to_string(),
+            msg: to_json_binary(&ExecuteMsg::StakeAstroLp {
+                account_id: account_id.to_string(),
+                lp_coin: lp_coin.clone(),
+            })?,
+            funds: vec![lp_coin],
+        }))
+    }
+
+    pub fn unstake_astro_lp_msg(&self, account_id: &str, lp_coin: Coin) -> StdResult<CosmosMsg> {
+        Ok(CosmosMsg::Wasm(WasmMsg::Execute {
+            contract_addr: self.addr.to_string(),
+            msg: to_json_binary(&ExecuteMsg::UnstakeAstroLp {
+                account_id: account_id.to_string(),
+                lp_coin,
+            })?,
+            funds: vec![],
+        }))
+    }
+
     pub fn query_unclaimed_rewards(
         &self,
         querier: &QuerierWrapper,
@@ -69,6 +102,36 @@ impl Incentives {
                 start_after_collateral_denom: None,
                 start_after_incentive_denom: None,
                 limit: None,
+            },
+        )
+    }
+
+    pub fn query_astroport_staked_lp_rewards(
+        &self,
+        querier: &QuerierWrapper,
+        account_id: &str,
+        lp_denom: &str,
+    ) -> StdResult<Vec<Coin>> {
+        querier.query_wasm_smart(
+            self.addr.to_string(),
+            &QueryMsg::AccountStakedLpRewards {
+                account_id: account_id.to_string(),
+                lp_denom: lp_denom.to_string(),
+            },
+        )
+    }
+
+    pub fn query_astroport_staked_lp_position(
+        &self,
+        querier: &QuerierWrapper,
+        account_id: &str,
+        lp_denom: &str,
+    ) -> StdResult<StakedLpPositionResponse> {
+        querier.query_wasm_smart(
+            self.addr.to_string(),
+            &QueryMsg::StakedLpPosition {
+                account_id: account_id.to_string(),
+                lp_denom: lp_denom.to_string(),
             },
         )
     }

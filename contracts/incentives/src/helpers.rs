@@ -262,7 +262,7 @@ pub fn calculate_rewards_from_astroport_incentive_state(
             .load(storage, (account_id, &lp_coin.denom, reward_denom))
             .unwrap_or(Decimal::zero());
 
-        // Don't pay if already all paid up
+        // Don't claim if already claimed
         if user_incentive_index != incentive_index {
             let asset_accrued_rewards = compute_user_accrued_rewards(
                 lp_coin.amount,

@@ -4,9 +4,9 @@ use cosmwasm_std::{
     Addr, Decimal, Event, Response, Timestamp, Uint128,
 };
 use mars_incentives::{
-    mars_incentives::execute_balance_change,
     contract::execute,
     helpers::{compute_incentive_index, compute_user_accrued_rewards},
+    mars_incentives::execute_balance_change,
     query::query_user_unclaimed_rewards,
     state::{EMISSIONS, INCENTIVE_STATES, USER_ASSET_INDICES, USER_UNCLAIMED_REWARDS},
 };

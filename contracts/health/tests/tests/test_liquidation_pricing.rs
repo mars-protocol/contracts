@@ -66,6 +66,7 @@ fn uses_liquidation_pricing() {
             }],
             lends: vec![],
             vaults: vec![],
+            staked_lp: vec![],
         },
     );
 

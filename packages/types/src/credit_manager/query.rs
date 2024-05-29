@@ -151,6 +151,7 @@ pub struct Positions {
     pub debts: Vec<DebtAmount>,
     pub lends: Vec<Coin>,
     pub vaults: Vec<VaultPosition>,
+    pub staked_lp: Vec<Coin>,
 }
 
 #[cw_serde]

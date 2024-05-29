@@ -69,6 +69,7 @@ pub fn query_positions(deps: Deps, account_id: &str) -> ContractResult<Positions
         debts: query_debt_amounts(deps, account_id)?,
         lends: RED_BANK.load(deps.storage)?.query_all_lent(&deps.querier, account_id)?,
         vaults: query_vault_positions(deps, account_id)?,
+        staked_lp: vec![],
     })
 }
 

@@ -154,8 +154,11 @@ pub enum ExecuteMsg {
         limit: Option<u32>,
     },
 
+    /// Claim Astroport LP rewards for an LP position
     ClaimAstroLpRewards {
+        /// User credit account Id
         account_id: String,
+        /// Denom of the LP token
         lp_denom: String,
     },
 
@@ -304,6 +307,15 @@ pub enum QueryMsg {
         /// The maximum number of results to return. If not set, 5 is used. If larger than 10,
         /// 10 is used.
         limit: Option<u32>,
+    },
+
+    /// Query account staked LP rewards
+    #[returns(Vec<cosmwasm_std::Coin>)]
+    AccountStakedLpRewards {
+        /// The id of the account who owns the LP
+        account_id: String,
+        /// lp denom to fetch staked rewards for
+        lp_denom: String,
     },
 
     /// Queries the incentive denom whitelist. Returns a Vec<(String, Uint128)> containing the

@@ -66,10 +66,11 @@ use mars_types::{
 use mars_zapper_mock::msg::{InstantiateMsg as ZapperInstantiateMsg, LpConfig};
 
 use super::{
-    lp_token_info, mock_account_nft_contract, mock_address_provider_contract, mock_health_contract,
-    mock_incentives_contract, mock_oracle_contract, mock_params_contract, mock_red_bank_contract,
-    mock_rover_contract, mock_swapper_contract, mock_v2_zapper_contract, mock_vault_contract,
-    AccountToFund, CoinInfo, VaultTestInfo,
+    lp_token_info, mock_account_nft_contract, mock_address_provider_contract,
+    mock_astro_incentives_contract, mock_health_contract, mock_incentives_contract,
+    mock_oracle_contract, mock_params_contract, mock_red_bank_contract, mock_rover_contract,
+    mock_swapper_contract, mock_v2_zapper_contract, mock_vault_contract, AccountToFund, CoinInfo,
+    VaultTestInfo,
 };
 
 pub const DEFAULT_RED_BANK_COIN_BALANCE: Uint128 = Uint128::new(1_000_000);
@@ -1186,6 +1187,26 @@ impl MockEnvBuilder {
             .unwrap();
 
         IncentivesUnchecked::new(addr.to_string())
+    }
+
+    pub fn deploy_astroport_incentives(&mut self) -> Addr {
+        let code_id = self.app.store_code(mock_astro_incentives_contract());
+        let addr = self
+            .app
+            .instantiate_contract(
+                code_id,
+                Addr::unchecked("astroport_incentives_owner"),
+                &Empty {},
+                &[],
+                "mock-astroport-incentives",
+                None,
+            )
+            .unwrap();
+
+        // todo fund incentives contract
+        // todo other setup
+
+        addr
     }
 
     fn deploy_vault(&mut self, vault: &VaultTestInfo) -> Addr {

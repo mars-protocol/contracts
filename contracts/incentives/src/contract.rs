@@ -233,6 +233,16 @@ pub fn query(deps: Deps, env: Env, msg: QueryMsg) -> StdResult<Binary> {
             account_id,
             lp_denom,
         } => to_json_binary(&query::query_user_lp_position(deps, env, account_id, lp_denom)?),
+        QueryMsg::AccountStakedLpRewards {
+            account_id,
+            lp_denom } => to_json_binary(
+                &query::query_lp_rewards_for_position(
+                    deps,
+                    &env,
+                    astroport_incentives_addr,
+                    user_id_key,
+                    lp_coin
+                ))
     }
 }
 

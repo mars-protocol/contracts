@@ -305,11 +305,13 @@ fn claim_astro_rewards_for_lp_position(
     res = if staked_lp_amount != Uint128::zero() {
         let user_claimable_rewards =
             calculate_claimable_rewards(deps.storage, account_id, lp_denom, staked_lp_amount)?;
-        
+
         for coin in &user_claimable_rewards {
-            event = event.add_attribute("denom", (&coin.denom).to_string()).add_attribute("amount", (&coin.amount).to_string());
+            event = event
+                .add_attribute("denom", (&coin.denom).to_string())
+                .add_attribute("amount", (&coin.amount).to_string());
         }
-        
+
         // Send the claimed rewards to the credit manager
         let send_rewards_to_cm_msg = CosmosMsg::Bank(BankMsg::Send {
             to_address: credit_manager_addr.to_string(),
