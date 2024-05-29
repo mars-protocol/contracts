@@ -7,7 +7,7 @@ use cw_it::astroport::astroport_v3::asset::Asset;
 use mars_incentives::{
     contract::{execute, query},
     query,
-    state::TOTAL_LP_DEPOSITS,
+    state::ASTRO_TOTAL_LP_DEPOSITS,
     ContractError,
 };
 use mars_testing::{assert_eq_vec, MarsMockQuerier};
@@ -116,7 +116,7 @@ fn lp_lifecycle() {
     // State:
     // - LP in incentives = 0
     // - Rewards available = 0
-    assert_eq!(TOTAL_LP_DEPOSITS.may_load(&deps.storage, lp_denom).unwrap(), None);
+    assert_eq!(ASTRO_TOTAL_LP_DEPOSITS.may_load(&deps.storage, lp_denom).unwrap(), None);
     let rewards = query::query_unclaimed_astroport_rewards(
         deps.as_ref(),
         &env.contract.address.to_string(),
@@ -141,7 +141,7 @@ fn lp_lifecycle() {
     // - LP in incentives = 100
     // - Rewards available = 0
     assert_eq!(
-        TOTAL_LP_DEPOSITS.may_load(&deps.storage, lp_denom).unwrap(),
+        ASTRO_TOTAL_LP_DEPOSITS.may_load(&deps.storage, lp_denom).unwrap(),
         Some(Uint128::new(100u128))
     );
 

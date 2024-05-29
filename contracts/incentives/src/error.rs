@@ -78,6 +78,11 @@ pub enum ContractError {
         account_id: String,
         denom: String,
     },
+
+    #[error("No deposits for {denom} exist")]
+    NoDeposits { 
+        denom: String 
+    },
 }
 
 impl From<ContractError> for StdError {

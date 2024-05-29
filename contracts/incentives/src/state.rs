@@ -33,13 +33,13 @@ pub const INCENTIVE_STATES: Map<(&str, &str), IncentiveState> = Map::new("incent
 
 /// A map containing the global incentive index for a given lp token
 /// The key is (lp token denom, incentive denom).
-pub const ASTROPORT_INCENTIVE_STATES: Map<(&str, &str), Decimal> =
+pub const ASTRO_INCENTIVE_STATES: Map<(&str, &str), Decimal> =
     Map::new("astroport_incentive_states");
 
 /// A map containing the individual incentive index for each unique user
 /// Note - this may contain many denoms for one user
 /// The key is (account_id, lp_token_denom, reward_denom)
-pub const USER_ASTROPORT_INCENTIVE_STATES: Map<(&str, &str, &str), Decimal> =
+pub const USER_ASTRO_INCENTIVE_STATES: Map<(&str, &str, &str), Decimal> =
     Map::new("user_astroport_incentive_states");
 
 /// A map containing emission speeds (incentive tokens per second) for a given collateral and
@@ -66,11 +66,11 @@ pub const MAX_LIMIT: u32 = 10;
 
 /// User LP positions staked in the astroport incentives contract. Returns amount
 /// The key is (account_id, lp_denom)
-pub const LP_DEPOSITS: Map<(&str, &str), Uint128> = Map::new("lp_deposits");
+pub const ASTRO_USER_LP_DEPOSITS: Map<(&str, &str), Uint128> = Map::new("lp_deposits");
 
 /// Total LP deposits in the astroport incentives contract. Returns amount
 /// The key is lp_denom
-pub const TOTAL_LP_DEPOSITS: Map<&str, Uint128> = Map::new("total_lp_deposits");
+pub const ASTRO_TOTAL_LP_DEPOSITS: Map<&str, Uint128> = Map::new("total_lp_deposits");
 
 /// Helper function to update unclaimed rewards for a given user, collateral denom and incentive
 /// denom. Adds `accrued_rewards` to the existing amount.
