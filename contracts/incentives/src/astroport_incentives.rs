@@ -2,8 +2,7 @@ use std::collections::HashMap;
 
 use astroport::incentives::ExecuteMsg;
 use cosmwasm_std::{
-    to_json_binary, BankMsg, Coin, CosmosMsg, Decimal, DepsMut, Env, Event, MessageInfo,
-    Order::Ascending, Response, StdResult, Storage, Uint128, WasmMsg,
+    ensure_eq, to_json_binary, BankMsg, Coin, CosmosMsg, Decimal, DepsMut, Env, Event, MessageInfo, Order::Ascending, Response, StdResult, Storage, Uint128, WasmMsg
 };
 use mars_types::{
     address_provider::{self, helpers::query_contract_addrs, MarsAddressType}, error::MarsError,

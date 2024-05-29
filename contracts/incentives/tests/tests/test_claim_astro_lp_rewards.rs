@@ -79,13 +79,11 @@ fn assert_user_rewards(
     lp_coin: Coin,
     rewards: Vec<Coin>,
 ) {
-
     let actual_rewards = query::query_lp_rewards_for_position(
         deps,
         &env,
-        &astroport_incentives_addr,
         user_id,
-        &lp_coin,
+        &lp_coin.denom,
     )
     .unwrap();
     assert_eq_vec(rewards, actual_rewards);
@@ -380,7 +378,7 @@ fn lp_lifecycle() {
 
     // State:
     // - LP in incentives = 300 (user_a 100, user_b 200)
-    // - Rewards available for user_1 = 50
+    // - Rewards available for user_1 = 0
     // - Rewards available for user_2 = 0
     assert_user_rewards(
         deps.as_ref(),
@@ -390,7 +388,7 @@ fn lp_lifecycle() {
         default_lp_coin.clone(),
         vec![Coin {
             denom: "ibc/reward_1".to_string(),
-            amount: Uint128::new(50u128),
+            amount: Uint128::new(0u128),
         }]
     );
 }

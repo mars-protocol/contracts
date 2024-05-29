@@ -12,7 +12,6 @@ use cw_it::astroport::astroport_v3::incentives::ExecuteMsg;
 use cw_storage_plus::Bound;
 use mars_types::{
     address_provider::{self, MarsAddressType},
-    error::MarsError,
     incentives::IncentiveState,
     keys::{UserId, UserIdKey},
     red_bank,

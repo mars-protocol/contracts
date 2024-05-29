@@ -2,7 +2,7 @@ use std::collections::HashMap;
 
 use astroport::asset::Asset;
 use cosmwasm_std::{
-    Addr, Coin, Coins, Decimal, Deps, Env, Order, Order::Ascending, StdError, StdResult, Uint128,
+    Addr, Coin, Coins, Decimal, Deps, Env, Order, Order::Ascending, StdResult, Uint128,
 };
 use cw_storage_plus::Bound;
 use mars_types::{
@@ -119,7 +119,6 @@ pub fn query_unclaimed_astroport_rewards(
 pub fn query_lp_rewards_for_user(
     deps: Deps,
     env: &Env,
-    astroport_incentives_addr: &Addr,
     user_id_key: &str,
     maybe_start_after_lp_denom: Option<&str>,
     limit: Option<u32>,
@@ -144,12 +143,8 @@ pub fn query_lp_rewards_for_user(
                 query_lp_rewards_for_position(
                     deps,
                     env,
-                    astroport_incentives_addr,
                     user_id_key,
-                    &Coin {
-                        denom: lp_denom,
-                        amount,
-                    },
+                    &lp_denom,
                 )
                 .expect("LP Rewards query failed"),
             )
@@ -167,15 +162,27 @@ pub fn query_lp_rewards_for_user(
 pub fn query_lp_rewards_for_position(
     deps: Deps,
     env: &Env,
-    astroport_incentives_addr: &Addr,
     account_id: &str,
-    lp_coin: &Coin,
-) -> Result<Vec<Coin>, ContractError> {
-    let lp_denom = &lp_coin.denom;
+    lp_denom: &str,
+) -> StdResult<Vec<Coin>> {
+    let config = CONFIG.load(deps.storage)?;
+
+    let amount = ASTRO_USER_LP_DEPOSITS.may_load(deps.storage, (&account_id, &lp_denom))?.ok_or(
+        ContractError::NoStakedLp {
+            account_id: account_id.to_string(),
+            denom: lp_denom.to_string(),
+        },
+    )?;
+
+    let astroport_incentive_addr = address_provider::helpers::query_contract_addr(
+        deps,
+        &config.address_provider,
+        MarsAddressType::AstroportIncentives,
+    )?;
     let pending_rewards: Vec<Coin> = query_unclaimed_astroport_rewards(
         deps,
         env.contract.address.as_ref(),
-        astroport_incentives_addr.as_ref(),
+        astroport_incentive_addr.as_ref(),
         lp_denom,
     )
     .unwrap_or_default();
@@ -193,10 +200,15 @@ pub fn query_lp_rewards_for_position(
     // Update our incentive states with the newly updated incentive states to ensure we are up to date.
     incentive_states.extend(incentives_to_update);
 
+    let lp_coin = Coin {
+        denom: lp_denom.to_string(),
+        amount,
+    };
+
     let reward_coins = calculate_rewards_from_astroport_incentive_state(
         deps.storage,
         account_id,
-        lp_coin,
+        &lp_coin,
         incentive_states,
     )?;
 
@@ -317,11 +329,6 @@ pub fn query_user_lp_position(
 ) -> StdResult<StakedLpPositionResponse> {
     // fetch position for lp position
     let config = CONFIG.load(deps.storage)?;
-    let astroport_incentive_addr = address_provider::helpers::query_contract_addr(
-        deps,
-        &config.address_provider,
-        MarsAddressType::AstroportIncentives,
-    )?;
 
     // query the position
     let amount = ASTRO_USER_LP_DEPOSITS.may_load(deps.storage, (&account_id, &denom))?.ok_or(
@@ -331,18 +338,17 @@ pub fn query_user_lp_position(
         },
     )?;
 
+    let rewards = query_lp_rewards_for_position(
+        deps,
+        &env,
+        &account_id,
+        &denom,
+    )?;
+
     let lp_coin = Coin {
         denom,
         amount,
     };
-
-    let rewards = query_lp_rewards_for_position(
-        deps,
-        &env,
-        &astroport_incentive_addr,
-        &account_id,
-        &lp_coin,
-    )?;
 
     let result = StakedLpPositionResponse {
         lp_coin,
@@ -360,11 +366,6 @@ pub fn query_user_lp_positions(
     limit: Option<u32>,
 ) -> StdResult<Vec<StakedLpPositionResponse>> {
     let config = CONFIG.load(deps.storage)?;
-    let astroport_incentive_addr = address_provider::helpers::query_contract_addr(
-        deps,
-        &config.address_provider,
-        MarsAddressType::AstroportIncentives,
-    )?;
 
     let min = start_after_denom.as_ref().map(|denom| Bound::exclusive(denom.as_str()));
     let limit = limit.unwrap_or(DEFAULT_LIMIT).min(MAX_LIMIT) as usize;
@@ -377,18 +378,19 @@ pub fn query_user_lp_positions(
     Ok(deposits
         .into_iter()
         .map(|(denom, amount)| {
+
+            let rewards = query_lp_rewards_for_position(
+                deps,
+                &env,
+                &account_id,
+                &denom,
+            )
+            .unwrap_or_default();
+
             let lp_coin = Coin {
                 denom,
                 amount,
             };
-            let rewards = query_lp_rewards_for_position(
-                deps,
-                &env,
-                &astroport_incentive_addr,
-                &account_id,
-                &lp_coin,
-            )
-            .unwrap_or_default();
 
             StakedLpPositionResponse {
                 lp_coin,
