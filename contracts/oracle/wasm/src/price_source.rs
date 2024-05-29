@@ -22,11 +22,12 @@ use crate::{
     helpers::{
         adjust_precision, astro_native_asset, get_astroport_pair_denoms,
         get_other_astroport_pair_denom, normalize_price, period_diff, query_astroport_config,
-        query_astroport_cumulative_price, query_astroport_curve_invariant,
-        query_astroport_pair_info, query_astroport_pool, query_token_precision,
+        query_astroport_cumulative_price, query_astroport_pair_info,
+        query_astroport_pcl_curve_invariant, query_astroport_pool,
+        query_astroport_ss_curve_invariant, query_token_precision,
         validate_astroport_lp_pool_for_type, validate_astroport_pair_price_source,
     },
-    lp_pricing::query_pcl_lp_price,
+    lp_pricing::{query_pcl_lp_price, query_stable_swap_lp_price},
     state::{ASTROPORT_FACTORY, ASTROPORT_TWAP_SNAPSHOTS},
 };
 
@@ -130,6 +131,10 @@ pub enum WasmPriceSource<A> {
         /// Address of the Astroport pair
         pair_address: A,
     },
+    SsLiquidityToken {
+        /// Address of the Astroport pair
+        pair_address: A,
+    },
 }
 
 #[cw_serde]
@@ -187,6 +192,7 @@ impl fmt::Display for WasmPriceSourceChecked {
             },
             WasmPriceSource::XykLiquidityToken { pair_address } => format!("xyk_liquidity_token:{pair_address}"),
             WasmPriceSource::PclLiquidityToken { pair_address } => format!("pcl_liquidity_token:{pair_address}"),
+            WasmPriceSource::SsLiquidityToken { pair_address } => format!("stable_swap_liquidity_token:{pair_address}"),
         };
         write!(f, "{label}")
     }
@@ -358,6 +364,21 @@ impl PriceSourceUnchecked<WasmPriceSourceChecked, Empty> for WasmPriceSourceUnch
                     pair_address,
                 })
             }
+            WasmPriceSource::SsLiquidityToken {
+                pair_address,
+            } => {
+                let pair_address = deps.api.addr_validate(&pair_address)?;
+                validate_astroport_lp_pool_for_type(
+                    deps,
+                    &pair_address,
+                    price_sources,
+                    PairType::Stable {},
+                )?;
+
+                Ok(WasmPriceSourceChecked::SsLiquidityToken {
+                    pair_address,
+                })
+            }
         }
     }
 }
@@ -459,6 +480,11 @@ impl PriceSourceChecked<Empty> for WasmPriceSourceChecked {
                 pair_address,
                 kind,
             ),
+            WasmPriceSource::SsLiquidityToken {
+                pair_address,
+            } => {
+                query_ss_liquidity_token_price(deps, env, config, price_sources, pair_address, kind)
+            }
         }
     }
 }
@@ -755,7 +781,7 @@ fn query_pcl_liquidity_token_price(
         None => return Err(ContractError::MissingAstroportPoolParams {}),
     };
 
-    let curve_invariant = query_astroport_curve_invariant(&deps.querier, pair_address)?;
+    let curve_invariant = query_astroport_pcl_curve_invariant(&deps.querier, pair_address)?;
 
     query_pcl_lp_price(
         deps,
@@ -767,6 +793,34 @@ fn query_pcl_liquidity_token_price(
         coin1,
         pool.total_share,
         pool_params.price_scale,
+        curve_invariant,
+    )
+}
+
+fn query_ss_liquidity_token_price(
+    deps: &Deps,
+    env: &Env,
+    config: &Config,
+    price_sources: &Map<&str, WasmPriceSourceChecked>,
+    pair_address: &Addr,
+    kind: ActionKind,
+) -> ContractResult<Decimal> {
+    // StableSwap pool asserted during price source creation
+    let pool = query_astroport_pool(&deps.querier, pair_address)?;
+    let coin0 = pool.assets[0].to_coin()?;
+    let coin1 = pool.assets[1].to_coin()?;
+
+    let curve_invariant = query_astroport_ss_curve_invariant(&deps.querier, pair_address)?;
+
+    query_stable_swap_lp_price(
+        deps,
+        env,
+        config,
+        price_sources,
+        kind,
+        coin0,
+        coin1,
+        pool.total_share,
         curve_invariant,
     )
 }
