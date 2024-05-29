@@ -25,6 +25,7 @@ astroport       = "=5.0.0-rc.1-tokenfactory"
 cosmwasm-schema = { workspace = true }
 cosmwasm-std    = { workspace = true }
 cw2             = { workspace = true }
+cw-paginate     = { workspace = true }
 cw-storage-plus = { workspace = true }
 mars-owner      = { workspace = true }
 mars-types      = { workspace = true }

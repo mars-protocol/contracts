@@ -80,8 +80,8 @@ pub enum ContractError {
     },
 
     #[error("No deposits for {denom} exist")]
-    NoDeposits { 
-        denom: String 
+    NoDeposits {
+        denom: String,
     },
 }
 

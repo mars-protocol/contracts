@@ -1,6 +1,9 @@
 use cosmwasm_schema::{cw_serde, QueryResponses};
 use cosmwasm_std::{Addr, Coin, Decimal, Uint128};
+use cw_paginate::PaginationResponse;
 use mars_owner::OwnerUpdate;
+
+use crate::credit_manager::ActionCoin;
 
 /// Global configuration
 #[cw_serde]
@@ -173,7 +176,7 @@ pub enum ExecuteMsg {
         /// User credit account Id
         account_id: String,
         /// AstroLp token to unstake.
-        lp_coin: Coin,
+        lp_coin: ActionCoin,
     },
 
     /// Update contract config (only callable by owner)
@@ -240,7 +243,7 @@ pub enum QueryMsg {
     },
 
     /// Enumerate a users LP positions with pagination
-    #[returns(Vec<StakedLpPositionResponse>)]
+    #[returns(PaginatedStakedLpResponse)]
     StakedLpPositions {
         /// The id of the account who owns the LP
         account_id: String,
@@ -380,6 +383,9 @@ pub struct StakedLpPositionResponse {
     pub lp_coin: Coin,
     pub rewards: Vec<Coin>,
 }
+
+pub type PaginatedStakedLpResponse = PaginationResponse<StakedLpPositionResponse>;
+
 
 #[cw_serde]
 pub enum LpModification {

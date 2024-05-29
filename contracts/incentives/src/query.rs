@@ -4,6 +4,7 @@ use astroport::asset::Asset;
 use cosmwasm_std::{
     Addr, Coin, Coins, Decimal, Deps, Env, Order, Order::Ascending, StdError, StdResult, Uint128,
 };
+use cw_paginate::paginate_prefix_query;
 use cw_storage_plus::Bound;
 use mars_types::{
     address_provider,
@@ -21,8 +22,8 @@ use crate::{
     },
     state,
     state::{
-        ASTRO_INCENTIVE_STATES, CONFIG, DEFAULT_LIMIT, EMISSIONS, EPOCH_DURATION,
-        INCENTIVE_STATES, ASTRO_USER_LP_DEPOSITS, MAX_LIMIT, OWNER, WHITELIST, WHITELIST_COUNT,
+        ASTRO_INCENTIVE_STATES, ASTRO_USER_LP_DEPOSITS, CONFIG, DEFAULT_LIMIT, EMISSIONS,
+        EPOCH_DURATION, INCENTIVE_STATES, MAX_LIMIT, OWNER, WHITELIST, WHITELIST_COUNT,
     },
     ContractError,
 };
@@ -194,7 +195,7 @@ pub fn query_lp_rewards_for_position(
     incentive_states.extend(incentives_to_update);
 
     let reward_coins = calculate_rewards_from_astroport_incentive_state(
-        deps.storage,
+        &mut deps.storage.into(),
         account_id,
         lp_coin,
         incentive_states,
@@ -358,7 +359,7 @@ pub fn query_user_lp_positions(
     account_id: String,
     start_after_denom: Option<String>,
     limit: Option<u32>,
-) -> StdResult<Vec<StakedLpPositionResponse>> {
+) -> StdResult<PaginatedStakedLpResponse> {
     let config = CONFIG.load(deps.storage)?;
     let astroport_incentive_addr = address_provider::helpers::query_contract_addr(
         deps,
@@ -366,17 +367,16 @@ pub fn query_user_lp_positions(
         MarsAddressType::AstroportIncentives,
     )?;
 
-    let min = start_after_denom.as_ref().map(|denom| Bound::exclusive(denom.as_str()));
+    let start = start_after_denom.as_ref().map(|denom| Bound::exclusive(denom.as_str()));
     let limit = limit.unwrap_or(DEFAULT_LIMIT).min(MAX_LIMIT) as usize;
-    let deposits = ASTRO_USER_LP_DEPOSITS
-        .prefix(&account_id)
-        .range(deps.storage, min, None, Order::Ascending)
-        .take(limit)
-        .collect::<StdResult<Vec<_>>>()?;
 
-    Ok(deposits
-        .into_iter()
-        .map(|(denom, amount)| {
+    Ok(paginate_prefix_query(
+        &ASTRO_USER_LP_DEPOSITS,
+        deps.storage,
+        &account_id,
+        start,
+        Some(limit),
+        |(denom, amount)| {
             let lp_coin = Coin {
                 denom,
                 amount,
@@ -387,13 +387,12 @@ pub fn query_user_lp_positions(
                 &astroport_incentive_addr,
                 &account_id,
                 &lp_coin,
-            )
-            .unwrap_or_default();
+            )?;
 
-            StakedLpPositionResponse {
+            Ok(StakedLpPositionResponse {
                 lp_coin,
                 rewards,
-            }
-        })
-        .collect())
+            })
+        },
+    ))
 }

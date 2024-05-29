@@ -2204,6 +2204,7 @@ dependencies = [
  "cosmwasm-schema",
  "cosmwasm-std",
  "cw-it",
+ "cw-paginate",
  "cw-storage-plus 1.2.0",
  "cw2 1.1.2",
  "mars-owner 2.0.0",

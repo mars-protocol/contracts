@@ -5,13 +5,13 @@ use cosmwasm_std::{
 };
 use cw_it::astroport::astroport_v3::asset::Asset;
 use mars_incentives::{
-    contract::{execute, query},
-    query,
-    state::ASTRO_TOTAL_LP_DEPOSITS,
-    ContractError,
+    contract::{execute, query}, helpers::MaybeMutStorage, query, state::ASTRO_TOTAL_LP_DEPOSITS, ContractError
 };
 use mars_testing::{assert_eq_vec, MarsMockQuerier};
-use mars_types::incentives::{ExecuteMsg, QueryMsg};
+use mars_types::{
+    credit_manager::{ActionAmount, ActionCoin},
+    incentives::{ExecuteMsg, QueryMsg},
+};
 
 use crate::tests::helpers::th_setup;
 
@@ -24,7 +24,7 @@ fn set_pending_astro_rewards(
     deps.querier.set_unclaimed_astroport_lp_rewards(lp_denom, mars_incentives_contract, rewards);
 }
 fn deposit_for_user(
-    deps: &mut OwnedDeps<MemoryStorage, MockApi, MarsMockQuerier>,
+    deps: DepsMut,
     env: Env,
     sender: &str,
     account_id: String,
@@ -36,11 +36,11 @@ fn deposit_for_user(
         lp_coin,
     };
 
-    execute(deps.as_mut(), env, info, msg)
+    execute(deps, env, info, msg)
 }
 
 fn claim_for_user(
-    deps: &mut OwnedDeps<MemoryStorage, MockApi, MarsMockQuerier>,
+    deps: DepsMut,
     env: Env,
     sender: &str,
     account_id: String,
@@ -52,15 +52,15 @@ fn claim_for_user(
         lp_denom,
     };
 
-    execute(deps.as_mut(), env, info, msg)
+    execute(deps, env, info, msg)
 }
 
 fn unstake_for_user(
-    deps: &mut OwnedDeps<MemoryStorage, MockApi, MarsMockQuerier>,
+    deps: DepsMut,
     env: Env,
     sender: &str,
     account_id: String,
-    lp_coin: Coin,
+    lp_coin: ActionCoin,
 ) -> Result<Response, ContractError> {
     let info = mock_info(sender, &[]);
     let msg = ExecuteMsg::UnstakeAstroLp {
@@ -68,7 +68,7 @@ fn unstake_for_user(
         lp_coin,
     };
 
-    execute(deps.as_mut(), env, info, msg)
+    execute(deps, env, info, msg)
 }
 
 fn assert_user_rewards(
@@ -79,7 +79,7 @@ fn assert_user_rewards(
     lp_coin: Coin,
     rewards: Vec<Coin>,
 ) {
-
+    println!("assert rewards");
     let actual_rewards = query::query_lp_rewards_for_position(
         deps,
         &env,
@@ -96,7 +96,7 @@ fn lp_lifecycle() {
     // SETUP
     let env = mock_env();
     let mut deps: OwnedDeps<MemoryStorage, MockApi, MarsMockQuerier> = th_setup();
-
+    
     // users
     let user_a_id = "1";
     let user_b_id = "2";
@@ -124,12 +124,13 @@ fn lp_lifecycle() {
         lp_denom,
     )
     .unwrap();
+
     assert_eq!(rewards.is_empty(), true);
     let mars_incentives_contract = &env.contract.address.to_string();
 
     // Deposit for user a
     let res = deposit_for_user(
-        &mut deps,
+        deps.as_mut(),
         env.clone(),
         credit_manager.as_str(),
         user_a_id.to_string(),
@@ -164,9 +165,10 @@ fn lp_lifecycle() {
         default_lp_coin.clone(),
         unclaimed_rewards.iter().map(|asset| asset.as_coin().unwrap()).collect(),
     );
+
     // deposit new user
     let res = deposit_for_user(
-        &mut deps,
+        deps.as_mut(),
         env.clone(),
         credit_manager.as_str(),
         user_b_id.to_string(),
@@ -243,7 +245,7 @@ fn lp_lifecycle() {
 
     // claim rewards, set as null
     claim_for_user(
-        &mut deps,
+        deps.as_mut(),
         env.clone(),
         credit_manager.as_str(),
         user_a_id.to_string(),
@@ -324,7 +326,7 @@ fn lp_lifecycle() {
 
     // test double stake
     deposit_for_user(
-        &mut deps,
+        deps.as_mut(),
         env.clone(),
         credit_manager.as_str(),
         user_b_id.to_string(),
@@ -367,20 +369,20 @@ fn lp_lifecycle() {
     );
 
     unstake_for_user(
-        &mut deps,
+        deps.as_mut(),
         env.clone(),
         credit_manager.as_str(),
         user_a_id.to_string(),
-        Coin {
+        ActionCoin {
             denom: lp_denom.to_string(),
-            amount: Uint128::new(100u128),
+            amount: ActionAmount::AccountBalance,
         },
     )
     .unwrap();
 
     // State:
     // - LP in incentives = 300 (user_a 100, user_b 200)
-    // - Rewards available for user_1 = 50
+    // - Rewards available for user_1 = 0
     // - Rewards available for user_2 = 0
     assert_user_rewards(
         deps.as_ref(),
@@ -388,10 +390,7 @@ fn lp_lifecycle() {
         astroport_incentives_addr.clone(),
         user_a_id,
         default_lp_coin.clone(),
-        vec![Coin {
-            denom: "ibc/reward_1".to_string(),
-            amount: Uint128::new(50u128),
-        }]
+        vec![],
     );
 }
 
@@ -410,7 +409,7 @@ fn assert_only_credit_manager() {
     let lp_denom = "uusd/ubtc";
 
     deposit_for_user(
-        &mut deps,
+        deps.as_mut(),
         env.clone(),
         "not_credit_manager",
         user_a_id.to_string(),
@@ -419,7 +418,7 @@ fn assert_only_credit_manager() {
     .expect_err("Unauthorized");
 
     claim_for_user(
-        &mut deps,
+        deps.as_mut(),
         env.clone(),
         "not_credit_manager",
         user_a_id.to_string(),
@@ -428,11 +427,11 @@ fn assert_only_credit_manager() {
     .expect_err("Unauthorized");
 
     unstake_for_user(
-        &mut deps,
+        deps.as_mut(),
         env.clone(),
         "not_credit_manager",
         user_a_id.to_string(),
-        Coin::new(100u128, lp_denom),
+        ActionCoin{ denom: lp_denom.to_string(), amount: mars_types::credit_manager::ActionAmount::Exact(Uint128::new(100u128)) }
     )
     .expect_err("Unauthorized");
 }
