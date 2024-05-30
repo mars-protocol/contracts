@@ -197,7 +197,7 @@ pub fn compute_ss_lp_price(
     // StableSwap pool lp price calculation:
     //    virtual_price = curve_invariant / total_shares
     //    lp_price = virtual_price * min(coin0_price, coin1_price)
-    let virtual_price = Decimal::from_ratio(curve_invariant.checked_div(total_shares)?, 1u128);
+    let virtual_price = Decimal::checked_from_ratio(curve_invariant, total_shares)?;
 
     // The curve_invariant takes on the precision of the asset with the greatest precision.
     // https://github.dev/astroport-fi/astroport-core/blob/a0a71af801be3f72c64b81f798e1b0805cf0f594/contracts/pair_stable/src/contract.rs#L91
@@ -205,18 +205,31 @@ pub fn compute_ss_lp_price(
     // curve_invariant with 18 decimals.
     let greatest_precision = max(coin0_decimals, coin1_decimals);
 
+    // 1 BTC = 65 000 USD
+    //
+    // We have to provide prices for the whole unit:
+    // 10^8 ubtc = 65 * 10^9 uusd
+    // 1 ubtc = 65 * 10^9 / 10^8 uusd
+    // 1 ubtc = 650 uusd
+    // If we multiply by BTC decimals:
+    // 1 BTC = 650 * 10^8 uusd
+    // 1 BTC = 65 * 10^9 uusd
     let coin0_price_scaled =
-        Decimal256::from(coin0_price) * Decimal256::from_str("10")?.pow(u32::from(coin0_decimals));
+        Decimal256::from(coin0_price) * Decimal256::from_str("10")?.pow(coin0_decimals as u32);
     let coin1_price_scaled =
-        Decimal256::from(coin1_price) * Decimal256::from_str("10")?.pow(u32::from(coin1_decimals));
+        Decimal256::from(coin1_price) * Decimal256::from_str("10")?.pow(coin1_decimals as u32);
 
     let lp_price_256_scaled =
         Decimal256::from(virtual_price).checked_mul(min(coin0_price_scaled, coin1_price_scaled))?;
 
+    // https://github.dev/astroport-fi/astroport-core/blob/a0a71af801be3f72c64b81f798e1b0805cf0f594/packages/astroport/src/asset.rs#L836
+    //
     // The price needs to be adjusted with the greatest_precision to denominate correctly in
-    // uusd per share
+    // uusd per share. Since the prices are already scaled to accompany the asset precisions,
+    // we can ignore the `self.decimals()` (in the linked Astroport code) of the calculation and
+    // just divide by the greatest precision.
     let lp_price_256 = lp_price_256_scaled
-        .checked_div(Decimal256::from_str("10")?.pow(u32::from(greatest_precision)))?;
+        .checked_div(Decimal256::from_str("10")?.pow(greatest_precision as u32))?;
     let lp_price = Decimal::try_from(lp_price_256)?;
 
     Ok(lp_price)
