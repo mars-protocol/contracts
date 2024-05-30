@@ -2,8 +2,8 @@ use std::str::FromStr;
 
 use astroport::{
     factory::PairType,
-    pair::StablePoolParams,
-    pair_concentrated::{ConcentratedPoolParams, QueryMsg},
+    pair::{QueryMsg, StablePoolParams},
+    pair_concentrated::{ConcentratedPoolParams, QueryMsg as ConcentratedPairQueryMsg},
 };
 use cosmwasm_std::{to_json_binary, Binary, Decimal, Decimal256, Empty, Uint128};
 #[cfg(feature = "osmosis-test-tube")]
@@ -356,12 +356,16 @@ impl<'a> WasmOracleTestRobot<'a> {
         self
     }
 
-    pub fn query_curve_invariant(&self, pair_addr: &str) -> Decimal256 {
-        self.wasm().query(pair_addr, &QueryMsg::ComputeD {}).unwrap()
+    pub fn query_pcl_curve_invariant(&self, pair_addr: &str) -> Decimal256 {
+        self.wasm().query(pair_addr, &ConcentratedPairQueryMsg::ComputeD {}).unwrap()
+    }
+
+    pub fn query_ss_curve_invariant(&self, pair_addr: &str) -> Uint128 {
+        self.wasm().query(pair_addr, &QueryMsg::QueryComputeD {}).unwrap()
     }
 
     pub fn query_astroport_config(&self, pair_addr: &str) -> astroport::pair::ConfigResponse {
-        self.wasm().query(pair_addr, &QueryMsg::Config {}).unwrap()
+        self.wasm().query(pair_addr, &ConcentratedPairQueryMsg::Config {}).unwrap()
     }
 }
 

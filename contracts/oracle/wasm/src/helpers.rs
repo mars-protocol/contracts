@@ -39,11 +39,18 @@ pub fn query_astroport_config(
     querier.query_wasm_smart(pair_contract, &PairQueryMsg::Config {})
 }
 
-pub fn query_astroport_curve_invariant(
+pub fn query_astroport_pcl_curve_invariant(
     querier: &QuerierWrapper,
     pair_contract: impl Into<String>,
 ) -> StdResult<Decimal256> {
     querier.query_wasm_smart(pair_contract, &ConcentratedPairQueryMsg::ComputeD {})
+}
+
+pub fn query_astroport_ss_curve_invariant(
+    querier: &QuerierWrapper,
+    pair_contract: impl Into<String>,
+) -> StdResult<Uint128> {
+    querier.query_wasm_smart(pair_contract, &PairQueryMsg::QueryComputeD {})
 }
 
 /// Helper function to create an Astroport native token AssetInfo.
