@@ -1,9 +1,11 @@
 use std::str::FromStr;
 
 use astroport::{
-    factory::PairType, pair::StablePoolParams, pair_concentrated::ConcentratedPoolParams,
+    factory::PairType,
+    pair::StablePoolParams,
+    pair_concentrated::{ConcentratedPoolParams, QueryMsg},
 };
-use cosmwasm_std::{to_json_binary, Binary, Decimal, Empty, Uint128};
+use cosmwasm_std::{to_json_binary, Binary, Decimal, Decimal256, Empty, Uint128};
 #[cfg(feature = "osmosis-test-tube")]
 use cw_it::Artifact;
 use cw_it::{
@@ -227,10 +229,18 @@ impl<'a> WasmOracleTestRobot<'a> {
         tolerance: Decimal,
     ) -> &Self {
         let price = self.query_price(denom);
-        println!("price: {:?}", price);
-        println!("expected_price: {:?}", expected_price);
         assert_almost_equal(price.price, expected_price, tolerance);
         assert_eq!(price.denom, denom);
+        self
+    }
+
+    pub fn assert_prices_almost_equal(
+        &self,
+        price0: Decimal,
+        price1: Decimal,
+        tolerance: Decimal,
+    ) -> &Self {
+        assert_almost_equal(price0, price1, tolerance);
         self
     }
 
@@ -344,6 +354,14 @@ impl<'a> WasmOracleTestRobot<'a> {
         let rr = self.query_redemption_rate(denom);
         assert_eq!(rr.redemption_rate, expected_value);
         self
+    }
+
+    pub fn query_curve_invariant(&self, pair_addr: &str) -> Decimal256 {
+        self.wasm().query(pair_addr, &QueryMsg::ComputeD {}).unwrap()
+    }
+
+    pub fn query_astroport_config(&self, pair_addr: &str) -> astroport::pair::ConfigResponse {
+        self.wasm().query(pair_addr, &QueryMsg::Config {}).unwrap()
     }
 }
 

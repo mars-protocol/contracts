@@ -52,7 +52,13 @@ export type QueryMsg =
       config: {}
     }
 export type ActionKind = 'default' | 'liquidation'
-export type AccountKind = 'default' | 'high_levered_strategy'
+export type AccountKind =
+  | ('default' | 'high_levered_strategy')
+  | {
+      fund_manager: {
+        vault_addr: string
+      }
+    }
 export interface ConfigResponse {
   credit_manager?: string | null
   owner_response: OwnerResponse

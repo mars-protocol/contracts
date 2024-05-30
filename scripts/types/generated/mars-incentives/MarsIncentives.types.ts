@@ -8,7 +8,6 @@
 export interface InstantiateMsg {
   address_provider: string
   epoch_duration: number
-  mars_denom: string
   max_whitelisted_denoms: number
   owner: string
 }

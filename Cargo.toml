@@ -13,6 +13,7 @@ members  = [
   "contracts/rewards-collector/*",
   "contracts/swapper/*",
   "contracts/v2-zapper/*",
+  "contracts/vault",
 
   # mock contracts
   "contracts/mock-credit-manager",
@@ -55,6 +56,8 @@ keywords      = ["mars", "cosmos", "cosmwasm"]
 
 [workspace.dependencies]
 anyhow             = "1.0.80"
+apollo-cw-asset    = { version = "0.1.2", features = ["astroport"] }
+apollo-utils       = "0.1.2"
 astroport          = "2.8.0"
 bech32             = "0.9.1"
 cosmwasm-schema    = "1.5.3"
@@ -74,6 +77,7 @@ neutron-sdk        = "0.8.0"
 osmosis-std        = "0.22.0"
 prost              = { version = "0.12.3", default-features = false }
 pyth-sdk-cw        = "1.2.0"
+regex              = "1.10.4"
 schemars           = "0.8.16"
 serde              = { version = "1.0.197", default-features = false }
 serde_json         = "1.0.114"
@@ -85,7 +89,7 @@ tsify              = "0.4.5"
 wasm-bindgen       = "0.2.91"
 
 # dev-dependencies
-cw-multi-test     = "0.20.0"
+cw-multi-test     = { version = "0.20.0", features = ["cosmwasm_1_1"] }
 cw-it             = "0.3.0"
 osmosis-test-tube = "22.1.0"
 proptest          = "1.4.0"
@@ -106,6 +110,7 @@ mars-utils                 = { path = "./packages/utils" }
 # contracts
 mars-account-nft               = { path = "./contracts/account-nft" }
 mars-address-provider          = { path = "./contracts/address-provider" }
+mars-credit-manager            = { path = "./contracts/credit-manager" }
 mars-incentives                = { path = "./contracts/incentives" }
 mars-mock-pyth                 = { path = "./contracts/mock-pyth" }
 mars-oracle-base               = { path = "./contracts/oracle/base" }
@@ -120,6 +125,7 @@ mars-rover-health              = { path = "./contracts/health" }
 mars-swapper-astroport         = { path = "./contracts/swapper/astroport" }
 mars-swapper-base              = { path = "./contracts/swapper/base" }
 mars-swapper-osmosis           = { path = "./contracts/swapper/osmosis" }
+mars-vault                     = { path = "./contracts/vault" }
 mars-zapper-base               = { path = "./contracts/v2-zapper/base" }
 
 # mocks

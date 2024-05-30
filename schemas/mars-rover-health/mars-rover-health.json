@@ -223,10 +223,36 @@
     ],
     "definitions": {
       "AccountKind": {
-        "type": "string",
-        "enum": [
-          "default",
-          "high_levered_strategy"
+        "oneOf": [
+          {
+            "type": "string",
+            "enum": [
+              "default",
+              "high_levered_strategy"
+            ]
+          },
+          {
+            "description": "A vault that is managed by a fund manager. Fund manager (wallet) is responsible for managing the vault. Fund manager can't deposit and withdraw funds from the vault.",
+            "type": "object",
+            "required": [
+              "fund_manager"
+            ],
+            "properties": {
+              "fund_manager": {
+                "type": "object",
+                "required": [
+                  "vault_addr"
+                ],
+                "properties": {
+                  "vault_addr": {
+                    "type": "string"
+                  }
+                },
+                "additionalProperties": false
+              }
+            },
+            "additionalProperties": false
+          }
         ]
       },
       "ActionKind": {

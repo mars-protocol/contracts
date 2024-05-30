@@ -37,7 +37,7 @@ impl Params {
         &self,
         querier: &QuerierWrapper,
         denom: &str,
-    ) -> StdResult<AssetParams> {
+    ) -> StdResult<Option<AssetParams>> {
         querier.query_wasm_smart(
             self.address().to_string(),
             &QueryMsg::AssetParams {

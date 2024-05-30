@@ -398,7 +398,6 @@ export class Deployer {
       address_provider: this.storage.addresses['addressProvider']!,
       epoch_duration: this.config.incentives.epochDuration,
       max_whitelisted_denoms: this.config.incentives.maxWhitelistedIncentiveDenoms,
-      mars_denom: this.config.marsDenom,
     }
     await this.instantiate('incentives', this.storage.codeIds.incentives!, msg)
   }

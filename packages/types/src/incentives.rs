@@ -13,8 +13,6 @@ pub struct Config {
     /// The maximum number of incentive denoms that can be whitelisted at any given time. This is
     /// a guard against accidentally whitelisting too many denoms, which could cause max gas errors.
     pub max_whitelisted_denoms: u8,
-    /// Mars Token Denom
-    pub mars_denom: String,
 }
 
 /// Incentive Metadata for a given incentive
@@ -92,8 +90,6 @@ pub struct InstantiateMsg {
     /// The maximum number of incentive denoms that can be whitelisted at any given time. This is
     /// a guard against accidentally whitelisting too many denoms, which could cause max gas errors.
     pub max_whitelisted_denoms: u8,
-    /// Mars Token Denom
-    pub mars_denom: String,
 }
 
 #[cw_serde]
@@ -313,16 +309,6 @@ pub enum QueryMsg {
     /// denoms of all whitelisted incentive denoms, as well as the minimum emission rate for each.
     #[returns(Vec<WhitelistEntry>)]
     Whitelist {},
-}
-
-#[cw_serde]
-pub struct MigrateMsg {
-    /// The amount of time in seconds for each incentive epoch. This is the minimum amount of time
-    /// that an incentive can last, and each incentive must be a multiple of this duration.
-    pub epoch_duration: u64,
-    /// The maximum number of incentive denoms that can be whitelisted at any given time. This is
-    /// a guard against accidentally whitelisting too many denoms, which could cause max gas errors.
-    pub max_whitelisted_denoms: u8,
 }
 
 #[cw_serde]

@@ -16,7 +16,7 @@ use mars_types::{
 };
 
 use crate::{
-    error::ContractError,
+    error::{ContractError, ContractResult},
     health,
     state::{COLLATERALS, CONFIG, DEBTS, MARKETS, OWNER},
 };
@@ -85,7 +85,7 @@ pub fn query_markets_v2(
     env: Env,
     start_after: Option<String>,
     limit: Option<u32>,
-) -> Result<PaginationResponse<MarketV2Response>, ContractError> {
+) -> ContractResult<PaginationResponse<MarketV2Response>> {
     let block_time = env.block.time.seconds();
     let start = start_after.map(|denom| Bound::ExclusiveRaw(denom.into_bytes()));
     let limit = limit.unwrap_or(DEFAULT_LIMIT).min(MAX_LIMIT);

@@ -189,4 +189,7 @@ pub enum ContractError {
 
     #[error("Debt cannot be represented by zero debt shares")]
     ZeroDebtShares,
+
+    #[error("{0} asset params not found")]
+    AssetParamsNotFound(String),
 }

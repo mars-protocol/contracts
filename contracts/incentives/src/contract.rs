@@ -41,7 +41,6 @@ pub fn instantiate(
     let config = Config {
         address_provider: deps.api.addr_validate(&msg.address_provider)?,
         max_whitelisted_denoms: msg.max_whitelisted_denoms,
-        mars_denom: msg.mars_denom,
     };
     CONFIG.save(deps.storage, &config)?;
 
@@ -239,6 +238,6 @@ pub fn query(deps: Deps, env: Env, msg: QueryMsg) -> StdResult<Binary> {
 /// MIGRATION
 
 #[cfg_attr(not(feature = "library"), entry_point)]
-pub fn migrate(deps: DepsMut, env: Env, msg: MigrateMsg) -> Result<Response, ContractError> {
+pub fn migrate(deps: DepsMut, env: Env, msg: Empty) -> Result<Response, ContractError> {
     migrations::v2_0_0::migrate(deps, env, msg)
 }

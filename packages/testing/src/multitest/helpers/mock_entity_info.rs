@@ -96,7 +96,7 @@ pub fn ujake_info() -> CoinInfo {
     }
 }
 
-pub fn blacklisted_coin() -> CoinInfo {
+pub fn blacklisted_coin_info() -> CoinInfo {
     CoinInfo {
         denom: "uluna".to_string(),
         price: Decimal::from_str("0.01").unwrap(),

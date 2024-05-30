@@ -1,12 +1,10 @@
 use cosmwasm_std::{DepsMut, Response};
 use cw2::{assert_contract_version, set_contract_version};
+use mars_swapper_base::ContractError;
 
-use crate::{
-    contract::{CONTRACT_NAME, CONTRACT_VERSION},
-    error::ContractError,
-};
+use crate::contract::{CONTRACT_NAME, CONTRACT_VERSION};
 
-const FROM_VERSION: &str = "2.0.0";
+const FROM_VERSION: &str = "1.2.0";
 
 pub fn migrate(deps: DepsMut) -> Result<Response, ContractError> {
     // make sure we're migrating the correct contract and from the correct version

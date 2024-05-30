@@ -15,7 +15,11 @@ use mars_red_bank::{
     state::{COLLATERALS, DEBTS, MARKETS},
 };
 use mars_testing::{
-    integration::mock_env::MockEnvBuilder, mock_env_at_block_time, MarsMockQuerier,
+    integration::{
+        helpers::{osmo_asset_params, usdc_asset_params},
+        mock_env::MockEnvBuilder,
+    },
+    mock_env_at_block_time, MarsMockQuerier,
 };
 use mars_types::{
     address_provider::MarsAddressType,
@@ -30,7 +34,7 @@ use super::helpers::{
     has_collateral_position, set_collateral, th_build_interests_updated_event,
     th_default_asset_params, th_get_expected_indices_and_rates, th_setup, TestUtilizationDeltaInfo,
 };
-use crate::tests::helpers::{assert_err_with_str, osmo_asset_params, usdc_asset_params};
+use crate::tests::helpers::assert_err_with_str;
 
 struct TestSuite {
     deps: OwnedDeps<MockStorage, MockApi, MarsMockQuerier>,
