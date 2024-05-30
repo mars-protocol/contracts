@@ -1,8 +1,8 @@
-use std::{collections::HashMap, error::Error};
+use std::collections::HashMap;
 
 use cosmwasm_std::{to_json_binary, Addr, Binary, ContractResult, QuerierResult, Uint128};
 // todo this dependency is probably not correct?
-use cw_it::astroport::astroport_v3::{asset, asset::Asset, incentives::QueryMsg};
+use cw_it::astroport::astroport_v3::{asset::Asset, incentives::QueryMsg};
 
 pub struct AstroportIncentivesQuerier {
     /// Holds mock rewards, key is (user, lp_token_denom)

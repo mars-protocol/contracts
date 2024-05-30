@@ -1,16 +1,13 @@
-use astroport::asset::AssetInfo;
 use cosmwasm_std::{
     testing::{mock_env, mock_info, MockApi},
     Addr, Coin, Deps, DepsMut, Env, MemoryStorage, OwnedDeps, Response, Uint128,
 };
 use cw_it::astroport::astroport_v3::asset::Asset;
-use mars_incentives::{
-    contract::{execute, query}, helpers::MaybeMutStorage, query, state::ASTRO_TOTAL_LP_DEPOSITS, ContractError
-};
+use mars_incentives::{contract::execute, query, state::ASTRO_TOTAL_LP_DEPOSITS, ContractError};
 use mars_testing::{assert_eq_vec, MarsMockQuerier};
 use mars_types::{
     credit_manager::{ActionAmount, ActionCoin},
-    incentives::{ExecuteMsg, QueryMsg},
+    incentives::ExecuteMsg,
 };
 
 use crate::tests::helpers::th_setup;
@@ -96,7 +93,7 @@ fn lp_lifecycle() {
     // SETUP
     let env = mock_env();
     let mut deps: OwnedDeps<MemoryStorage, MockApi, MarsMockQuerier> = th_setup();
-    
+
     // users
     let user_a_id = "1";
     let user_b_id = "2";
@@ -119,17 +116,17 @@ fn lp_lifecycle() {
     assert_eq!(ASTRO_TOTAL_LP_DEPOSITS.may_load(&deps.storage, lp_denom).unwrap(), None);
     let rewards = query::query_unclaimed_astroport_rewards(
         deps.as_ref(),
-        &env.contract.address.to_string(),
-        &astroport_incentives_addr.to_string(),
+        env.contract.address.as_ref(),
+        astroport_incentives_addr.as_ref(),
         lp_denom,
     )
     .unwrap();
 
-    assert_eq!(rewards.is_empty(), true);
+    assert!(rewards.is_empty());
     let mars_incentives_contract = &env.contract.address.to_string();
 
     // Deposit for user a
-    let res = deposit_for_user(
+    deposit_for_user(
         deps.as_mut(),
         env.clone(),
         credit_manager.as_str(),
@@ -167,7 +164,7 @@ fn lp_lifecycle() {
     );
 
     // deposit new user
-    let res = deposit_for_user(
+    deposit_for_user(
         deps.as_mut(),
         env.clone(),
         credit_manager.as_str(),
@@ -431,7 +428,10 @@ fn assert_only_credit_manager() {
         env.clone(),
         "not_credit_manager",
         user_a_id.to_string(),
-        ActionCoin{ denom: lp_denom.to_string(), amount: mars_types::credit_manager::ActionAmount::Exact(Uint128::new(100u128)) }
+        ActionCoin {
+            denom: lp_denom.to_string(),
+            amount: mars_types::credit_manager::ActionAmount::Exact(Uint128::new(100u128)),
+        },
     )
     .expect_err("Unauthorized");
 }

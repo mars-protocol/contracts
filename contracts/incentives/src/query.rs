@@ -2,16 +2,16 @@ use std::collections::HashMap;
 
 use astroport::asset::Asset;
 use cosmwasm_std::{
-    Addr, Coin, Coins, Decimal, Deps, Env, Order, Order::Ascending, StdError, StdResult, Uint128,
+    Addr, Coin, Coins, Decimal, Deps, Env, Order, Order::Ascending, StdResult, Uint128,
 };
 use cw_paginate::paginate_prefix_query;
 use cw_storage_plus::Bound;
 use mars_types::{
-    address_provider,
-    address_provider::MarsAddressType,
+    address_provider::{self, MarsAddressType},
     incentives::{
         ActiveEmission, ConfigResponse, EmissionResponse, IncentiveStateResponse,
-        StakedLpPositionResponse, WhitelistEntry,
+        PaginatedLpRewardsResponse, PaginatedStakedLpResponse, StakedLpPositionResponse,
+        WhitelistEntry,
     },
 };
 
@@ -121,11 +121,11 @@ pub fn query_lp_rewards_for_user(
     deps: Deps,
     env: &Env,
     astroport_incentives_addr: &Addr,
-    user_id_key: &str,
+    account_id: &str,
     maybe_start_after_lp_denom: Option<&str>,
     limit: Option<u32>,
-) -> Result<Vec<(String, Vec<Coin>)>, ContractError> {
-    let limit = limit.unwrap_or(DEFAULT_LIMIT).min(MAX_LIMIT) as usize;
+) -> Result<PaginatedLpRewardsResponse, ContractError> {
+    let limit = limit.unwrap_or(DEFAULT_LIMIT).min(MAX_LIMIT);
     let start = match maybe_start_after_lp_denom {
         Some(start_after_lp_denom) => {
             let start = Bound::exclusive(start_after_lp_denom);
@@ -134,30 +134,28 @@ pub fn query_lp_rewards_for_user(
         None => None,
     };
 
-    let lp_deposits = ASTRO_USER_LP_DEPOSITS
-        .prefix(user_id_key)
-        .range(deps.storage, start, None, Ascending)
-        .take(limit)
-        .map(|res: StdResult<(String, Uint128)>| {
-            let (lp_denom, amount) = res.expect("Lp Position does not exist");
-            (
-                lp_denom.clone(),
-                query_lp_rewards_for_position(
-                    deps,
-                    env,
-                    astroport_incentives_addr,
-                    user_id_key,
-                    &Coin {
-                        denom: lp_denom,
-                        amount,
-                    },
-                )
-                .expect("LP Rewards query failed"),
-            )
-        })
-        .collect();
+    paginate_prefix_query(
+        &ASTRO_USER_LP_DEPOSITS,
+        deps.storage,
+        account_id,
+        start,
+        Some(limit),
+        |denom, amount| {
+            let lp_coin = Coin {
+                denom,
+                amount,
+            };
+            let rewards = query_lp_rewards_for_position(
+                deps,
+                env,
+                astroport_incentives_addr,
+                account_id,
+                &lp_coin,
+            )?;
 
-    Ok(lp_deposits)
+            Ok((lp_coin.denom, rewards))
+        },
+    )
 }
 
 /// Fetch the rewards owed to a user.
@@ -359,7 +357,7 @@ pub fn query_user_lp_positions(
     account_id: String,
     start_after_denom: Option<String>,
     limit: Option<u32>,
-) -> StdResult<PaginatedStakedLpResponse> {
+) -> Result<PaginatedStakedLpResponse, ContractError> {
     let config = CONFIG.load(deps.storage)?;
     let astroport_incentive_addr = address_provider::helpers::query_contract_addr(
         deps,
@@ -368,15 +366,15 @@ pub fn query_user_lp_positions(
     )?;
 
     let start = start_after_denom.as_ref().map(|denom| Bound::exclusive(denom.as_str()));
-    let limit = limit.unwrap_or(DEFAULT_LIMIT).min(MAX_LIMIT) as usize;
+    let limit = limit.unwrap_or(DEFAULT_LIMIT).min(MAX_LIMIT);
 
-    Ok(paginate_prefix_query(
+    paginate_prefix_query(
         &ASTRO_USER_LP_DEPOSITS,
         deps.storage,
         &account_id,
         start,
         Some(limit),
-        |(denom, amount)| {
+        |denom, amount| {
             let lp_coin = Coin {
                 denom,
                 amount,
@@ -394,5 +392,5 @@ pub fn query_user_lp_positions(
                 rewards,
             })
         },
-    ))
+    )
 }

@@ -4,7 +4,7 @@ use cosmwasm_std::{
 };
 use mars_types::{
     error::MarsError,
-    incentives::{IncentiveState, WhitelistEntry},
+    incentives::IncentiveState,
     keys::{UserId, UserIdKey},
 };
 use mars_utils::helpers::validate_native_denom;
@@ -17,8 +17,8 @@ use crate::{
     query::query_red_bank_address,
     state,
     state::{
-        CONFIG, EMISSIONS, EPOCH_DURATION, INCENTIVE_STATES, OWNER, USER_ASSET_INDICES,
-        USER_UNCLAIMED_REWARDS, WHITELIST, WHITELIST_COUNT,
+        CONFIG, EMISSIONS, EPOCH_DURATION, INCENTIVE_STATES, USER_ASSET_INDICES,
+        USER_UNCLAIMED_REWARDS, WHITELIST,
     },
     ContractError,
 };

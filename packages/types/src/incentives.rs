@@ -385,8 +385,7 @@ pub struct StakedLpPositionResponse {
 }
 
 pub type PaginatedStakedLpResponse = PaginationResponse<StakedLpPositionResponse>;
-
-
+pub type PaginatedLpRewardsResponse = PaginationResponse<(String, Vec<Coin>)>;
 #[cw_serde]
 pub enum LpModification {
     Deposit,
