@@ -1,9 +1,9 @@
 #[cfg(not(feature = "library"))]
 use cosmwasm_std::entry_point;
-use cosmwasm_std::{to_json_binary, Binary, Deps, DepsMut, Env, MessageInfo, Response, StdResult};
+use cosmwasm_std::{to_json_binary, Binary, Deps, DepsMut, Empty, Env, MessageInfo, Response, StdResult};
 use cw2::set_contract_version;
 use mars_owner::OwnerInit::SetInitialOwner;
-use mars_types::incentives::{Config, ExecuteMsg, InstantiateMsg, MigrateMsg, QueryMsg};
+use mars_types::incentives::{Config, ExecuteMsg, InstantiateMsg, QueryMsg};
 
 use crate::{
     astroport_incentives, config,
