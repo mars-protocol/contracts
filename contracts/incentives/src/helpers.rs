@@ -3,12 +3,12 @@ use std::{
     collections::HashMap,
 };
 
+use astroport::incentives::ExecuteMsg;
 use cosmwasm_std::{
     coin, to_json_binary, Addr, BlockInfo, Coin, CosmosMsg, Decimal, Deps, MessageInfo, Order,
     OverflowError, OverflowOperation, QuerierWrapper, StdError, StdResult, Storage, Uint128,
     WasmMsg,
 };
-use cw_it::astroport::astroport_v3::incentives::ExecuteMsg;
 use cw_storage_plus::Bound;
 use mars_types::{
     address_provider::{self, MarsAddressType},

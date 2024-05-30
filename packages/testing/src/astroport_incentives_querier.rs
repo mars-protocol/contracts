@@ -1,7 +1,6 @@
 use std::collections::HashMap;
 
 use cosmwasm_std::{to_json_binary, Addr, Binary, ContractResult, QuerierResult, Uint128};
-// todo this dependency is probably not correct?
 use cw_it::astroport::astroport_v3::{asset::Asset, incentives::QueryMsg};
 
 pub struct AstroportIncentivesQuerier {
