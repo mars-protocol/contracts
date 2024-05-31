@@ -1,5 +1,5 @@
-use cosmwasm_std::{coin, Addr};
-use mars_vault::msg::VaultInfoResponseExt;
+use cosmwasm_std::{coin, Addr, Decimal};
+use mars_vault::msg::{PerformanceFeeConfig, VaultInfoResponseExt};
 
 use super::{
     helpers::{AccountToFund, MockEnv},
@@ -42,7 +42,11 @@ fn only_credit_manager_can_bind_account() {
             description: None,
             credit_manager: credit_manager.to_string(),
             vault_account_id: Some("2024".to_string()),
-            cooldown_period: 60
+            cooldown_period: 60,
+            performance_fee_config: PerformanceFeeConfig {
+                performance_fee_percentage: Decimal::zero(),
+                performance_fee_interval: 0
+            }
         }
     )
 }

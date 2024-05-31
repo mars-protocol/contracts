@@ -94,10 +94,10 @@ impl<'a> BaseVault<'a> {
         &self,
         deps: DepsMut,
         env: &Env,
+        total_staked_amount: Uint128,
         vault_tokens: Uint128,
     ) -> Result<(Uint128, Response), ContractError> {
         let vault_token = self.vault_token.load(deps.storage)?;
-        let total_staked_amount = total_base_token_in_account(deps.as_ref())?;
         let vault_token_supply = vault_token.query_total_supply(deps.as_ref())?;
 
         // calculate base tokens based on the given amount of vault tokens

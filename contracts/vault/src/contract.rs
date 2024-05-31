@@ -1,5 +1,5 @@
 use cosmwasm_std::{
-    entry_point, to_json_binary, Binary, Deps, DepsMut, Env, MessageInfo, Response,
+    entry_point, to_json_binary, Binary, Deps, DepsMut, Env, Int128, MessageInfo, Response, Uint128,
 };
 use cw_vault_standard::{VaultInfoResponse, VaultStandardInfoResponse};
 use mars_owner::OwnerInit;
@@ -18,8 +18,8 @@ use crate::{
     },
     query,
     state::{
-        COOLDOWN_PERIOD, CREDIT_MANAGER, DESCRIPTION, HEALTH, ORACLE, OWNER, SUBTITLE, TITLE,
-        VAULT_ACC_ID,
+        PerformanceFeeState, COOLDOWN_PERIOD, CREDIT_MANAGER, DESCRIPTION, HEALTH, ORACLE, OWNER,
+        PERFORMANCE_FEE_CONFIG, PERFORMANCE_FEE_STATE, SUBTITLE, TITLE, VAULT_ACC_ID,
     },
     token_factory::TokenFactoryDenom,
 };
@@ -72,6 +72,17 @@ pub fn instantiate(
     }
 
     COOLDOWN_PERIOD.save(deps.storage, &msg.cooldown_period)?;
+
+    PERFORMANCE_FEE_CONFIG.save(deps.storage, &msg.performance_fee_config)?;
+    PERFORMANCE_FEE_STATE.save(
+        deps.storage,
+        &PerformanceFeeState {
+            updated_at: u64::MAX,
+            liquidity: Uint128::zero(),
+            accumulated_pnl: Int128::zero(),
+            accumulated_fee: Uint128::zero(),
+        },
+    )?;
 
     let base_vault = Vault::default();
     let vault_token =
@@ -154,6 +165,7 @@ pub fn query(deps: Deps, _env: Env, msg: QueryMsg) -> ContractResult<Binary> {
                     credit_manager: CREDIT_MANAGER.load(deps.storage)?,
                     vault_account_id: VAULT_ACC_ID.may_load(deps.storage)?,
                     cooldown_period: COOLDOWN_PERIOD.load(deps.storage)?,
+                    performance_fee_config: PERFORMANCE_FEE_CONFIG.load(deps.storage)?,
                 })
             }
             ExtensionQueryMsg::UserUnlocks {

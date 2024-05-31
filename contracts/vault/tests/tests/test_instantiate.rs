@@ -1,6 +1,8 @@
-use cosmwasm_std::{coin, Addr};
+use std::str::FromStr;
+
+use cosmwasm_std::{coin, Addr, Decimal};
 use cw_multi_test::Executor;
-use mars_vault::msg::{InstantiateMsg, VaultInfoResponseExt};
+use mars_vault::msg::{InstantiateMsg, PerformanceFeeConfig, VaultInfoResponseExt};
 
 use super::helpers::{mock_managed_vault_contract, AccountToFund, MockEnv};
 use crate::tests::{helpers::deploy_managed_vault, vault_helpers::query_vault_info};
@@ -30,7 +32,11 @@ fn instantiate_with_empty_metadata() {
             description: None,
             credit_manager: credit_manager.to_string(),
             vault_account_id: None,
-            cooldown_period: 60
+            cooldown_period: 60,
+            performance_fee_config: PerformanceFeeConfig {
+                performance_fee_percentage: Decimal::zero(),
+                performance_fee_interval: 0
+            }
         }
     )
 }
@@ -61,6 +67,10 @@ fn instantiate_with_metadata() {
                 description: Some("The vault manages others money !!!".to_string()),
                 credit_manager: credit_manager.to_string(),
                 cooldown_period: 8521,
+                performance_fee_config: PerformanceFeeConfig {
+                    performance_fee_percentage: Decimal::from_str("0.00208").unwrap(),
+                    performance_fee_interval: 1563,
+                },
             },
             &[coin(10_000_000, "untrn")], // Token Factory fee for minting new denom. Configured in the Token Factory module in `mars-testing` package.
             "mock-managed-vault",
@@ -80,6 +90,10 @@ fn instantiate_with_metadata() {
             credit_manager: credit_manager.to_string(),
             vault_account_id: None,
             cooldown_period: 8521,
+            performance_fee_config: PerformanceFeeConfig {
+                performance_fee_percentage: Decimal::from_str("0.00208").unwrap(),
+                performance_fee_interval: 1563,
+            }
         }
     )
 }

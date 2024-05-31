@@ -1,5 +1,5 @@
 use cosmwasm_schema::cw_serde;
-use cosmwasm_std::Uint128;
+use cosmwasm_std::{Decimal, Uint128};
 use cw_vault_standard::{VaultStandardExecuteMsg, VaultStandardQueryMsg};
 
 pub type ExecuteMsg = VaultStandardExecuteMsg<ExtensionExecuteMsg>;
@@ -26,6 +26,9 @@ pub struct InstantiateMsg {
     /// Stakers need to wait a cooldown period before being able to withdraw USDC from the vault.
     /// Value defined in seconds.
     pub cooldown_period: u64,
+
+    /// Performance fee configuration
+    pub performance_fee_config: PerformanceFeeConfig,
 }
 
 #[cw_serde]
@@ -75,6 +78,9 @@ pub struct VaultInfoResponseExt {
     /// Stakers need to wait a cooldown period before being able to withdraw USDC from the vault.
     /// Value defined in seconds.
     pub cooldown_period: u64,
+
+    /// Performance fee configuration
+    pub performance_fee_config: PerformanceFeeConfig,
 }
 
 /// Unlock state for a single user
@@ -93,4 +99,14 @@ pub struct VaultUnlock {
     pub cooldown_end: u64,
     pub vault_tokens: Uint128,
     pub base_tokens: Uint128,
+}
+
+#[cw_serde]
+#[derive(Default)]
+pub struct PerformanceFeeConfig {
+    /// The percentage of the performance fee that will be charged on the profits
+    pub performance_fee_percentage: Decimal,
+
+    /// The interval in seconds at which the performance fee can be withdrawn by the manager
+    pub performance_fee_interval: u64,
 }

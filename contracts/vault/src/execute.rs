@@ -12,7 +12,10 @@ use crate::{
     contract::Vault,
     error::ContractError,
     msg::UnlockState,
-    state::{COOLDOWN_PERIOD, CREDIT_MANAGER, HEALTH, ORACLE, UNLOCKS, VAULT_ACC_ID},
+    state::{
+        COOLDOWN_PERIOD, CREDIT_MANAGER, HEALTH, ORACLE, PERFORMANCE_FEE_CONFIG,
+        PERFORMANCE_FEE_STATE, UNLOCKS, VAULT_ACC_ID,
+    },
 };
 
 pub fn bind_credit_manager_account(
@@ -63,8 +66,24 @@ pub fn deposit(
     // calculate vault tokens
     let total_staked_amount = total_base_token_in_account(deps.as_ref())?;
     let vault_token_supply = vault_token.query_total_supply(deps.as_ref())?;
-    let vault_tokens =
-        vault.calculate_vault_tokens(amount, total_staked_amount, vault_token_supply)?;
+
+    let mut performance_fee_state = PERFORMANCE_FEE_STATE.load(deps.storage)?;
+    let peroformance_fee_config = PERFORMANCE_FEE_CONFIG.load(deps.storage)?;
+    performance_fee_state.update_fee_and_pnl(
+        env.block.time.seconds(),
+        total_staked_amount,
+        peroformance_fee_config,
+    )?;
+    performance_fee_state.update_by_deposit(total_staked_amount, amount)?;
+    PERFORMANCE_FEE_STATE.save(deps.storage, &performance_fee_state)?;
+    let total_staked_amount_without_fee =
+        total_staked_amount.checked_sub(performance_fee_state.accumulated_fee)?;
+
+    let vault_tokens = vault.calculate_vault_tokens(
+        amount,
+        total_staked_amount_without_fee,
+        vault_token_supply,
+    )?;
 
     let coin_deposited = Coin {
         denom: base_token,
@@ -199,8 +218,28 @@ pub fn redeem(
         });
     }
 
-    let (tokens_to_withdraw, burn_res) =
-        vault.burn_vault_tokens_for_base_tokens(deps.branch(), &env, vault_token_amount)?;
+    let total_staked_amount = total_base_token_in_account(deps.as_ref())?;
+
+    let mut performance_fee_state = PERFORMANCE_FEE_STATE.load(deps.storage)?;
+    let peroformance_fee_config = PERFORMANCE_FEE_CONFIG.load(deps.storage)?;
+    performance_fee_state.update_fee_and_pnl(
+        env.block.time.seconds(),
+        total_staked_amount,
+        peroformance_fee_config,
+    )?;
+
+    let total_staked_amount_without_fee =
+        total_staked_amount.checked_sub(performance_fee_state.accumulated_fee)?;
+    let (tokens_to_withdraw, burn_res) = vault.burn_vault_tokens_for_base_tokens(
+        deps.branch(),
+        &env,
+        total_staked_amount_without_fee,
+        vault_token_amount,
+    )?;
+
+    performance_fee_state.update_by_withdraw(total_staked_amount, tokens_to_withdraw)?;
+
+    PERFORMANCE_FEE_STATE.save(deps.storage, &performance_fee_state)?;
 
     let mut actions =
         prepare_lend_and_borrow_actions(deps.as_ref(), base_token.clone(), tokens_to_withdraw)?;

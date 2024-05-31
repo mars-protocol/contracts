@@ -65,7 +65,7 @@ use mars_types::{
         QueryMsg::EstimateExactInSwap, SwapperRoute,
     },
 };
-use mars_vault::msg::InstantiateMsg as ManagedVaultInstantiateMsg;
+use mars_vault::msg::{InstantiateMsg as ManagedVaultInstantiateMsg, PerformanceFeeConfig};
 use mars_zapper_mock::msg::{InstantiateMsg as ZapperInstantiateMsg, LpConfig};
 
 use super::{
@@ -1501,6 +1501,10 @@ pub fn deploy_managed_vault(app: &mut CustomApp, sender: &Addr, credit_manager: 
             description: None,
             credit_manager: credit_manager.to_string(),
             cooldown_period: 60,
+            performance_fee_config: PerformanceFeeConfig {
+                performance_fee_percentage: Decimal::zero(),
+                performance_fee_interval: 0,
+            },
         },
         &[coin(10_000_000, "untrn")], // Token Factory fee for minting new denom. Configured in the Token Factory module in `mars-testing` package.
         "mock-managed-vault",
