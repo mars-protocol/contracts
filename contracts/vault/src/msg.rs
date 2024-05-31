@@ -44,6 +44,13 @@ pub enum ExtensionExecuteMsg {
         /// The amount of vault tokens to unlock
         amount: Uint128,
     },
+
+    /// Withdraw performance fee from the vault.
+    /// This can only be done by the Fund Manager once a certain period (definied by `performance_fee_interval` parameter).
+    WithdrawPerformanceFee {
+        /// New performance fee config to set. It will be used for future calculations.
+        new_performance_fee_config: Option<PerformanceFeeConfig>,
+    },
 }
 
 #[cw_serde]

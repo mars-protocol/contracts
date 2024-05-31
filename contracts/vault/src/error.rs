@@ -53,6 +53,12 @@ pub enum ContractError {
 
     #[error("Unlocked positions not found")]
     UnlockedPositionsNotFound {},
+
+    #[error("{user:?} is not the owner of {account_id:?}")]
+    NotTokenOwner {
+        user: String,
+        account_id: String,
+    },
 }
 
 pub type ContractResult<T> = Result<T, ContractError>;

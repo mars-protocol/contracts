@@ -1,16 +1,17 @@
 use cosmwasm_std::{
-    entry_point, to_json_binary, Binary, Deps, DepsMut, Env, Int128, MessageInfo, Response, Uint128,
+    entry_point, to_json_binary, Binary, Deps, DepsMut, Env, Int128, MessageInfo, Response,
+    StdError, Uint128,
 };
 use cw_vault_standard::{VaultInfoResponse, VaultStandardInfoResponse};
 use mars_owner::OwnerInit;
 use mars_types::{
-    adapters::{health::HealthContractBase, oracle::OracleBase},
+    adapters::{account_nft::AccountNftBase, health::HealthContractBase, oracle::OracleBase},
     credit_manager::{ConfigResponse, QueryMsg as CreditManagerQueryMsg},
 };
 
 use crate::{
     base_vault::BaseVault,
-    error::ContractResult,
+    error::{ContractError, ContractResult},
     execute,
     msg::{
         ExecuteMsg, ExtensionExecuteMsg, ExtensionQueryMsg, InstantiateMsg, QueryMsg,
@@ -18,8 +19,9 @@ use crate::{
     },
     query,
     state::{
-        PerformanceFeeState, COOLDOWN_PERIOD, CREDIT_MANAGER, DESCRIPTION, HEALTH, ORACLE, OWNER,
-        PERFORMANCE_FEE_CONFIG, PERFORMANCE_FEE_STATE, SUBTITLE, TITLE, VAULT_ACC_ID,
+        PerformanceFeeState, ACCOUNT_NFT, COOLDOWN_PERIOD, CREDIT_MANAGER, DESCRIPTION, HEALTH,
+        ORACLE, OWNER, PERFORMANCE_FEE_CONFIG, PERFORMANCE_FEE_STATE, SUBTITLE, TITLE,
+        VAULT_ACC_ID,
     },
     token_factory::TokenFactoryDenom,
 };
@@ -60,6 +62,14 @@ pub fn instantiate(
     let health = HealthContractBase::new(config.health_contract);
     ORACLE.save(deps.storage, &oracle.check(deps.api)?)?;
     HEALTH.save(deps.storage, &health.check(deps.api)?)?;
+    if let Some(acc_nft) = config.account_nft {
+        let account_nft = AccountNftBase::new(acc_nft);
+        ACCOUNT_NFT.save(deps.storage, &account_nft.check(deps.api)?)?;
+    } else {
+        return Err(ContractError::Std(StdError::generic_err(
+            "Account NFT contract address is not set in Credit Manager".to_string(),
+        )));
+    }
 
     if let Some(title) = msg.title {
         TITLE.save(deps.storage, &title)?;
@@ -114,6 +124,9 @@ pub fn execute(
             ExtensionExecuteMsg::Unlock {
                 amount,
             } => execute::unlock(deps, env, &info, amount),
+            ExtensionExecuteMsg::WithdrawPerformanceFee {
+                new_performance_fee_config,
+            } => execute::withdraw_performance_fee(deps, env, &info, new_performance_fee_config),
         },
     }
 }

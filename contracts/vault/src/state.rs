@@ -2,7 +2,7 @@ use cosmwasm_schema::cw_serde;
 use cosmwasm_std::{Decimal, Int128, Int256, StdError, StdResult, Uint128};
 use cw_storage_plus::{Item, Map};
 use mars_owner::Owner;
-use mars_types::adapters::{health::HealthContract, oracle::Oracle};
+use mars_types::adapters::{account_nft::AccountNft, health::HealthContract, oracle::Oracle};
 
 use crate::msg::{PerformanceFeeConfig, UnlockState};
 
@@ -32,7 +32,7 @@ impl PerformanceFeeState {
         &mut self,
         current_time: u64,
         total_staked_base_tokens: Uint128,
-        config: PerformanceFeeConfig,
+        config: &PerformanceFeeConfig,
     ) -> StdResult<()> {
         if self.updated_at == u64::MAX {
             self.updated_at = current_time;
@@ -45,7 +45,7 @@ impl PerformanceFeeState {
             let accumulated_pnl_i128: Int128 = accumulated_pnl_i256.try_into()?;
 
             let accumulated_fee = if accumulated_pnl_i128 > Int128::zero() {
-                let rate = self.calculate_applied_linear_interest_rate(current_time, &config)?;
+                let rate = self.calculate_applied_linear_interest_rate(current_time, config)?;
                 accumulated_pnl_i128.unsigned_abs() * rate
             } else {
                 Uint128::zero()
@@ -82,7 +82,7 @@ impl PerformanceFeeState {
         &mut self,
         current_time: u64,
         total_staked_base_tokens: Uint128,
-        config: PerformanceFeeConfig,
+        config: &PerformanceFeeConfig,
     ) -> StdResult<()> {
         let time_diff = current_time - self.updated_at;
         if time_diff < config.performance_fee_interval {
@@ -115,6 +115,7 @@ pub const VAULT_ACC_ID: Item<String> = Item::new("vault_acc_id");
 
 pub const ORACLE: Item<Oracle> = Item::new("oracle");
 pub const HEALTH: Item<HealthContract> = Item::new("health");
+pub const ACCOUNT_NFT: Item<AccountNft> = Item::new("account_nft");
 
 pub const TITLE: Item<String> = Item::new("title");
 pub const SUBTITLE: Item<String> = Item::new("subtitle");
