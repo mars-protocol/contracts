@@ -7,6 +7,7 @@
 
 export interface InstantiateMsg {
   base_token: string
+  cooldown_period: number
   credit_manager: string
   description?: string | null
   subtitle?: string | null
@@ -30,11 +31,17 @@ export type ExecuteMsg =
       vault_extension: ExtensionExecuteMsg
     }
 export type Uint128 = string
-export type ExtensionExecuteMsg = {
-  bind_credit_manager_account: {
-    account_id: string
-  }
-}
+export type ExtensionExecuteMsg =
+  | {
+      bind_credit_manager_account: {
+        account_id: string
+      }
+    }
+  | {
+      unlock: {
+        amount: Uint128
+      }
+    }
 export type QueryMsg =
   | {
       vault_standard_info: {}
@@ -71,7 +78,13 @@ export type QueryMsg =
   | {
       vault_extension: ExtensionQueryMsg
     }
-export type ExtensionQueryMsg = 'vault_info'
+export type ExtensionQueryMsg =
+  | 'vault_info'
+  | {
+      user_unlocks: {
+        user_address: string
+      }
+    }
 export interface VaultInfoResponse {
   base_token: string
   vault_token: string

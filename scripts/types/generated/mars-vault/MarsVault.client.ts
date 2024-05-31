@@ -28,7 +28,7 @@ export interface MarsVaultReadOnlyInterface {
   totalVaultTokenSupply: () => Promise<Uint128>
   convertToShares: ({ amount }: { amount: Uint128 }) => Promise<Uint128>
   convertToAssets: ({ amount }: { amount: Uint128 }) => Promise<Uint128>
-  vaultExtension: () => Promise<Empty>
+  vaultExtension: (extensionQueryMsg: ExtensionQueryMsg) => Promise<Empty>
 }
 export class MarsVaultQueryClient implements MarsVaultReadOnlyInterface {
   client: CosmWasmClient
@@ -96,9 +96,9 @@ export class MarsVaultQueryClient implements MarsVaultReadOnlyInterface {
       },
     })
   }
-  vaultExtension = async (): Promise<Empty> => {
+  vaultExtension = async (extensionQueryMsg: ExtensionQueryMsg): Promise<Empty> => {
     return this.client.queryContractSmart(this.contractAddress, {
-      vault_extension: {},
+      vault_extension: extensionQueryMsg,
     })
   }
 }
