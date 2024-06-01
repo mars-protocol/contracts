@@ -1,5 +1,8 @@
 use cosmwasm_std::{coin, Addr, Decimal};
-use mars_vault::msg::{PerformanceFeeConfig, VaultInfoResponseExt};
+use mars_vault::{
+    error::ContractError,
+    msg::{PerformanceFeeConfig, VaultInfoResponseExt},
+};
 
 use super::{
     helpers::{AccountToFund, MockEnv},
@@ -27,7 +30,7 @@ fn only_credit_manager_can_bind_account() {
         &managed_vault_addr,
         "2024",
     );
-    assert_vault_err(res, mars_vault::error::ContractError::NotCreditManager {});
+    assert_vault_err(res, ContractError::NotCreditManager {});
 
     execute_bind_credit_manager_account(&mut mock, &credit_manager, &managed_vault_addr, "2024")
         .unwrap();
@@ -73,5 +76,5 @@ fn only_one_binding_allowed() {
         &managed_vault_addr,
         "2025",
     );
-    assert_vault_err(res, mars_vault::error::ContractError::VaultAccountExists {});
+    assert_vault_err(res, ContractError::VaultAccountExists {});
 }

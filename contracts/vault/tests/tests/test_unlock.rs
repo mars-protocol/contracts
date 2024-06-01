@@ -1,6 +1,6 @@
 use cosmwasm_std::{coin, Addr, Uint128};
 use mars_types::health::AccountKind;
-use mars_vault::msg::VaultUnlock;
+use mars_vault::{error::ContractError, msg::VaultUnlock};
 
 use super::{
     helpers::{AccountToFund, MockEnv},
@@ -27,7 +27,7 @@ fn unlock_if_credit_manager_account_not_binded() {
     let managed_vault_addr = deploy_managed_vault(&mut mock.app, &fund_manager, &credit_manager);
 
     let res = execute_unlock(&mut mock, &user, &managed_vault_addr, Uint128::one(), &[]);
-    assert_vault_err(res, mars_vault::error::ContractError::VaultAccountNotFound {});
+    assert_vault_err(res, ContractError::VaultAccountNotFound {});
 }
 
 #[test]
@@ -62,7 +62,7 @@ fn unlock_invalid_amount() {
     let res = execute_unlock(&mut mock, &user, &managed_vault_addr, Uint128::zero(), &[]);
     assert_vault_err(
         res,
-        mars_vault::error::ContractError::InvalidAmount {
+        ContractError::InvalidAmount {
             reason: "provided zero vault tokens".to_string(),
         },
     );
@@ -89,7 +89,7 @@ fn unlock_invalid_amount() {
     );
     assert_vault_err(
         res,
-        mars_vault::error::ContractError::InvalidAmount {
+        ContractError::InvalidAmount {
             reason: "amount exceeds total vault token supply".to_string(),
         },
     );

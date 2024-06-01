@@ -378,6 +378,15 @@ pub fn withdraw_performance_fee(
         return Err(ContractError::VaultAccountNotFound {});
     };
 
+    let acc_nft = ACCOUNT_NFT.load(deps.storage)?;
+    let vault_acc_owner_addr = acc_nft.query_nft_token_owner(&deps.querier, &vault_acc_id)?;
+    if vault_acc_owner_addr != info.sender {
+        return Err(ContractError::NotTokenOwner {
+            user: info.sender.to_string(),
+            account_id: vault_acc_id,
+        });
+    }
+
     let total_staked_amount = total_base_token_in_account(deps.as_ref())?;
 
     let mut performance_fee_state = PERFORMANCE_FEE_STATE.load(deps.storage)?;
@@ -399,15 +408,6 @@ pub fn withdraw_performance_fee(
     // update performance fee config if new config is provided
     if let Some(new_config) = new_performance_fee_config {
         PERFORMANCE_FEE_CONFIG.save(deps.storage, &new_config)?;
-    }
-
-    let acc_nft = ACCOUNT_NFT.load(deps.storage)?;
-    let vault_acc_owner_addr = acc_nft.query_nft_token_owner(&deps.querier, &vault_acc_id)?;
-    if vault_acc_owner_addr != info.sender {
-        return Err(ContractError::NotTokenOwner {
-            user: vault_acc_owner_addr,
-            account_id: vault_acc_id,
-        });
     }
 
     let event = Event::new("withdraw_performance_fee").add_attributes(vec![

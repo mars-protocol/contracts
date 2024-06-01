@@ -1,8 +1,11 @@
-use cosmwasm_std::{Addr, Deps};
+use cosmwasm_std::{Addr, Deps, Env};
 
 use crate::{
-    contract::Vault, error::ContractResult, execute::total_base_token_in_account, msg::VaultUnlock,
-    state::UNLOCKS,
+    contract::Vault,
+    error::ContractResult,
+    execute::total_base_token_in_account,
+    msg::VaultUnlock,
+    state::{PerformanceFeeState, PERFORMANCE_FEE_CONFIG, PERFORMANCE_FEE_STATE, UNLOCKS},
 };
 
 pub fn unlocks(deps: Deps, user_addr: Addr) -> ContractResult<Vec<VaultUnlock>> {
@@ -27,4 +30,25 @@ pub fn unlocks(deps: Deps, user_addr: Addr) -> ContractResult<Vec<VaultUnlock>> 
             })
         })
         .collect()
+}
+
+pub fn performance_fee(deps: Deps, env: Env) -> ContractResult<PerformanceFeeState> {
+    let total_staked_amount = total_base_token_in_account(deps)?;
+
+    let mut performance_fee_state = PERFORMANCE_FEE_STATE.load(deps.storage)?;
+    let performance_fee_config = PERFORMANCE_FEE_CONFIG.load(deps.storage)?;
+    performance_fee_state.update_fee_and_pnl(
+        env.block.time.seconds(),
+        total_staked_amount,
+        &performance_fee_config,
+    )?;
+
+    let updated_liquidity = total_staked_amount - performance_fee_state.accumulated_fee;
+
+    Ok(PerformanceFeeState {
+        updated_at: performance_fee_state.updated_at,
+        liquidity: updated_liquidity,
+        accumulated_pnl: performance_fee_state.accumulated_pnl,
+        accumulated_fee: performance_fee_state.accumulated_fee,
+    })
 }

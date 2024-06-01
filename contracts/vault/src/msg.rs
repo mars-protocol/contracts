@@ -61,6 +61,8 @@ pub enum ExtensionQueryMsg {
         /// The address of the user to query
         user_address: String,
     },
+
+    PerformanceFeeState {},
 }
 
 #[cw_serde]
