@@ -3,8 +3,8 @@ use cosmwasm_std::{Addr, Coin, Uint128};
 use cw_multi_test::{AppResponse, Executor};
 use mars_vault::{
     msg::{
-        ExecuteMsg, ExtensionExecuteMsg, ExtensionQueryMsg, QueryMsg, VaultInfoResponseExt,
-        VaultUnlock,
+        ExecuteMsg, ExtensionExecuteMsg, ExtensionQueryMsg, PerformanceFeeConfig, QueryMsg,
+        VaultInfoResponseExt, VaultUnlock,
     },
     state::PerformanceFeeState,
 };
@@ -86,12 +86,13 @@ pub fn execute_withdraw_performance_fee(
     mock_env: &mut MockEnv,
     sender: &Addr,
     vault: &Addr,
+    new_performance_fee_config: Option<PerformanceFeeConfig>,
 ) -> AnyResult<AppResponse> {
     mock_env.app.execute_contract(
         sender.clone(),
         vault.clone(),
         &ExecuteMsg::VaultExtension(ExtensionExecuteMsg::WithdrawPerformanceFee {
-            new_performance_fee_config: None,
+            new_performance_fee_config,
         }),
         &[],
     )

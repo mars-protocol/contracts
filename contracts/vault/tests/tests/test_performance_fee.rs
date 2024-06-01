@@ -39,7 +39,7 @@ fn deposit_if_credit_manager_account_not_binded() {
 
     let managed_vault_addr = deploy_managed_vault(&mut mock.app, &fund_manager, &credit_manager);
 
-    let res = execute_withdraw_performance_fee(&mut mock, &user, &managed_vault_addr);
+    let res = execute_withdraw_performance_fee(&mut mock, &user, &managed_vault_addr, None);
     assert_vault_err(res, ContractError::VaultAccountNotFound {});
 }
 
@@ -74,7 +74,7 @@ fn unauthorized_withdraw() {
         .unwrap();
 
     // vault user can't withdraw performance fee
-    let res = execute_withdraw_performance_fee(&mut mock, &user, &managed_vault_addr);
+    let res = execute_withdraw_performance_fee(&mut mock, &user, &managed_vault_addr, None);
     assert_vault_err(
         res,
         ContractError::NotTokenOwner {
@@ -85,7 +85,7 @@ fn unauthorized_withdraw() {
 
     // random user can't withdraw performance fee
     let random_user = Addr::unchecked("random-user");
-    let res = execute_withdraw_performance_fee(&mut mock, &random_user, &managed_vault_addr);
+    let res = execute_withdraw_performance_fee(&mut mock, &random_user, &managed_vault_addr, None);
     assert_vault_err(
         res,
         ContractError::NotTokenOwner {
@@ -127,12 +127,6 @@ fn withdraw_performance_fee() {
             performance_fee_interval: 60,
         },
     );
-    let vault_info_res = query_vault_info(&mock, &managed_vault_addr);
-    let vault_token = vault_info_res.vault_token;
-
-    // there shouldn't be any base tokens in Fund Manager wallet
-    let base_token_balance = mock.query_balance(&fund_manager, &uusdc_info.denom.clone()).amount;
-    assert!(base_token_balance.is_zero());
 
     let fund_acc_id = mock
         .create_credit_account_v2(
@@ -151,6 +145,16 @@ fn withdraw_performance_fee() {
         price: Decimal::one(),
     });
 
+    let vault_info_res = query_vault_info(&mock, &managed_vault_addr);
+    let vault_token = vault_info_res.vault_token;
+
+    // there shouldn't be any base tokens in Fund Manager wallet
+    let base_token_balance = mock.query_balance(&fund_manager, &uusdc_info.denom.clone()).amount;
+    assert!(base_token_balance.is_zero());
+
+    // -- FIRST ACTION --
+
+    let first_deposit_time = mock.query_block_time();
     let deposited_amt = Uint128::new(100_000_000);
     execute_deposit(
         &mut mock,
@@ -162,18 +166,18 @@ fn withdraw_performance_fee() {
     )
     .unwrap();
 
-    let block_time_1 = mock.query_block_time();
     let performance_fee = query_performance_fee(&mock, &managed_vault_addr);
     assert_eq!(
         performance_fee,
         PerformanceFeeState {
-            updated_at: block_time_1,
+            updated_at: first_deposit_time,
             liquidity: deposited_amt,
             accumulated_pnl: Int128::zero(),
             accumulated_fee: Uint128::zero()
         }
     );
 
+    // swap USDC to ATOM to tune PnL value based on different ATOM price
     let swap_amt = Uint128::new(80_000_000);
     let cm_config = mock.query_config();
     mock.app
@@ -195,6 +199,8 @@ fn withdraw_performance_fee() {
     )
     .unwrap();
 
+    // -- SECOND ACTION --
+
     // move by 97 hours
     mock.increment_by_time(97 * 60 * 60);
 
@@ -212,17 +218,18 @@ fn withdraw_performance_fee() {
     )
     .unwrap();
 
-    let _block_time_2 = mock.query_block_time();
     let performance_fee = query_performance_fee(&mock, &managed_vault_addr);
     assert_eq!(
         performance_fee,
         PerformanceFeeState {
-            updated_at: block_time_1,
+            updated_at: first_deposit_time,
             liquidity: Uint128::new(139959648),
             accumulated_pnl: Int128::new(20000000),
             accumulated_fee: Uint128::new(40352)
         }
     );
+
+    // -- THIRD ACTION --
 
     // move by 72 hours
     mock.increment_by_time(72 * 60 * 60);
@@ -241,17 +248,18 @@ fn withdraw_performance_fee() {
     )
     .unwrap();
 
-    let _block_time_3 = mock.query_block_time();
     let performance_fee = query_performance_fee(&mock, &managed_vault_addr);
     assert_eq!(
         performance_fee,
         PerformanceFeeState {
-            updated_at: block_time_1,
+            updated_at: first_deposit_time,
             liquidity: Uint128::new(75000000),
             accumulated_pnl: Int128::new(-59959648),
             accumulated_fee: Uint128::zero()
         }
     );
+
+    // -- FOURTH ACTION --
 
     // move by 144 hours
     mock.increment_by_time(144 * 60 * 60);
@@ -274,17 +282,18 @@ fn withdraw_performance_fee() {
     )
     .unwrap();
 
-    let _block_time_4 = mock.query_block_time();
     let performance_fee = query_performance_fee(&mock, &managed_vault_addr);
     assert_eq!(
         performance_fee,
         PerformanceFeeState {
-            updated_at: block_time_1,
+            updated_at: first_deposit_time,
             liquidity: Uint128::new(417233938),
             accumulated_pnl: Int128::new(315040352),
             accumulated_fee: Uint128::new(2051038)
         }
     );
+
+    // -- FIFTH ACTION --
 
     // move by 744 hours
     mock.increment_by_time(744 * 60 * 60);
@@ -292,14 +301,23 @@ fn withdraw_performance_fee() {
     let pnl = calculate_pnl(&mut mock, &fund_acc_id, Decimal::from_str("10").unwrap());
     assert_eq!(pnl, Uint128::new(824284976));
 
-    execute_withdraw_performance_fee(&mut mock, &fund_manager, &managed_vault_addr).unwrap();
+    execute_withdraw_performance_fee(
+        &mut mock,
+        &fund_manager,
+        &managed_vault_addr,
+        Some(PerformanceFeeConfig {
+            performance_fee_percentage: Decimal::from_str("0.0000408").unwrap(),
+            performance_fee_interval: 60,
+        }),
+    )
+    .unwrap();
 
-    let block_time_6 = mock.query_block_time();
+    let fee_withdraw_time = mock.query_block_time();
     let performance_fee = query_performance_fee(&mock, &managed_vault_addr);
     assert_eq!(
         performance_fee,
         PerformanceFeeState {
-            updated_at: block_time_6,
+            updated_at: fee_withdraw_time,
             liquidity: Uint128::new(808409364),
             accumulated_pnl: Int128::zero(),
             accumulated_fee: Uint128::zero()
@@ -308,6 +326,8 @@ fn withdraw_performance_fee() {
 
     let base_token_balance = mock.query_balance(&fund_manager, &uusdc_info.denom.clone()).amount;
     assert_eq!(base_token_balance, Uint128::new(15875612));
+
+    // -- SIXTH ACTION --
 
     // move by 48 hours
     mock.increment_by_time(48 * 60 * 60);
@@ -326,15 +346,15 @@ fn withdraw_performance_fee() {
     )
     .unwrap();
 
-    let _block_time_7 = mock.query_block_time();
+    // new performance fee percentage should be used
     let performance_fee = query_performance_fee(&mock, &managed_vault_addr);
     assert_eq!(
         performance_fee,
         PerformanceFeeState {
-            updated_at: block_time_6,
-            liquidity: Uint128::new(903369428),
+            updated_at: fee_withdraw_time,
+            liquidity: Uint128::new(903331028),
             accumulated_pnl: Int128::new(40000000),
-            accumulated_fee: Uint128::new(39936)
+            accumulated_fee: Uint128::new(78336)
         }
     );
 }
