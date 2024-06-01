@@ -1,6 +1,5 @@
 use cosmwasm_std::{
-    entry_point, to_json_binary, Binary, Deps, DepsMut, Env, Int128, MessageInfo, Response,
-    StdError, Uint128,
+    entry_point, to_json_binary, Binary, Deps, DepsMut, Env, MessageInfo, Response, StdError,
 };
 use cw_vault_standard::{VaultInfoResponse, VaultStandardInfoResponse};
 use mars_owner::OwnerInit;
@@ -17,11 +16,11 @@ use crate::{
         ExecuteMsg, ExtensionExecuteMsg, ExtensionQueryMsg, InstantiateMsg, QueryMsg,
         VaultInfoResponseExt,
     },
+    performance_fee::PerformanceFeeState,
     query,
     state::{
-        PerformanceFeeState, ACCOUNT_NFT, COOLDOWN_PERIOD, CREDIT_MANAGER, DESCRIPTION, HEALTH,
-        ORACLE, OWNER, PERFORMANCE_FEE_CONFIG, PERFORMANCE_FEE_STATE, SUBTITLE, TITLE,
-        VAULT_ACC_ID,
+        ACCOUNT_NFT, COOLDOWN_PERIOD, CREDIT_MANAGER, DESCRIPTION, HEALTH, ORACLE, OWNER,
+        PERFORMANCE_FEE_CONFIG, PERFORMANCE_FEE_STATE, SUBTITLE, TITLE, VAULT_ACC_ID,
     },
     token_factory::TokenFactoryDenom,
 };
@@ -85,15 +84,7 @@ pub fn instantiate(
 
     msg.performance_fee_config.validate()?;
     PERFORMANCE_FEE_CONFIG.save(deps.storage, &msg.performance_fee_config)?;
-    PERFORMANCE_FEE_STATE.save(
-        deps.storage,
-        &PerformanceFeeState {
-            updated_at: u64::MAX,
-            liquidity: Uint128::zero(),
-            accumulated_pnl: Int128::zero(),
-            accumulated_fee: Uint128::zero(),
-        },
-    )?;
+    PERFORMANCE_FEE_STATE.save(deps.storage, &PerformanceFeeState::default())?;
 
     let base_vault = Vault::default();
     let vault_token =

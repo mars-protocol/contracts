@@ -1,13 +1,16 @@
 use std::str::FromStr;
 
-use cosmwasm_std::{coin, Addr, Decimal, Int128, StdError, Uint128};
+use cosmwasm_std::{coin, Addr, Decimal, Int128, Uint128};
 use cw_multi_test::{BankSudo, SudoMsg};
 use mars_mock_oracle::msg::CoinPrice;
 use mars_testing::multitest::helpers::{
     coin_info, deploy_managed_vault_with_performance_fee, uatom_info, CoinInfo,
 };
 use mars_types::{credit_manager::Action, health::AccountKind, oracle::ActionKind};
-use mars_vault::{error::ContractError, msg::PerformanceFeeConfig, state::PerformanceFeeState};
+use mars_vault::{
+    error::ContractError,
+    performance_fee::{PerformanceFeeConfig, PerformanceFeeState},
+};
 
 use super::{
     helpers::{AccountToFund, MockEnv},
@@ -123,8 +126,8 @@ fn cannot_withdraw_zero_performance_fee() {
         &credit_manager,
         0,
         PerformanceFeeConfig {
-            performance_fee_percentage: Decimal::from_str("0.0000208").unwrap(),
-            performance_fee_interval: 60,
+            fee: Decimal::from_str("0.0000208").unwrap(),
+            withdrawal_interval: 60,
         },
     );
 
@@ -138,16 +141,11 @@ fn cannot_withdraw_zero_performance_fee() {
     .unwrap();
 
     let res = execute_withdraw_performance_fee(&mut mock, &fund_manager, &managed_vault_addr, None);
-    assert_vault_err(
-        res,
-        ContractError::Std(StdError::generic_err(
-            "Cannot update by manager before user has accumulated fees",
-        )),
-    );
+    assert_vault_err(res, ContractError::ZeroPerformanceFee {});
 }
 
 #[test]
-fn cannot_withdraw_if_time_not_passed() {
+fn cannot_withdraw_if_withdrawal_interval_not_passed() {
     let uusdc_info = coin_info("uusdc");
     let uatom_info = uatom_info();
 
@@ -175,8 +173,8 @@ fn cannot_withdraw_if_time_not_passed() {
         &credit_manager,
         0,
         PerformanceFeeConfig {
-            performance_fee_percentage: Decimal::from_str("0.0000208").unwrap(),
-            performance_fee_interval,
+            fee: Decimal::from_str("0.0000208").unwrap(),
+            withdrawal_interval: performance_fee_interval,
         },
     );
 
@@ -222,12 +220,7 @@ fn cannot_withdraw_if_time_not_passed() {
     mock.increment_by_time(performance_fee_interval - 1);
 
     let res = execute_withdraw_performance_fee(&mut mock, &fund_manager, &managed_vault_addr, None);
-    assert_vault_err(
-        res,
-        ContractError::Std(StdError::generic_err(
-            "Cannot update by manager before fee max holding period",
-        )),
-    );
+    assert_vault_err(res, ContractError::WithdrawalIntervalNotPassed {});
 
     // move by another 1 second
     mock.increment_by_time(1);
@@ -238,8 +231,8 @@ fn cannot_withdraw_if_time_not_passed() {
         &fund_manager,
         &managed_vault_addr,
         Some(PerformanceFeeConfig {
-            performance_fee_percentage: Decimal::from_str("0.000046287042457350").unwrap(),
-            performance_fee_interval: 1563,
+            fee: Decimal::from_str("0.000046287042457350").unwrap(),
+            withdrawal_interval: 1563,
         }),
     );
     assert_vault_err(
@@ -286,8 +279,8 @@ fn performance_fee_correctly_accumulated() {
         &credit_manager,
         0,
         PerformanceFeeConfig {
-            performance_fee_percentage: Decimal::from_str("0.0000208").unwrap(),
-            performance_fee_interval: 60,
+            fee: Decimal::from_str("0.0000208").unwrap(),
+            withdrawal_interval: 60,
         },
     );
 
@@ -334,7 +327,7 @@ fn performance_fee_correctly_accumulated() {
         performance_fee,
         PerformanceFeeState {
             updated_at: first_deposit_time,
-            liquidity: deposited_amt,
+            base_tokens_amt: deposited_amt,
             accumulated_pnl: Int128::zero(),
             accumulated_fee: Uint128::zero()
         }
@@ -368,7 +361,7 @@ fn performance_fee_correctly_accumulated() {
         performance_fee,
         PerformanceFeeState {
             updated_at: first_deposit_time,
-            liquidity: Uint128::new(139959648),
+            base_tokens_amt: Uint128::new(139959648),
             accumulated_pnl: Int128::new(20000000),
             accumulated_fee: Uint128::new(40352)
         }
@@ -398,7 +391,7 @@ fn performance_fee_correctly_accumulated() {
         performance_fee,
         PerformanceFeeState {
             updated_at: first_deposit_time,
-            liquidity: Uint128::new(75000000),
+            base_tokens_amt: Uint128::new(75000000),
             accumulated_pnl: Int128::new(-59959648),
             accumulated_fee: Uint128::zero()
         }
@@ -432,7 +425,7 @@ fn performance_fee_correctly_accumulated() {
         performance_fee,
         PerformanceFeeState {
             updated_at: first_deposit_time,
-            liquidity: Uint128::new(417233938),
+            base_tokens_amt: Uint128::new(417233938),
             accumulated_pnl: Int128::new(315040352),
             accumulated_fee: Uint128::new(2051038)
         }
@@ -451,8 +444,8 @@ fn performance_fee_correctly_accumulated() {
         &fund_manager,
         &managed_vault_addr,
         Some(PerformanceFeeConfig {
-            performance_fee_percentage: Decimal::from_str("0.0000408").unwrap(),
-            performance_fee_interval: 60,
+            fee: Decimal::from_str("0.0000408").unwrap(),
+            withdrawal_interval: 60,
         }),
     )
     .unwrap();
@@ -463,7 +456,7 @@ fn performance_fee_correctly_accumulated() {
         performance_fee,
         PerformanceFeeState {
             updated_at: fee_withdraw_time,
-            liquidity: Uint128::new(808409364),
+            base_tokens_amt: Uint128::new(808409364),
             accumulated_pnl: Int128::zero(),
             accumulated_fee: Uint128::zero()
         }
@@ -497,7 +490,7 @@ fn performance_fee_correctly_accumulated() {
         performance_fee,
         PerformanceFeeState {
             updated_at: fee_withdraw_time,
-            liquidity: Uint128::new(903331028),
+            base_tokens_amt: Uint128::new(903331028),
             accumulated_pnl: Int128::new(40000000),
             accumulated_fee: Uint128::new(78336)
         }

@@ -1,14 +1,14 @@
 use cosmwasm_std::{Addr, Deps};
 
 use crate::{
-    contract::Vault, error::ContractResult, execute::total_base_token_in_account, msg::VaultUnlock,
-    state::UNLOCKS,
+    contract::Vault, error::ContractResult, execute::total_base_tokens_in_account,
+    msg::VaultUnlock, state::UNLOCKS,
 };
 
 pub fn unlocks(deps: Deps, user_addr: Addr) -> ContractResult<Vec<VaultUnlock>> {
     let vault = Vault::default();
     let vault_token_supply = vault.vault_token.load(deps.storage)?.query_total_supply(deps)?;
-    let total_staked_amount = total_base_token_in_account(deps)?;
+    let total_staked_amount = total_base_tokens_in_account(deps)?;
 
     let unlocks = UNLOCKS.may_load(deps.storage, user_addr.to_string())?.unwrap_or_default();
     unlocks

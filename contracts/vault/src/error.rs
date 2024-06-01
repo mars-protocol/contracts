@@ -65,6 +65,12 @@ pub enum ContractError {
         expected: Decimal,
         actual: Decimal,
     },
+
+    #[error("Zero performance fee")]
+    ZeroPerformanceFee {},
+
+    #[error("Withdrawal interval not passed")]
+    WithdrawalIntervalNotPassed {},
 }
 
 pub type ContractResult<T> = Result<T, ContractError>;

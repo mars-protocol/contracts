@@ -5,7 +5,8 @@ use cosmwasm_std::{coin, Addr, Decimal};
 use cw_multi_test::Executor;
 use mars_vault::{
     error::ContractError,
-    msg::{InstantiateMsg, PerformanceFeeConfig, VaultInfoResponseExt},
+    msg::{InstantiateMsg, VaultInfoResponseExt},
+    performance_fee::PerformanceFeeConfig,
 };
 
 use super::helpers::{mock_managed_vault_contract, AccountToFund, MockEnv};
@@ -38,8 +39,8 @@ fn instantiate_with_empty_metadata() {
             vault_account_id: None,
             cooldown_period: 60,
             performance_fee_config: PerformanceFeeConfig {
-                performance_fee_percentage: Decimal::zero(),
-                performance_fee_interval: 0
+                fee: Decimal::zero(),
+                withdrawal_interval: 0
             }
         }
     )
@@ -72,8 +73,8 @@ fn instantiate_with_metadata() {
                 credit_manager: credit_manager.to_string(),
                 cooldown_period: 8521,
                 performance_fee_config: PerformanceFeeConfig {
-                    performance_fee_percentage: Decimal::from_str("0.000046287042457349").unwrap(),
-                    performance_fee_interval: 1563,
+                    fee: Decimal::from_str("0.000046287042457349").unwrap(),
+                    withdrawal_interval: 1563,
                 },
             },
             &[coin(10_000_000, "untrn")], // Token Factory fee for minting new denom. Configured in the Token Factory module in `mars-testing` package.
@@ -95,8 +96,8 @@ fn instantiate_with_metadata() {
             vault_account_id: None,
             cooldown_period: 8521,
             performance_fee_config: PerformanceFeeConfig {
-                performance_fee_percentage: Decimal::from_str("0.000046287042457349").unwrap(),
-                performance_fee_interval: 1563,
+                fee: Decimal::from_str("0.000046287042457349").unwrap(),
+                withdrawal_interval: 1563,
             }
         }
     )
@@ -127,8 +128,8 @@ fn cannot_instantiate_with_invalid_performance_fee() {
             credit_manager: credit_manager.to_string(),
             cooldown_period: 8521,
             performance_fee_config: PerformanceFeeConfig {
-                performance_fee_percentage: Decimal::from_str("0.000046287042457350").unwrap(),
-                performance_fee_interval: 1563,
+                fee: Decimal::from_str("0.000046287042457350").unwrap(),
+                withdrawal_interval: 1563,
             },
         },
         &[coin(10_000_000, "untrn")], // Token Factory fee for minting new denom. Configured in the Token Factory module in `mars-testing` package.

@@ -3,10 +3,10 @@ use cosmwasm_std::{Addr, Coin, Uint128};
 use cw_multi_test::{AppResponse, Executor};
 use mars_vault::{
     msg::{
-        ExecuteMsg, ExtensionExecuteMsg, ExtensionQueryMsg, PerformanceFeeConfig, QueryMsg,
-        VaultInfoResponseExt, VaultUnlock,
+        ExecuteMsg, ExtensionExecuteMsg, ExtensionQueryMsg, QueryMsg, VaultInfoResponseExt,
+        VaultUnlock,
     },
-    state::PerformanceFeeState,
+    performance_fee::{PerformanceFeeConfig, PerformanceFeeState},
 };
 
 use super::helpers::MockEnv;

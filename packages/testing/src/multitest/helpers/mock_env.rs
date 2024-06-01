@@ -65,7 +65,9 @@ use mars_types::{
         QueryMsg::EstimateExactInSwap, SwapperRoute,
     },
 };
-use mars_vault::msg::{InstantiateMsg as ManagedVaultInstantiateMsg, PerformanceFeeConfig};
+use mars_vault::{
+    msg::InstantiateMsg as ManagedVaultInstantiateMsg, performance_fee::PerformanceFeeConfig,
+};
 use mars_zapper_mock::msg::{InstantiateMsg as ZapperInstantiateMsg, LpConfig};
 
 use super::{
@@ -1508,8 +1510,8 @@ pub fn deploy_managed_vault(app: &mut CustomApp, sender: &Addr, credit_manager: 
         credit_manager,
         60,
         PerformanceFeeConfig {
-            performance_fee_percentage: Decimal::zero(),
-            performance_fee_interval: 0,
+            fee: Decimal::zero(),
+            withdrawal_interval: 0,
         },
     )
 }
