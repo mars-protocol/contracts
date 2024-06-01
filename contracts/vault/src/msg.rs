@@ -2,9 +2,15 @@ use cosmwasm_schema::cw_serde;
 use cosmwasm_std::{Decimal, Uint128};
 use cw_vault_standard::{VaultStandardExecuteMsg, VaultStandardQueryMsg};
 
+use crate::error::ContractError;
+
 pub type ExecuteMsg = VaultStandardExecuteMsg<ExtensionExecuteMsg>;
 
 pub type QueryMsg = VaultStandardQueryMsg<ExtensionQueryMsg>;
+
+/// The maximum performance fee per 1h that can be set (equal to 0.0046287042457349%).
+/// It is equivalent to 50% per year.
+const MAX_PERFORMANCE_FEE: Decimal = Decimal::raw(46287042457349);
 
 #[cw_serde]
 pub struct InstantiateMsg {
@@ -118,4 +124,17 @@ pub struct PerformanceFeeConfig {
 
     /// The interval in seconds at which the performance fee can be withdrawn by the manager
     pub performance_fee_interval: u64,
+}
+
+impl PerformanceFeeConfig {
+    pub fn validate(&self) -> Result<(), ContractError> {
+        if self.performance_fee_percentage > MAX_PERFORMANCE_FEE {
+            return Err(ContractError::InvalidPerformanceFee {
+                expected: MAX_PERFORMANCE_FEE,
+                actual: self.performance_fee_percentage,
+            });
+        }
+
+        Ok(())
+    }
 }

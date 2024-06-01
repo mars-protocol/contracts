@@ -232,6 +232,24 @@ fn cannot_withdraw_if_time_not_passed() {
     // move by another 1 second
     mock.increment_by_time(1);
 
+    // try to pass invalid performance fee config
+    let res = execute_withdraw_performance_fee(
+        &mut mock,
+        &fund_manager,
+        &managed_vault_addr,
+        Some(PerformanceFeeConfig {
+            performance_fee_percentage: Decimal::from_str("0.000046287042457350").unwrap(),
+            performance_fee_interval: 1563,
+        }),
+    );
+    assert_vault_err(
+        res,
+        ContractError::InvalidPerformanceFee {
+            expected: Decimal::from_str("0.000046287042457349").unwrap(),
+            actual: Decimal::from_str("0.000046287042457350").unwrap(),
+        },
+    );
+
     execute_withdraw_performance_fee(&mut mock, &fund_manager, &managed_vault_addr, None).unwrap();
 
     let base_token_balance = mock.query_balance(&fund_manager, &uusdc_info.denom.clone()).amount;

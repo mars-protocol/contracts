@@ -1,5 +1,5 @@
 use cosmwasm_std::{
-    CheckedFromRatioError, CheckedMultiplyFractionError, CheckedMultiplyRatioError,
+    CheckedFromRatioError, CheckedMultiplyFractionError, CheckedMultiplyRatioError, Decimal,
     DecimalRangeExceeded, DivideByZeroError, OverflowError, StdError,
 };
 use cw_utils::PaymentError;
@@ -58,6 +58,12 @@ pub enum ContractError {
     NotTokenOwner {
         user: String,
         account_id: String,
+    },
+
+    #[error("Invalid performance fee, expected less than {expected:?}, got {actual:?}")]
+    InvalidPerformanceFee {
+        expected: Decimal,
+        actual: Decimal,
     },
 }
 

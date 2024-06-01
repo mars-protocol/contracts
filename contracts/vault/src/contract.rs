@@ -83,6 +83,7 @@ pub fn instantiate(
 
     COOLDOWN_PERIOD.save(deps.storage, &msg.cooldown_period)?;
 
+    msg.performance_fee_config.validate()?;
     PERFORMANCE_FEE_CONFIG.save(deps.storage, &msg.performance_fee_config)?;
     PERFORMANCE_FEE_STATE.save(
         deps.storage,

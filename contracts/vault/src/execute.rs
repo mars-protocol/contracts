@@ -407,6 +407,7 @@ pub fn withdraw_performance_fee(
 
     // update performance fee config if new config is provided
     if let Some(new_config) = new_performance_fee_config {
+        new_config.validate()?;
         PERFORMANCE_FEE_CONFIG.save(deps.storage, &new_config)?;
     }
 
