@@ -327,8 +327,9 @@ fn performance_fee_correctly_accumulated() {
 
     // -- SECOND ACTION --
 
-    // move by 97 hours
-    mock.increment_by_time(97 * 60 * 60);
+    // move by 97 hours and 20 minutes
+    // fee is applier per 1 hour so 20 minutes should be ignored during fee calculation
+    mock.increment_by_time(97 * 60 * 60 + 20 * 60);
 
     let pnl = calculate_pnl(&mut mock, &fund_acc_id, Decimal::from_str("1.25").unwrap());
     assert_eq!(pnl, Uint128::new(120_000_000));
@@ -357,8 +358,8 @@ fn performance_fee_correctly_accumulated() {
 
     // -- THIRD ACTION --
 
-    // move by 72 hours
-    mock.increment_by_time(72 * 60 * 60);
+    // move by 72 hours reduced by 20 min (applied in previous step)
+    mock.increment_by_time(72 * 60 * 60 - 20 * 60);
 
     let pnl = calculate_pnl(&mut mock, &fund_acc_id, Decimal::from_str("0.25").unwrap());
     assert_eq!(pnl, Uint128::new(60_000_000));
