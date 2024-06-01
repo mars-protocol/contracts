@@ -16,8 +16,7 @@ use super::{
 use crate::tests::{
     helpers::deploy_managed_vault,
     vault_helpers::{
-        execute_deposit, execute_redeem, execute_unlock,
-        query_performance_fee, query_vault_info,
+        execute_deposit, execute_redeem, execute_unlock, query_performance_fee, query_vault_info,
     },
 };
 
@@ -202,18 +201,6 @@ fn withdraw_performance_fee() {
     let pnl = calculate_pnl(&mut mock, &fund_acc_id, Decimal::from_str("1.25").unwrap());
     assert_eq!(pnl, Uint128::new(120_000_000));
 
-    let _block_time_2 = mock.query_block_time();
-    let performance_fee = query_performance_fee(&mock, &managed_vault_addr);
-    assert_eq!(
-        performance_fee,
-        PerformanceFeeState {
-            updated_at: block_time_1,
-            liquidity: Uint128::new(119959648),
-            accumulated_pnl: Int128::new(20000000),
-            accumulated_fee: Uint128::new(40352)
-        }
-    );
-
     let deposited_amt = Uint128::new(20_000_000);
     execute_deposit(
         &mut mock,
@@ -225,23 +212,23 @@ fn withdraw_performance_fee() {
     )
     .unwrap();
 
-    // move by 72 hours
-    mock.increment_by_time(72 * 60 * 60);
-
-    let pnl = calculate_pnl(&mut mock, &fund_acc_id, Decimal::from_str("0.25").unwrap());
-    assert_eq!(pnl, Uint128::new(60_000_000));
-
-    let _block_time_3 = mock.query_block_time();
+    let _block_time_2 = mock.query_block_time();
     let performance_fee = query_performance_fee(&mock, &managed_vault_addr);
     assert_eq!(
         performance_fee,
         PerformanceFeeState {
             updated_at: block_time_1,
-            liquidity: Uint128::new(60000000),
-            accumulated_pnl: Int128::new(-59959648),
-            accumulated_fee: Uint128::zero()
+            liquidity: Uint128::new(139959648),
+            accumulated_pnl: Int128::new(20000000),
+            accumulated_fee: Uint128::new(40352)
         }
     );
+
+    // move by 72 hours
+    mock.increment_by_time(72 * 60 * 60);
+
+    let pnl = calculate_pnl(&mut mock, &fund_acc_id, Decimal::from_str("0.25").unwrap());
+    assert_eq!(pnl, Uint128::new(60_000_000));
 
     let deposited_amt = Uint128::new(15_000_000);
     execute_deposit(
@@ -254,6 +241,18 @@ fn withdraw_performance_fee() {
     )
     .unwrap();
 
+    let _block_time_3 = mock.query_block_time();
+    let performance_fee = query_performance_fee(&mock, &managed_vault_addr);
+    assert_eq!(
+        performance_fee,
+        PerformanceFeeState {
+            updated_at: block_time_1,
+            liquidity: Uint128::new(75000000),
+            accumulated_pnl: Int128::new(-59959648),
+            accumulated_fee: Uint128::zero()
+        }
+    );
+
     // move by 144 hours
     mock.increment_by_time(144 * 60 * 60);
 
@@ -262,18 +261,6 @@ fn withdraw_performance_fee() {
     // so the price of uatom has to be 395_000_000 / 80_000_000 = 4.9375
     let pnl = calculate_pnl(&mut mock, &fund_acc_id, Decimal::from_str("4.9375").unwrap());
     assert_eq!(pnl, Uint128::new(450_000_000));
-
-    let _block_time_4 = mock.query_block_time();
-    let performance_fee = query_performance_fee(&mock, &managed_vault_addr);
-    assert_eq!(
-        performance_fee,
-        PerformanceFeeState {
-            updated_at: block_time_1,
-            liquidity: Uint128::new(447948962),
-            accumulated_pnl: Int128::new(315040352),
-            accumulated_fee: Uint128::new(2051038)
-        }
-    );
 
     let unlock_vault_tokens = Uint128::new(10_000_000_000_000);
     execute_unlock(&mut mock, &user, &managed_vault_addr, unlock_vault_tokens, &[]).unwrap();
@@ -287,23 +274,23 @@ fn withdraw_performance_fee() {
     )
     .unwrap();
 
-    // move by 744 hours
-    mock.increment_by_time(744 * 60 * 60);
-
-    let pnl = calculate_pnl(&mut mock, &fund_acc_id, Decimal::from_str("10").unwrap());
-    assert_eq!(pnl, Uint128::new(824284976));
-
-    let _block_time_5 = mock.query_block_time();
+    let _block_time_4 = mock.query_block_time();
     let performance_fee = query_performance_fee(&mock, &managed_vault_addr);
     assert_eq!(
         performance_fee,
         PerformanceFeeState {
             updated_at: block_time_1,
-            liquidity: Uint128::new(808409364),
-            accumulated_pnl: Int128::new(722091390),
-            accumulated_fee: Uint128::new(15875612)
+            liquidity: Uint128::new(417233938),
+            accumulated_pnl: Int128::new(315040352),
+            accumulated_fee: Uint128::new(2051038)
         }
     );
+
+    // move by 744 hours
+    mock.increment_by_time(744 * 60 * 60);
+
+    let pnl = calculate_pnl(&mut mock, &fund_acc_id, Decimal::from_str("10").unwrap());
+    assert_eq!(pnl, Uint128::new(824284976));
 
     execute_withdraw_performance_fee(&mut mock, &fund_manager, &managed_vault_addr).unwrap();
 
@@ -328,18 +315,6 @@ fn withdraw_performance_fee() {
     let pnl = calculate_pnl(&mut mock, &fund_acc_id, Decimal::from_str("10.5").unwrap());
     assert_eq!(pnl, Uint128::new(848409364));
 
-    let _block_time_7 = mock.query_block_time();
-    let performance_fee = query_performance_fee(&mock, &managed_vault_addr);
-    assert_eq!(
-        performance_fee,
-        PerformanceFeeState {
-            updated_at: block_time_6,
-            liquidity: Uint128::new(848369428),
-            accumulated_pnl: Int128::new(40000000),
-            accumulated_fee: Uint128::new(39936)
-        }
-    );
-
     let deposited_amt = Uint128::new(55_000_000);
     execute_deposit(
         &mut mock,
@@ -350,6 +325,18 @@ fn withdraw_performance_fee() {
         &[coin(deposited_amt.u128(), "uusdc")],
     )
     .unwrap();
+
+    let _block_time_7 = mock.query_block_time();
+    let performance_fee = query_performance_fee(&mock, &managed_vault_addr);
+    assert_eq!(
+        performance_fee,
+        PerformanceFeeState {
+            updated_at: block_time_6,
+            liquidity: Uint128::new(903369428),
+            accumulated_pnl: Int128::new(40000000),
+            accumulated_fee: Uint128::new(39936)
+        }
+    );
 }
 
 fn calculate_pnl(mock: &mut MockEnv, fund_acc_id: &str, new_atom_price: Decimal) -> Uint128 {
