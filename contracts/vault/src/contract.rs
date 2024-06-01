@@ -132,7 +132,7 @@ pub fn execute(
 }
 
 #[entry_point]
-pub fn query(deps: Deps, env: Env, msg: QueryMsg) -> ContractResult<Binary> {
+pub fn query(deps: Deps, _env: Env, msg: QueryMsg) -> ContractResult<Binary> {
     let base_vault = Vault::default();
 
     match msg {
@@ -188,7 +188,7 @@ pub fn query(deps: Deps, env: Env, msg: QueryMsg) -> ContractResult<Binary> {
                 to_json_binary(&query::unlocks(deps, user_addr)?)
             }
             ExtensionQueryMsg::PerformanceFeeState {} => {
-                to_json_binary(&query::performance_fee(deps, env)?)
+                to_json_binary(&PERFORMANCE_FEE_STATE.load(deps.storage)?)
             }
         },
     }

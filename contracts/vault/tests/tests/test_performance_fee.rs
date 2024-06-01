@@ -4,7 +4,7 @@ use cosmwasm_std::{coin, Addr, Decimal, Int128, Uint128};
 use cw_multi_test::{BankSudo, SudoMsg};
 use mars_mock_oracle::msg::CoinPrice;
 use mars_testing::multitest::helpers::{
-    coin_info, deploy_managed_vault_with_performance_fee, uatom_info,
+    coin_info, deploy_managed_vault_with_performance_fee, uatom_info, CoinInfo,
 };
 use mars_types::{credit_manager::Action, health::AccountKind, oracle::ActionKind};
 use mars_vault::{error::ContractError, msg::PerformanceFeeConfig, state::PerformanceFeeState};
@@ -44,7 +44,7 @@ fn deposit_if_credit_manager_account_not_binded() {
 }
 
 #[test]
-fn unauthorized_withdraw() {
+fn unauthorized_performance_fee_withdraw() {
     let fund_manager = Addr::unchecked("fund-manager");
     let user = Addr::unchecked("user");
     let user_funded_amt = Uint128::new(1_000_000_000);
@@ -95,8 +95,10 @@ fn unauthorized_withdraw() {
     );
 }
 
+/// Scenarios based on spreadsheet:
+/// ../files/Mars - 3rd party Vault - Performance Fee - test cases v1.0.xlsx
 #[test]
-fn withdraw_performance_fee() {
+fn performance_fee_correctly_accumulated() {
     let uusdc_info = coin_info("uusdc");
     let uatom_info = uatom_info();
 
@@ -178,26 +180,7 @@ fn withdraw_performance_fee() {
     );
 
     // swap USDC to ATOM to tune PnL value based on different ATOM price
-    let swap_amt = Uint128::new(80_000_000);
-    let cm_config = mock.query_config();
-    mock.app
-        .sudo(SudoMsg::Bank(BankSudo::Mint {
-            to_address: cm_config.swapper,
-            amount: vec![coin(swap_amt.u128(), uatom_info.denom.clone())],
-        }))
-        .unwrap();
-    mock.update_credit_account(
-        &fund_acc_id,
-        &fund_manager,
-        vec![Action::SwapExactIn {
-            coin_in: uusdc_info.to_action_coin(swap_amt.u128()),
-            denom_out: uatom_info.denom.clone(),
-            slippage: Decimal::from_atomics(6u128, 1).unwrap(),
-            route: None,
-        }],
-        &[],
-    )
-    .unwrap();
+    swap_usdc_to_atom(&mut mock, &fund_acc_id, &fund_manager, &uusdc_info, &uatom_info);
 
     // -- SECOND ACTION --
 
@@ -357,6 +340,35 @@ fn withdraw_performance_fee() {
             accumulated_fee: Uint128::new(78336)
         }
     );
+}
+
+fn swap_usdc_to_atom(
+    mock: &mut MockEnv,
+    fund_acc_id: &str,
+    fund_manager: &Addr,
+    uusdc_info: &CoinInfo,
+    uatom_info: &CoinInfo,
+) {
+    let swap_amt = Uint128::new(80_000_000);
+    let cm_config = mock.query_config();
+    mock.app
+        .sudo(SudoMsg::Bank(BankSudo::Mint {
+            to_address: cm_config.swapper,
+            amount: vec![coin(swap_amt.u128(), uatom_info.denom.clone())],
+        }))
+        .unwrap();
+    mock.update_credit_account(
+        fund_acc_id,
+        fund_manager,
+        vec![Action::SwapExactIn {
+            coin_in: uusdc_info.to_action_coin(swap_amt.u128()),
+            denom_out: uatom_info.denom.clone(),
+            slippage: Decimal::from_atomics(6u128, 1).unwrap(),
+            route: None,
+        }],
+        &[],
+    )
+    .unwrap();
 }
 
 fn calculate_pnl(mock: &mut MockEnv, fund_acc_id: &str, new_atom_price: Decimal) -> Uint128 {
