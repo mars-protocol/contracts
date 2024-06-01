@@ -84,16 +84,16 @@ impl PerformanceFeeState {
         total_staked_base_tokens: Uint128,
         config: &PerformanceFeeConfig,
     ) -> StdResult<()> {
+        if self.accumulated_fee.is_zero() {
+            return Err(StdError::generic_err(
+                "Cannot update by manager before user has accumulated fees",
+            ));
+        }
+
         let time_diff = current_time - self.updated_at;
         if time_diff < config.performance_fee_interval {
             return Err(StdError::generic_err(
                 "Cannot update by manager before fee max holding period",
-            ));
-        }
-
-        if self.accumulated_fee.is_zero() {
-            return Err(StdError::generic_err(
-                "Cannot update by manager before user has accumulated fees",
             ));
         }
 

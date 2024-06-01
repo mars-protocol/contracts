@@ -1,6 +1,6 @@
 use std::str::FromStr;
 
-use cosmwasm_std::{coin, Addr, Decimal, Int128, Uint128};
+use cosmwasm_std::{coin, Addr, Decimal, Int128, StdError, Uint128};
 use cw_multi_test::{BankSudo, SudoMsg};
 use mars_mock_oracle::msg::CoinPrice;
 use mars_testing::multitest::helpers::{
@@ -93,6 +93,149 @@ fn unauthorized_performance_fee_withdraw() {
             account_id: vault_acc_id,
         },
     );
+}
+
+#[test]
+fn cannot_withdraw_zero_performance_fee() {
+    let uusdc_info = coin_info("uusdc");
+    let uatom_info = uatom_info();
+
+    let fund_manager = Addr::unchecked("fund-manager");
+    let user = Addr::unchecked("user");
+    let user_funded_amt = Uint128::new(100_000_000_000);
+    let mut mock = MockEnv::new()
+        .set_params(&[uusdc_info.clone(), uatom_info.clone()])
+        .fund_account(AccountToFund {
+            addr: fund_manager.clone(),
+            funds: vec![coin(1_000_000_000, "untrn")],
+        })
+        .fund_account(AccountToFund {
+            addr: user.clone(),
+            funds: vec![coin(user_funded_amt.u128(), "uusdc")],
+        })
+        .build()
+        .unwrap();
+    let credit_manager = mock.rover.clone();
+
+    let managed_vault_addr = deploy_managed_vault_with_performance_fee(
+        &mut mock.app,
+        &fund_manager,
+        &credit_manager,
+        0,
+        PerformanceFeeConfig {
+            performance_fee_percentage: Decimal::from_str("0.0000208").unwrap(),
+            performance_fee_interval: 60,
+        },
+    );
+
+    mock.create_credit_account_v2(
+        &fund_manager,
+        AccountKind::FundManager {
+            vault_addr: managed_vault_addr.to_string(),
+        },
+        None,
+    )
+    .unwrap();
+
+    let res = execute_withdraw_performance_fee(&mut mock, &fund_manager, &managed_vault_addr, None);
+    assert_vault_err(
+        res,
+        ContractError::Std(StdError::generic_err(
+            "Cannot update by manager before user has accumulated fees",
+        )),
+    );
+}
+
+#[test]
+fn cannot_withdraw_if_time_not_passed() {
+    let uusdc_info = coin_info("uusdc");
+    let uatom_info = uatom_info();
+
+    let fund_manager = Addr::unchecked("fund-manager");
+    let user = Addr::unchecked("user");
+    let user_funded_amt = Uint128::new(100_000_000_000);
+    let mut mock = MockEnv::new()
+        .set_params(&[uusdc_info.clone(), uatom_info.clone()])
+        .fund_account(AccountToFund {
+            addr: fund_manager.clone(),
+            funds: vec![coin(1_000_000_000, "untrn")],
+        })
+        .fund_account(AccountToFund {
+            addr: user.clone(),
+            funds: vec![coin(user_funded_amt.u128(), "uusdc")],
+        })
+        .build()
+        .unwrap();
+    let credit_manager = mock.rover.clone();
+
+    let performance_fee_interval = 7200u64; // 2 hours
+    let managed_vault_addr = deploy_managed_vault_with_performance_fee(
+        &mut mock.app,
+        &fund_manager,
+        &credit_manager,
+        0,
+        PerformanceFeeConfig {
+            performance_fee_percentage: Decimal::from_str("0.0000208").unwrap(),
+            performance_fee_interval,
+        },
+    );
+
+    let fund_acc_id = mock
+        .create_credit_account_v2(
+            &fund_manager,
+            AccountKind::FundManager {
+                vault_addr: managed_vault_addr.to_string(),
+            },
+            None,
+        )
+        .unwrap();
+
+    // simulate base token price = 1 USD
+    mock.price_change(CoinPrice {
+        pricing: ActionKind::Default,
+        denom: uusdc_info.denom.clone(),
+        price: Decimal::one(),
+    });
+
+    let deposited_amt = Uint128::new(100_000_000);
+    execute_deposit(
+        &mut mock,
+        &user,
+        &managed_vault_addr,
+        Uint128::zero(), // we don't care about the amount, we are using the funds
+        None,
+        &[coin(deposited_amt.u128(), "uusdc")],
+    )
+    .unwrap();
+
+    // swap USDC to ATOM to tune PnL value based on different ATOM price
+    swap_usdc_to_atom(&mut mock, &fund_acc_id, &fund_manager, &uusdc_info, &uatom_info);
+
+    let pnl = calculate_pnl(&mut mock, &fund_acc_id, Decimal::from_str("1.25").unwrap());
+    assert_eq!(pnl, Uint128::new(120_000_000));
+
+    // check performance fee fund manager wallet balance
+    let base_token_balance = mock.query_balance(&fund_manager, &uusdc_info.denom.clone()).amount;
+    assert!(base_token_balance.is_zero());
+
+    // move by interval - 1
+    mock.increment_by_time(performance_fee_interval - 1);
+
+    let res = execute_withdraw_performance_fee(&mut mock, &fund_manager, &managed_vault_addr, None);
+    assert_vault_err(
+        res,
+        ContractError::Std(StdError::generic_err(
+            "Cannot update by manager before fee max holding period",
+        )),
+    );
+
+    // move by another 1 second
+    mock.increment_by_time(1);
+
+    execute_withdraw_performance_fee(&mut mock, &fund_manager, &managed_vault_addr, None).unwrap();
+
+    let base_token_balance = mock.query_balance(&fund_manager, &uusdc_info.denom.clone()).amount;
+    assert_eq!(base_token_balance, Uint128::new(832));
 }
 
 /// Scenarios based on spreadsheet:
