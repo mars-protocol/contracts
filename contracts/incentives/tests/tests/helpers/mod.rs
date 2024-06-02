@@ -22,7 +22,6 @@ pub fn th_setup_with_env(env: Env) -> OwnedDeps<MockStorage, MockApi, MarsMockQu
         address_provider: String::from("address_provider"),
         epoch_duration: 604800, // 1 week in seconds
         max_whitelisted_denoms: 10,
-        mars_denom: "umars".to_string(),
     };
     let info = mock_info("owner", &[]);
     instantiate(deps.as_mut(), env, info, msg).unwrap();
@@ -41,7 +40,6 @@ pub fn ths_setup_with_epoch_duration(
         address_provider: String::from("address_provider"),
         epoch_duration,
         max_whitelisted_denoms: 10,
-        mars_denom: "umars".to_string(),
     };
     let info = mock_info("owner", &[]);
     instantiate(deps.as_mut(), env, info, msg).unwrap();

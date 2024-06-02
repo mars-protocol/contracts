@@ -16,7 +16,7 @@ use mars_types::{
 };
 
 use crate::{
-    error::ContractError,
+    error::{ContractError, ContractResult},
     health,
     state::{COLLATERALS, CONFIG, DEBTS, MARKETS, OWNER},
 };
@@ -85,7 +85,7 @@ pub fn query_markets_v2(
     env: Env,
     start_after: Option<String>,
     limit: Option<u32>,
-) -> Result<PaginationResponse<MarketV2Response>, ContractError> {
+) -> ContractResult<PaginationResponse<MarketV2Response>> {
     let block_time = env.block.time.seconds();
     let start = start_after.map(|denom| Bound::ExclusiveRaw(denom.into_bytes()));
     let limit = limit.unwrap_or(DEFAULT_LIMIT).min(MAX_LIMIT);
@@ -205,7 +205,8 @@ pub fn query_user_collaterals(
     start_after: Option<String>,
     limit: Option<u32>,
 ) -> Result<Vec<UserCollateralResponse>, ContractError> {
-    let res_v2 = query_user_collaterals_v2(deps, block, user_addr, account_id, start_after, limit)?;
+    let res_v2: PaginationResponse<UserCollateralResponse> =
+        query_user_collaterals_v2(deps, block, user_addr, account_id, start_after, limit)?;
     Ok(res_v2.data)
 }
 
@@ -224,7 +225,7 @@ pub fn query_user_collaterals_v2(
 
     let acc_id = account_id.unwrap_or("".to_string());
 
-    let user_id = UserId::credit_manager(user_addr, acc_id);
+    let user_id: UserId = UserId::credit_manager(user_addr, acc_id);
     let user_id_key: UserIdKey = user_id.try_into()?;
 
     paginate_prefix_query(

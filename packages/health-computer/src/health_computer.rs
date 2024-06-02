@@ -107,6 +107,9 @@ impl HealthComputer {
 
         let withdraw_denom_max_ltv = match self.kind {
             AccountKind::Default => params.max_loan_to_value,
+            AccountKind::FundManager {
+                ..
+            } => params.max_loan_to_value,
             AccountKind::HighLeveredStrategy => {
                 params
                     .credit_manager
@@ -278,6 +281,9 @@ impl HealthComputer {
 
         let borrow_denom_max_ltv = match self.kind {
             AccountKind::Default => params.max_loan_to_value,
+            AccountKind::FundManager {
+                ..
+            } => params.max_loan_to_value,
             AccountKind::HighLeveredStrategy => {
                 params
                     .credit_manager
@@ -348,6 +354,9 @@ impl HealthComputer {
                 let checked_vault_max_ltv = if *whitelisted {
                     match self.kind {
                         AccountKind::Default => *max_loan_to_value,
+                        AccountKind::FundManager {
+                            ..
+                        } => *max_loan_to_value,
                         AccountKind::HighLeveredStrategy => {
                             hls.as_ref()
                                 .ok_or(MissingHLSParams(addr.to_string()))?
@@ -508,12 +517,7 @@ impl HealthComputer {
         let mut liquidation_threshold_adjusted_collateral = Uint128::zero();
 
         for c in coins {
-            let coin_price =
-                self.denoms_data.prices.get(&c.denom).ok_or(MissingPrice(c.denom.clone()))?;
-            let coin_value = c.amount.checked_mul_floor(*coin_price)?;
-            total_collateral_value = total_collateral_value.checked_add(coin_value)?;
-
-            let AssetParams {
+            let Some(AssetParams {
                 credit_manager:
                     CmSettings {
                         hls,
@@ -521,7 +525,16 @@ impl HealthComputer {
                     },
                 liquidation_threshold,
                 ..
-            } = self.denoms_data.params.get(&c.denom).ok_or(MissingParams(c.denom.clone()))?;
+            }) = self.denoms_data.params.get(&c.denom)
+            else {
+                // If the coin is not found (whitelisted), it is not considered for collateral
+                continue;
+            };
+
+            let coin_price =
+                self.denoms_data.prices.get(&c.denom).ok_or(MissingPrice(c.denom.clone()))?;
+            let coin_value = c.amount.checked_mul_floor(*coin_price)?;
+            total_collateral_value = total_collateral_value.checked_add(coin_value)?;
 
             let checked_max_ltv = self.get_coin_max_ltv(&c.denom)?;
 
@@ -531,6 +544,9 @@ impl HealthComputer {
 
             let checked_liquidation_threshold = match self.kind {
                 AccountKind::Default => *liquidation_threshold,
+                AccountKind::FundManager {
+                    ..
+                } => *liquidation_threshold,
                 AccountKind::HighLeveredStrategy => {
                     hls.as_ref().ok_or(MissingHLSParams(c.denom.clone()))?.liquidation_threshold
                 }
@@ -584,6 +600,9 @@ impl HealthComputer {
             let checked_vault_max_ltv = if *whitelisted && base_params.credit_manager.whitelisted {
                 match self.kind {
                     AccountKind::Default => *max_loan_to_value,
+                    AccountKind::FundManager {
+                        ..
+                    } => *max_loan_to_value,
                     AccountKind::HighLeveredStrategy => {
                         hls.as_ref().ok_or(MissingHLSParams(addr.to_string()))?.max_loan_to_value
                     }
@@ -600,6 +619,9 @@ impl HealthComputer {
 
             let checked_liquidation_threshold = match self.kind {
                 AccountKind::Default => *liquidation_threshold,
+                AccountKind::FundManager {
+                    ..
+                } => *liquidation_threshold,
                 AccountKind::HighLeveredStrategy => {
                     hls.as_ref().ok_or(MissingHLSParams(addr.to_string()))?.liquidation_threshold
                 }
@@ -642,6 +664,9 @@ impl HealthComputer {
 
         match self.kind {
             AccountKind::Default => Ok(params.max_loan_to_value),
+            AccountKind::FundManager {
+                ..
+            } => Ok(params.max_loan_to_value),
             AccountKind::HighLeveredStrategy => Ok(params
                 .credit_manager
                 .hls

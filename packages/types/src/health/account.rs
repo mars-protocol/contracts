@@ -9,6 +9,13 @@ use tsify::Tsify;
 pub enum AccountKind {
     Default,
     HighLeveredStrategy,
+
+    /// A vault that is managed by a fund manager.
+    /// Fund manager (wallet) is responsible for managing the vault.
+    /// Fund manager can't deposit and withdraw funds from the vault.
+    FundManager {
+        vault_addr: String,
+    },
 }
 
 impl fmt::Display for AccountKind {

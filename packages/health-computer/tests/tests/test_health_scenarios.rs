@@ -38,6 +38,8 @@ fn only_assets_with_no_debts() {
         kind: AccountKind::Default,
         positions: Positions {
             account_id: "123".to_string(),
+            account_kind: AccountKind::Default,
+
             deposits: vec![Coin {
                 denom: umars.denom.clone(),
                 amount: deposit_amount,
@@ -100,6 +102,8 @@ fn terra_ragnarok() {
         kind: AccountKind::Default,
         positions: Positions {
             account_id: "123".to_string(),
+            account_kind: AccountKind::Default,
+
             deposits: vec![Coin {
                 denom: uluna.denom.clone(),
                 amount: deposit_amount,
@@ -160,6 +164,8 @@ fn terra_ragnarok() {
         kind: AccountKind::Default,
         positions: Positions {
             account_id: "123".to_string(),
+            account_kind: AccountKind::Default,
+
             deposits: vec![Coin {
                 denom: uluna.denom.clone(),
                 amount: deposit_amount,
@@ -222,6 +228,8 @@ fn ltv_and_lqdt_adjusted_values() {
         kind: AccountKind::Default,
         positions: Positions {
             account_id: "123".to_string(),
+            account_kind: AccountKind::Default,
+
             deposits: vec![
                 Coin {
                     denom: ustars.denom.clone(),
@@ -332,6 +340,8 @@ fn debt_value() {
         kind: AccountKind::Default,
         positions: Positions {
             account_id: "123".to_string(),
+            account_kind: AccountKind::Default,
+
             deposits: vec![
                 Coin {
                     denom: ustars.denom.clone(),
@@ -455,6 +465,8 @@ fn above_max_ltv_below_liq_threshold() {
         kind: AccountKind::Default,
         positions: Positions {
             account_id: "123".to_string(),
+            account_kind: AccountKind::Default,
+
             deposits: vec![coin(1200, &umars.denom), coin(33, &udai.denom)],
             debts: vec![DebtAmount {
                 denom: udai.denom,
@@ -511,6 +523,8 @@ fn liquidatable() {
         kind: AccountKind::Default,
         positions: Positions {
             account_id: "123".to_string(),
+            account_kind: AccountKind::Default,
+
             deposits: vec![coin(1200, &umars.denom), coin(33, &udai.denom)],
             debts: vec![
                 DebtAmount {
@@ -576,6 +590,8 @@ fn rover_whitelist_influences_max_ltv() {
         kind: AccountKind::Default,
         positions: Positions {
             account_id: "123".to_string(),
+            account_kind: AccountKind::Default,
+
             deposits: vec![coin(1200, &umars.denom), coin(33, &udai.denom)],
             debts: vec![
                 DebtAmount {
@@ -665,6 +681,8 @@ fn unlocked_vault() {
         kind: AccountKind::Default,
         positions: Positions {
             account_id: "123".to_string(),
+            account_kind: AccountKind::Default,
+
             deposits: vec![coin(1200, &umars.denom), coin(33, &udai.denom)],
             debts: vec![
                 DebtAmount {
@@ -757,6 +775,8 @@ fn locked_vault() {
         kind: AccountKind::Default,
         positions: Positions {
             account_id: "123".to_string(),
+            account_kind: AccountKind::Default,
+
             deposits: vec![coin(1200, &umars.denom), coin(33, &udai.denom)],
             debts: vec![
                 DebtAmount {
@@ -852,6 +872,8 @@ fn locked_vault_with_unlocking_positions() {
         kind: AccountKind::Default,
         positions: Positions {
             account_id: "123".to_string(),
+            account_kind: AccountKind::Default,
+
             deposits: vec![coin(1200, &umars.denom), coin(33, &udai.denom)],
             debts: vec![
                 DebtAmount {
@@ -956,6 +978,8 @@ fn vault_is_not_whitelisted() {
         kind: AccountKind::Default,
         positions: Positions {
             account_id: "123".to_string(),
+            account_kind: AccountKind::Default,
+
             deposits: vec![coin(1200, &umars.denom), coin(33, &udai.denom)],
             debts: vec![
                 DebtAmount {
@@ -1054,6 +1078,8 @@ fn vault_base_token_is_not_whitelisted() {
         kind: AccountKind::Default,
         positions: Positions {
             account_id: "123".to_string(),
+            account_kind: AccountKind::Default,
+
             deposits: vec![coin(1200, &umars.denom), coin(33, &udai.denom)],
             debts: vec![
                 DebtAmount {
@@ -1135,6 +1161,8 @@ fn lent_coins_used_as_collateral() {
         kind: AccountKind::Default,
         positions: Positions {
             account_id: "123".to_string(),
+            account_kind: AccountKind::Default,
+
             deposits: vec![coin(1200, &umars.denom), coin(23, &udai.denom)],
             debts: vec![DebtAmount {
                 denom: udai.denom.clone(),
@@ -1196,6 +1224,8 @@ fn allowed_lent_coins_influence_max_ltv() {
         kind: AccountKind::Default,
         positions: Positions {
             account_id: "123".to_string(),
+            account_kind: AccountKind::Default,
+
             deposits: vec![coin(1200, &umars.denom), coin(23, &udai.denom)],
             debts: vec![DebtAmount {
                 denom: udai.denom.clone(),

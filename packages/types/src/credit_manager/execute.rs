@@ -19,6 +19,11 @@ pub enum ExecuteMsg {
     //--------------------------------------------------------------------------------------------------
     /// Mints NFT representing a credit account for user. User can have many.
     CreateCreditAccount(AccountKind),
+    /// Mints NFT representing a credit account for user with optional custom account_id creation. User can have many accounts.
+    CreateCreditAccountV2 {
+        kind: AccountKind,
+        account_id: Option<String>,
+    },
     /// Update user's position on their credit account
     UpdateCreditAccount {
         account_id: Option<String>,
@@ -120,6 +125,11 @@ pub enum Action {
     Deposit(Coin),
     /// Withdraw coin of specified denom and amount
     Withdraw(ActionCoin),
+    /// Withdraw coin of specified denom and amount to a wallet address
+    WithdrawToWallet {
+        coin: ActionCoin,
+        recipient: String,
+    },
     /// Borrow coin of specified amount from Red Bank
     Borrow(Coin),
     /// Lend coin to the Red Bank

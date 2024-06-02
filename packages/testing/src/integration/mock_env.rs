@@ -553,6 +553,18 @@ impl RedBank {
             .unwrap()
     }
 
+    pub fn query_market_v2(&self, env: &mut MockEnv, denom: &str) -> MarketV2Response {
+        env.app
+            .wrap()
+            .query_wasm_smart(
+                self.contract_addr.clone(),
+                &red_bank::QueryMsg::MarketV2 {
+                    denom: denom.to_string(),
+                },
+            )
+            .unwrap()
+    }
+
     pub fn query_markets(&self, env: &mut MockEnv) -> HashMap<String, Market> {
         let res: Vec<Market> = env
             .app
@@ -765,6 +777,24 @@ impl Params {
             )
             .unwrap()
     }
+
+    pub fn all_total_deposits_v2(
+        &self,
+        env: &mut MockEnv,
+        start_after: Option<String>,
+        limit: Option<u32>,
+    ) -> PaginationResponse<TotalDepositResponse> {
+        env.app
+            .wrap()
+            .query_wasm_smart(
+                self.contract_addr.clone(),
+                &mars_types::params::QueryMsg::AllTotalDepositsV2 {
+                    start_after,
+                    limit,
+                },
+            )
+            .unwrap()
+    }
 }
 
 pub struct MockEnvBuilder {
@@ -954,7 +984,6 @@ impl MockEnvBuilder {
                     address_provider: address_provider_addr.to_string(),
                     epoch_duration: 604800,
                     max_whitelisted_denoms: 10,
-                    mars_denom: "umars".to_string(),
                 },
                 &[],
                 "incentives",

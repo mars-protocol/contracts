@@ -122,11 +122,20 @@ impl MockEnv {
     }
 
     pub fn mint(&mut self, token_owner: &Addr) -> AnyResult<String> {
+        self.mint_with_custom_token_id(token_owner, None)
+    }
+
+    pub fn mint_with_custom_token_id(
+        &mut self,
+        token_owner: &Addr,
+        token_id: Option<String>,
+    ) -> AnyResult<String> {
         let res = self.app.execute_contract(
             self.minter.clone(),
             self.nft_contract.clone(),
             &ExecuteMsg::Mint {
                 user: token_owner.into(),
+                token_id,
             },
             &[],
         )?;

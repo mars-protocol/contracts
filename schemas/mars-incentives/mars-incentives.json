@@ -9,7 +9,6 @@
     "required": [
       "address_provider",
       "epoch_duration",
-      "mars_denom",
       "max_whitelisted_denoms",
       "owner"
     ],
@@ -23,10 +22,6 @@
         "type": "integer",
         "format": "uint64",
         "minimum": 0.0
-      },
-      "mars_denom": {
-        "description": "Mars Token Denom",
-        "type": "string"
       },
       "max_whitelisted_denoms": {
         "description": "The maximum number of incentive denoms that can be whitelisted at any given time. This is a guard against accidentally whitelisting too many denoms, which could cause max gas errors.",

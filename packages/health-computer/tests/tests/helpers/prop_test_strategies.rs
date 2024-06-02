@@ -18,7 +18,13 @@ use proptest::{
 };
 
 fn random_account_kind() -> impl Strategy<Value = AccountKind> {
-    prop_oneof![Just(AccountKind::Default), Just(AccountKind::HighLeveredStrategy)]
+    prop_oneof![
+        Just(AccountKind::Default),
+        Just(AccountKind::HighLeveredStrategy),
+        Just(AccountKind::FundManager {
+            vault_addr: "vault_addr".to_string()
+        })
+    ]
 }
 
 fn random_denom() -> impl Strategy<Value = String> {
@@ -269,9 +275,10 @@ pub fn random_health_computer() -> impl Strategy<Value = HealthComputer> {
             random_vault_positions(vaults_data.clone()),
         )
             .prop_map(move |(kind, deposits, debts, lends, vaults)| HealthComputer {
-                kind,
+                kind: kind.clone(),
                 positions: Positions {
                     account_id: "123".to_string(),
+                    account_kind: kind,
                     deposits,
                     debts,
                     lends,

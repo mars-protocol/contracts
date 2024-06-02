@@ -1,4 +1,4 @@
-mod helpers;
+pub use mars_testing::multitest::helpers;
 
 mod test_borrow;
 mod test_claim_rewards;
@@ -12,6 +12,7 @@ mod test_enumerate_coin_balances;
 mod test_enumerate_debt_shares;
 mod test_enumerate_total_debt_shares;
 mod test_enumerate_vault_positions;
+mod test_fund_manager_accounts;
 mod test_health;
 mod test_hls_accounts;
 mod test_instantiate;

@@ -28,6 +28,7 @@ fn hls_account_kind_passed_along() {
 
     let positions = Positions {
         account_id: account_id.to_string(),
+        account_kind: AccountKind::Default,
         deposits: vec![],
         debts: vec![DebtAmount {
             denom: debt_token.to_string(),

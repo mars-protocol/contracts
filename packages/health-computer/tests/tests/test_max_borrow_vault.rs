@@ -31,6 +31,7 @@ fn max_borrow_vault_offset_good() {
         kind: AccountKind::Default,
         positions: Positions {
             account_id: "123".to_string(),
+            account_kind: AccountKind::Default,
             deposits: vec![coin(1200, &udai.denom)],
             debts: vec![],
             lends: vec![],
@@ -75,6 +76,8 @@ fn max_borrow_vault_offset_margin_of_error() {
         kind: AccountKind::Default,
         positions: Positions {
             account_id: "123".to_string(),
+            account_kind: AccountKind::Default,
+
             deposits: vec![coin(1200, &umars.denom)],
             debts: vec![],
             lends: vec![],

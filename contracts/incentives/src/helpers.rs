@@ -3,6 +3,7 @@ use std::{
     collections::HashMap,
 };
 
+use astroport::incentives::ExecuteMsg;
 use cosmwasm_std::{
     coin, to_json_binary, Addr, BlockInfo, Coin, CosmosMsg, Decimal, Deps, MessageInfo, Order,
     OverflowError, OverflowOperation, QuerierWrapper, StdError, StdResult, Storage, Uint128,
@@ -19,8 +20,9 @@ use mars_types::{
 
 use crate::{
     state::{
-        ASTRO_INCENTIVE_STATES, EMISSIONS, EPOCH_DURATION, INCENTIVE_STATES, ASTRO_TOTAL_LP_DEPOSITS,
-        USER_ASSET_INDICES, USER_ASTRO_INCENTIVE_STATES, USER_UNCLAIMED_REWARDS, WHITELIST,
+        ASTRO_INCENTIVE_STATES, ASTRO_TOTAL_LP_DEPOSITS, EMISSIONS, EPOCH_DURATION,
+        INCENTIVE_STATES, USER_ASSET_INDICES, USER_ASTRO_INCENTIVE_STATES, USER_UNCLAIMED_REWARDS,
+        WHITELIST,
     },
     ContractError,
 };
@@ -222,7 +224,7 @@ pub fn compute_updated_astroport_incentive_states(
     lp_denom: &str,
 ) -> Result<HashMap<String, Decimal>, ContractError> {
     let mut updated_incentives: HashMap<String, Decimal> = HashMap::new();
-    let total_lp_amount = ASTRO_TOTAL_LP_DEPOSITS.may_load(storage, &lp_denom)?.unwrap_or_default();
+    let total_lp_amount = ASTRO_TOTAL_LP_DEPOSITS.may_load(storage, lp_denom)?.unwrap_or_default();
 
     for reward in pending_rewards {
         let reward_denom = reward.denom;
@@ -231,12 +233,10 @@ pub fn compute_updated_astroport_incentive_states(
         // This allows us to combine multiple rewards of the same denom.
         let previous_index = updated_incentives
             .get(&reward_denom)
-            .and_then(|d| Some(*d))
+            .copied()
             // Otherwise we load from storage
             .or_else(|| {
-                ASTRO_INCENTIVE_STATES
-                    .may_load(storage, (&lp_denom, &reward_denom)).ok()?
-
+                ASTRO_INCENTIVE_STATES.may_load(storage, (&lp_denom, &reward_denom)).ok()?
             })
             .unwrap_or(Decimal::zero());
 
@@ -250,7 +250,7 @@ pub fn compute_updated_astroport_incentive_states(
 }
 
 pub fn calculate_rewards_from_astroport_incentive_state(
-    storage: &dyn Storage,
+    mut storage: &mut MaybeMutStorage,
     account_id: &str,
     lp_coin: &Coin,
     incentive_states: HashMap<String, Decimal>,
@@ -258,11 +258,11 @@ pub fn calculate_rewards_from_astroport_incentive_state(
     let mut payables = vec![];
     for (reward_denom, incentive_index) in incentive_states.iter() {
         let user_incentive_index = USER_ASTRO_INCENTIVE_STATES
-            .may_load(storage, (account_id, &lp_coin.denom, reward_denom))?
+            .may_load(storage.to_storage(), (account_id, &lp_coin.denom, reward_denom))?
             .unwrap_or(Decimal::zero());
 
         // Don't claim if already claimed
-        if user_incentive_index != incentive_index {
+        if user_incentive_index != incentive_index && !lp_coin.amount.is_zero() {
             let rewards = compute_user_accrued_rewards(
                 lp_coin.amount,
                 user_incentive_index,
@@ -274,6 +274,16 @@ pub fn calculate_rewards_from_astroport_incentive_state(
                 denom: reward_denom.to_string(),
                 amount: rewards,
             })
+        }
+
+        // Update user incentive index
+        if let MaybeMutStorage::Mutable(storage) = &mut storage {
+            // Set user incentive to latest, as we claim every action
+            USER_ASTRO_INCENTIVE_STATES.save(
+                *storage,
+                (&account_id, &lp_coin.denom, reward_denom),
+                incentive_index,
+            )?;
         }
     }
 

@@ -1,9 +1,11 @@
 #[cfg(not(feature = "library"))]
 use cosmwasm_std::entry_point;
-use cosmwasm_std::{to_json_binary, Binary, Deps, DepsMut, Env, MessageInfo, Response, StdResult};
+use cosmwasm_std::{
+    to_json_binary, Binary, Deps, DepsMut, Empty, Env, MessageInfo, Response, StdResult,
+};
 use cw2::set_contract_version;
-use mars_owner::{OwnerInit::SetInitialOwner, OwnerUpdate};
-use mars_types::incentives::{Config, ExecuteMsg, InstantiateMsg, MigrateMsg, QueryMsg};
+use mars_owner::OwnerInit::SetInitialOwner;
+use mars_types::incentives::{Config, ExecuteMsg, InstantiateMsg, QueryMsg};
 
 use crate::{
     astroport_incentives, config,
@@ -41,7 +43,6 @@ pub fn instantiate(
     let config = Config {
         address_provider: deps.api.addr_validate(&msg.address_provider)?,
         max_whitelisted_denoms: msg.max_whitelisted_denoms,
-        mars_denom: msg.mars_denom,
     };
     CONFIG.save(deps.storage, &config)?;
 
@@ -140,6 +141,16 @@ pub fn execute(
             account_id,
             lp_coin,
         } => astroport_incentives::execute_unstake_astro_lp(deps, env, info, account_id, lp_coin),
+        ExecuteMsg::ClaimAstroLpRewards {
+            account_id,
+            lp_denom,
+        } => astroport_incentives::execute_claim_astro_rewards_for_lp_position(
+            deps,
+            env,
+            info,
+            &account_id,
+            &lp_denom,
+        ),
         ExecuteMsg::UpdateConfig {
             address_provider,
             max_whitelisted_denoms,
@@ -233,21 +244,12 @@ pub fn query(deps: Deps, env: Env, msg: QueryMsg) -> StdResult<Binary> {
             account_id,
             lp_denom,
         } => to_json_binary(&query::query_user_lp_position(deps, env, account_id, lp_denom)?),
-        QueryMsg::AccountStakedLpRewards {
-            account_id,
-            lp_denom } => to_json_binary(
-                &query::query_lp_rewards_for_position(
-                    deps,
-                    &env,
-                    &account_id,
-                    &lp_denom
-                )?)
     }
 }
 
 /// MIGRATION
 
 #[cfg_attr(not(feature = "library"), entry_point)]
-pub fn migrate(deps: DepsMut, env: Env, msg: MigrateMsg) -> Result<Response, ContractError> {
+pub fn migrate(deps: DepsMut, env: Env, msg: Empty) -> Result<Response, ContractError> {
     migrations::v2_0_0::migrate(deps, env, msg)
 }

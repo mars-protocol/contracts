@@ -17,6 +17,7 @@ fn zero_debts_results_in_healthy_state() {
         account_id,
         &Positions {
             account_id: account_id.to_string(),
+            account_kind: AccountKind::Default,
             deposits: vec![Coin {
                 denom: "xyz".to_string(),
                 amount: Uint128::one(),
@@ -49,6 +50,7 @@ fn computing_health_when_healthy() {
         account_id,
         &Positions {
             account_id: account_id.to_string(),
+            account_kind: AccountKind::Default,
             deposits: vec![Coin {
                 denom: umars.to_string(),
                 amount: Uint128::new(100),
@@ -84,6 +86,7 @@ fn computing_health_when_unhealthy() {
         account_id,
         &Positions {
             account_id: account_id.to_string(),
+            account_kind: AccountKind::Default,
             deposits: vec![Coin {
                 denom: umars.to_string(),
                 amount: Uint128::new(100),

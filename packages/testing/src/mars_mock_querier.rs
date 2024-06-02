@@ -4,10 +4,7 @@ use cosmwasm_std::{
     Addr, Coin, Decimal, Empty, Querier, QuerierResult, QueryRequest, StdResult, SystemError,
     SystemResult, Uint128, WasmQuery,
 };
-use cw_it::astroport::{
-    astroport_v3,
-    astroport_v3::asset::{Asset, AssetInfo},
-};
+use cw_it::astroport::{astroport_v3, astroport_v3::asset::Asset};
 use ica_oracle::msg::RedemptionRateResponse;
 use mars_oracle_osmosis::DowntimeDetector;
 use mars_types::{address_provider, incentives, oracle, params::AssetParams, red_bank};

@@ -1268,7 +1268,6 @@ fn setup_redbank(wasm: &Wasm<OsmosisTestApp>, signer: &SigningAccount) -> (Strin
             address_provider: addr_provider_addr.clone(),
             epoch_duration: 604800, // 1 week in seconds
             max_whitelisted_denoms: 10,
-            mars_denom: "umars".to_string(),
         },
     );
 

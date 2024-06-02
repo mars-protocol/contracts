@@ -19,7 +19,13 @@ export type HlsAssetTypeForAddr =
 export type Addr = string
 export type Decimal = string
 export type Uint128 = string
-export type AccountKind = 'default' | 'high_levered_strategy'
+export type AccountKind =
+  | ('default' | 'high_levered_strategy')
+  | {
+      fund_manager: {
+        vault_addr: string
+      }
+    }
 export type VaultPositionAmount =
   | {
       unlocked: VaultAmount
@@ -75,6 +81,7 @@ export interface RedBankSettings {
 }
 export interface Positions {
   account_id: string
+  account_kind: AccountKind
   debts: DebtAmount[]
   deposits: Coin[]
   lends: Coin[]

@@ -34,13 +34,15 @@ import {
   AssetParamsBaseForAddr,
   CmSettingsForAddr,
   HlsParamsBaseForAddr,
+  PaginationResponseForTotalDepositResponse,
+  TotalDepositResponse,
+  Metadata,
   ArrayOfVaultConfigBaseForAddr,
   VaultConfigBaseForAddr,
   PaginationResponseForVaultConfigBaseForAddr,
-  Metadata,
+  NullableAssetParamsBaseForAddr,
   ConfigResponse,
   OwnerResponse,
-  TotalDepositResponse,
 } from './MarsParams.types'
 import { MarsParamsQueryClient, MarsParamsClient } from './MarsParams.client'
 export const marsParamsQueryKeys = {
@@ -79,6 +81,10 @@ export const marsParamsQueryKeys = {
     [
       { ...marsParamsQueryKeys.address(contractAddress)[0], method: 'total_deposit', args },
     ] as const,
+  allTotalDepositsV2: (contractAddress: string | undefined, args?: Record<string, unknown>) =>
+    [
+      { ...marsParamsQueryKeys.address(contractAddress)[0], method: 'all_total_deposits_v2', args },
+    ] as const,
 }
 export interface MarsParamsReactQuery<TResponse, TData = TResponse> {
   client: MarsParamsQueryClient | undefined
@@ -88,6 +94,28 @@ export interface MarsParamsReactQuery<TResponse, TData = TResponse> {
   > & {
     initialData?: undefined
   }
+}
+export interface MarsParamsAllTotalDepositsV2Query<TData>
+  extends MarsParamsReactQuery<PaginationResponseForTotalDepositResponse, TData> {
+  args: {
+    limit?: number
+    startAfter?: string
+  }
+}
+export function useMarsParamsAllTotalDepositsV2Query<
+  TData = PaginationResponseForTotalDepositResponse,
+>({ client, args, options }: MarsParamsAllTotalDepositsV2Query<TData>) {
+  return useQuery<PaginationResponseForTotalDepositResponse, Error, TData>(
+    marsParamsQueryKeys.allTotalDepositsV2(client?.contractAddress, args),
+    () =>
+      client
+        ? client.allTotalDepositsV2({
+            limit: args.limit,
+            startAfter: args.startAfter,
+          })
+        : Promise.reject(new Error('Invalid client')),
+    { ...options, enabled: !!client && (options?.enabled != undefined ? options.enabled : true) },
+  )
 }
 export interface MarsParamsTotalDepositQuery<TData>
   extends MarsParamsReactQuery<TotalDepositResponse, TData> {
@@ -216,17 +244,17 @@ export function useMarsParamsAllAssetParamsQuery<TData = ArrayOfAssetParamsBaseF
   )
 }
 export interface MarsParamsAssetParamsQuery<TData>
-  extends MarsParamsReactQuery<AssetParamsBaseForAddr, TData> {
+  extends MarsParamsReactQuery<NullableAssetParamsBaseForAddr, TData> {
   args: {
     denom: string
   }
 }
-export function useMarsParamsAssetParamsQuery<TData = AssetParamsBaseForAddr>({
+export function useMarsParamsAssetParamsQuery<TData = NullableAssetParamsBaseForAddr>({
   client,
   args,
   options,
 }: MarsParamsAssetParamsQuery<TData>) {
-  return useQuery<AssetParamsBaseForAddr, Error, TData>(
+  return useQuery<NullableAssetParamsBaseForAddr, Error, TData>(
     marsParamsQueryKeys.assetParams(client?.contractAddress, args),
     () =>
       client

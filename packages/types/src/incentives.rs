@@ -1,6 +1,9 @@
 use cosmwasm_schema::{cw_serde, QueryResponses};
 use cosmwasm_std::{Addr, Coin, Decimal, Uint128};
+use cw_paginate::PaginationResponse;
 use mars_owner::OwnerUpdate;
+
+use crate::credit_manager::ActionCoin;
 
 /// Global configuration
 #[cw_serde]
@@ -10,8 +13,6 @@ pub struct Config {
     /// The maximum number of incentive denoms that can be whitelisted at any given time. This is
     /// a guard against accidentally whitelisting too many denoms, which could cause max gas errors.
     pub max_whitelisted_denoms: u8,
-    /// Mars Token Denom
-    pub mars_denom: String,
 }
 
 /// Incentive Metadata for a given incentive
@@ -89,8 +90,6 @@ pub struct InstantiateMsg {
     /// The maximum number of incentive denoms that can be whitelisted at any given time. This is
     /// a guard against accidentally whitelisting too many denoms, which could cause max gas errors.
     pub max_whitelisted_denoms: u8,
-    /// Mars Token Denom
-    pub mars_denom: String,
 }
 
 #[cw_serde]
@@ -154,11 +153,8 @@ pub enum ExecuteMsg {
         limit: Option<u32>,
     },
 
-    /// Claim Astroport LP rewards for an LP position
     ClaimAstroLpRewards {
-        /// User credit account Id
         account_id: String,
-        /// Denom of the LP token
         lp_denom: String,
     },
 
@@ -176,7 +172,7 @@ pub enum ExecuteMsg {
         /// User credit account Id
         account_id: String,
         /// AstroLp token to unstake.
-        lp_coin: Coin,
+        lp_coin: ActionCoin,
     },
 
     /// Update contract config (only callable by owner)
@@ -250,6 +246,27 @@ pub enum QueryMsg {
         /// The maximum number of results to return. If not set, 5 is used. If larger than 10,
         /// 10 is used.
         limit: Option<u32>,
+    },
+
+    /// Enumerate a users LP positions with pagination
+    #[returns(PaginatedStakedLpResponse)]
+    StakedLpPositions {
+        /// The id of the account who owns the LP
+        account_id: String,
+        /// Start pagination after this lp denom, if used.
+        start_after: Option<String>,
+        /// The maximum number of results to return. If not set, 5 is used. If larger than 10,
+        /// 10 is used.
+        limit: Option<u32>,
+    },
+
+    /// Get specific details on a users LP Position
+    #[returns(StakedLpPositionResponse)]
+    StakedLpPosition {
+        /// The id of the account who owns the LP
+        account_id: String,
+        /// The denom of the LP position
+        lp_denom: String,
     },
 
     /// Queries the planned emission rate for a given collateral and incentive denom tuple at the
@@ -326,16 +343,6 @@ pub enum QueryMsg {
 }
 
 #[cw_serde]
-pub struct MigrateMsg {
-    /// The amount of time in seconds for each incentive epoch. This is the minimum amount of time
-    /// that an incentive can last, and each incentive must be a multiple of this duration.
-    pub epoch_duration: u64,
-    /// The maximum number of incentive denoms that can be whitelisted at any given time. This is
-    /// a guard against accidentally whitelisting too many denoms, which could cause max gas errors.
-    pub max_whitelisted_denoms: u8,
-}
-
-#[cw_serde]
 pub struct EmissionResponse {
     /// The unix timestamp in seconds at which the emission epoch starts
     pub epoch_start: u64,
@@ -394,6 +401,8 @@ pub struct StakedLpPositionResponse {
     pub rewards: Vec<Coin>,
 }
 
+pub type PaginatedStakedLpResponse = PaginationResponse<StakedLpPositionResponse>;
+pub type PaginatedLpRewardsResponse = PaginationResponse<(String, Vec<Coin>)>;
 #[cw_serde]
 pub enum LpModification {
     Deposit,

@@ -31,6 +31,12 @@ export type ExecuteMsg =
       create_credit_account: AccountKind
     }
   | {
+      create_credit_account_v2: {
+        account_id?: string | null
+        kind: AccountKind
+      }
+    }
+  | {
       update_credit_account: {
         account_id?: string | null
         account_kind?: AccountKind | null
@@ -59,13 +65,25 @@ export type ExecuteMsg =
   | {
       callback: CallbackMsg
     }
-export type AccountKind = 'default' | 'high_levered_strategy'
+export type AccountKind =
+  | ('default' | 'high_levered_strategy')
+  | {
+      fund_manager: {
+        vault_addr: string
+      }
+    }
 export type Action =
   | {
       deposit: Coin
     }
   | {
       withdraw: ActionCoin
+    }
+  | {
+      withdraw_to_wallet: {
+        coin: ActionCoin
+        recipient: string
+      }
     }
   | {
       borrow: Coin
@@ -591,6 +609,7 @@ export interface RewardsCollector {
 export type ArrayOfCoin = Coin[]
 export interface Positions {
   account_id: string
+  account_kind: AccountKind
   debts: DebtAmount[]
   deposits: Coin[]
   lends: Coin[]

@@ -39,7 +39,9 @@ pub fn calculate_liquidation(
 
     let params = PARAMS.load(deps.storage)?;
     let target_health_factor = params.query_target_health_factor(&deps.querier)?;
-    let request_coin_params = params.query_asset_params(&deps.querier, request_coin)?;
+    let request_coin_params = params
+        .query_asset_params(&deps.querier, request_coin)?
+        .ok_or(ContractError::AssetParamsNotFound(request_coin.to_string()))?;
 
     let oracle = ORACLE.load(deps.storage)?;
     let debt_coin_price =

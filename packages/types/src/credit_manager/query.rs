@@ -147,6 +147,7 @@ impl Coins for Vec<DebtAmount> {
 #[cw_serde]
 pub struct Positions {
     pub account_id: String,
+    pub account_kind: AccountKind,
     pub deposits: Vec<Coin>,
     pub debts: Vec<DebtAmount>,
     pub lends: Vec<Coin>,

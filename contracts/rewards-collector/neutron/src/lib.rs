@@ -9,6 +9,8 @@ use neutron_sdk::{
     sudo::msg::RequestPacketTimeoutHeight,
 };
 
+pub mod migrations;
+
 pub struct NeutronIbcMsgFactory {}
 
 impl IbcTransferMsg<NeutronMsg> for NeutronIbcMsgFactory {
@@ -55,7 +57,7 @@ pub mod entry {
     use mars_types::rewards_collector::{ExecuteMsg, InstantiateMsg, QueryMsg};
     use neutron_sdk::bindings::msg::NeutronMsg;
 
-    use crate::NeutronCollector;
+    use crate::{migrations, NeutronCollector};
 
     pub const CONTRACT_NAME: &str = env!("CARGO_PKG_NAME");
     pub const CONTRACT_VERSION: &str = env!("CARGO_PKG_VERSION");
@@ -90,7 +92,7 @@ pub mod entry {
     }
 
     #[entry_point]
-    pub fn migrate(_deps: DepsMut, _env: Env, _msg: Empty) -> StdResult<Response> {
-        Ok(Response::default())
+    pub fn migrate(deps: DepsMut, _env: Env, _msg: Empty) -> ContractResult<Response> {
+        migrations::v2_0_0::migrate(deps)
     }
 }

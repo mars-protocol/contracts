@@ -49,6 +49,7 @@ version = "0.1.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "423502406a307052f6877030f48b5fb4e9fb338fc5e7c8ca1064210def52876b"
 dependencies = [
+ "astroport 2.9.0",
  "cosmwasm-std",
  "cw-storage-plus 1.2.0",
  "cw20 1.1.2",
@@ -2123,6 +2124,7 @@ dependencies = [
  "mars-owner 2.0.0",
  "mars-rover",
  "mars-types",
+ "proptest",
  "serde_json",
  "thiserror",
 ]
@@ -2171,8 +2173,10 @@ dependencies = [
  "mars-params",
  "mars-rover-health",
  "mars-swapper-mock",
+ "mars-testing",
  "mars-types",
  "mars-utils 2.0.0",
+ "mars-vault",
  "mars-zapper-mock",
  "test-case",
  "thiserror",
@@ -2205,6 +2209,7 @@ dependencies = [
  "cosmwasm-schema",
  "cosmwasm-std",
  "cw-it",
+ "cw-paginate",
  "cw-storage-plus 1.2.0",
  "cw2 1.1.2",
  "mars-owner 2.0.0",
@@ -2247,10 +2252,8 @@ dependencies = [
 name = "mars-interest-rate"
 version = "2.0.0"
 dependencies = [
- "cosmwasm-schema",
  "cosmwasm-std",
  "mars-types",
- "mars-utils 2.0.0",
 ]
 
 [[package]]
@@ -2283,16 +2286,13 @@ dependencies = [
  "cosmwasm-schema",
  "cosmwasm-std",
  "cw-storage-plus 1.2.0",
- "cw-utils 1.0.3",
  "mars-types",
- "thiserror",
 ]
 
 [[package]]
 name = "mars-mock-incentives"
 version = "2.0.0"
 dependencies = [
- "cosmwasm-schema",
  "cosmwasm-std",
  "cw-storage-plus 1.2.0",
  "mars-types",
@@ -2312,7 +2312,6 @@ dependencies = [
 name = "mars-mock-pyth"
 version = "2.0.0"
 dependencies = [
- "cosmwasm-schema",
  "cosmwasm-std",
  "pyth-sdk-cw",
 ]
@@ -2540,6 +2539,7 @@ dependencies = [
  "cosmwasm-std",
  "cw2 1.1.2",
  "mars-rewards-collector-base",
+ "mars-testing",
  "mars-types",
  "neutron-sdk",
 ]
@@ -2601,7 +2601,6 @@ dependencies = [
  "mars-params",
  "mars-rover-health-computer",
  "mars-types",
- "thiserror",
 ]
 
 [[package]]
@@ -2611,11 +2610,9 @@ dependencies = [
  "console_error_panic_hook",
  "cosmwasm-schema",
  "cosmwasm-std",
- "cw-vault-standard 0.4.0",
  "mars-types",
  "proptest",
  "schemars",
- "serde",
  "serde_json",
  "tsify",
  "wasm-bindgen",
@@ -2694,29 +2691,45 @@ dependencies = [
  "cosmwasm-std",
  "cw-it",
  "cw-multi-test",
+ "cw-paginate",
+ "cw-utils 1.0.3",
+ "cw-vault-standard 0.4.0",
+ "cw721 0.18.0",
+ "cw721-base 0.18.0",
  "ica-oracle",
+ "mars-account-nft",
  "mars-address-provider",
+ "mars-credit-manager",
  "mars-incentives",
+ "mars-mock-incentives",
+ "mars-mock-oracle",
  "mars-mock-pyth",
+ "mars-mock-red-bank",
+ "mars-mock-vault",
  "mars-oracle-osmosis",
  "mars-oracle-wasm",
- "mars-osmosis",
  "mars-owner 2.0.0",
  "mars-params",
  "mars-red-bank",
  "mars-rewards-collector-osmosis",
+ "mars-rover-health",
  "mars-swapper-astroport",
+ "mars-swapper-mock",
  "mars-types",
+ "mars-vault",
+ "mars-zapper-mock",
  "osmosis-std 0.22.0",
  "prost 0.12.3",
  "pyth-sdk-cw",
+ "regex",
+ "schemars",
+ "serde",
 ]
 
 [[package]]
 name = "mars-types"
 version = "2.0.0"
 dependencies = [
- "astroport 2.9.0",
  "cosmwasm-schema",
  "cosmwasm-std",
  "cw-paginate",
@@ -2725,12 +2738,8 @@ dependencies = [
  "cw-vault-standard 0.4.0",
  "cw721 0.18.0",
  "cw721-base 0.18.0",
- "mars-osmosis",
  "mars-owner 2.0.0",
  "mars-utils 2.0.0",
- "osmosis-std 0.22.0",
- "schemars",
- "serde",
  "serde-json-wasm 1.0.1",
  "strum 0.26.1",
  "thiserror",
@@ -2765,6 +2774,46 @@ dependencies = [
  "cosmwasm-std",
  "cw-storage-plus 1.2.0",
  "thiserror",
+]
+
+[[package]]
+name = "mars-vault"
+version = "2.0.0"
+dependencies = [
+ "anyhow",
+ "cosmwasm-schema",
+ "cosmwasm-std",
+ "cw-multi-test",
+ "cw-storage-plus 1.2.0",
+ "cw-utils 1.0.3",
+ "cw-vault-standard 0.4.0",
+ "cw2 1.1.2",
+ "mars-mock-oracle",
+ "mars-owner 2.0.0",
+ "mars-testing",
+ "mars-types",
+ "osmosis-std 0.22.0",
+ "test-case",
+ "thiserror",
+]
+
+[[package]]
+name = "mars-zapper-astroport"
+version = "2.0.0"
+dependencies = [
+ "anyhow",
+ "apollo-cw-asset",
+ "apollo-utils",
+ "astroport 5.0.0-rc.1-tokenfactory",
+ "cosmwasm-std",
+ "cw-dex",
+ "cw-it",
+ "cw2 1.1.2",
+ "mars-oracle-wasm",
+ "mars-testing",
+ "mars-types",
+ "mars-zapper-base",
+ "test-case",
 ]
 
 [[package]]
@@ -3462,9 +3511,9 @@ dependencies = [
 
 [[package]]
 name = "regex"
-version = "1.10.0"
+version = "1.10.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "d119d7c7ca818f8a53c300863d4f87566aac09943aef5b355bb83969dae75d87"
+checksum = "c117dbdfde9c8308975b6a18d71f3f385c89461f7b3fb054288ecf2a2058ba4c"
 dependencies = [
  "aho-corasick",
  "memchr",
@@ -3474,9 +3523,9 @@ dependencies = [
 
 [[package]]
 name = "regex-automata"
-version = "0.4.1"
+version = "0.4.6"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "465c6fc0621e4abc4187a2bda0937bfd4f722c2730b29562e19689ea796c9a4b"
+checksum = "86b83b8b9847f9bf95ef68afb0b8e6cdb80f498442f5179a29fad448fcc1eaea"
 dependencies = [
  "aho-corasick",
  "memchr",
@@ -3485,9 +3534,9 @@ dependencies = [
 
 [[package]]
 name = "regex-syntax"
-version = "0.8.0"
+version = "0.8.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "c3cbb081b9784b07cceb8824c8583f86db4814d172ab043f3c23f7dc600bf83d"
+checksum = "adad44e29e4c806119491a7f06f03de4d1af22c3a680dd47f1e6e179439d1f56"
 
 [[package]]
 name = "reqwest"
