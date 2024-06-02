@@ -1,6 +1,9 @@
 use cosmwasm_schema::{cw_serde, QueryResponses};
-use cosmwasm_std::{Addr, Decimal, Uint128};
+use cosmwasm_std::{Addr, Coin, Decimal, Uint128};
+use cw_paginate::PaginationResponse;
 use mars_owner::OwnerUpdate;
+
+use crate::credit_manager::ActionCoin;
 
 /// Global configuration
 #[cw_serde]
@@ -150,6 +153,28 @@ pub enum ExecuteMsg {
         limit: Option<u32>,
     },
 
+    ClaimAstroLpRewards {
+        account_id: String,
+        lp_denom: String,
+    },
+
+    /// Stake Astroport LP tokens in astroport incentives contract to receive rewards.
+    StakeAstroLp {
+        /// User credit account Id
+        account_id: String,
+        /// AstroLp token to stake.
+        lp_coin: Coin,
+    },
+
+    /// Unstake Astroport LP tokens from astroport incentives contract.
+    /// Sends tokens back to the users credit account
+    UnstakeAstroLp {
+        /// User credit account Id
+        account_id: String,
+        /// AstroLp token to unstake.
+        lp_coin: ActionCoin,
+    },
+
     /// Update contract config (only callable by owner)
     UpdateConfig {
         /// The address provider contract address
@@ -211,6 +236,27 @@ pub enum QueryMsg {
         /// The maximum number of results to return. If not set, 5 is used. If larger than 10,
         /// 10 is used.
         limit: Option<u32>,
+    },
+
+    /// Enumerate a users LP positions with pagination
+    #[returns(PaginatedStakedLpResponse)]
+    StakedLpPositions {
+        /// The id of the account who owns the LP
+        account_id: String,
+        /// Start pagination after this lp denom, if used.
+        start_after: Option<String>,
+        /// The maximum number of results to return. If not set, 5 is used. If larger than 10,
+        /// 10 is used.
+        limit: Option<u32>,
+    },
+
+    /// Get specific details on a users LP Position
+    #[returns(StakedLpPositionResponse)]
+    StakedLpPosition {
+        /// The id of the account who owns the LP
+        account_id: String,
+        /// The denom of the LP position
+        lp_denom: String,
     },
 
     /// Queries the planned emission rate for a given collateral and incentive denom tuple at the
@@ -316,4 +362,27 @@ pub struct ConfigResponse {
     pub epoch_duration: u64,
     /// The count of the number of whitelisted incentive denoms
     pub whitelist_count: u8,
+}
+
+#[cw_serde]
+pub struct StakedLpPositionResponse {
+    pub lp_coin: Coin,
+    pub rewards: Vec<Coin>,
+}
+
+pub type PaginatedStakedLpResponse = PaginationResponse<StakedLpPositionResponse>;
+pub type PaginatedLpRewardsResponse = PaginationResponse<(String, Vec<Coin>)>;
+#[cw_serde]
+pub enum LpModification {
+    Deposit,
+    Withdraw,
+}
+
+impl From<LpModification> for String {
+    fn from(lp_modification: LpModification) -> Self {
+        match lp_modification {
+            LpModification::Deposit => "Deposit".to_string(),
+            LpModification::Withdraw => "Withdraw".to_string(),
+        }
+    }
 }

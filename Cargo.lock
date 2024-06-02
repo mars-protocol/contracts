@@ -2204,8 +2204,11 @@ dependencies = [
 name = "mars-incentives"
 version = "2.0.0"
 dependencies = [
+ "astroport 5.0.0-rc.1-tokenfactory",
  "cosmwasm-schema",
  "cosmwasm-std",
+ "cw-it",
+ "cw-paginate",
  "cw-storage-plus 1.2.0",
  "cw2 1.1.2",
  "mars-owner 2.0.0",

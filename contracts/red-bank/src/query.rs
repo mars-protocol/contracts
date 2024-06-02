@@ -205,7 +205,8 @@ pub fn query_user_collaterals(
     start_after: Option<String>,
     limit: Option<u32>,
 ) -> Result<Vec<UserCollateralResponse>, ContractError> {
-    let res_v2 = query_user_collaterals_v2(deps, block, user_addr, account_id, start_after, limit)?;
+    let res_v2: PaginationResponse<UserCollateralResponse> =
+        query_user_collaterals_v2(deps, block, user_addr, account_id, start_after, limit)?;
     Ok(res_v2.data)
 }
 
@@ -224,7 +225,7 @@ pub fn query_user_collaterals_v2(
 
     let acc_id = account_id.unwrap_or("".to_string());
 
-    let user_id = UserId::credit_manager(user_addr, acc_id);
+    let user_id: UserId = UserId::credit_manager(user_addr, acc_id);
     let user_id_key: UserIdKey = user_id.try_into()?;
 
     paginate_prefix_query(
