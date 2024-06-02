@@ -105,6 +105,16 @@ pub fn execute(
                 total_amount_scaled_before,
             )
         }
+        ExecuteMsg::ClaimAstroLpRewards {
+            account_id,
+            lp_denom,
+        } => astroport_incentives::execute_claim_astro_rewards_for_lp_position(
+            deps,
+            env,
+            info,
+            &account_id,
+            &lp_denom,
+        ),
         ExecuteMsg::ClaimRewards {
             account_id,
             start_after_collateral_denom,
@@ -130,16 +140,6 @@ pub fn execute(
             account_id,
             lp_coin,
         } => astroport_incentives::execute_unstake_astro_lp(deps, env, info, account_id, lp_coin),
-        ExecuteMsg::ClaimAstroLpRewards {
-            account_id,
-            lp_denom,
-        } => astroport_incentives::execute_claim_astro_rewards_for_lp_position(
-            deps,
-            env,
-            info,
-            &account_id,
-            &lp_denom,
-        ),
         ExecuteMsg::UpdateConfig {
             address_provider,
             max_whitelisted_denoms,
