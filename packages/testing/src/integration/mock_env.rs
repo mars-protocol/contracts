@@ -4,22 +4,19 @@ use std::{collections::HashMap, default::Default, mem::take, str::FromStr};
 
 use anyhow::Result as AnyResult;
 use cosmwasm_std::{coin, Addr, Coin, Decimal, Empty, StdResult, Uint128};
+use cw_it::astroport::astroport_v3::incentives::{ExecuteMsg, InputSchedule};
 use cw_multi_test::{App, AppResponse, BankSudo, BasicApp, Executor, SudoMsg};
+use mars_incentives::astroport_incentives;
 use mars_oracle_osmosis::OsmosisPriceSourceUnchecked;
 use mars_types::{
-    address_provider::{self, MarsAddressType},
-    incentives,
-    oracle::{
+    address_provider::{self, MarsAddressType}, credit_manager::{self, ActionCoin}, health::AccountKind, incentives, oracle::{
         self,
         ActionKind::{Default as ActionDefault, Liquidation},
         PriceResponse,
-    },
-    params::{AssetParams, AssetParamsUpdate},
-    red_bank::{
+    }, params::{AssetParams, AssetParamsUpdate}, red_bank::{
         self, CreateOrUpdateConfig, InitOrUpdateAssetParams, Market, UserCollateralResponse,
         UserDebtResponse, UserPositionResponse,
-    },
-    rewards_collector,
+    }, rewards_collector
 };
 use pyth_sdk_cw::PriceIdentifier;
 
@@ -29,10 +26,13 @@ use crate::integration::mock_contracts::{
     mock_rewards_collector_osmosis_contract,
 };
 
+use super::mock_contracts::mock_astroport_incentives;
+
 pub struct MockEnv {
     pub app: App,
     pub owner: Addr,
     pub address_provider: AddressProvider,
+    pub astro_incentives: AstroIncentives,
     pub incentives: Incentives,
     pub oracle: Oracle,
     pub red_bank: RedBank,
@@ -44,6 +44,11 @@ pub struct MockEnv {
 
 #[derive(Clone)]
 pub struct AddressProvider {
+    pub contract_addr: Addr,
+}
+
+#[derive(Clone)]
+pub struct AstroIncentives {
     pub contract_addr: Addr,
 }
 
@@ -114,6 +119,29 @@ impl MockEnv {
         res.into_iter().map(|r| (r.denom, r.amount)).collect()
     }
 }
+
+impl AstroIncentives {
+    pub fn set_incentive_schedule(
+        &self,
+        env: &mut MockEnv,
+        lp_denom: &str,
+        incentive_schedule: &InputSchedule,
+        funds: Vec<Coin>
+    ) {
+        env.app
+            .execute_contract(
+                env.owner.clone(),
+                self.contract_addr.clone(),
+                &cw_it::astroport::astroport_v3::incentives::ExecuteMsg::Incentivize {
+                    lp_token: lp_denom.to_string(),
+                    schedule: incentive_schedule.clone(),
+                },
+                &funds,
+            )
+            .unwrap();
+    }
+}
+
 
 impl Incentives {
     pub fn whitelist_incentive_denoms(&self, env: &mut MockEnv, incentive_denoms: &[(&str, u128)]) {
@@ -205,6 +233,42 @@ impl Incentives {
         )
     }
 
+    pub fn claim_astro_rewards(
+        &self,
+        env: &mut MockEnv,
+        sender: &Addr,
+        account_id: String,
+        lp_denom: &str,
+    ) -> AnyResult<AppResponse> {
+        env.app.execute_contract(
+            sender.clone(),
+            self.contract_addr.clone(),
+            &incentives::ExecuteMsg::ClaimAstroLpRewards {
+                account_id,
+                lp_denom: lp_denom.to_string(),
+            },
+            &[],
+        )
+    }
+
+    pub fn stake_astro_lp(
+        &self,
+        env: &mut MockEnv,
+        sender: &Addr,
+        account_id: String,
+        lp_coin: Coin,
+    ) {
+        env.app.execute_contract(
+            sender.clone(),
+            self.contract_addr.clone(),
+            &incentives::ExecuteMsg::StakeAstroLp {
+               account_id,
+               lp_coin: lp_coin.clone(),
+            },
+            &[lp_coin],
+        ).unwrap();
+    }
+
     pub fn query_unclaimed_rewards(&self, env: &mut MockEnv, user: &Addr) -> StdResult<Vec<Coin>> {
         self.query_unclaimed_rewards_with_acc_id(env, user, None)
     }
@@ -223,6 +287,21 @@ impl Incentives {
                 start_after_collateral_denom: None,
                 start_after_incentive_denom: None,
                 limit: None,
+            },
+        )
+    }
+
+    pub fn query_unclaimed_astroport_rewards(
+        &self,
+        env: &MockEnv,
+        account_id: String,
+        lp_denom: &str,
+    ) -> StdResult<Vec<Coin>> {
+        env.app.wrap().query_wasm_smart(
+            self.contract_addr.clone(),
+            &incentives::QueryMsg::AccountStakedLpRewards {
+                account_id,
+                lp_denom: lp_denom.to_string(),
             },
         )
     }
@@ -785,6 +864,7 @@ impl MockEnvBuilder {
         let rewards_collector_addr = self.deploy_rewards_collector_osmosis(&address_provider_addr);
         let params_addr = self.deploy_params_osmosis(&address_provider_addr);
         let pyth_addr = self.deploy_mock_pyth();
+        let astroport_incentives_addr = self.deploy_mock_astroport_incentives();
 
         self.update_address_provider(
             &address_provider_addr,
@@ -809,12 +889,20 @@ impl MockEnvBuilder {
             MarsAddressType::CreditManager,
             &cm_addr,
         );
+        self.update_address_provider(
+            &address_provider_addr, 
+            MarsAddressType::AstroportIncentives,
+            &astroport_incentives_addr
+        );
 
         MockEnv {
             app: take(&mut self.app),
             owner: self.owner.clone(),
             address_provider: AddressProvider {
                 contract_addr: address_provider_addr,
+            },          
+            astro_incentives: AstroIncentives {
+                contract_addr: astroport_incentives_addr,
             },
             incentives: Incentives {
                 contract_addr: incentives_addr,
@@ -963,6 +1051,21 @@ impl MockEnvBuilder {
 
         self.app
             .instantiate_contract(code_id, self.owner.clone(), &Empty {}, &[], "mock-pyth", None)
+            .unwrap()
+    }
+
+    pub fn deploy_mock_astroport_incentives(&mut self) -> Addr {
+        let code_id = self.app.store_code(mock_astroport_incentives());
+
+        self.app
+            .instantiate_contract(
+                code_id,
+                self.owner.clone(),
+                &Empty {},
+                &[],
+                "mock-astroport-incentives",
+                None,
+            )
             .unwrap()
     }
 

@@ -44,7 +44,7 @@ use mars_types::{
         AccountKind, ExecuteMsg::UpdateConfig, HealthValuesResponse,
         InstantiateMsg as HealthInstantiateMsg, QueryMsg::HealthValues,
     },
-    incentives::{ExecuteMsg::BalanceChange, QueryMsg::UserUnclaimedRewards},
+    incentives::{ExecuteMsg::BalanceChange, QueryMsg::{UserUnclaimedRewards, AccountStakedLpRewards}},
     oracle::ActionKind,
     params::{
         AssetParams, AssetParamsUpdate,
@@ -397,6 +397,19 @@ impl MockEnv {
                     account_id: account_id.to_string(),
                     kind,
                     action,
+                },
+            )
+            .unwrap()
+    }
+
+    pub fn query_unclaimed_astroport_rewards_for_lp(&self, account_id: &str, lp_denom: &str) -> Vec<Coin> {
+        self.app
+            .wrap()
+            .query_wasm_smart(
+                self.incentives.clone().addr,
+                &AccountStakedLpRewards {
+                    account_id: account_id.to_string(),
+                    lp_denom: lp_denom.to_string(),
                 },
             )
             .unwrap()
@@ -770,7 +783,7 @@ impl MockEnvBuilder {
         let incentives =
             Incentives::new(Addr::unchecked(self.get_incentives().address()), rover.clone());
 
-        let params = self.get_params_contract();
+        let params: mars_types::adapters::params::ParamsBase<Addr> = self.get_params_contract();
         self.add_params_to_contract();
 
         let health_contract = self.get_health_contract();
