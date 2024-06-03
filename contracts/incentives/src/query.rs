@@ -16,16 +16,10 @@ use mars_types::{
 };
 
 use crate::{
-    helpers::{
+    astroport_incentives, helpers::{
         calculate_rewards_from_astroport_incentive_state,
         compute_updated_astroport_incentive_states, compute_user_unclaimed_rewards,
-    },
-    state,
-    state::{
-        ASTRO_INCENTIVE_STATES, ASTRO_USER_LP_DEPOSITS, CONFIG, DEFAULT_LIMIT, EMISSIONS,
-        EPOCH_DURATION, INCENTIVE_STATES, MAX_LIMIT, OWNER, WHITELIST, WHITELIST_COUNT,
-    },
-    ContractError,
+    }, state::{self, ASTRO_INCENTIVE_STATES, ASTRO_USER_LP_DEPOSITS, CONFIG, DEFAULT_LIMIT, EMISSIONS, EPOCH_DURATION, INCENTIVE_STATES, MAX_LIMIT, OWNER, WHITELIST, WHITELIST_COUNT}, ContractError
 };
 
 pub fn query_active_emissions(
@@ -156,6 +150,31 @@ pub fn query_lp_rewards_for_user(
             Ok((lp_coin.denom, rewards))
         },
     )
+}
+
+pub fn query_lp_rewards_for_denom(
+    deps: Deps,
+    env: &Env,
+    account_id: &str,
+    lp_denom: &str,
+) -> Result<Vec<Coin>, ContractError> {
+
+    let lp_amount = ASTRO_USER_LP_DEPOSITS
+        .may_load(deps.storage, (&account_id, lp_denom))?
+        .unwrap_or_default();
+
+    let lp_coin = Coin {
+        denom: lp_denom.to_string(),
+        amount: lp_amount,
+    };
+
+    let astroport_incentives_addr = address_provider::helpers::query_contract_addr(
+        deps,
+        &CONFIG.load(deps.storage)?.address_provider,
+        MarsAddressType::AstroportIncentives,
+    )?;
+
+    query_lp_rewards_for_position(deps, env, &astroport_incentives_addr, account_id, &lp_coin)
 }
 
 /// Fetch the rewards owed to a user.

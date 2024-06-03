@@ -141,16 +141,6 @@ pub fn execute(
             account_id,
             lp_coin,
         } => astroport_incentives::execute_unstake_astro_lp(deps, env, info, account_id, lp_coin),
-        ExecuteMsg::ClaimAstroLpRewards {
-            account_id,
-            lp_denom,
-        } => astroport_incentives::execute_claim_astro_rewards_for_lp_position(
-            deps,
-            env,
-            info,
-            &account_id,
-            &lp_denom,
-        ),
         ExecuteMsg::UpdateConfig {
             address_provider,
             max_whitelisted_denoms,
@@ -171,6 +161,16 @@ pub fn execute(
 #[cfg_attr(not(feature = "library"), entry_point)]
 pub fn query(deps: Deps, env: Env, msg: QueryMsg) -> StdResult<Binary> {
     match msg {
+        QueryMsg::AccountStakedLpRewards {
+            account_id, 
+            lp_denom 
+        } => to_json_binary(&query::query_lp_rewards_for_denom(
+            deps,
+            &env,
+            &account_id,
+            &lp_denom,
+        )?), 
+        
         QueryMsg::Config {} => to_json_binary(&query::query_config(deps)?),
         QueryMsg::IncentiveState {
             collateral_denom,
