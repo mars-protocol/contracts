@@ -361,7 +361,7 @@ fn performance_fee_correctly_accumulated() {
         performance_fee,
         PerformanceFeeState {
             updated_at: first_deposit_time,
-            base_tokens_amt: Uint128::new(139959648),
+            base_tokens_amt: Uint128::new(140000000),
             accumulated_pnl: Int128::new(20000000),
             accumulated_fee: Uint128::new(40352)
         }
@@ -392,7 +392,7 @@ fn performance_fee_correctly_accumulated() {
         PerformanceFeeState {
             updated_at: first_deposit_time,
             base_tokens_amt: Uint128::new(75000000),
-            accumulated_pnl: Int128::new(-59959648),
+            accumulated_pnl: Int128::new(-60000000),
             accumulated_fee: Uint128::zero()
         }
     );
@@ -425,9 +425,9 @@ fn performance_fee_correctly_accumulated() {
         performance_fee,
         PerformanceFeeState {
             updated_at: first_deposit_time,
-            base_tokens_amt: Uint128::new(417233938),
-            accumulated_pnl: Int128::new(315040352),
-            accumulated_fee: Uint128::new(2051038)
+            base_tokens_amt: Uint128::new(419284958),
+            accumulated_pnl: Int128::new(315000000),
+            accumulated_fee: Uint128::new(2050776)
         }
     );
 
@@ -437,7 +437,7 @@ fn performance_fee_correctly_accumulated() {
     mock.increment_by_time(744 * 60 * 60);
 
     let pnl = calculate_pnl(&mut mock, &fund_acc_id, Decimal::from_str("10").unwrap());
-    assert_eq!(pnl, Uint128::new(824284976));
+    assert_eq!(pnl, Uint128::new(824284958));
 
     execute_withdraw_performance_fee(
         &mut mock,
@@ -456,14 +456,14 @@ fn performance_fee_correctly_accumulated() {
         performance_fee,
         PerformanceFeeState {
             updated_at: fee_withdraw_time,
-            base_tokens_amt: Uint128::new(808409364),
+            base_tokens_amt: Uint128::new(808455326),
             accumulated_pnl: Int128::zero(),
             accumulated_fee: Uint128::zero()
         }
     );
 
     let base_token_balance = mock.query_balance(&fund_manager, &uusdc_info.denom.clone()).amount;
-    assert_eq!(base_token_balance, Uint128::new(15875612));
+    assert_eq!(base_token_balance, Uint128::new(15829632));
 
     // -- SIXTH ACTION --
 
@@ -471,7 +471,7 @@ fn performance_fee_correctly_accumulated() {
     mock.increment_by_time(48 * 60 * 60);
 
     let pnl = calculate_pnl(&mut mock, &fund_acc_id, Decimal::from_str("10.5").unwrap());
-    assert_eq!(pnl, Uint128::new(848409364));
+    assert_eq!(pnl, Uint128::new(848455326));
 
     let deposited_amt = Uint128::new(55_000_000);
     execute_deposit(
@@ -490,7 +490,7 @@ fn performance_fee_correctly_accumulated() {
         performance_fee,
         PerformanceFeeState {
             updated_at: fee_withdraw_time,
-            base_tokens_amt: Uint128::new(903331028),
+            base_tokens_amt: Uint128::new(903455326),
             accumulated_pnl: Int128::new(40000000),
             accumulated_fee: Uint128::new(78336)
         }

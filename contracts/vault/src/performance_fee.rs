@@ -108,7 +108,7 @@ impl PerformanceFeeState {
         total_base_tokens: Uint128,
         deposit_amt: Uint128,
     ) -> StdResult<()> {
-        let updated_liquidity = total_base_tokens + deposit_amt - self.accumulated_fee;
+        let updated_liquidity = total_base_tokens + deposit_amt;
         self.base_tokens_amt = updated_liquidity;
         Ok(())
     }
@@ -118,7 +118,7 @@ impl PerformanceFeeState {
         total_base_tokens: Uint128,
         withdraw_amt: Uint128,
     ) -> StdResult<()> {
-        let updated_liquidity = total_base_tokens - withdraw_amt - self.accumulated_fee;
+        let updated_liquidity = total_base_tokens - withdraw_amt;
         self.base_tokens_amt = updated_liquidity;
         Ok(())
     }
