@@ -38,7 +38,7 @@ pub struct PerformanceFeeState {
     /// The timestamp (sec) of the last fee withdrawal
     pub updated_at: u64,
 
-    /// The total amount of base tokens in the vault account in Credit Manager (exluding accumulated performance fee)
+    /// The total amount of base tokens in the vault account in Credit Manager
     pub base_tokens_amt: Uint128,
 
     /// The accumulated profit and loss since the last fee withdrawal
