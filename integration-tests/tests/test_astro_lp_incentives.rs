@@ -84,7 +84,7 @@ fn claim_rewards_without_active_schedule() {
 
     // Params
     let lp_denom = "factory12345";
-  
+
     let lp_coin = Coin {
         denom: lp_denom.to_string(),
         amount: Uint128::new(1_000_000_000),
@@ -102,14 +102,11 @@ fn claim_rewards_without_active_schedule() {
 
     mock_env.increment_by_blocks(1);
 
-    let lp_rewards: Vec<Coin> =
-        incentives.query_unclaimed_astroport_rewards(&mock_env, "1".to_string(), lp_denom).unwrap();
-
     // claim rewards
     incentives
         .claim_astro_rewards(&mut mock_env, &credit_manager, "1".to_string(), lp_denom)
         .unwrap();
-
+    
 }
 
 #[test]
@@ -155,13 +152,11 @@ fn unstake_claims_rewards() {
         duration_periods: 1,
     };
 
-    let rewards = vec![
-        Coin::try_from(reward_asset.clone()).unwrap()
-    ];
+    let rewards = vec![Coin::try_from(reward_asset.clone()).unwrap()];
     astro_incentives.set_incentive_schedule(&mut mock_env, lp_denom, incentives_for_astro, rewards);
 
     incentives.stake_astro_lp(&mut mock_env, &credit_manager, "1".to_string(), lp_coin.clone());
-    
+
     mock_env.increment_by_blocks(1);
 
     let lp_rewards: Vec<Coin> =
@@ -169,13 +164,12 @@ fn unstake_claims_rewards() {
 
     incentives.unstake_astro_lp(&mut mock_env, &credit_manager, "1".to_string(), lp_coin.clone());
 
-     // Ensure that balance of credit manager is updated with rewards paid
-     let reward_balance = mock_env.query_balance(&credit_manager, reward_denom).unwrap();
-     assert_eq!(reward_balance, lp_rewards[0]);
+    // Ensure that balance of credit manager is updated with rewards paid
+    let reward_balance = mock_env.query_balance(&credit_manager, reward_denom).unwrap();
+    assert_eq!(reward_balance, lp_rewards[0]);
 
-     // Ensure our lp balance is incremented in credit manager
+    // Ensure our lp balance is incremented in credit manager
 
     let lp_balance = mock_env.query_balance(&credit_manager, lp_denom).unwrap();
     assert_eq!(lp_balance, lp_coin);
-
 }

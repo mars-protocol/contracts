@@ -9,14 +9,20 @@ use cw_multi_test::{App, AppResponse, BankSudo, BasicApp, Executor, SudoMsg};
 use cw_paginate::PaginationResponse;
 use mars_oracle_osmosis::OsmosisPriceSourceUnchecked;
 use mars_types::{
-    address_provider::{self, MarsAddressType}, credit_manager::ActionCoin, incentives, oracle::{
+    address_provider::{self, MarsAddressType},
+    credit_manager::ActionCoin,
+    incentives,
+    oracle::{
         self,
         ActionKind::{Default as ActionDefault, Liquidation},
         PriceResponse,
-    }, params::{AssetParams, AssetParamsUpdate, TotalDepositResponse}, red_bank::{
+    },
+    params::{AssetParams, AssetParamsUpdate, TotalDepositResponse},
+    red_bank::{
         self, CreateOrUpdateConfig, InitOrUpdateAssetParams, Market, MarketV2Response,
         UserCollateralResponse, UserDebtResponse, UserPositionResponse,
-    }, rewards_collector
+    },
+    rewards_collector,
 };
 use pyth_sdk_cw::PriceIdentifier;
 

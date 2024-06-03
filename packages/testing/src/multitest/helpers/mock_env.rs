@@ -1262,8 +1262,7 @@ impl MockEnvBuilder {
 
     pub fn deploy_astroport_incentives(&mut self) -> Addr {
         let code_id = self.app.store_code(mock_astro_incentives_contract());
-        self
-            .app
+        self.app
             .instantiate_contract(
                 code_id,
                 Addr::unchecked("astroport_incentives_owner"),
