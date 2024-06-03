@@ -47,7 +47,7 @@ use mars_types::{
         InstantiateMsg as HealthInstantiateMsg, QueryMsg::HealthValues,
     },
     incentives::{
-        ExecuteMsg::BalanceChange,
+        ExecuteMsg::{BalanceChange, SetAssetIncentive},
         QueryMsg::{AccountStakedLpRewards, UserUnclaimedRewards},
     },
     oracle::ActionKind,
@@ -421,6 +421,32 @@ impl MockEnv {
             .unwrap();
     }
 
+    pub fn add_astro_incentive_reward(&mut self, account_id: &str, lp_denom: &str, coin: Coin) {
+        // Register reward in mock contract
+        self.app
+            .execute_contract(
+                self.rover.clone(),
+                self.incentives.addr.clone(),
+                &SetAssetIncentive {
+                    collateral_denom: lp_denom.to_string(),
+                    incentive_denom: coin.denom.clone(),
+                    emission_per_second: coin.amount,
+                    start_time: account_id.parse().unwrap(),
+                    duration: Default::default(),
+                },
+                &[],
+            )
+            .unwrap();
+
+        // Mint token for incentives contract so it can be claimed
+        self.app
+            .sudo(SudoMsg::Bank(BankSudo::Mint {
+                to_address: self.incentives.addr.to_string(),
+                amount: vec![coin],
+            }))
+            .unwrap();
+    }
+
     //--------------------------------------------------------------------------------------------------
     // Queries
     //--------------------------------------------------------------------------------------------------
@@ -484,6 +510,19 @@ impl MockEnv {
                     start_after_collateral_denom: None,
                     start_after_incentive_denom: None,
                     limit: None,
+                },
+            )
+            .unwrap()
+    }
+
+    pub fn query_pending_astroport_rewards(&self, account_id: &str, lp_denom: &str) -> Vec<Coin> {
+        self.app
+            .wrap()
+            .query_wasm_smart(
+                self.incentives.clone().addr,
+                &AccountStakedLpRewards {
+                    account_id: account_id.to_string(),
+                    lp_denom: lp_denom.to_string(),
                 },
             )
             .unwrap()

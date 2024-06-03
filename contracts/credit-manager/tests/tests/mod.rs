@@ -1,6 +1,7 @@
 pub use mars_testing::multitest::helpers;
 
 mod test_borrow;
+mod test_claim_lp_rewards;
 mod test_claim_rewards;
 mod test_coin_balances;
 mod test_create_credit_account;

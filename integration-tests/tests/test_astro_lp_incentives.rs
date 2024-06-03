@@ -106,7 +106,6 @@ fn claim_rewards_without_active_schedule() {
     incentives
         .claim_astro_rewards(&mut mock_env, &credit_manager, "1".to_string(), lp_denom)
         .unwrap();
-    
 }
 
 #[test]
