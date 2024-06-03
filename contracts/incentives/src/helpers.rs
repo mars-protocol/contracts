@@ -9,7 +9,6 @@ use cosmwasm_std::{
     OverflowError, OverflowOperation, QuerierWrapper, StdError, StdResult, Storage, Uint128,
     WasmMsg,
 };
-use cw_it::astroport::astroport_v3::incentives::ExecuteMsg;
 use cw_storage_plus::Bound;
 use mars_types::{
     address_provider::{self, MarsAddressType},

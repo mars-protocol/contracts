@@ -46,7 +46,10 @@ use mars_types::{
         AccountKind, ExecuteMsg::UpdateConfig, HealthValuesResponse,
         InstantiateMsg as HealthInstantiateMsg, QueryMsg::HealthValues,
     },
-    incentives::{ExecuteMsg::BalanceChange, QueryMsg::{UserUnclaimedRewards, AccountStakedLpRewards}},
+    incentives::{
+        ExecuteMsg::BalanceChange,
+        QueryMsg::{AccountStakedLpRewards, UserUnclaimedRewards},
+    },
     oracle::ActionKind,
     params::{
         AssetParams, AssetParamsUpdate,
@@ -71,9 +74,9 @@ use mars_zapper_mock::msg::{InstantiateMsg as ZapperInstantiateMsg, LpConfig};
 use super::{
     lp_token_info, mock_account_nft_contract, mock_address_provider_contract,
     mock_astro_incentives_contract, mock_health_contract, mock_incentives_contract,
-    mock_oracle_contract, mock_params_contract, mock_red_bank_contract, mock_rover_contract,
-    mock_swapper_contract, mock_v2_zapper_contract, mock_vault_contract, AccountToFund, CoinInfo,
-    VaultTestInfo,
+    mock_managed_vault_contract, mock_oracle_contract, mock_params_contract,
+    mock_red_bank_contract, mock_rover_contract, mock_swapper_contract, mock_v2_zapper_contract,
+    mock_vault_contract, AccountToFund, CoinInfo, VaultTestInfo,
 };
 use crate::multitest::modules::token_factory::{CustomApp, TokenFactory};
 
@@ -453,7 +456,11 @@ impl MockEnv {
             .unwrap()
     }
 
-    pub fn query_unclaimed_astroport_rewards_for_lp(&self, account_id: &str, lp_denom: &str) -> Vec<Coin> {
+    pub fn query_unclaimed_astroport_rewards_for_lp(
+        &self,
+        account_id: &str,
+        lp_denom: &str,
+    ) -> Vec<Coin> {
         self.app
             .wrap()
             .query_wasm_smart(
@@ -1255,7 +1262,7 @@ impl MockEnvBuilder {
 
     pub fn deploy_astroport_incentives(&mut self) -> Addr {
         let code_id = self.app.store_code(mock_astro_incentives_contract());
-        let addr = self
+        self
             .app
             .instantiate_contract(
                 code_id,
@@ -1265,12 +1272,7 @@ impl MockEnvBuilder {
                 "mock-astroport-incentives",
                 None,
             )
-            .unwrap();
-
-        // todo fund incentives contract
-        // todo other setup
-
-        addr
+            .unwrap()
     }
 
     fn deploy_vault(&mut self, vault: &VaultTestInfo) -> Addr {

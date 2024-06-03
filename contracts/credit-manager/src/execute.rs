@@ -612,10 +612,6 @@ pub fn execute_callback(
         CallbackMsg::ClaimAstroLpRewards {
             account_id,
             lp_denom,
-        } => claim_lp_rewards(
-            deps,
-            &account_id,
-            &lp_denom,
-        ),
+        } => claim_lp_rewards(deps, &account_id, &lp_denom),
     }
 }

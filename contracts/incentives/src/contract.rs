@@ -162,15 +162,12 @@ pub fn execute(
 pub fn query(deps: Deps, env: Env, msg: QueryMsg) -> StdResult<Binary> {
     match msg {
         QueryMsg::AccountStakedLpRewards {
-            account_id, 
-            lp_denom 
-        } => to_json_binary(&query::query_lp_rewards_for_denom(
-            deps,
-            &env,
-            &account_id,
-            &lp_denom,
-        )?), 
-        
+            account_id,
+            lp_denom,
+        } => {
+            to_json_binary(&query::query_lp_rewards_for_denom(deps, &env, &account_id, &lp_denom)?)
+        }
+
         QueryMsg::Config {} => to_json_binary(&query::query_config(deps)?),
         QueryMsg::IncentiveState {
             collateral_denom,

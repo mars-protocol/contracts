@@ -3,7 +3,10 @@ use cosmwasm_std::{
     to_json_binary, Addr, Api, Coin, CosmosMsg, QuerierWrapper, StdResult, WasmMsg,
 };
 
-use crate::incentives::{ExecuteMsg, QueryMsg, StakedLpPositionResponse};
+use crate::{
+    credit_manager::ActionCoin,
+    incentives::{ExecuteMsg, QueryMsg, StakedLpPositionResponse},
+};
 
 #[cw_serde]
 pub struct IncentivesUnchecked(String);
@@ -83,7 +86,7 @@ impl Incentives {
             contract_addr: self.addr.to_string(),
             msg: to_json_binary(&ExecuteMsg::UnstakeAstroLp {
                 account_id: account_id.to_string(),
-                lp_coin,
+                lp_coin: ActionCoin::from(&lp_coin),
             })?,
             funds: vec![],
         }))

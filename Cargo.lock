@@ -2701,6 +2701,7 @@ dependencies = [
  "mars-address-provider",
  "mars-credit-manager",
  "mars-incentives",
+ "mars-mock-astroport-incentives",
  "mars-mock-incentives",
  "mars-mock-oracle",
  "mars-mock-pyth",

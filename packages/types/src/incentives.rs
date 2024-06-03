@@ -205,7 +205,6 @@ pub enum MigrateV1ToV2 {
 #[cw_serde]
 #[derive(QueryResponses)]
 pub enum QueryMsg {
-
     /// Query account staked LP rewards
     #[returns(Vec<cosmwasm_std::Coin>)]
     AccountStakedLpRewards {
@@ -246,27 +245,6 @@ pub enum QueryMsg {
         /// The maximum number of results to return. If not set, 5 is used. If larger than 10,
         /// 10 is used.
         limit: Option<u32>,
-    },
-
-    /// Enumerate a users LP positions with pagination
-    #[returns(PaginatedStakedLpResponse)]
-    StakedLpPositions {
-        /// The id of the account who owns the LP
-        account_id: String,
-        /// Start pagination after this lp denom, if used.
-        start_after: Option<String>,
-        /// The maximum number of results to return. If not set, 5 is used. If larger than 10,
-        /// 10 is used.
-        limit: Option<u32>,
-    },
-
-    /// Get specific details on a users LP Position
-    #[returns(StakedLpPositionResponse)]
-    StakedLpPosition {
-        /// The id of the account who owns the LP
-        account_id: String,
-        /// The denom of the LP position
-        lp_denom: String,
     },
 
     /// Queries the planned emission rate for a given collateral and incentive denom tuple at the

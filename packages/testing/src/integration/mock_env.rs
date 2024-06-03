@@ -4,29 +4,33 @@ use std::{collections::HashMap, default::Default, mem::take, str::FromStr};
 
 use anyhow::Result as AnyResult;
 use cosmwasm_std::{coin, Addr, Coin, Decimal, Empty, StdResult, Uint128};
-use cw_it::astroport::astroport_v3::incentives::{ExecuteMsg, InputSchedule};
+use cw_it::astroport::astroport_v3::incentives::InputSchedule;
 use cw_multi_test::{App, AppResponse, BankSudo, BasicApp, Executor, SudoMsg};
-use mars_incentives::astroport_incentives;
+use cw_paginate::PaginationResponse;
 use mars_oracle_osmosis::OsmosisPriceSourceUnchecked;
 use mars_types::{
-    address_provider::{self, MarsAddressType}, credit_manager::{self, ActionCoin}, health::AccountKind, incentives, oracle::{
+    address_provider::{self, MarsAddressType},
+    incentives,
+    oracle::{
         self,
         ActionKind::{Default as ActionDefault, Liquidation},
         PriceResponse,
-    }, params::{AssetParams, AssetParamsUpdate}, red_bank::{
-        self, CreateOrUpdateConfig, InitOrUpdateAssetParams, Market, UserCollateralResponse,
-        UserDebtResponse, UserPositionResponse,
-    }, rewards_collector
+    },
+    params::{AssetParams, AssetParamsUpdate, TotalDepositResponse},
+    red_bank::{
+        self, CreateOrUpdateConfig, InitOrUpdateAssetParams, Market, MarketV2Response,
+        UserCollateralResponse, UserDebtResponse, UserPositionResponse,
+    },
+    rewards_collector,
 };
 use pyth_sdk_cw::PriceIdentifier;
 
+use super::mock_contracts::mock_astroport_incentives;
 use crate::integration::mock_contracts::{
     mock_address_provider_contract, mock_incentives_contract, mock_oracle_osmosis_contract,
     mock_params_osmosis_contract, mock_pyth_contract, mock_red_bank_contract,
     mock_rewards_collector_osmosis_contract,
 };
-
-use super::mock_contracts::mock_astroport_incentives;
 
 pub struct MockEnv {
     pub app: App,
@@ -126,7 +130,7 @@ impl AstroIncentives {
         env: &mut MockEnv,
         lp_denom: &str,
         incentive_schedule: &InputSchedule,
-        funds: Vec<Coin>
+        funds: Vec<Coin>,
     ) {
         env.app
             .execute_contract(
@@ -141,7 +145,6 @@ impl AstroIncentives {
             .unwrap();
     }
 }
-
 
 impl Incentives {
     pub fn whitelist_incentive_denoms(&self, env: &mut MockEnv, incentive_denoms: &[(&str, u128)]) {
@@ -258,15 +261,17 @@ impl Incentives {
         account_id: String,
         lp_coin: Coin,
     ) {
-        env.app.execute_contract(
-            sender.clone(),
-            self.contract_addr.clone(),
-            &incentives::ExecuteMsg::StakeAstroLp {
-               account_id,
-               lp_coin: lp_coin.clone(),
-            },
-            &[lp_coin],
-        ).unwrap();
+        env.app
+            .execute_contract(
+                sender.clone(),
+                self.contract_addr.clone(),
+                &incentives::ExecuteMsg::StakeAstroLp {
+                    account_id,
+                    lp_coin: lp_coin.clone(),
+                },
+                &[lp_coin],
+            )
+            .unwrap();
     }
 
     pub fn query_unclaimed_rewards(&self, env: &mut MockEnv, user: &Addr) -> StdResult<Vec<Coin>> {
@@ -920,9 +925,9 @@ impl MockEnvBuilder {
             &cm_addr,
         );
         self.update_address_provider(
-            &address_provider_addr, 
+            &address_provider_addr,
             MarsAddressType::AstroportIncentives,
-            &astroport_incentives_addr
+            &astroport_incentives_addr,
         );
 
         MockEnv {
@@ -930,7 +935,7 @@ impl MockEnvBuilder {
             owner: self.owner.clone(),
             address_provider: AddressProvider {
                 contract_addr: address_provider_addr,
-            },          
+            },
             astro_incentives: AstroIncentives {
                 contract_addr: astroport_incentives_addr,
             },

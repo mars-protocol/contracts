@@ -109,3 +109,12 @@ pub fn mock_astro_incentives_contract() -> Box<dyn Contract<Empty>> {
     );
     Box::new(contract)
 }
+
+pub fn mock_managed_vault_contract() -> Box<dyn Contract<Empty>> {
+    let contract = ContractWrapper::new(
+        mars_vault::contract::execute,
+        mars_vault::contract::instantiate,
+        mars_vault::contract::query,
+    );
+    Box::new(contract)
+}

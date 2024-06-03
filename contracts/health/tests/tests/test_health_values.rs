@@ -381,6 +381,7 @@ fn not_whitelisted_coins_work() {
             debts: vec![],
             lends: vec![],
             vaults: vec![],
+            staked_lp: vec![],
         },
     );
 

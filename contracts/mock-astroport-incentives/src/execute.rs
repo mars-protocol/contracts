@@ -1,23 +1,27 @@
-use astroport::{asset::AssetInfo, incentives::{IncentivesSchedule, InputSchedule}};
-use cosmwasm_std::{Coin, Deps, DepsMut, Env, MessageInfo, Response, StdError, StdResult, Uint128};
+use astroport::{
+    asset::AssetInfo,
+    incentives::{IncentivesSchedule, InputSchedule},
+};
+use cosmwasm_std::{Coin, DepsMut, Env, MessageInfo, Response, StdError, StdResult, Uint128};
 
-use crate::{query::query_rewards, state::{ASTRO_LP_INCENTIVE_DEPOSITS, INCENTIVE_SCHEDULES}};
+use crate::{
+    query::query_rewards,
+    state::{ASTRO_LP_INCENTIVE_DEPOSITS, INCENTIVE_SCHEDULES},
+};
 
 pub fn incentivise(
     deps: DepsMut,
     env: Env,
     lp_token: String,
-    schedule: InputSchedule
+    schedule: InputSchedule,
 ) -> StdResult<Response> {
-
     // TODO verify coins were sent to the contract
-    let incentives_schedule = IncentivesSchedule::from_input(
-        &env,
-        &schedule,
-    )?;
+    let incentives_schedule = IncentivesSchedule::from_input(&env, &schedule)?;
 
     let reward_denom = match &incentives_schedule.reward_info {
-        AssetInfo::NativeToken { denom } => denom.to_string(),
+        AssetInfo::NativeToken {
+            denom,
+        } => denom.to_string(),
         _ => unimplemented!("mock does not support cw20 assets!"),
     };
 
@@ -29,11 +33,7 @@ pub fn incentivise(
 
 // We just use this as a blank to consume the deposit message. This mock assumes only the incentives contract
 // will ever deposit / withdraw / interact
-pub fn deposit(
-    deps: DepsMut,
-    _: Env,
-    info: MessageInfo,
-) -> StdResult<Response> {
+pub fn deposit(deps: DepsMut, _: Env, info: MessageInfo) -> StdResult<Response> {
     let sender = info.sender.to_string();
     let coins = info.funds;
 
@@ -41,9 +41,9 @@ pub fn deposit(
         let lp_token = coin.denom.clone();
         ASTRO_LP_INCENTIVE_DEPOSITS.update(deps.storage, (&sender, &lp_token), |value_opt| {
             value_opt
-            .unwrap_or_else(Uint128::zero)
-            .checked_add(coin.amount)
-            .map_err(|_| StdError::generic_err("overflow"))
+                .unwrap_or_else(Uint128::zero)
+                .checked_add(coin.amount)
+                .map_err(|_| StdError::generic_err("overflow"))
         })?;
     }
 
@@ -57,25 +57,22 @@ pub fn withdraw(
     lp_token: String,
     amount: Uint128,
 ) -> StdResult<Response> {
-
     let sender = info.sender.to_string();
 
     // Send the rewards to the user
     let withdraw_lp_msg = cosmwasm_std::CosmosMsg::Bank(cosmwasm_std::BankMsg::Send {
         to_address: info.sender.to_string(),
-        amount: vec![
-            Coin {
-                amount: amount,
-                denom: lp_token.clone(),
-            }
-        ],
+        amount: vec![Coin {
+            amount,
+            denom: lp_token.clone(),
+        }],
     });
 
     ASTRO_LP_INCENTIVE_DEPOSITS.update(deps.storage, (&sender, &lp_token), |value_opt| {
         value_opt
-        .unwrap_or_else(Uint128::zero)
-        .checked_sub(amount)
-        .map_err(|_| StdError::generic_err("overflow"))
+            .unwrap_or_else(Uint128::zero)
+            .checked_sub(amount)
+            .map_err(|_| StdError::generic_err("overflow"))
     })?;
 
     Ok(Response::new().add_message(withdraw_lp_msg))
@@ -87,12 +84,16 @@ pub fn claim_rewards(
     info: MessageInfo,
     lp_tokens: Vec<String>,
 ) -> StdResult<Response> {
-    let rewards = lp_tokens.iter().map(|lp_token: &String| {
-        query_rewards(deps.as_ref(), env.clone(), info.sender.to_string(), lp_token.to_string()).unwrap()
-    }).fold(vec![], |mut acc, item| {
-        acc.extend(item);
-        acc
-    });
+    let rewards = lp_tokens
+        .iter()
+        .map(|lp_token: &String| {
+            query_rewards(deps.as_ref(), env.clone(), info.sender.to_string(), lp_token.to_string())
+                .unwrap()
+        })
+        .fold(vec![], |mut acc, item| {
+            acc.extend(item);
+            acc
+        });
 
     let response = Response::new();
 

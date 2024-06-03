@@ -16,10 +16,15 @@ use mars_types::{
 };
 
 use crate::{
-    astroport_incentives, helpers::{
+    helpers::{
         calculate_rewards_from_astroport_incentive_state,
         compute_updated_astroport_incentive_states, compute_user_unclaimed_rewards,
-    }, state::{self, ASTRO_INCENTIVE_STATES, ASTRO_USER_LP_DEPOSITS, CONFIG, DEFAULT_LIMIT, EMISSIONS, EPOCH_DURATION, INCENTIVE_STATES, MAX_LIMIT, OWNER, WHITELIST, WHITELIST_COUNT}, ContractError
+    },
+    state::{
+        self, ASTRO_INCENTIVE_STATES, ASTRO_USER_LP_DEPOSITS, CONFIG, DEFAULT_LIMIT, EMISSIONS,
+        EPOCH_DURATION, INCENTIVE_STATES, MAX_LIMIT, OWNER, WHITELIST, WHITELIST_COUNT,
+    },
+    ContractError,
 };
 
 pub fn query_active_emissions(
@@ -158,10 +163,8 @@ pub fn query_lp_rewards_for_denom(
     account_id: &str,
     lp_denom: &str,
 ) -> Result<Vec<Coin>, ContractError> {
-
-    let lp_amount = ASTRO_USER_LP_DEPOSITS
-        .may_load(deps.storage, (&account_id, lp_denom))?
-        .unwrap_or_default();
+    let lp_amount =
+        ASTRO_USER_LP_DEPOSITS.may_load(deps.storage, (&account_id, lp_denom))?.unwrap_or_default();
 
     let lp_coin = Coin {
         denom: lp_denom.to_string(),
