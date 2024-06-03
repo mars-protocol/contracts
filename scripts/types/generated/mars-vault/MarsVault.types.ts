@@ -5,14 +5,20 @@
  * and run the @cosmwasm/ts-codegen generate command to regenerate this file.
  */
 
+export type Decimal = string
 export interface InstantiateMsg {
   base_token: string
   cooldown_period: number
   credit_manager: string
   description?: string | null
+  performance_fee_config: PerformanceFeeConfig
   subtitle?: string | null
   title?: string | null
   vault_token_subdenom: string
+}
+export interface PerformanceFeeConfig {
+  fee: Decimal
+  withdrawal_interval: number
 }
 export type ExecuteMsg =
   | {
@@ -40,6 +46,11 @@ export type ExtensionExecuteMsg =
   | {
       unlock: {
         amount: Uint128
+      }
+    }
+  | {
+      withdraw_performance_fee: {
+        new_performance_fee_config?: PerformanceFeeConfig | null
       }
     }
 export type QueryMsg =
@@ -84,6 +95,9 @@ export type ExtensionQueryMsg =
       user_unlocks: {
         user_address: string
       }
+    }
+  | {
+      performance_fee_state: {}
     }
 export interface VaultInfoResponse {
   base_token: string

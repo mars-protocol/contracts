@@ -8,7 +8,9 @@
 import { CosmWasmClient, SigningCosmWasmClient, ExecuteResult } from '@cosmjs/cosmwasm-stargate'
 import { Coin, StdFee } from '@cosmjs/amino'
 import {
+  Decimal,
   InstantiateMsg,
+  PerformanceFeeConfig,
   ExecuteMsg,
   Uint128,
   ExtensionExecuteMsg,

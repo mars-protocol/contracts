@@ -38,8 +38,8 @@ use mars_types::{
     address_provider::{self, MarsAddressType},
     credit_manager::{
         Account, Action, CallbackMsg, CoinBalanceResponseItem, ConfigResponse, ConfigUpdates,
-        DebtShares, ExecuteMsg, InstantiateMsg, Positions, QueryMsg,
-        QueryMsg::{EstimateProvideLiquidity, VaultPositionValue},
+        DebtShares, ExecuteMsg, InstantiateMsg, Positions,
+        QueryMsg::{self, EstimateProvideLiquidity, VaultPositionValue},
         SharesResponseItem, VaultPositionResponseItem, VaultUtilizationResponse,
     },
     health::{
@@ -47,10 +47,10 @@ use mars_types::{
         InstantiateMsg as HealthInstantiateMsg, QueryMsg::HealthValues,
     },
     incentives::{ExecuteMsg::BalanceChange, QueryMsg::UserUnclaimedRewards},
-    oracle::ActionKind,
+    oracle::{ActionKind, PriceResponse, QueryMsg::Price as OraclePrice},
     params::{
-        AssetParams, AssetParamsUpdate,
-        AssetParamsUpdate::AddOrUpdate,
+        AssetParams,
+        AssetParamsUpdate::{self, AddOrUpdate},
         ExecuteMsg::{UpdateAssetParams, UpdateVaultConfig},
         InstantiateMsg as ParamsInstantiateMsg, QueryMsg as ParamsQueryMsg, VaultConfig,
         VaultConfigUnchecked, VaultConfigUpdate,
@@ -65,7 +65,9 @@ use mars_types::{
         QueryMsg::EstimateExactInSwap, SwapperRoute,
     },
 };
-use mars_vault::msg::InstantiateMsg as ManagedVaultInstantiateMsg;
+use mars_vault::{
+    msg::InstantiateMsg as ManagedVaultInstantiateMsg, performance_fee::PerformanceFeeConfig,
+};
 use mars_zapper_mock::msg::{InstantiateMsg as ZapperInstantiateMsg, LpConfig};
 
 use super::{
@@ -809,6 +811,19 @@ impl MockEnv {
             },
         )
     }
+
+    pub fn query_price(&self, denom: &str) -> PriceResponse {
+        self.app
+            .wrap()
+            .query_wasm_smart(
+                self.mars_oracle.clone(),
+                &OraclePrice {
+                    kind: None,
+                    denom: denom.to_string(),
+                },
+            )
+            .unwrap()
+    }
 }
 
 impl MockEnvBuilder {
@@ -1489,6 +1504,25 @@ fn propose_new_nft_minter(
 }
 
 pub fn deploy_managed_vault(app: &mut CustomApp, sender: &Addr, credit_manager: &Addr) -> Addr {
+    deploy_managed_vault_with_performance_fee(
+        app,
+        sender,
+        credit_manager,
+        60,
+        PerformanceFeeConfig {
+            fee: Decimal::zero(),
+            withdrawal_interval: 0,
+        },
+    )
+}
+
+pub fn deploy_managed_vault_with_performance_fee(
+    app: &mut CustomApp,
+    sender: &Addr,
+    credit_manager: &Addr,
+    cooldown_period: u64,
+    pf_config: PerformanceFeeConfig,
+) -> Addr {
     let contract_code_id = app.store_code(mock_managed_vault_contract());
     app.instantiate_contract(
         contract_code_id,
@@ -1500,7 +1534,8 @@ pub fn deploy_managed_vault(app: &mut CustomApp, sender: &Addr, credit_manager: 
             subtitle: None,
             description: None,
             credit_manager: credit_manager.to_string(),
-            cooldown_period: 60,
+            cooldown_period,
+            performance_fee_config: pf_config,
         },
         &[coin(10_000_000, "untrn")], // Token Factory fee for minting new denom. Configured in the Token Factory module in `mars-testing` package.
         "mock-managed-vault",

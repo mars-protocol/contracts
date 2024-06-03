@@ -1,8 +1,12 @@
 use anyhow::Result as AnyResult;
 use cosmwasm_std::{Addr, Coin, Uint128};
 use cw_multi_test::{AppResponse, Executor};
-use mars_vault::msg::{
-    ExecuteMsg, ExtensionExecuteMsg, ExtensionQueryMsg, QueryMsg, VaultInfoResponseExt, VaultUnlock,
+use mars_vault::{
+    msg::{
+        ExecuteMsg, ExtensionExecuteMsg, ExtensionQueryMsg, QueryMsg, VaultInfoResponseExt,
+        VaultUnlock,
+    },
+    performance_fee::{PerformanceFeeConfig, PerformanceFeeState},
 };
 
 use super::helpers::MockEnv;
@@ -78,6 +82,22 @@ pub fn execute_unlock(
     )
 }
 
+pub fn execute_withdraw_performance_fee(
+    mock_env: &mut MockEnv,
+    sender: &Addr,
+    vault: &Addr,
+    new_performance_fee_config: Option<PerformanceFeeConfig>,
+) -> AnyResult<AppResponse> {
+    mock_env.app.execute_contract(
+        sender.clone(),
+        vault.clone(),
+        &ExecuteMsg::VaultExtension(ExtensionExecuteMsg::WithdrawPerformanceFee {
+            new_performance_fee_config,
+        }),
+        &[],
+    )
+}
+
 pub fn query_vault_info(mock_env: &MockEnv, vault: &Addr) -> VaultInfoResponseExt {
     mock_env
         .app
@@ -132,6 +152,17 @@ pub fn query_convert_to_shares(mock_env: &MockEnv, vault: &Addr, base_tokens: Ui
             &QueryMsg::ConvertToShares {
                 amount: base_tokens,
             },
+        )
+        .unwrap()
+}
+
+pub fn query_performance_fee(mock_env: &MockEnv, vault: &Addr) -> PerformanceFeeState {
+    mock_env
+        .app
+        .wrap()
+        .query_wasm_smart(
+            vault.to_string(),
+            &QueryMsg::VaultExtension(ExtensionQueryMsg::PerformanceFeeState {}),
         )
         .unwrap()
 }

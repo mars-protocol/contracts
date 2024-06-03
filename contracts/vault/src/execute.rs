@@ -12,7 +12,11 @@ use crate::{
     contract::Vault,
     error::ContractError,
     msg::UnlockState,
-    state::{COOLDOWN_PERIOD, CREDIT_MANAGER, HEALTH, ORACLE, UNLOCKS, VAULT_ACC_ID},
+    performance_fee::PerformanceFeeConfig,
+    state::{
+        ACCOUNT_NFT, COOLDOWN_PERIOD, CREDIT_MANAGER, HEALTH, ORACLE, PERFORMANCE_FEE_CONFIG,
+        PERFORMANCE_FEE_STATE, UNLOCKS, VAULT_ACC_ID,
+    },
 };
 
 pub fn bind_credit_manager_account(
@@ -61,10 +65,26 @@ pub fn deposit(
     let amount = cw_utils::must_pay(info, &base_token)?;
 
     // calculate vault tokens
-    let total_staked_amount = total_base_token_in_account(deps.as_ref())?;
+    let total_staked_amount = total_base_tokens_in_account(deps.as_ref())?;
     let vault_token_supply = vault_token.query_total_supply(deps.as_ref())?;
-    let vault_tokens =
-        vault.calculate_vault_tokens(amount, total_staked_amount, vault_token_supply)?;
+
+    let mut performance_fee_state = PERFORMANCE_FEE_STATE.load(deps.storage)?;
+    let performance_fee_config = PERFORMANCE_FEE_CONFIG.load(deps.storage)?;
+    performance_fee_state.update_fee_and_pnl(
+        env.block.time.seconds(),
+        total_staked_amount,
+        &performance_fee_config,
+    )?;
+    performance_fee_state.update_base_tokens_after_deposit(total_staked_amount, amount)?;
+    PERFORMANCE_FEE_STATE.save(deps.storage, &performance_fee_state)?;
+    let total_staked_amount_without_fee =
+        total_staked_amount.checked_sub(performance_fee_state.accumulated_fee)?;
+
+    let vault_tokens = vault.calculate_vault_tokens(
+        amount,
+        total_staked_amount_without_fee,
+        vault_token_supply,
+    )?;
 
     let coin_deposited = Coin {
         denom: base_token,
@@ -152,7 +172,6 @@ pub fn redeem(
     info: &MessageInfo,
     recipient: Option<String>,
 ) -> Result<Response, ContractError> {
-    let cm_addr = CREDIT_MANAGER.load(deps.storage)?;
     let Some(vault_acc_id) = VAULT_ACC_ID.may_load(deps.storage)? else {
         // bind credit manager account first
         return Err(ContractError::VaultAccountNotFound {});
@@ -199,29 +218,37 @@ pub fn redeem(
         });
     }
 
-    let (tokens_to_withdraw, burn_res) =
-        vault.burn_vault_tokens_for_base_tokens(deps.branch(), &env, vault_token_amount)?;
+    let total_staked_amount = total_base_tokens_in_account(deps.as_ref())?;
 
-    let mut actions =
-        prepare_lend_and_borrow_actions(deps.as_ref(), base_token.clone(), tokens_to_withdraw)?;
+    let mut performance_fee_state = PERFORMANCE_FEE_STATE.load(deps.storage)?;
+    let performance_fee_config = PERFORMANCE_FEE_CONFIG.load(deps.storage)?;
+    performance_fee_state.update_fee_and_pnl(
+        env.block.time.seconds(),
+        total_staked_amount,
+        &performance_fee_config,
+    )?;
 
-    actions.push(Action::WithdrawToWallet {
-        coin: ActionCoin {
-            denom: base_token,
-            amount: ActionAmount::Exact(tokens_to_withdraw),
-        },
-        recipient: recipient.to_string(),
-    });
+    let total_staked_amount_without_fee =
+        total_staked_amount.checked_sub(performance_fee_state.accumulated_fee)?;
+    let (tokens_to_withdraw, burn_res) = vault.burn_vault_tokens_for_base_tokens(
+        deps.branch(),
+        &env,
+        total_staked_amount_without_fee,
+        vault_token_amount,
+    )?;
 
-    let withdraw_from_cm = CosmosMsg::Wasm(WasmMsg::Execute {
-        contract_addr: cm_addr.to_string(),
-        msg: to_json_binary(&credit_manager::ExecuteMsg::UpdateCreditAccount {
-            account_id: Some(vault_acc_id.clone()),
-            account_kind: None,
-            actions,
-        })?,
-        funds: vec![],
-    });
+    performance_fee_state
+        .update_base_tokens_after_redeem(total_staked_amount, tokens_to_withdraw)?;
+
+    PERFORMANCE_FEE_STATE.save(deps.storage, &performance_fee_state)?;
+
+    let withdraw_from_cm = prepare_credit_manager_msg(
+        deps.as_ref(),
+        base_token,
+        tokens_to_withdraw,
+        recipient.to_string(),
+        vault_acc_id,
+    )?;
 
     let event = Event::new("vault/redeem").add_attributes(vec![
         attr("action", "burn_vault_tokens"),
@@ -233,6 +260,41 @@ pub fn redeem(
     Ok(burn_res.add_message(withdraw_from_cm).add_event(event))
 }
 
+fn prepare_credit_manager_msg(
+    deps: Deps,
+    base_token: String,
+    withdraw_amt: Uint128,
+    withdraw_recipient: String,
+    vault_acc_id: String,
+) -> Result<CosmosMsg, ContractError> {
+    let cm_addr = CREDIT_MANAGER.load(deps.storage)?;
+
+    let mut actions = prepare_lend_and_borrow_actions(
+        deps,
+        base_token.clone(),
+        withdraw_amt,
+        cm_addr.clone(),
+        vault_acc_id.clone(),
+    )?;
+    actions.push(Action::WithdrawToWallet {
+        coin: ActionCoin {
+            denom: base_token,
+            amount: ActionAmount::Exact(withdraw_amt),
+        },
+        recipient: withdraw_recipient.to_string(),
+    });
+    let withdraw_from_cm = CosmosMsg::Wasm(WasmMsg::Execute {
+        contract_addr: cm_addr.to_string(),
+        msg: to_json_binary(&credit_manager::ExecuteMsg::UpdateCreditAccount {
+            account_id: Some(vault_acc_id.clone()),
+            account_kind: None,
+            actions,
+        })?,
+        funds: vec![],
+    });
+    Ok(withdraw_from_cm)
+}
+
 /// Prepare lend and borrow actions to redeem the desired base token balance.
 /// If there is enough base token deposited, no actions are needed.
 /// If there is not enough base token deposited, it will try to reclaim the lent base token first.
@@ -241,10 +303,9 @@ fn prepare_lend_and_borrow_actions(
     deps: Deps,
     base_token: String,
     withraw_amount: Uint128,
+    cm_addr: String,
+    vault_acc_id: String,
 ) -> Result<Vec<Action>, ContractError> {
-    let cm_addr = CREDIT_MANAGER.load(deps.storage)?;
-    let vault_acc_id = VAULT_ACC_ID.load(deps.storage)?;
-
     let positions: Positions = deps.querier.query_wasm_smart(
         cm_addr,
         &QueryMsg::Positions {
@@ -295,7 +356,7 @@ fn prepare_lend_and_borrow_actions(
     Ok(actions)
 }
 
-pub fn total_base_token_in_account(deps: Deps) -> Result<Uint128, ContractError> {
+pub fn total_base_tokens_in_account(deps: Deps) -> Result<Uint128, ContractError> {
     let cm_addr = CREDIT_MANAGER.load(deps.storage)?;
     let vault_acc_id = VAULT_ACC_ID.load(deps.storage)?;
 
@@ -325,4 +386,67 @@ pub fn total_base_token_in_account(deps: Deps) -> Result<Uint128, ContractError>
 
     let base_token_in_account = net_value.checked_div_floor(base_token_price)?;
     Ok(base_token_in_account)
+}
+
+pub fn withdraw_performance_fee(
+    deps: DepsMut,
+    env: Env,
+    info: &MessageInfo,
+    new_performance_fee_config: Option<PerformanceFeeConfig>,
+) -> Result<Response, ContractError> {
+    let Some(vault_acc_id) = VAULT_ACC_ID.may_load(deps.storage)? else {
+        // bind credit manager account first
+        return Err(ContractError::VaultAccountNotFound {});
+    };
+
+    let acc_nft = ACCOUNT_NFT.load(deps.storage)?;
+    let vault_acc_owner_addr = acc_nft.query_nft_token_owner(&deps.querier, &vault_acc_id)?;
+    if vault_acc_owner_addr != info.sender {
+        return Err(ContractError::NotTokenOwner {
+            user: info.sender.to_string(),
+            account_id: vault_acc_id,
+        });
+    }
+
+    let total_staked_amount = total_base_tokens_in_account(deps.as_ref())?;
+
+    let mut performance_fee_state = PERFORMANCE_FEE_STATE.load(deps.storage)?;
+    let performance_fee_config = PERFORMANCE_FEE_CONFIG.load(deps.storage)?;
+    performance_fee_state.update_fee_and_pnl(
+        env.block.time.seconds(),
+        total_staked_amount,
+        &performance_fee_config,
+    )?;
+    let accumulated_performace_fee = performance_fee_state.accumulated_fee;
+    performance_fee_state.reset_state_by_manager(
+        env.block.time.seconds(),
+        total_staked_amount,
+        &performance_fee_config,
+    )?;
+
+    PERFORMANCE_FEE_STATE.save(deps.storage, &performance_fee_state)?;
+
+    // update performance fee config if new config is provided
+    if let Some(new_config) = new_performance_fee_config {
+        new_config.validate()?;
+        PERFORMANCE_FEE_CONFIG.save(deps.storage, &new_config)?;
+    }
+
+    let event = Event::new("withdraw_performance_fee").add_attributes(vec![
+        attr("recipient", vault_acc_owner_addr.clone()),
+        attr("amount", accumulated_performace_fee),
+    ]);
+
+    let vault = Vault::default();
+    let base_token = vault.base_token.load(deps.storage)?;
+
+    let withdraw_from_cm = prepare_credit_manager_msg(
+        deps.as_ref(),
+        base_token,
+        accumulated_performace_fee,
+        vault_acc_owner_addr,
+        vault_acc_id,
+    )?;
+
+    Ok(Response::new().add_message(withdraw_from_cm).add_event(event))
 }

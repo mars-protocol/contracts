@@ -1,4 +1,5 @@
 use cosmwasm_std::{coin, Addr, Decimal, Uint128};
+use cw_utils::PaymentError;
 use mars_mock_oracle::msg::CoinPrice;
 use mars_testing::multitest::helpers::{uosmo_info, CoinInfo};
 use mars_types::{
@@ -7,6 +8,7 @@ use mars_types::{
     oracle::ActionKind,
     params::LiquidationBonus,
 };
+use mars_vault::error::ContractError;
 use test_case::test_case;
 
 use super::{
@@ -50,10 +52,7 @@ fn redeem_invalid_funds() {
         None,
         &[],
     );
-    assert_vault_err(
-        res,
-        mars_vault::error::ContractError::Payment(cw_utils::PaymentError::NoFunds {}),
-    );
+    assert_vault_err(res, ContractError::Payment(PaymentError::NoFunds {}));
 
     let res = execute_redeem(
         &mut mock,
@@ -63,10 +62,7 @@ fn redeem_invalid_funds() {
         None,
         &[coin(1_001, "untrn"), coin(1_002, "uusdc")],
     );
-    assert_vault_err(
-        res,
-        mars_vault::error::ContractError::Payment(cw_utils::PaymentError::MultipleDenoms {}),
-    );
+    assert_vault_err(res, ContractError::Payment(PaymentError::MultipleDenoms {}));
 
     let res = execute_redeem(
         &mut mock,
@@ -78,9 +74,7 @@ fn redeem_invalid_funds() {
     );
     assert_vault_err(
         res,
-        mars_vault::error::ContractError::Payment(cw_utils::PaymentError::MissingDenom(
-            "factory/contract10/vault".to_string(),
-        )),
+        ContractError::Payment(PaymentError::MissingDenom("factory/contract10/vault".to_string())),
     );
 }
 
@@ -112,7 +106,7 @@ fn redeem_if_credit_manager_account_not_binded() {
         None,
         &[coin(deposited_amt.u128(), "vault")],
     );
-    assert_vault_err(res, mars_vault::error::ContractError::VaultAccountNotFound {});
+    assert_vault_err(res, ContractError::VaultAccountNotFound {});
 }
 
 #[test]
@@ -166,7 +160,7 @@ fn redeem_if_unlocked_positions_not_found() {
         None,
         &[coin(10u128, vault_token.clone())],
     );
-    assert_vault_err(res, mars_vault::error::ContractError::UnlockedPositionsNotFound {});
+    assert_vault_err(res, ContractError::UnlockedPositionsNotFound {});
 }
 
 #[test]
@@ -243,7 +237,7 @@ fn redeem_invalid_unlocked_amount() {
     );
     assert_vault_err(
         res,
-        mars_vault::error::ContractError::InvalidAmount {
+        ContractError::InvalidAmount {
             reason: "provided vault tokens do not match total unlocked vault tokens".to_string(),
         },
     );
