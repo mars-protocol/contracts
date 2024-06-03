@@ -2,8 +2,8 @@
 
 extern crate core;
 
-#[cfg(feature = "astroport")]
 pub mod astroport_incentives_querier;
+#[cfg(feature = "astroport")]
 pub mod astroport_swapper;
 mod cosmwasm_pool_querier;
 /// cosmwasm_std::testing overrides and custom test helpers

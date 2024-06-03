@@ -3,7 +3,7 @@ use std::{
     collections::HashMap,
 };
 
-use astroport::incentives::ExecuteMsg;
+use astroport_v5::incentives::ExecuteMsg;
 use cosmwasm_std::{
     coin, to_json_binary, Addr, BlockInfo, Coin, CosmosMsg, Decimal, Deps, MessageInfo, Order,
     OverflowError, OverflowOperation, QuerierWrapper, StdError, StdResult, Storage, Uint128,

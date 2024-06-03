@@ -1,6 +1,6 @@
 use std::collections::HashMap;
 
-use astroport::incentives::ExecuteMsg;
+use astroport_v5::incentives::ExecuteMsg;
 use cosmwasm_std::{
     ensure_eq, to_json_binary, BankMsg, Coin, CosmosMsg, Decimal, DepsMut, Env, Event, MessageInfo,
     Order::Ascending, Response, StdResult, Storage, Uint128, WasmMsg,

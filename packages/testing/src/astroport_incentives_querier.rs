@@ -1,7 +1,7 @@
 use std::collections::HashMap;
 
+use astroport_v5::{asset::Asset, incentives::QueryMsg};
 use cosmwasm_std::{to_json_binary, Addr, Binary, ContractResult, QuerierResult, Uint128};
-use cw_it::astroport::astroport_v3::{asset::Asset, incentives::QueryMsg};
 
 pub struct AstroportIncentivesQuerier {
     /// Holds mock rewards, key is (user, lp_token_denom)
