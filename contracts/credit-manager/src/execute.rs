@@ -21,6 +21,7 @@ use crate::{
     hls::assert_hls_rules,
     lend::lend,
     liquidate::assert_not_self_liquidation,
+    liquidate_astro_lp::liquidate_astro_lp,
     liquidate_deposit::liquidate_deposit,
     liquidate_lend::liquidate_lend,
     reclaim::reclaim,
@@ -259,6 +260,12 @@ pub fn dispatch_actions(
                         request_vault: request_vault.check(deps.api)?,
                         position_type,
                     },
+                }),
+                LiquidateRequest::AstroLp(lp_denom) => callbacks.push(CallbackMsg::Liquidate {
+                    liquidator_account_id: account_id.to_string(),
+                    liquidatee_account_id: liquidatee_account_id.to_string(),
+                    debt_coin,
+                    request: LiquidateRequest::AstroLp(lp_denom),
                 }),
             },
             Action::SwapExactIn {
@@ -534,6 +541,14 @@ pub fn execute_callback(
                     debt_coin,
                     request_vault,
                     position_type,
+                ),
+                LiquidateRequest::AstroLp(request_coin_denom) => liquidate_astro_lp(
+                    deps,
+                    env,
+                    &liquidator_account_id,
+                    &liquidatee_account_id,
+                    debt_coin,
+                    &request_coin_denom,
                 ),
             }
         }
