@@ -206,7 +206,7 @@ pub enum MigrateV1ToV2 {
 #[derive(QueryResponses)]
 pub enum QueryMsg {
     /// Query account staked LP rewards
-    #[returns(Vec<cosmwasm_std::Coin>)]
+    #[returns(PaginatedLpRewardsResponse)]
     AccountStakedLpRewards {
         /// The id of the account who owns the LP
         account_id: String,
@@ -277,7 +277,7 @@ pub enum QueryMsg {
     },
 
     /// Enumerate a users LP positions with pagination
-    #[returns(Vec<StakedLpPositionResponse>)]
+    #[returns(PaginatedStakedLpResponse)]
     StakedLpPositions {
         /// The id of the account who owns the LP
         account_id: String,

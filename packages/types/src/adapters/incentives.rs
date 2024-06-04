@@ -5,7 +5,7 @@ use cosmwasm_std::{
 
 use crate::{
     credit_manager::ActionCoin,
-    incentives::{ExecuteMsg, QueryMsg, StakedLpPositionResponse},
+    incentives::{ExecuteMsg, PaginatedStakedLpResponse, QueryMsg, StakedLpPositionResponse},
 };
 
 #[cw_serde]
@@ -137,5 +137,44 @@ impl Incentives {
                 lp_denom: lp_denom.to_string(),
             },
         )
+    }
+
+    pub fn query_astroport_staked_lp_positions(
+        &self,
+        querier: &QuerierWrapper,
+        account_id: &str,
+        start_after: Option<String>,
+        limit: Option<u32>,
+    ) -> StdResult<PaginatedStakedLpResponse> {
+        querier.query_wasm_smart(
+            self.addr.to_string(),
+            &QueryMsg::StakedLpPositions {
+                account_id: account_id.to_string(),
+                start_after,
+                limit,
+            },
+        )
+    }
+
+    pub fn query_all_staked_lp_coins(
+        &self,
+        querier: &QuerierWrapper,
+        account_id: &str,
+    ) -> StdResult<Vec<Coin>> {
+        let mut start_after = Option::<String>::None;
+        let mut has_more = true;
+        let mut all_coins = Vec::new();
+
+        while has_more {
+            let response =
+                self.query_astroport_staked_lp_positions(querier, account_id, start_after, None)?;
+            for item in response.data {
+                all_coins.push(item.lp_coin);
+            }
+            start_after = all_coins.last().map(|item| item.denom.clone());
+            has_more = response.metadata.has_more;
+        }
+
+        Ok(all_coins)
     }
 }

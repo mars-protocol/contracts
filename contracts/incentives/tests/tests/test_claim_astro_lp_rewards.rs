@@ -76,7 +76,6 @@ fn assert_user_rewards(
     lp_coin: Coin,
     rewards: Vec<Coin>,
 ) {
-    println!("assert rewards");
     let actual_rewards = query::query_lp_rewards_for_position(
         deps,
         &env,

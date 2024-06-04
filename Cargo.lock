@@ -2295,6 +2295,7 @@ name = "mars-mock-incentives"
 version = "2.0.0"
 dependencies = [
  "cosmwasm-std",
+ "cw-paginate",
  "cw-storage-plus 1.2.0",
  "mars-types",
 ]

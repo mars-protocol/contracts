@@ -1,5 +1,7 @@
 use cosmwasm_std::{Addr, Coin, Uint128};
 use cw_storage_plus::Map;
+pub const DEFAULT_LIMIT: u32 = 10;
+pub const MAX_LIMIT: u32 = 30;
 
 // Map<(Addr, CmAccountId), Unclaimed Coins>
 pub const UNCLAIMED_REWARDS: Map<(Addr, String), Vec<Coin>> = Map::new("unclaimed_rewards");

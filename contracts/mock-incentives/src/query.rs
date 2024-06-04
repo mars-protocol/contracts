@@ -1,7 +1,11 @@
 use cosmwasm_std::{Coin, Deps, StdResult};
-use mars_types::incentives::StakedLpPositionResponse;
+use cw_paginate::paginate_prefix_query;
+use cw_storage_plus::Bound;
+use mars_types::incentives::{PaginatedStakedLpResponse, StakedLpPositionResponse};
 
-use crate::state::{PENDING_ASTROPORT_REWARDS, UNCLAIMED_REWARDS};
+use crate::state::{
+    DEFAULT_LIMIT, MAX_LIMIT, PENDING_ASTROPORT_REWARDS, STAKED_LP_POSITIONS, UNCLAIMED_REWARDS,
+};
 
 pub fn query_unclaimed_rewards(
     deps: Deps,
@@ -36,6 +40,37 @@ pub fn query_staked_lp_position(
         lp_coin: staked_coin,
         rewards,
     })
+}
+
+pub fn query_all_staked_lp_positions_for_account(
+    deps: Deps,
+    account_id: String,
+    start_after: Option<String>,
+    limit: Option<u32>,
+) -> StdResult<PaginatedStakedLpResponse> {
+    let start = start_after.as_ref().map(|denom| Bound::exclusive(denom.as_str()));
+    let limit: u32 = limit.unwrap_or(DEFAULT_LIMIT).min(MAX_LIMIT);
+
+    paginate_prefix_query(
+        &STAKED_LP_POSITIONS,
+        deps.storage,
+        account_id.clone(),
+        start,
+        Some(limit),
+        |denom, amount| {
+            let lp_coin = Coin {
+                denom,
+                amount,
+            };
+            let rewards =
+                query_pending_astroport_rewards(deps, account_id.clone(), lp_coin.denom.clone())?;
+
+            Ok(StakedLpPositionResponse {
+                lp_coin,
+                rewards,
+            })
+        },
+    )
 }
 
 pub fn query_staked_amount(deps: Deps, account_id: String, lp_denom: String) -> StdResult<Coin> {

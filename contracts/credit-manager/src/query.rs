@@ -70,7 +70,9 @@ pub fn query_positions(deps: Deps, account_id: &str) -> ContractResult<Positions
         debts: query_debt_amounts(deps, account_id)?,
         lends: RED_BANK.load(deps.storage)?.query_all_lent(&deps.querier, account_id)?,
         vaults: query_vault_positions(deps, account_id)?,
-        staked_lp: vec![],
+        staked_lp: INCENTIVES
+            .load(deps.storage)?
+            .query_all_staked_lp_coins(&deps.querier, account_id)?,
     })
 }
 
@@ -260,4 +262,27 @@ pub fn query_vault_position_value(
 ) -> StdResult<VaultPositionValue> {
     let oracle = ORACLE.load(deps.storage)?;
     vault_position.query_values(&deps.querier, &oracle, ActionKind::Default)
+}
+
+pub fn query_all_staked_lp_positions(
+    deps: Deps,
+    start_after: Option<(String, String)>,
+    limit: Option<u32>,
+) -> StdResult<Vec<VaultPositionResponseItem>> {
+    let start = match &start_after {
+        Some((account_id, unchecked)) => {
+            let addr = deps.api.addr_validate(unchecked)?;
+            Some(Bound::exclusive((account_id.as_str(), addr)))
+        }
+        None => None,
+    };
+    paginate_map(&VAULT_POSITIONS, deps.storage, start, limit, |(account_id, addr), amount| {
+        Ok(VaultPositionResponseItem {
+            account_id,
+            position: VaultPosition {
+                vault: VaultBase::new(addr),
+                amount,
+            },
+        })
+    })
 }

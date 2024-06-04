@@ -121,7 +121,11 @@ pub fn unstake_astro_lp(
 
     let new_amount = staked_coin.amount.checked_sub(lp_coin.amount)?;
 
-    STAKED_LP_POSITIONS.save(deps.storage, (account_id, lp_coin.denom), &new_amount)?;
+    if new_amount.is_zero() {
+        STAKED_LP_POSITIONS.remove(deps.storage, (account_id, lp_coin.denom));
+    } else {
+        STAKED_LP_POSITIONS.save(deps.storage, (account_id, lp_coin.denom), &new_amount)?;
+    }
 
     Ok(Response::new())
 }

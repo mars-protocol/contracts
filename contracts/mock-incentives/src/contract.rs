@@ -98,6 +98,16 @@ pub fn query(deps: Deps, _env: Env, msg: incentives::QueryMsg) -> StdResult<Bina
             lp_denom,
             ..
         } => to_json_binary(&query::query_staked_lp_position(deps, account_id, lp_denom)?),
+        incentives::QueryMsg::StakedLpPositions {
+            account_id,
+            start_after,
+            limit,
+        } => to_json_binary(&query::query_all_staked_lp_positions_for_account(
+            deps,
+            account_id,
+            start_after,
+            limit,
+        )?),
         _ => unimplemented!("Query not supported!"),
     }
 }
