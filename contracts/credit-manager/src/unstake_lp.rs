@@ -35,7 +35,7 @@ pub fn unstake_lp(
         amount: new_amount,
     };
 
-    decrement_coin_balance(deps.storage, account_id, &updated_coin)?;
+    increment_coin_balance(deps.storage, account_id, &updated_coin)?;
 
     // unstake msg
     let unstake_msg = incentives.unstake_astro_lp_msg(account_id, updated_coin)?;
