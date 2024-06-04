@@ -22,6 +22,7 @@ osmosis-test-tube = ["cw-it/osmosis-test-tube"]
 [dependencies]
 anyhow                         = { workspace = true }
 astroport                      = { workspace = true, optional = true }
+astroport-v5                   = { workspace = true }
 cosmwasm-std                   = { workspace = true }
 cosmwasm-schema                = { workspace = true }
 cw721                          = { workspace = true }

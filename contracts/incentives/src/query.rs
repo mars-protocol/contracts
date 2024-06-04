@@ -1,6 +1,6 @@
 use std::collections::HashMap;
 
-use astroport::asset::Asset;
+use astroport_v5::asset::Asset;
 use cosmwasm_std::{
     Addr, Coin, Coins, Decimal, Deps, Env, Order, Order::Ascending, StdResult, Uint128,
 };
@@ -101,7 +101,7 @@ pub fn query_unclaimed_astroport_rewards(
 ) -> Result<Vec<Coin>, ContractError> {
     let result: Vec<Asset> = deps.querier.query_wasm_smart(
         astroport_incentives_addr,
-        &astroport::incentives::QueryMsg::PendingRewards {
+        &astroport_v5::incentives::QueryMsg::PendingRewards {
             lp_token: lp_denom.to_string(),
             user: mars_incentives_addr.to_string(),
         },

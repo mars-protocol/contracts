@@ -21,8 +21,7 @@ library    = []
 [dependencies]
 apollo-cw-asset  = { workspace = true }
 apollo-utils     = { workspace = true }
-# TODO: update with official release once ready
-astroport        = "=5.0.0-rc.1-tokenfactory"
+astroport-v5     = { workspace = true }
 cosmwasm-std     = { workspace = true }
 cw2              = { workspace = true }
 cw-dex           = { workspace = true }
