@@ -38,8 +38,7 @@ use mars_types::{
     address_provider::{self, MarsAddressType},
     credit_manager::{
         Account, Action, CallbackMsg, CoinBalanceResponseItem, ConfigResponse, ConfigUpdates,
-        DebtShares, ExecuteMsg, InstantiateMsg, Positions, QueryMsg,
-        QueryMsg::{EstimateProvideLiquidity, VaultPositionValue},
+        DebtShares, ExecuteMsg, InstantiateMsg, Positions, QueryMsg::{self, EstimateProvideLiquidity, VaultPositionValue},
         SharesResponseItem, VaultPositionResponseItem, VaultUtilizationResponse,
     },
     health::{
@@ -48,12 +47,11 @@ use mars_types::{
     },
     incentives::{
         ExecuteMsg::{BalanceChange, SetAssetIncentive},
-        QueryMsg::{AccountStakedLpRewards, UserUnclaimedRewards},
+        QueryMsg::{AccountStakedLpRewards, StakedLpPosition, UserUnclaimedRewards}, StakedLpPositionResponse,
     },
     oracle::ActionKind,
     params::{
-        AssetParams, AssetParamsUpdate,
-        AssetParamsUpdate::AddOrUpdate,
+        AssetParams, AssetParamsUpdate::{self, AddOrUpdate},
         ExecuteMsg::{UpdateAssetParams, UpdateVaultConfig},
         InstantiateMsg as ParamsInstantiateMsg, QueryMsg as ParamsQueryMsg, VaultConfig,
         VaultConfigUnchecked, VaultConfigUpdate,
@@ -521,6 +519,19 @@ impl MockEnv {
             .query_wasm_smart(
                 self.incentives.clone().addr,
                 &AccountStakedLpRewards {
+                    account_id: account_id.to_string(),
+                    lp_denom: lp_denom.to_string(),
+                },
+            )
+            .unwrap()
+    }
+
+    pub fn query_staked_lp_position(&self, account_id: &str, lp_denom: &str) -> StakedLpPositionResponse {
+        self.app
+            .wrap()
+            .query_wasm_smart(
+                self.incentives.clone().addr,
+                &StakedLpPosition {
                     account_id: account_id.to_string(),
                     lp_denom: lp_denom.to_string(),
                 },

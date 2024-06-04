@@ -69,7 +69,7 @@ fn claiming_a_single_reward() {
 }
 
 #[test]
-fn claiming_a_multiple_rewards() {
+fn claiming_multiple_rewards() {
     let osmo_info = uosmo_info();
     let atom_info = coin_info("atom");
     let mut mock = MockEnv::new().build().unwrap();

@@ -32,6 +32,7 @@ mod test_repay;
 mod test_repay_for_recipient;
 mod test_repay_from_wallet;
 mod test_swap;
+mod test_unstake_astro_lp;
 mod test_update_admin;
 mod test_update_config;
 mod test_update_credit_account_with_new_acc;
@@ -46,3 +47,4 @@ mod test_vault_request_unlock;
 mod test_withdraw;
 mod test_zap_provide;
 mod test_zap_withdraw;
+

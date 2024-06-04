@@ -3,8 +3,8 @@ use cosmwasm_std::{
 };
 
 use crate::{
-    query::{query_pending_astroport_rewards, query_unclaimed_rewards},
-    state::{PENDING_ASTROPORT_REWARDS, UNCLAIMED_REWARDS},
+    query::{query_pending_astroport_rewards, query_staked_amount, query_unclaimed_rewards},
+    state::{PENDING_ASTROPORT_REWARDS, STAKED_LP_POSITIONS, UNCLAIMED_REWARDS},
 };
 
 pub fn claim_astro_lp_rewards(
@@ -90,6 +90,36 @@ pub fn set_incentive_rewards(
     });
 
     PENDING_ASTROPORT_REWARDS.save(deps.storage, (account_id, lp_denom), &pending_astro_rewards)?;
+
+    Ok(Response::new())
+}
+
+pub fn stake_astro_lp(
+    deps: DepsMut,
+    _: MessageInfo,
+    account_id: String,
+    lp_coin: Coin,
+) -> StdResult<Response> {
+    let staked_coin = query_staked_amount(deps.as_ref(), account_id.clone(), lp_coin.denom.clone())?;
+
+    let new_amount = staked_coin.amount.checked_add(lp_coin.amount)?;
+
+    STAKED_LP_POSITIONS.save(deps.storage, (account_id, lp_coin.denom), &new_amount)?;
+
+    Ok(Response::new())
+}
+
+pub fn unstake_astro_lp(
+    deps: DepsMut,
+    _: MessageInfo,
+    account_id: String,
+    lp_coin: Coin,
+) -> StdResult<Response> {
+    let staked_coin = query_staked_amount(deps.as_ref(), account_id.clone(), lp_coin.denom.clone())?;
+
+    let new_amount = staked_coin.amount.checked_sub(lp_coin.amount)?;
+
+    STAKED_LP_POSITIONS.save(deps.storage, (account_id, lp_coin.denom), &new_amount)?;
 
     Ok(Response::new())
 }

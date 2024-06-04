@@ -1,12 +1,15 @@
 #[cfg(not(feature = "library"))]
 use cosmwasm_std::entry_point;
 use cosmwasm_std::{
-    to_json_binary, Binary, Deps, DepsMut, Empty, Env, MessageInfo, Response, StdResult,
+    to_json_binary, Binary, Coin, Deps, DepsMut, Empty, Env, MessageInfo, Response, StdResult
 };
 use mars_types::incentives;
 
 use crate::{
-    execute::{balance_change, claim_astro_lp_rewards, claim_rewards, set_incentive_rewards},
+    execute::{
+        balance_change, claim_astro_lp_rewards, claim_rewards, set_incentive_rewards,
+        stake_astro_lp, unstake_astro_lp,
+    },
     query::{self, query_unclaimed_rewards},
 };
 
@@ -57,6 +60,22 @@ pub fn execute(
             emission_per_second,
             start_time,
         ),
+        incentives::ExecuteMsg::StakeAstroLp {
+            account_id,
+            lp_coin,
+        } => stake_astro_lp(deps, info, account_id, lp_coin),
+        incentives::ExecuteMsg::UnstakeAstroLp {
+            account_id,
+            lp_coin,
+        } => unstake_astro_lp(
+            deps,
+            info,
+            account_id,
+            Coin {
+                denom: lp_coin.denom,
+                amount: lp_coin.amount.value().unwrap(),
+            },
+        ),
         _ => unimplemented!("Msg not supported!"),
     }
 }
@@ -74,6 +93,11 @@ pub fn query(deps: Deps, _env: Env, msg: incentives::QueryMsg) -> StdResult<Bina
             lp_denom,
             ..
         } => to_json_binary(&query::query_pending_astroport_rewards(deps, account_id, lp_denom)?),
+        incentives::QueryMsg::StakedLpPosition {
+            account_id,
+            lp_denom,
+            ..
+        } => to_json_binary(&query::query_staked_lp_position(deps, account_id, lp_denom)?),
         _ => unimplemented!("Query not supported!"),
     }
 }
