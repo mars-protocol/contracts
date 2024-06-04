@@ -17,7 +17,7 @@ pub fn stake_lp(deps: DepsMut, account_id: &str, lp_coin: ActionCoin) -> Contrac
         lp_coin.denom.as_str(),
     )?;
 
-    let coin_balance = COIN_BALANCES.load(deps.storage, (account_id, &lp_coin.denom))?;
+    let coin_balance = COIN_BALANCES.may_load(deps.storage, (account_id, &lp_coin.denom))?.unwrap_or_default();
     let new_amount = match lp_coin.amount {
         ActionAmount::Exact(amt) => amt,
         ActionAmount::AccountBalance => coin_balance,
