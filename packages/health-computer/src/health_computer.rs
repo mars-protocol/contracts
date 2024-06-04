@@ -494,20 +494,24 @@ impl HealthComputer {
         let deposits = self.coins_value(&self.positions.deposits)?;
         let lends = self.coins_value(&self.positions.lends)?;
         let vaults = self.vaults_value()?;
-
+        let staked_lp = self.coins_value(&self.positions.staked_lp)?;
+        
         Ok(CollateralValue {
             total_collateral_value: deposits
                 .total_collateral_value
                 .checked_add(vaults.total_collateral_value)?
-                .checked_add(lends.total_collateral_value)?,
+                .checked_add(lends.total_collateral_value)?
+                .checked_add(staked_lp.total_collateral_value)?,
             max_ltv_adjusted_collateral: deposits
                 .max_ltv_adjusted_collateral
                 .checked_add(vaults.max_ltv_adjusted_collateral)?
-                .checked_add(lends.max_ltv_adjusted_collateral)?,
+                .checked_add(lends.max_ltv_adjusted_collateral)?
+                .checked_add(staked_lp.max_ltv_adjusted_collateral)?,
             liquidation_threshold_adjusted_collateral: deposits
                 .liquidation_threshold_adjusted_collateral
                 .checked_add(vaults.liquidation_threshold_adjusted_collateral)?
-                .checked_add(lends.liquidation_threshold_adjusted_collateral)?,
+                .checked_add(lends.liquidation_threshold_adjusted_collateral)?
+                .checked_add(staked_lp.liquidation_threshold_adjusted_collateral)?,
         })
     }
 
