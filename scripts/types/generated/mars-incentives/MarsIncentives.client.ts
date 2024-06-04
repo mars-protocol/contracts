@@ -12,9 +12,12 @@ import {
   ExecuteMsg,
   Uint128,
   Addr,
+  ActionAmount,
   OwnerUpdate,
   MigrateV1ToV2,
   WhitelistEntry,
+  Coin,
+  ActionCoin,
   QueryMsg,
   ArrayOfActiveEmission,
   ActiveEmission,
@@ -24,8 +27,10 @@ import {
   Decimal,
   IncentiveStateResponse,
   ArrayOfIncentiveStateResponse,
+  StakedLpPositionResponse,
+  PaginationResponseForStakedLpPositionResponse,
+  Metadata,
   ArrayOfCoin,
-  Coin,
   ArrayOfWhitelistEntry,
 } from './MarsIncentives.types'
 export interface MarsIncentivesReadOnlyInterface {
@@ -52,6 +57,22 @@ export interface MarsIncentivesReadOnlyInterface {
     startAfterCollateralDenom?: string
     startAfterIncentiveDenom?: string
   }) => Promise<ArrayOfIncentiveStateResponse>
+  stakedLpPositions: ({
+    accountId,
+    limit,
+    startAfter,
+  }: {
+    accountId: string
+    limit?: number
+    startAfter?: string
+  }) => Promise<PaginationResponseForStakedLpPositionResponse>
+  stakedLpPosition: ({
+    accountId,
+    lpDenom,
+  }: {
+    accountId: string
+    lpDenom: string
+  }) => Promise<StakedLpPositionResponse>
   emission: ({
     collateralDenom,
     incentiveDenom,
@@ -98,6 +119,8 @@ export class MarsIncentivesQueryClient implements MarsIncentivesReadOnlyInterfac
     this.config = this.config.bind(this)
     this.incentiveState = this.incentiveState.bind(this)
     this.incentiveStates = this.incentiveStates.bind(this)
+    this.stakedLpPositions = this.stakedLpPositions.bind(this)
+    this.stakedLpPosition = this.stakedLpPosition.bind(this)
     this.emission = this.emission.bind(this)
     this.emissions = this.emissions.bind(this)
     this.userUnclaimedRewards = this.userUnclaimedRewards.bind(this)
@@ -148,6 +171,37 @@ export class MarsIncentivesQueryClient implements MarsIncentivesReadOnlyInterfac
         limit,
         start_after_collateral_denom: startAfterCollateralDenom,
         start_after_incentive_denom: startAfterIncentiveDenom,
+      },
+    })
+  }
+  stakedLpPositions = async ({
+    accountId,
+    limit,
+    startAfter,
+  }: {
+    accountId: string
+    limit?: number
+    startAfter?: string
+  }): Promise<PaginationResponseForStakedLpPositionResponse> => {
+    return this.client.queryContractSmart(this.contractAddress, {
+      staked_lp_positions: {
+        account_id: accountId,
+        limit,
+        start_after: startAfter,
+      },
+    })
+  }
+  stakedLpPosition = async ({
+    accountId,
+    lpDenom,
+  }: {
+    accountId: string
+    lpDenom: string
+  }): Promise<StakedLpPositionResponse> => {
+    return this.client.queryContractSmart(this.contractAddress, {
+      staked_lp_position: {
+        account_id: accountId,
+        lp_denom: lpDenom,
       },
     })
   }
@@ -284,6 +338,42 @@ export interface MarsIncentivesInterface extends MarsIncentivesReadOnlyInterface
     memo?: string,
     _funds?: Coin[],
   ) => Promise<ExecuteResult>
+  claimAstroLpRewards: (
+    {
+      accountId,
+      lpDenom,
+    }: {
+      accountId: string
+      lpDenom: string
+    },
+    fee?: number | StdFee | 'auto',
+    memo?: string,
+    _funds?: Coin[],
+  ) => Promise<ExecuteResult>
+  stakeAstroLp: (
+    {
+      accountId,
+      lpCoin,
+    }: {
+      accountId: string
+      lpCoin: Coin
+    },
+    fee?: number | StdFee | 'auto',
+    memo?: string,
+    _funds?: Coin[],
+  ) => Promise<ExecuteResult>
+  unstakeAstroLp: (
+    {
+      accountId,
+      lpCoin,
+    }: {
+      accountId: string
+      lpCoin: ActionCoin
+    },
+    fee?: number | StdFee | 'auto',
+    memo?: string,
+    _funds?: Coin[],
+  ) => Promise<ExecuteResult>
   updateConfig: (
     {
       addressProvider,
@@ -326,6 +416,9 @@ export class MarsIncentivesClient
     this.setAssetIncentive = this.setAssetIncentive.bind(this)
     this.balanceChange = this.balanceChange.bind(this)
     this.claimRewards = this.claimRewards.bind(this)
+    this.claimAstroLpRewards = this.claimAstroLpRewards.bind(this)
+    this.stakeAstroLp = this.stakeAstroLp.bind(this)
+    this.unstakeAstroLp = this.unstakeAstroLp.bind(this)
     this.updateConfig = this.updateConfig.bind(this)
     this.updateOwner = this.updateOwner.bind(this)
     this.migrate = this.migrate.bind(this)
@@ -452,6 +545,84 @@ export class MarsIncentivesClient
           limit,
           start_after_collateral_denom: startAfterCollateralDenom,
           start_after_incentive_denom: startAfterIncentiveDenom,
+        },
+      },
+      fee,
+      memo,
+      _funds,
+    )
+  }
+  claimAstroLpRewards = async (
+    {
+      accountId,
+      lpDenom,
+    }: {
+      accountId: string
+      lpDenom: string
+    },
+    fee: number | StdFee | 'auto' = 'auto',
+    memo?: string,
+    _funds?: Coin[],
+  ): Promise<ExecuteResult> => {
+    return await this.client.execute(
+      this.sender,
+      this.contractAddress,
+      {
+        claim_astro_lp_rewards: {
+          account_id: accountId,
+          lp_denom: lpDenom,
+        },
+      },
+      fee,
+      memo,
+      _funds,
+    )
+  }
+  stakeAstroLp = async (
+    {
+      accountId,
+      lpCoin,
+    }: {
+      accountId: string
+      lpCoin: Coin
+    },
+    fee: number | StdFee | 'auto' = 'auto',
+    memo?: string,
+    _funds?: Coin[],
+  ): Promise<ExecuteResult> => {
+    return await this.client.execute(
+      this.sender,
+      this.contractAddress,
+      {
+        stake_astro_lp: {
+          account_id: accountId,
+          lp_coin: lpCoin,
+        },
+      },
+      fee,
+      memo,
+      _funds,
+    )
+  }
+  unstakeAstroLp = async (
+    {
+      accountId,
+      lpCoin,
+    }: {
+      accountId: string
+      lpCoin: ActionCoin
+    },
+    fee: number | StdFee | 'auto' = 'auto',
+    memo?: string,
+    _funds?: Coin[],
+  ): Promise<ExecuteResult> => {
+    return await this.client.execute(
+      this.sender,
+      this.contractAddress,
+      {
+        unstake_astro_lp: {
+          account_id: accountId,
+          lp_coin: lpCoin,
         },
       },
       fee,

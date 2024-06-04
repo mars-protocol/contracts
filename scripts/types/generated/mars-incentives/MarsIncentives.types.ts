@@ -45,6 +45,24 @@ export type ExecuteMsg =
       }
     }
   | {
+      claim_astro_lp_rewards: {
+        account_id: string
+        lp_denom: string
+      }
+    }
+  | {
+      stake_astro_lp: {
+        account_id: string
+        lp_coin: Coin
+      }
+    }
+  | {
+      unstake_astro_lp: {
+        account_id: string
+        lp_coin: ActionCoin
+      }
+    }
+  | {
       update_config: {
         address_provider?: string | null
         max_whitelisted_denoms?: number | null
@@ -58,6 +76,11 @@ export type ExecuteMsg =
     }
 export type Uint128 = string
 export type Addr = string
+export type ActionAmount =
+  | 'account_balance'
+  | {
+      exact: Uint128
+    }
 export type OwnerUpdate =
   | {
       propose_new_owner: {
@@ -86,6 +109,15 @@ export interface WhitelistEntry {
   denom: string
   min_emission_rate: Uint128
 }
+export interface Coin {
+  amount: Uint128
+  denom: string
+  [k: string]: unknown
+}
+export interface ActionCoin {
+  amount: ActionAmount
+  denom: string
+}
 export type QueryMsg =
   | {
       active_emissions: {
@@ -106,6 +138,19 @@ export type QueryMsg =
         limit?: number | null
         start_after_collateral_denom?: string | null
         start_after_incentive_denom?: string | null
+      }
+    }
+  | {
+      staked_lp_positions: {
+        account_id: string
+        limit?: number | null
+        start_after?: string | null
+      }
+    }
+  | {
+      staked_lp_position: {
+        account_id: string
+        lp_denom: string
       }
     }
   | {
@@ -161,10 +206,16 @@ export interface IncentiveStateResponse {
   last_updated: number
 }
 export type ArrayOfIncentiveStateResponse = IncentiveStateResponse[]
-export type ArrayOfCoin = Coin[]
-export interface Coin {
-  amount: Uint128
-  denom: string
-  [k: string]: unknown
+export interface StakedLpPositionResponse {
+  lp_coin: Coin
+  rewards: Coin[]
 }
+export interface PaginationResponseForStakedLpPositionResponse {
+  data: StakedLpPositionResponse[]
+  metadata: Metadata
+}
+export interface Metadata {
+  has_more: boolean
+}
+export type ArrayOfCoin = Coin[]
 export type ArrayOfWhitelistEntry = WhitelistEntry[]

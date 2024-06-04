@@ -15,13 +15,12 @@ crate-type = ["cdylib", "rlib"]
 doctest    = false
 
 [features]
-astroport         = ["cw-it/astroport"]
 # for more explicit tests, cargo test --features=backtraces
 backtraces = ["cosmwasm-std/backtraces", "mars-testing/backtraces", "mars-utils/backtraces", "mars-red-bank/backtraces"]
 library    = []
 
 [dependencies]
-astroport       = "=5.0.0-rc.1-tokenfactory"
+astroport-v5    = { workspace = true }
 cosmwasm-schema = { workspace = true }
 cosmwasm-std    = { workspace = true }
 cw2             = { workspace = true }

@@ -2,7 +2,7 @@ use std::str::FromStr;
 
 use apollo_cw_asset::{Asset, AssetInfo, AssetInfoBase, AssetList};
 use apollo_utils::assets::assert_only_native_coins;
-use astroport::{
+use astroport_v5::{
     asset::{Asset as AstroAsset, AssetInfo as AstroAssetInfo, PairInfo},
     factory::PairType,
     pair::{PoolResponse, QueryMsg as PairQueryMsg, MAX_ALLOWED_SLIPPAGE},
@@ -133,7 +133,7 @@ impl Pool for AstroportLpPool {
         // Create the provide liquidity message
         let provide_liquidity_msg = CosmosMsg::Wasm(WasmMsg::Execute {
             contract_addr: self.pair_addr.to_string(),
-            msg: to_json_binary(&astroport::pair::ExecuteMsg::ProvideLiquidity {
+            msg: to_json_binary(&astroport_v5::pair::ExecuteMsg::ProvideLiquidity {
                 assets: astro_assets,
                 slippage_tolerance: Some(Decimal::from_str(MAX_ALLOWED_SLIPPAGE)?),
                 auto_stake: Some(false),
@@ -163,7 +163,7 @@ impl Pool for AstroportLpPool {
 
             let withdraw_liquidity = CosmosMsg::Wasm(WasmMsg::Execute {
                 contract_addr: self.pair_addr.to_string(),
-                msg: to_json_binary(&astroport::pair::ExecuteMsg::WithdrawLiquidity {
+                msg: to_json_binary(&astroport_v5::pair::ExecuteMsg::WithdrawLiquidity {
                     // This field is currently not used...
                     assets: vec![],
                     min_assets_to_receive: Some(astro_assets),
@@ -211,7 +211,7 @@ impl Pool for AstroportLpPool {
 
         let amount: Uint128 = deps.querier.query_wasm_smart(
             self.pair_addr.to_string(),
-            &astroport::pair::QueryMsg::SimulateProvide {
+            &astroport_v5::pair::QueryMsg::SimulateProvide {
                 assets: astro_assets,
                 slippage_tolerance: Some(Decimal::from_str(MAX_ALLOWED_SLIPPAGE)?),
             },
@@ -232,7 +232,7 @@ impl Pool for AstroportLpPool {
     ) -> Result<AssetList, CwDexError> {
         let assets: Vec<AstroAsset> = deps.querier.query_wasm_smart(
             self.pair_addr.to_string(),
-            &astroport::pair::QueryMsg::SimulateWithdraw {
+            &astroport_v5::pair::QueryMsg::SimulateWithdraw {
                 lp_amount: lp_token.amount,
             },
         )?;

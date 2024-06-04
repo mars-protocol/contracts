@@ -1,8 +1,8 @@
+use astroport_v5::asset::Asset;
 use cosmwasm_std::{
     testing::{mock_env, mock_info, MockApi},
     Addr, Coin, Deps, DepsMut, Env, MemoryStorage, OwnedDeps, Response, Uint128,
 };
-use cw_it::astroport::astroport_v3::asset::Asset;
 use mars_incentives::{contract::execute, query, state::ASTRO_TOTAL_LP_DEPOSITS, ContractError};
 use mars_testing::{assert_eq_vec, MarsMockQuerier};
 use mars_types::{

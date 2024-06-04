@@ -1,10 +1,10 @@
+use astroport_v5::asset::Asset;
 use cosmwasm_std::{
     from_json,
     testing::{MockQuerier, MOCK_CONTRACT_ADDR},
     Addr, Coin, Decimal, Empty, Querier, QuerierResult, QueryRequest, StdResult, SystemError,
     SystemResult, Uint128, WasmQuery,
 };
-use cw_it::astroport::{astroport_v3, astroport_v3::asset::Asset};
 use ica_oracle::msg::RedemptionRateResponse;
 use mars_oracle_osmosis::DowntimeDetector;
 use mars_types::{address_provider, incentives, oracle, params::AssetParams, red_bank};
@@ -259,7 +259,7 @@ impl MarsMockQuerier {
 
                 // Astroport Incentive Queries
                 if let Ok(astroport_incentives_query) =
-                    from_json::<astroport_v3::incentives::QueryMsg>(msg)
+                    from_json::<astroport_v5::incentives::QueryMsg>(msg)
                 {
                     return self
                         .astroport_incentives_querier
