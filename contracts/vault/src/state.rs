@@ -1,8 +1,11 @@
 use cw_storage_plus::{Item, Map};
 use mars_owner::Owner;
-use mars_types::adapters::{health::HealthContract, oracle::Oracle};
+use mars_types::adapters::{account_nft::AccountNft, health::HealthContract, oracle::Oracle};
 
-use crate::msg::UnlockState;
+use crate::{
+    msg::UnlockState,
+    performance_fee::{PerformanceFeeConfig, PerformanceFeeState},
+};
 
 pub const OWNER: Owner = Owner::new("owner");
 
@@ -11,6 +14,7 @@ pub const VAULT_ACC_ID: Item<String> = Item::new("vault_acc_id");
 
 pub const ORACLE: Item<Oracle> = Item::new("oracle");
 pub const HEALTH: Item<HealthContract> = Item::new("health");
+pub const ACCOUNT_NFT: Item<AccountNft> = Item::new("account_nft");
 
 pub const TITLE: Item<String> = Item::new("title");
 pub const SUBTITLE: Item<String> = Item::new("subtitle");
@@ -18,3 +22,6 @@ pub const DESCRIPTION: Item<String> = Item::new("desc");
 
 pub const COOLDOWN_PERIOD: Item<u64> = Item::new("cooldown_period");
 pub const UNLOCKS: Map<String, Vec<UnlockState>> = Map::new("unlocks");
+
+pub const PERFORMANCE_FEE_CONFIG: Item<PerformanceFeeConfig> = Item::new("performance_fee_config");
+pub const PERFORMANCE_FEE_STATE: Item<PerformanceFeeState> = Item::new("performance_fee_state");

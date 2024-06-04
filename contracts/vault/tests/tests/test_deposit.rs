@@ -1,5 +1,7 @@
 use cosmwasm_std::{coin, Addr, Uint128};
+use cw_utils::PaymentError;
 use mars_types::health::AccountKind;
+use mars_vault::error::ContractError;
 
 use super::{
     helpers::{AccountToFund, MockEnv},
@@ -36,10 +38,7 @@ fn deposit_invalid_funds() {
         None,
         &[],
     );
-    assert_vault_err(
-        res,
-        mars_vault::error::ContractError::Payment(cw_utils::PaymentError::NoFunds {}),
-    );
+    assert_vault_err(res, ContractError::Payment(PaymentError::NoFunds {}));
 
     let res = execute_deposit(
         &mut mock,
@@ -49,10 +48,7 @@ fn deposit_invalid_funds() {
         None,
         &[coin(1_001, "untrn"), coin(1_002, "uusdc")],
     );
-    assert_vault_err(
-        res,
-        mars_vault::error::ContractError::Payment(cw_utils::PaymentError::MultipleDenoms {}),
-    );
+    assert_vault_err(res, ContractError::Payment(PaymentError::MultipleDenoms {}));
 
     let res = execute_deposit(
         &mut mock,
@@ -62,12 +58,7 @@ fn deposit_invalid_funds() {
         None,
         &[coin(1_001, "untrn")],
     );
-    assert_vault_err(
-        res,
-        mars_vault::error::ContractError::Payment(cw_utils::PaymentError::MissingDenom(
-            "uusdc".to_string(),
-        )),
-    );
+    assert_vault_err(res, ContractError::Payment(PaymentError::MissingDenom("uusdc".to_string())));
 }
 
 #[test]
@@ -98,7 +89,7 @@ fn deposit_if_credit_manager_account_not_binded() {
         None,
         &[coin(deposited_amt.u128(), "uusdc")],
     );
-    assert_vault_err(res, mars_vault::error::ContractError::VaultAccountNotFound {});
+    assert_vault_err(res, ContractError::VaultAccountNotFound {});
 }
 
 #[test]

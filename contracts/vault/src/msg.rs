@@ -2,6 +2,8 @@ use cosmwasm_schema::cw_serde;
 use cosmwasm_std::Uint128;
 use cw_vault_standard::{VaultStandardExecuteMsg, VaultStandardQueryMsg};
 
+use crate::performance_fee::PerformanceFeeConfig;
+
 pub type ExecuteMsg = VaultStandardExecuteMsg<ExtensionExecuteMsg>;
 
 pub type QueryMsg = VaultStandardQueryMsg<ExtensionQueryMsg>;
@@ -26,6 +28,9 @@ pub struct InstantiateMsg {
     /// Stakers need to wait a cooldown period before being able to withdraw USDC from the vault.
     /// Value defined in seconds.
     pub cooldown_period: u64,
+
+    /// Performance fee configuration
+    pub performance_fee_config: PerformanceFeeConfig,
 }
 
 #[cw_serde]
@@ -41,6 +46,13 @@ pub enum ExtensionExecuteMsg {
         /// The amount of vault tokens to unlock
         amount: Uint128,
     },
+
+    /// Withdraw performance fee from the vault.
+    /// This can only be done by the Fund Manager once a certain period (definied by `performance_fee_interval` parameter).
+    WithdrawPerformanceFee {
+        /// New performance fee config to set. It will be used for future calculations.
+        new_performance_fee_config: Option<PerformanceFeeConfig>,
+    },
 }
 
 #[cw_serde]
@@ -51,6 +63,8 @@ pub enum ExtensionQueryMsg {
         /// The address of the user to query
         user_address: String,
     },
+
+    PerformanceFeeState {},
 }
 
 #[cw_serde]
@@ -75,6 +89,9 @@ pub struct VaultInfoResponseExt {
     /// Stakers need to wait a cooldown period before being able to withdraw USDC from the vault.
     /// Value defined in seconds.
     pub cooldown_period: u64,
+
+    /// Performance fee configuration
+    pub performance_fee_config: PerformanceFeeConfig,
 }
 
 /// Unlock state for a single user

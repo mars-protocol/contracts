@@ -86,15 +86,17 @@ pub fn swap_exact_in(
         return Err(StdError::generic_err("Did not send funds"));
     }
 
-    if denom_out != "uosmo" {
-        return Err(StdError::generic_err("Mock swapper can only have uosmo as denom out"));
-    }
+    let transfer_amt = if denom_out == "uosmo" {
+        MOCK_SWAP_RESULT
+    } else {
+        coin_in.amount
+    };
 
     // This is dependent on the mock env to pre-fund this contract with uosmo coins
     // simulating a swap has taken place
     let transfer_msg = CosmosMsg::Bank(BankMsg::Send {
         to_address: info.sender.to_string(),
-        amount: coins(MOCK_SWAP_RESULT.u128(), denom_out),
+        amount: coins(transfer_amt.u128(), denom_out),
     });
 
     Ok(Response::new().add_attribute("action", "transfer_result").add_message(transfer_msg))

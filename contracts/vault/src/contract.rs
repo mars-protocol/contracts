@@ -1,25 +1,26 @@
 use cosmwasm_std::{
-    entry_point, to_json_binary, Binary, Deps, DepsMut, Env, MessageInfo, Response,
+    entry_point, to_json_binary, Binary, Deps, DepsMut, Env, MessageInfo, Response, StdError,
 };
 use cw_vault_standard::{VaultInfoResponse, VaultStandardInfoResponse};
 use mars_owner::OwnerInit;
 use mars_types::{
-    adapters::{health::HealthContractBase, oracle::OracleBase},
+    adapters::{account_nft::AccountNftBase, health::HealthContractBase, oracle::OracleBase},
     credit_manager::{ConfigResponse, QueryMsg as CreditManagerQueryMsg},
 };
 
 use crate::{
     base_vault::BaseVault,
-    error::ContractResult,
+    error::{ContractError, ContractResult},
     execute,
     msg::{
         ExecuteMsg, ExtensionExecuteMsg, ExtensionQueryMsg, InstantiateMsg, QueryMsg,
         VaultInfoResponseExt,
     },
+    performance_fee::PerformanceFeeState,
     query,
     state::{
-        COOLDOWN_PERIOD, CREDIT_MANAGER, DESCRIPTION, HEALTH, ORACLE, OWNER, SUBTITLE, TITLE,
-        VAULT_ACC_ID,
+        ACCOUNT_NFT, COOLDOWN_PERIOD, CREDIT_MANAGER, DESCRIPTION, HEALTH, ORACLE, OWNER,
+        PERFORMANCE_FEE_CONFIG, PERFORMANCE_FEE_STATE, SUBTITLE, TITLE, VAULT_ACC_ID,
     },
     token_factory::TokenFactoryDenom,
 };
@@ -60,6 +61,14 @@ pub fn instantiate(
     let health = HealthContractBase::new(config.health_contract);
     ORACLE.save(deps.storage, &oracle.check(deps.api)?)?;
     HEALTH.save(deps.storage, &health.check(deps.api)?)?;
+    if let Some(acc_nft) = config.account_nft {
+        let account_nft = AccountNftBase::new(acc_nft);
+        ACCOUNT_NFT.save(deps.storage, &account_nft.check(deps.api)?)?;
+    } else {
+        return Err(ContractError::Std(StdError::generic_err(
+            "Account NFT contract address is not set in Credit Manager".to_string(),
+        )));
+    }
 
     if let Some(title) = msg.title {
         TITLE.save(deps.storage, &title)?;
@@ -72,6 +81,10 @@ pub fn instantiate(
     }
 
     COOLDOWN_PERIOD.save(deps.storage, &msg.cooldown_period)?;
+
+    msg.performance_fee_config.validate()?;
+    PERFORMANCE_FEE_CONFIG.save(deps.storage, &msg.performance_fee_config)?;
+    PERFORMANCE_FEE_STATE.save(deps.storage, &PerformanceFeeState::default())?;
 
     let base_vault = Vault::default();
     let vault_token =
@@ -103,6 +116,9 @@ pub fn execute(
             ExtensionExecuteMsg::Unlock {
                 amount,
             } => execute::unlock(deps, env, &info, amount),
+            ExtensionExecuteMsg::WithdrawPerformanceFee {
+                new_performance_fee_config,
+            } => execute::withdraw_performance_fee(deps, env, &info, new_performance_fee_config),
         },
     }
 }
@@ -154,6 +170,7 @@ pub fn query(deps: Deps, _env: Env, msg: QueryMsg) -> ContractResult<Binary> {
                     credit_manager: CREDIT_MANAGER.load(deps.storage)?,
                     vault_account_id: VAULT_ACC_ID.may_load(deps.storage)?,
                     cooldown_period: COOLDOWN_PERIOD.load(deps.storage)?,
+                    performance_fee_config: PERFORMANCE_FEE_CONFIG.load(deps.storage)?,
                 })
             }
             ExtensionQueryMsg::UserUnlocks {
@@ -161,6 +178,9 @@ pub fn query(deps: Deps, _env: Env, msg: QueryMsg) -> ContractResult<Binary> {
             } => {
                 let user_addr = deps.api.addr_validate(&user_address)?;
                 to_json_binary(&query::unlocks(deps, user_addr)?)
+            }
+            ExtensionQueryMsg::PerformanceFeeState {} => {
+                to_json_binary(&PERFORMANCE_FEE_STATE.load(deps.storage)?)
             }
         },
     }
