@@ -120,6 +120,12 @@ export interface ActionCoin {
 }
 export type QueryMsg =
   | {
+      account_staked_lp_rewards: {
+        account_id: string
+        lp_denom: string
+      }
+    }
+  | {
       active_emissions: {
         collateral_denom: string
       }
@@ -141,19 +147,6 @@ export type QueryMsg =
       }
     }
   | {
-      staked_lp_positions: {
-        account_id: string
-        limit?: number | null
-        start_after?: string | null
-      }
-    }
-  | {
-      staked_lp_position: {
-        account_id: string
-        lp_denom: string
-      }
-    }
-  | {
       emission: {
         collateral_denom: string
         incentive_denom: string
@@ -169,6 +162,19 @@ export type QueryMsg =
       }
     }
   | {
+      staked_lp_positions: {
+        account_id: string
+        limit?: number | null
+        start_after?: string | null
+      }
+    }
+  | {
+      staked_lp_position: {
+        account_id: string
+        lp_denom: string
+      }
+    }
+  | {
       user_unclaimed_rewards: {
         account_id?: string | null
         limit?: number | null
@@ -180,6 +186,7 @@ export type QueryMsg =
   | {
       whitelist: {}
     }
+export type ArrayOfCoin = Coin[]
 export type ArrayOfActiveEmission = ActiveEmission[]
 export interface ActiveEmission {
   denom: string
@@ -210,12 +217,5 @@ export interface StakedLpPositionResponse {
   lp_coin: Coin
   rewards: Coin[]
 }
-export interface PaginationResponseForStakedLpPositionResponse {
-  data: StakedLpPositionResponse[]
-  metadata: Metadata
-}
-export interface Metadata {
-  has_more: boolean
-}
-export type ArrayOfCoin = Coin[]
+export type ArrayOfStakedLpPositionResponse = StakedLpPositionResponse[]
 export type ArrayOfWhitelistEntry = WhitelistEntry[]

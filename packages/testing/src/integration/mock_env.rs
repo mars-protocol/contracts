@@ -4,7 +4,7 @@ use std::{collections::HashMap, default::Default, mem::take, str::FromStr};
 
 use anyhow::Result as AnyResult;
 use cosmwasm_std::{coin, Addr, Coin, Decimal, Empty, StdResult, Uint128};
-use cw_it::astroport::astroport_v3::incentives::InputSchedule;
+use astroport_v5::incentives::InputSchedule;
 use cw_multi_test::{App, AppResponse, BankSudo, BasicApp, Executor, SudoMsg};
 use cw_paginate::PaginationResponse;
 use mars_oracle_osmosis::OsmosisPriceSourceUnchecked;
@@ -137,7 +137,7 @@ impl AstroIncentives {
             .execute_contract(
                 env.owner.clone(),
                 self.contract_addr.clone(),
-                &cw_it::astroport::astroport_v3::incentives::ExecuteMsg::Incentivize {
+                &astroport_v5::incentives::ExecuteMsg::Incentivize {
                     lp_token: lp_denom.to_string(),
                     schedule: incentive_schedule.clone(),
                 },

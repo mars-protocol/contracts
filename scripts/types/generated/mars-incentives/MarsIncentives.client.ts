@@ -19,6 +19,7 @@ import {
   Coin,
   ActionCoin,
   QueryMsg,
+  ArrayOfCoin,
   ArrayOfActiveEmission,
   ActiveEmission,
   ConfigResponse,
@@ -28,13 +29,18 @@ import {
   IncentiveStateResponse,
   ArrayOfIncentiveStateResponse,
   StakedLpPositionResponse,
-  PaginationResponseForStakedLpPositionResponse,
-  Metadata,
-  ArrayOfCoin,
+  ArrayOfStakedLpPositionResponse,
   ArrayOfWhitelistEntry,
 } from './MarsIncentives.types'
 export interface MarsIncentivesReadOnlyInterface {
   contractAddress: string
+  accountStakedLpRewards: ({
+    accountId,
+    lpDenom,
+  }: {
+    accountId: string
+    lpDenom: string
+  }) => Promise<ArrayOfCoin>
   activeEmissions: ({
     collateralDenom,
   }: {
@@ -57,22 +63,6 @@ export interface MarsIncentivesReadOnlyInterface {
     startAfterCollateralDenom?: string
     startAfterIncentiveDenom?: string
   }) => Promise<ArrayOfIncentiveStateResponse>
-  stakedLpPositions: ({
-    accountId,
-    limit,
-    startAfter,
-  }: {
-    accountId: string
-    limit?: number
-    startAfter?: string
-  }) => Promise<PaginationResponseForStakedLpPositionResponse>
-  stakedLpPosition: ({
-    accountId,
-    lpDenom,
-  }: {
-    accountId: string
-    lpDenom: string
-  }) => Promise<StakedLpPositionResponse>
   emission: ({
     collateralDenom,
     incentiveDenom,
@@ -93,6 +83,22 @@ export interface MarsIncentivesReadOnlyInterface {
     limit?: number
     startAfterTimestamp?: number
   }) => Promise<ArrayOfEmissionResponse>
+  stakedLpPositions: ({
+    accountId,
+    limit,
+    startAfter,
+  }: {
+    accountId: string
+    limit?: number
+    startAfter?: string
+  }) => Promise<ArrayOfStakedLpPositionResponse>
+  stakedLpPosition: ({
+    accountId,
+    lpDenom,
+  }: {
+    accountId: string
+    lpDenom: string
+  }) => Promise<StakedLpPositionResponse>
   userUnclaimedRewards: ({
     accountId,
     limit,
@@ -115,18 +121,33 @@ export class MarsIncentivesQueryClient implements MarsIncentivesReadOnlyInterfac
   constructor(client: CosmWasmClient, contractAddress: string) {
     this.client = client
     this.contractAddress = contractAddress
+    this.accountStakedLpRewards = this.accountStakedLpRewards.bind(this)
     this.activeEmissions = this.activeEmissions.bind(this)
     this.config = this.config.bind(this)
     this.incentiveState = this.incentiveState.bind(this)
     this.incentiveStates = this.incentiveStates.bind(this)
-    this.stakedLpPositions = this.stakedLpPositions.bind(this)
-    this.stakedLpPosition = this.stakedLpPosition.bind(this)
     this.emission = this.emission.bind(this)
     this.emissions = this.emissions.bind(this)
+    this.stakedLpPositions = this.stakedLpPositions.bind(this)
+    this.stakedLpPosition = this.stakedLpPosition.bind(this)
     this.userUnclaimedRewards = this.userUnclaimedRewards.bind(this)
     this.whitelist = this.whitelist.bind(this)
   }
 
+  accountStakedLpRewards = async ({
+    accountId,
+    lpDenom,
+  }: {
+    accountId: string
+    lpDenom: string
+  }): Promise<ArrayOfCoin> => {
+    return this.client.queryContractSmart(this.contractAddress, {
+      account_staked_lp_rewards: {
+        account_id: accountId,
+        lp_denom: lpDenom,
+      },
+    })
+  }
   activeEmissions = async ({
     collateralDenom,
   }: {
@@ -174,37 +195,6 @@ export class MarsIncentivesQueryClient implements MarsIncentivesReadOnlyInterfac
       },
     })
   }
-  stakedLpPositions = async ({
-    accountId,
-    limit,
-    startAfter,
-  }: {
-    accountId: string
-    limit?: number
-    startAfter?: string
-  }): Promise<PaginationResponseForStakedLpPositionResponse> => {
-    return this.client.queryContractSmart(this.contractAddress, {
-      staked_lp_positions: {
-        account_id: accountId,
-        limit,
-        start_after: startAfter,
-      },
-    })
-  }
-  stakedLpPosition = async ({
-    accountId,
-    lpDenom,
-  }: {
-    accountId: string
-    lpDenom: string
-  }): Promise<StakedLpPositionResponse> => {
-    return this.client.queryContractSmart(this.contractAddress, {
-      staked_lp_position: {
-        account_id: accountId,
-        lp_denom: lpDenom,
-      },
-    })
-  }
   emission = async ({
     collateralDenom,
     incentiveDenom,
@@ -239,6 +229,37 @@ export class MarsIncentivesQueryClient implements MarsIncentivesReadOnlyInterfac
         incentive_denom: incentiveDenom,
         limit,
         start_after_timestamp: startAfterTimestamp,
+      },
+    })
+  }
+  stakedLpPositions = async ({
+    accountId,
+    limit,
+    startAfter,
+  }: {
+    accountId: string
+    limit?: number
+    startAfter?: string
+  }): Promise<ArrayOfStakedLpPositionResponse> => {
+    return this.client.queryContractSmart(this.contractAddress, {
+      staked_lp_positions: {
+        account_id: accountId,
+        limit,
+        start_after: startAfter,
+      },
+    })
+  }
+  stakedLpPosition = async ({
+    accountId,
+    lpDenom,
+  }: {
+    accountId: string
+    lpDenom: string
+  }): Promise<StakedLpPositionResponse> => {
+    return this.client.queryContractSmart(this.contractAddress, {
+      staked_lp_position: {
+        account_id: accountId,
+        lp_denom: lpDenom,
       },
     })
   }

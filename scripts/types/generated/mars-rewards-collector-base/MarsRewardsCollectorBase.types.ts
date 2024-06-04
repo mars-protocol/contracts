@@ -169,6 +169,21 @@ export type Action =
       }
     }
   | {
+      stake_astro_lp: {
+        lp_token: ActionCoin
+      }
+    }
+  | {
+      unstake_astro_lp: {
+        lp_token: ActionCoin
+      }
+    }
+  | {
+      claim_astro_lp_rewards: {
+        lp_denom: string
+      }
+    }
+  | {
       refund_all_coin_balances: {}
     }
 export type ActionAmount =

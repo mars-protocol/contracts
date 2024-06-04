@@ -20,6 +20,7 @@ import {
   Coin,
   ActionCoin,
   QueryMsg,
+  ArrayOfCoin,
   ArrayOfActiveEmission,
   ActiveEmission,
   ConfigResponse,
@@ -29,9 +30,7 @@ import {
   IncentiveStateResponse,
   ArrayOfIncentiveStateResponse,
   StakedLpPositionResponse,
-  PaginationResponseForStakedLpPositionResponse,
-  Metadata,
-  ArrayOfCoin,
+  ArrayOfStakedLpPositionResponse,
   ArrayOfWhitelistEntry,
 } from './MarsIncentives.types'
 import { MarsIncentivesQueryClient, MarsIncentivesClient } from './MarsIncentives.client'
@@ -43,6 +42,14 @@ export const marsIncentivesQueryKeys = {
   ] as const,
   address: (contractAddress: string | undefined) =>
     [{ ...marsIncentivesQueryKeys.contract[0], address: contractAddress }] as const,
+  accountStakedLpRewards: (contractAddress: string | undefined, args?: Record<string, unknown>) =>
+    [
+      {
+        ...marsIncentivesQueryKeys.address(contractAddress)[0],
+        method: 'account_staked_lp_rewards',
+        args,
+      },
+    ] as const,
   activeEmissions: (contractAddress: string | undefined, args?: Record<string, unknown>) =>
     [
       { ...marsIncentivesQueryKeys.address(contractAddress)[0], method: 'active_emissions', args },
@@ -56,6 +63,12 @@ export const marsIncentivesQueryKeys = {
   incentiveStates: (contractAddress: string | undefined, args?: Record<string, unknown>) =>
     [
       { ...marsIncentivesQueryKeys.address(contractAddress)[0], method: 'incentive_states', args },
+    ] as const,
+  emission: (contractAddress: string | undefined, args?: Record<string, unknown>) =>
+    [{ ...marsIncentivesQueryKeys.address(contractAddress)[0], method: 'emission', args }] as const,
+  emissions: (contractAddress: string | undefined, args?: Record<string, unknown>) =>
+    [
+      { ...marsIncentivesQueryKeys.address(contractAddress)[0], method: 'emissions', args },
     ] as const,
   stakedLpPositions: (contractAddress: string | undefined, args?: Record<string, unknown>) =>
     [
@@ -72,12 +85,6 @@ export const marsIncentivesQueryKeys = {
         method: 'staked_lp_position',
         args,
       },
-    ] as const,
-  emission: (contractAddress: string | undefined, args?: Record<string, unknown>) =>
-    [{ ...marsIncentivesQueryKeys.address(contractAddress)[0], method: 'emission', args }] as const,
-  emissions: (contractAddress: string | undefined, args?: Record<string, unknown>) =>
-    [
-      { ...marsIncentivesQueryKeys.address(contractAddress)[0], method: 'emissions', args },
     ] as const,
   userUnclaimedRewards: (contractAddress: string | undefined, args?: Record<string, unknown>) =>
     [
@@ -143,6 +150,56 @@ export function useMarsIncentivesUserUnclaimedRewardsQuery<TData = ArrayOfCoin>(
     { ...options, enabled: !!client && (options?.enabled != undefined ? options.enabled : true) },
   )
 }
+export interface MarsIncentivesStakedLpPositionQuery<TData>
+  extends MarsIncentivesReactQuery<StakedLpPositionResponse, TData> {
+  args: {
+    accountId: string
+    lpDenom: string
+  }
+}
+export function useMarsIncentivesStakedLpPositionQuery<TData = StakedLpPositionResponse>({
+  client,
+  args,
+  options,
+}: MarsIncentivesStakedLpPositionQuery<TData>) {
+  return useQuery<StakedLpPositionResponse, Error, TData>(
+    marsIncentivesQueryKeys.stakedLpPosition(client?.contractAddress, args),
+    () =>
+      client
+        ? client.stakedLpPosition({
+            accountId: args.accountId,
+            lpDenom: args.lpDenom,
+          })
+        : Promise.reject(new Error('Invalid client')),
+    { ...options, enabled: !!client && (options?.enabled != undefined ? options.enabled : true) },
+  )
+}
+export interface MarsIncentivesStakedLpPositionsQuery<TData>
+  extends MarsIncentivesReactQuery<ArrayOfStakedLpPositionResponse, TData> {
+  args: {
+    accountId: string
+    limit?: number
+    startAfter?: string
+  }
+}
+export function useMarsIncentivesStakedLpPositionsQuery<TData = ArrayOfStakedLpPositionResponse>({
+  client,
+  args,
+  options,
+}: MarsIncentivesStakedLpPositionsQuery<TData>) {
+  return useQuery<ArrayOfStakedLpPositionResponse, Error, TData>(
+    marsIncentivesQueryKeys.stakedLpPositions(client?.contractAddress, args),
+    () =>
+      client
+        ? client.stakedLpPositions({
+            accountId: args.accountId,
+            limit: args.limit,
+            startAfter: args.startAfter,
+          })
+        : Promise.reject(new Error('Invalid client')),
+    { ...options, enabled: !!client && (options?.enabled != undefined ? options.enabled : true) },
+  )
+}
 export interface MarsIncentivesEmissionsQuery<TData>
   extends MarsIncentivesReactQuery<ArrayOfEmissionResponse, TData> {
   args: {
@@ -192,54 +249,6 @@ export function useMarsIncentivesEmissionQuery<TData = Uint128>({
             collateralDenom: args.collateralDenom,
             incentiveDenom: args.incentiveDenom,
             timestamp: args.timestamp,
-          })
-        : Promise.reject(new Error('Invalid client')),
-    { ...options, enabled: !!client && (options?.enabled != undefined ? options.enabled : true) },
-  )
-}
-export interface MarsIncentivesStakedLpPositionQuery<TData>
-  extends MarsIncentivesReactQuery<StakedLpPositionResponse, TData> {
-  args: {
-    accountId: string
-    lpDenom: string
-  }
-}
-export function useMarsIncentivesStakedLpPositionQuery<TData = StakedLpPositionResponse>({
-  client,
-  args,
-  options,
-}: MarsIncentivesStakedLpPositionQuery<TData>) {
-  return useQuery<StakedLpPositionResponse, Error, TData>(
-    marsIncentivesQueryKeys.stakedLpPosition(client?.contractAddress, args),
-    () =>
-      client
-        ? client.stakedLpPosition({
-            accountId: args.accountId,
-            lpDenom: args.lpDenom,
-          })
-        : Promise.reject(new Error('Invalid client')),
-    { ...options, enabled: !!client && (options?.enabled != undefined ? options.enabled : true) },
-  )
-}
-export interface MarsIncentivesStakedLpPositionsQuery<TData>
-  extends MarsIncentivesReactQuery<PaginationResponseForStakedLpPositionResponse, TData> {
-  args: {
-    accountId: string
-    limit?: number
-    startAfter?: string
-  }
-}
-export function useMarsIncentivesStakedLpPositionsQuery<
-  TData = PaginationResponseForStakedLpPositionResponse,
->({ client, args, options }: MarsIncentivesStakedLpPositionsQuery<TData>) {
-  return useQuery<PaginationResponseForStakedLpPositionResponse, Error, TData>(
-    marsIncentivesQueryKeys.stakedLpPositions(client?.contractAddress, args),
-    () =>
-      client
-        ? client.stakedLpPositions({
-            accountId: args.accountId,
-            limit: args.limit,
-            startAfter: args.startAfter,
           })
         : Promise.reject(new Error('Invalid client')),
     { ...options, enabled: !!client && (options?.enabled != undefined ? options.enabled : true) },
@@ -324,6 +333,30 @@ export function useMarsIncentivesActiveEmissionsQuery<TData = ArrayOfActiveEmiss
       client
         ? client.activeEmissions({
             collateralDenom: args.collateralDenom,
+          })
+        : Promise.reject(new Error('Invalid client')),
+    { ...options, enabled: !!client && (options?.enabled != undefined ? options.enabled : true) },
+  )
+}
+export interface MarsIncentivesAccountStakedLpRewardsQuery<TData>
+  extends MarsIncentivesReactQuery<ArrayOfCoin, TData> {
+  args: {
+    accountId: string
+    lpDenom: string
+  }
+}
+export function useMarsIncentivesAccountStakedLpRewardsQuery<TData = ArrayOfCoin>({
+  client,
+  args,
+  options,
+}: MarsIncentivesAccountStakedLpRewardsQuery<TData>) {
+  return useQuery<ArrayOfCoin, Error, TData>(
+    marsIncentivesQueryKeys.accountStakedLpRewards(client?.contractAddress, args),
+    () =>
+      client
+        ? client.accountStakedLpRewards({
+            accountId: args.accountId,
+            lpDenom: args.lpDenom,
           })
         : Promise.reject(new Error('Invalid client')),
     { ...options, enabled: !!client && (options?.enabled != undefined ? options.enabled : true) },

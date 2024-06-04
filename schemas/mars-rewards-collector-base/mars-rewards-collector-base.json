@@ -732,6 +732,72 @@
             "additionalProperties": false
           },
           {
+            "description": "Stake lp token in astroport incentives contract via mars incentives",
+            "type": "object",
+            "required": [
+              "stake_astro_lp"
+            ],
+            "properties": {
+              "stake_astro_lp": {
+                "type": "object",
+                "required": [
+                  "lp_token"
+                ],
+                "properties": {
+                  "lp_token": {
+                    "$ref": "#/definitions/ActionCoin"
+                  }
+                },
+                "additionalProperties": false
+              }
+            },
+            "additionalProperties": false
+          },
+          {
+            "description": "Unstake lp token from astroport incentives contract via mars incentives",
+            "type": "object",
+            "required": [
+              "unstake_astro_lp"
+            ],
+            "properties": {
+              "unstake_astro_lp": {
+                "type": "object",
+                "required": [
+                  "lp_token"
+                ],
+                "properties": {
+                  "lp_token": {
+                    "$ref": "#/definitions/ActionCoin"
+                  }
+                },
+                "additionalProperties": false
+              }
+            },
+            "additionalProperties": false
+          },
+          {
+            "description": "Claim accrued LP incentive rewards from astroport incentives contract via mars incentives",
+            "type": "object",
+            "required": [
+              "claim_astro_lp_rewards"
+            ],
+            "properties": {
+              "claim_astro_lp_rewards": {
+                "type": "object",
+                "required": [
+                  "lp_denom"
+                ],
+                "properties": {
+                  "lp_denom": {
+                    "type": "string"
+                  }
+                },
+                "additionalProperties": false
+              }
+            },
+            "additionalProperties": false
+          },
+          {
             "description": "Refunds all coin balances back to user wallet",
             "type": "object",
             "required": [
