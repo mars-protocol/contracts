@@ -21,6 +21,7 @@ mod test_lend;
 mod test_liquidate_deposit;
 mod test_liquidate_guard;
 mod test_liquidate_lend;
+mod test_liquidate_staked_lp;
 mod test_liquidate_vault;
 mod test_liquidation_pricing;
 mod test_migration_v2;
