@@ -144,7 +144,10 @@ fn unstake_claims_rewards() {
         vec![
             Action::Deposit(lp_coin.clone()),
             Action::StakeAstroLp {
-                lp_token: ActionCoin::from(&lp_coin.clone()),
+                lp_token: ActionCoin {
+                    denom: lp_denom.to_string(),
+                    amount: ActionAmount::AccountBalance,
+                },
             },
         ],
         &[lp_coin],
@@ -169,6 +172,7 @@ fn unstake_claims_rewards() {
     .unwrap();
 
     let positions = mock.query_positions(&account_id);
+    assert_eq!(positions.staked_lp.len(), 1);
     assert_eq!(positions.deposits.len(), 2);
     assert_eq!(positions.deposits[0].amount, Uint128::new(50));
     assert_eq!(positions.deposits[0].denom, lp_denom.to_string());
