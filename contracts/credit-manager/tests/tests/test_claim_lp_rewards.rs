@@ -43,7 +43,7 @@ fn claiming_a_single_reward() {
     let unclaimed = mock.query_pending_astroport_rewards(&account_id, lp_denom);
     assert!(unclaimed.is_empty());
 
-    mock.add_astro_incentive_reward(&account_id, lp_denom, reward);
+    mock.add_astro_incentive_reward(&account_id, lp_denom, reward.clone());
 
     let unclaimed = mock.query_pending_astroport_rewards(&account_id, lp_denom);
     assert_eq!(unclaimed.len(), 1);
@@ -65,6 +65,7 @@ fn claiming_a_single_reward() {
     // Check account id deposit balance
     let positions = mock.query_positions(&account_id);
     assert_eq!(positions.deposits.len(), 1);
+    assert_eq!(positions.deposits[0].amount, reward.amount);
 }
 
 #[test]
@@ -90,8 +91,8 @@ fn claiming_a_multiple_rewards() {
     let unclaimed = mock.query_pending_astroport_rewards(&account_id, lp_denom);
     assert!(unclaimed.is_empty());
 
-    mock.add_astro_incentive_reward(&account_id, lp_denom, reward_1);
-    mock.add_astro_incentive_reward(&account_id, lp_denom, reward_2);
+    mock.add_astro_incentive_reward(&account_id, lp_denom, reward_1.clone());
+    mock.add_astro_incentive_reward(&account_id, lp_denom, reward_2.clone());
 
     let unclaimed = mock.query_pending_astroport_rewards(&account_id, lp_denom);
     assert_eq!(unclaimed.len(), 2);
@@ -113,4 +114,6 @@ fn claiming_a_multiple_rewards() {
     // Check account id deposit balance
     let positions = mock.query_positions(&account_id);
     assert_eq!(positions.deposits.len(), 2);
+    assert_eq!(positions.deposits[0].amount, reward_1.amount);
+    assert_eq!(positions.deposits[1].amount, reward_2.amount);
 }
