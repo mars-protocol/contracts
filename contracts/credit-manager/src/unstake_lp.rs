@@ -1,10 +1,10 @@
-use cosmwasm_std::{Coin, DepsMut, Response};
+use cosmwasm_std::{Coin, DepsMut, OverflowError, Response};
 use mars_types::credit_manager::{ActionAmount, ActionCoin};
 
 use crate::{
-    error::ContractResult,
+    error::{ContractError, ContractResult},
     state::INCENTIVES,
-    utils::{decrement_coin_balance, increment_coin_balance},
+    utils::increment_coin_balance,
 };
 
 pub fn unstake_lp(
@@ -26,7 +26,17 @@ pub fn unstake_lp(
     }
 
     let new_amount = match lp_coin.amount {
-        ActionAmount::Exact(amt) => amt,
+        ActionAmount::Exact(amt) => {
+            if lp_position.lp_coin.amount.lt(&amt) {
+                return Err(ContractError::Overflow(OverflowError {
+                    operation: cosmwasm_std::OverflowOperation::Sub,
+                    operand1: lp_position.lp_coin.amount.to_string(),
+                    operand2: amt.to_string(),
+                }));
+            } else {
+                lp_position.lp_coin.amount.checked_sub(amt)?
+            }
+        }
         ActionAmount::AccountBalance => lp_position.lp_coin.amount,
     };
 
