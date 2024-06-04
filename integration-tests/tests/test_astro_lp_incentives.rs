@@ -1,8 +1,8 @@
-use cosmwasm_std::{coin, Addr, Coin, Uint128};
-use cw_it::astroport::astroport_v3::{
+use astroport_v5::{
     asset::{Asset, AssetInfo},
     incentives::InputSchedule,
 };
+use cosmwasm_std::{coin, Addr, Coin, Uint128};
 use mars_testing::integration::mock_env::MockEnvBuilder;
 
 use crate::helpers::default_asset_params;

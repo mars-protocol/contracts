@@ -3,8 +3,8 @@
 use std::{collections::HashMap, default::Default, mem::take, str::FromStr};
 
 use anyhow::Result as AnyResult;
-use cosmwasm_std::{coin, Addr, Coin, Decimal, Empty, StdResult, Uint128};
 use astroport_v5::incentives::InputSchedule;
+use cosmwasm_std::{coin, Addr, Coin, Decimal, Empty, StdResult, Uint128};
 use cw_multi_test::{App, AppResponse, BankSudo, BasicApp, Executor, SudoMsg};
 use cw_paginate::PaginationResponse;
 use mars_oracle_osmosis::OsmosisPriceSourceUnchecked;
