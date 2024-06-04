@@ -263,26 +263,3 @@ pub fn query_vault_position_value(
     let oracle = ORACLE.load(deps.storage)?;
     vault_position.query_values(&deps.querier, &oracle, ActionKind::Default)
 }
-
-pub fn query_all_staked_lp_positions(
-    deps: Deps,
-    start_after: Option<(String, String)>,
-    limit: Option<u32>,
-) -> StdResult<Vec<VaultPositionResponseItem>> {
-    let start = match &start_after {
-        Some((account_id, unchecked)) => {
-            let addr = deps.api.addr_validate(unchecked)?;
-            Some(Bound::exclusive((account_id.as_str(), addr)))
-        }
-        None => None,
-    };
-    paginate_map(&VAULT_POSITIONS, deps.storage, start, limit, |(account_id, addr), amount| {
-        Ok(VaultPositionResponseItem {
-            account_id,
-            position: VaultPosition {
-                vault: VaultBase::new(addr),
-                amount,
-            },
-        })
-    })
-}
