@@ -20,7 +20,8 @@ import {
   Coin,
   ActionCoin,
   QueryMsg,
-  ArrayOfCoin,
+  PaginationResponseForTupleOfStringAndArrayOfCoin,
+  Metadata,
   ArrayOfActiveEmission,
   ActiveEmission,
   ConfigResponse,
@@ -30,7 +31,8 @@ import {
   IncentiveStateResponse,
   ArrayOfIncentiveStateResponse,
   StakedLpPositionResponse,
-  ArrayOfStakedLpPositionResponse,
+  PaginationResponseForStakedLpPositionResponse,
+  ArrayOfCoin,
   ArrayOfWhitelistEntry,
 } from './MarsIncentives.types'
 import { MarsIncentivesQueryClient, MarsIncentivesClient } from './MarsIncentives.client'
@@ -175,19 +177,17 @@ export function useMarsIncentivesStakedLpPositionQuery<TData = StakedLpPositionR
   )
 }
 export interface MarsIncentivesStakedLpPositionsQuery<TData>
-  extends MarsIncentivesReactQuery<ArrayOfStakedLpPositionResponse, TData> {
+  extends MarsIncentivesReactQuery<PaginationResponseForStakedLpPositionResponse, TData> {
   args: {
     accountId: string
     limit?: number
     startAfter?: string
   }
 }
-export function useMarsIncentivesStakedLpPositionsQuery<TData = ArrayOfStakedLpPositionResponse>({
-  client,
-  args,
-  options,
-}: MarsIncentivesStakedLpPositionsQuery<TData>) {
-  return useQuery<ArrayOfStakedLpPositionResponse, Error, TData>(
+export function useMarsIncentivesStakedLpPositionsQuery<
+  TData = PaginationResponseForStakedLpPositionResponse,
+>({ client, args, options }: MarsIncentivesStakedLpPositionsQuery<TData>) {
+  return useQuery<PaginationResponseForStakedLpPositionResponse, Error, TData>(
     marsIncentivesQueryKeys.stakedLpPositions(client?.contractAddress, args),
     () =>
       client
@@ -339,18 +339,16 @@ export function useMarsIncentivesActiveEmissionsQuery<TData = ArrayOfActiveEmiss
   )
 }
 export interface MarsIncentivesAccountStakedLpRewardsQuery<TData>
-  extends MarsIncentivesReactQuery<ArrayOfCoin, TData> {
+  extends MarsIncentivesReactQuery<PaginationResponseForTupleOfStringAndArrayOfCoin, TData> {
   args: {
     accountId: string
     lpDenom: string
   }
 }
-export function useMarsIncentivesAccountStakedLpRewardsQuery<TData = ArrayOfCoin>({
-  client,
-  args,
-  options,
-}: MarsIncentivesAccountStakedLpRewardsQuery<TData>) {
-  return useQuery<ArrayOfCoin, Error, TData>(
+export function useMarsIncentivesAccountStakedLpRewardsQuery<
+  TData = PaginationResponseForTupleOfStringAndArrayOfCoin,
+>({ client, args, options }: MarsIncentivesAccountStakedLpRewardsQuery<TData>) {
+  return useQuery<PaginationResponseForTupleOfStringAndArrayOfCoin, Error, TData>(
     marsIncentivesQueryKeys.accountStakedLpRewards(client?.contractAddress, args),
     () =>
       client

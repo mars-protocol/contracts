@@ -186,7 +186,13 @@ export type QueryMsg =
   | {
       whitelist: {}
     }
-export type ArrayOfCoin = Coin[]
+export interface PaginationResponseForTupleOfStringAndArrayOfCoin {
+  data: [string, Coin[]][]
+  metadata: Metadata
+}
+export interface Metadata {
+  has_more: boolean
+}
 export type ArrayOfActiveEmission = ActiveEmission[]
 export interface ActiveEmission {
   denom: string
@@ -217,5 +223,9 @@ export interface StakedLpPositionResponse {
   lp_coin: Coin
   rewards: Coin[]
 }
-export type ArrayOfStakedLpPositionResponse = StakedLpPositionResponse[]
+export interface PaginationResponseForStakedLpPositionResponse {
+  data: StakedLpPositionResponse[]
+  metadata: Metadata
+}
+export type ArrayOfCoin = Coin[]
 export type ArrayOfWhitelistEntry = WhitelistEntry[]

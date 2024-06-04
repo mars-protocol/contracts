@@ -19,7 +19,8 @@ import {
   Coin,
   ActionCoin,
   QueryMsg,
-  ArrayOfCoin,
+  PaginationResponseForTupleOfStringAndArrayOfCoin,
+  Metadata,
   ArrayOfActiveEmission,
   ActiveEmission,
   ConfigResponse,
@@ -29,7 +30,8 @@ import {
   IncentiveStateResponse,
   ArrayOfIncentiveStateResponse,
   StakedLpPositionResponse,
-  ArrayOfStakedLpPositionResponse,
+  PaginationResponseForStakedLpPositionResponse,
+  ArrayOfCoin,
   ArrayOfWhitelistEntry,
 } from './MarsIncentives.types'
 export interface MarsIncentivesReadOnlyInterface {
@@ -40,7 +42,7 @@ export interface MarsIncentivesReadOnlyInterface {
   }: {
     accountId: string
     lpDenom: string
-  }) => Promise<ArrayOfCoin>
+  }) => Promise<PaginationResponseForTupleOfStringAndArrayOfCoin>
   activeEmissions: ({
     collateralDenom,
   }: {
@@ -91,7 +93,7 @@ export interface MarsIncentivesReadOnlyInterface {
     accountId: string
     limit?: number
     startAfter?: string
-  }) => Promise<ArrayOfStakedLpPositionResponse>
+  }) => Promise<PaginationResponseForStakedLpPositionResponse>
   stakedLpPosition: ({
     accountId,
     lpDenom,
@@ -140,7 +142,7 @@ export class MarsIncentivesQueryClient implements MarsIncentivesReadOnlyInterfac
   }: {
     accountId: string
     lpDenom: string
-  }): Promise<ArrayOfCoin> => {
+  }): Promise<PaginationResponseForTupleOfStringAndArrayOfCoin> => {
     return this.client.queryContractSmart(this.contractAddress, {
       account_staked_lp_rewards: {
         account_id: accountId,
@@ -240,7 +242,7 @@ export class MarsIncentivesQueryClient implements MarsIncentivesReadOnlyInterfac
     accountId: string
     limit?: number
     startAfter?: string
-  }): Promise<ArrayOfStakedLpPositionResponse> => {
+  }): Promise<PaginationResponseForStakedLpPositionResponse> => {
     return this.client.queryContractSmart(this.contractAddress, {
       staked_lp_positions: {
         account_id: accountId,
