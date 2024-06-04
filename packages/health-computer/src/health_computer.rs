@@ -495,7 +495,7 @@ impl HealthComputer {
         let lends = self.coins_value(&self.positions.lends)?;
         let vaults = self.vaults_value()?;
         let staked_lp = self.coins_value(&self.positions.staked_lp)?;
-        
+
         Ok(CollateralValue {
             total_collateral_value: deposits
                 .total_collateral_value

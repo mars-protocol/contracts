@@ -100,7 +100,8 @@ pub fn stake_astro_lp(
     account_id: String,
     lp_coin: Coin,
 ) -> StdResult<Response> {
-    let staked_coin = query_staked_amount(deps.as_ref(), account_id.clone(), lp_coin.denom.clone())?;
+    let staked_coin =
+        query_staked_amount(deps.as_ref(), account_id.clone(), lp_coin.denom.clone())?;
 
     let new_amount = staked_coin.amount.checked_add(lp_coin.amount)?;
 
@@ -115,7 +116,8 @@ pub fn unstake_astro_lp(
     account_id: String,
     lp_coin: Coin,
 ) -> StdResult<Response> {
-    let staked_coin = query_staked_amount(deps.as_ref(), account_id.clone(), lp_coin.denom.clone())?;
+    let staked_coin =
+        query_staked_amount(deps.as_ref(), account_id.clone(), lp_coin.denom.clone())?;
 
     let new_amount = staked_coin.amount.checked_sub(lp_coin.amount)?;
 

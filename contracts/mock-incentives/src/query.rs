@@ -31,7 +31,7 @@ pub fn query_staked_lp_position(
 ) -> StdResult<StakedLpPositionResponse> {
     let staked_coin = query_staked_amount(deps, account_id.clone(), lp_denom.clone())?;
     let rewards = query_pending_astroport_rewards(deps, account_id, lp_denom)?;
-    
+
     Ok(StakedLpPositionResponse {
         lp_coin: staked_coin,
         rewards,

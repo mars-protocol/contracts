@@ -46,7 +46,11 @@ use mars_types::{
         AccountKind, ExecuteMsg::UpdateConfig, HealthValuesResponse,
         InstantiateMsg as HealthInstantiateMsg, QueryMsg::HealthValues,
     },
-    incentives::{ExecuteMsg::{BalanceChange, SetAssetIncentive}, QueryMsg::{AccountStakedLpRewards, StakedLpPosition, UserUnclaimedRewards}, StakedLpPositionResponse},
+    incentives::{
+        ExecuteMsg::{BalanceChange, SetAssetIncentive},
+        QueryMsg::{AccountStakedLpRewards, StakedLpPosition, UserUnclaimedRewards},
+        StakedLpPositionResponse,
+    },
     oracle::{ActionKind, PriceResponse, QueryMsg::Price as OraclePrice},
     params::{
         AssetParams,
@@ -527,7 +531,11 @@ impl MockEnv {
             .unwrap()
     }
 
-    pub fn query_staked_lp_position(&self, account_id: &str, lp_denom: &str) -> StakedLpPositionResponse {
+    pub fn query_staked_lp_position(
+        &self,
+        account_id: &str,
+        lp_denom: &str,
+    ) -> StakedLpPositionResponse {
         self.app
             .wrap()
             .query_wasm_smart(
