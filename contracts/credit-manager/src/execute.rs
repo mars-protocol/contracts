@@ -13,7 +13,7 @@ use mars_vault::msg::{ExecuteMsg, ExtensionExecuteMsg};
 
 use crate::{
     borrow::borrow,
-    claim_lp_rewards::claim_lp_rewards,
+    claim_astro_lp_rewards::claim_lp_rewards,
     claim_rewards::{claim_rewards, send_rewards},
     deposit::{assert_deposit_caps, deposit},
     error::{ContractError, ContractResult},
@@ -26,10 +26,10 @@ use crate::{
     reclaim::reclaim,
     refund::refund_coin_balances,
     repay::{repay, repay_for_recipient},
-    stake_lp::stake_lp,
+    stake_astro_lp::stake_lp,
     state::{ACCOUNT_KINDS, ACCOUNT_NFT, REENTRANCY_GUARD},
     swap::swap_exact_in,
-    unstake_lp::unstake_lp,
+    unstake_astro_lp::unstake_lp,
     update_coin_balances::{update_coin_balance, update_coin_balance_after_vault_liquidation},
     utils::{assert_is_token_owner, get_account_kind},
     vault::{
