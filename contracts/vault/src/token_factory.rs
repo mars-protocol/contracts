@@ -2,7 +2,7 @@ use std::fmt::Display;
 
 use cosmwasm_schema::cw_serde;
 use cosmwasm_std::{
-    attr, Addr, CosmosMsg, Deps, DepsMut, Env, Event, Response, StdError, StdResult, Uint128,
+    attr, Addr, CosmosMsg, Deps, DepsMut, Env, Event, Response, StdResult, Uint128,
 };
 use osmosis_std::types::{
     cosmos::base::v1beta1::Coin as CoinMsg,
@@ -27,18 +27,6 @@ impl TokenFactoryDenom {
             owner,
             subdenom,
         }
-    }
-
-    pub fn from_native_denom(denom: &str) -> StdResult<Self> {
-        let parts: Vec<_> = denom.split('/').collect();
-
-        if parts.len() != 3 || parts[0] != "factory" {
-            return Err(StdError::generic_err(
-                "Can't create TokenFactoryDenom from invalid denom.",
-            ));
-        }
-
-        Ok(Self::new(parts[1].to_string(), parts[2].to_string()))
     }
 
     pub fn instantiate(&self) -> StdResult<Response> {

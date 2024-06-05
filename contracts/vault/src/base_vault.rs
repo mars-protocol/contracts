@@ -1,7 +1,4 @@
-use cosmwasm_std::{
-    attr, Addr, BankMsg, Coin, CosmosMsg, Deps, DepsMut, Env, Event, Response, StdError, StdResult,
-    Uint128,
-};
+use cosmwasm_std::{attr, Deps, DepsMut, Env, Event, Response, StdError, StdResult, Uint128};
 use cw_storage_plus::Item;
 
 use crate::{
@@ -38,26 +35,6 @@ impl<'a> BaseVault<'a> {
         self.base_token.save(deps.storage, &base_token)?;
 
         vault_token.instantiate()
-    }
-
-    pub fn send_base_tokens(
-        &self,
-        deps: DepsMut,
-        recipient: &Addr,
-        amount: Uint128,
-    ) -> StdResult<Response> {
-        let event = Event::new("base_vault/send_base_tokens")
-            .add_attributes(vec![attr("recipient", recipient), attr("amount", amount)]);
-
-        Ok(Response::new()
-            .add_message(CosmosMsg::Bank(BankMsg::Send {
-                to_address: recipient.into(),
-                amount: vec![Coin {
-                    denom: self.base_token.load(deps.storage)?,
-                    amount,
-                }],
-            }))
-            .add_event(event))
     }
 
     pub fn calculate_vault_tokens(
