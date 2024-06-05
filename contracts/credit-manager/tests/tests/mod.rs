@@ -1,6 +1,7 @@
 pub use mars_testing::multitest::helpers;
 
 mod test_borrow;
+mod test_claim_astro_lp_rewards;
 mod test_claim_rewards;
 mod test_coin_balances;
 mod test_create_credit_account;
@@ -20,6 +21,7 @@ mod test_lend;
 mod test_liquidate_deposit;
 mod test_liquidate_guard;
 mod test_liquidate_lend;
+mod test_liquidate_staked_astro_lp;
 mod test_liquidate_vault;
 mod test_liquidation_pricing;
 mod test_migration_v2;
@@ -30,7 +32,9 @@ mod test_refund_balances;
 mod test_repay;
 mod test_repay_for_recipient;
 mod test_repay_from_wallet;
+mod test_stake_astro_lp;
 mod test_swap;
+mod test_unstake_astro_lp;
 mod test_update_admin;
 mod test_update_config;
 mod test_update_credit_account_with_new_acc;

@@ -46,7 +46,11 @@ use mars_types::{
         AccountKind, ExecuteMsg::UpdateConfig, HealthValuesResponse,
         InstantiateMsg as HealthInstantiateMsg, QueryMsg::HealthValues,
     },
-    incentives::{ExecuteMsg::BalanceChange, QueryMsg::UserUnclaimedRewards},
+    incentives::{
+        ExecuteMsg::{BalanceChange, SetAssetIncentive},
+        QueryMsg::{StakedAstroLpPosition, StakedAstroLpRewards, UserUnclaimedRewards},
+        StakedLpPositionResponse,
+    },
     oracle::{ActionKind, PriceResponse, QueryMsg::Price as OraclePrice},
     params::{
         AssetParams,
@@ -71,10 +75,11 @@ use mars_vault::{
 use mars_zapper_mock::msg::{InstantiateMsg as ZapperInstantiateMsg, LpConfig};
 
 use super::{
-    lp_token_info, mock_account_nft_contract, mock_address_provider_contract, mock_health_contract,
-    mock_incentives_contract, mock_managed_vault_contract, mock_oracle_contract,
-    mock_params_contract, mock_red_bank_contract, mock_rover_contract, mock_swapper_contract,
-    mock_v2_zapper_contract, mock_vault_contract, AccountToFund, CoinInfo, VaultTestInfo,
+    lp_token_info, mock_account_nft_contract, mock_address_provider_contract,
+    mock_astro_incentives_contract, mock_health_contract, mock_incentives_contract,
+    mock_managed_vault_contract, mock_oracle_contract, mock_params_contract,
+    mock_red_bank_contract, mock_rover_contract, mock_swapper_contract, mock_v2_zapper_contract,
+    mock_vault_contract, AccountToFund, CoinInfo, VaultTestInfo,
 };
 use crate::multitest::modules::token_factory::{CustomApp, TokenFactory};
 
@@ -419,6 +424,34 @@ impl MockEnv {
             .unwrap();
     }
 
+    pub fn add_astro_incentive_reward(&mut self, account_id: &str, lp_denom: &str, coin: Coin) {
+        // This is a bit of a hack to set up astroport lp rewards in our mock contract, using the existing API.
+        self.app
+            .execute_contract(
+                self.rover.clone(),
+                self.incentives.addr.clone(),
+                &SetAssetIncentive {
+                    collateral_denom: lp_denom.to_string(),
+                    incentive_denom: coin.denom.clone(),
+                    // Emision per second is used for amount
+                    emission_per_second: coin.amount,
+                    // Start time is used for account_id. The account id is parsed as a u64
+                    start_time: account_id.parse().unwrap(),
+                    duration: Default::default(),
+                },
+                &[],
+            )
+            .unwrap();
+
+        // Mint token for incentives contract so it can be claimed
+        self.app
+            .sudo(SudoMsg::Bank(BankSudo::Mint {
+                to_address: self.incentives.addr.to_string(),
+                amount: vec![coin],
+            }))
+            .unwrap();
+    }
+
     //--------------------------------------------------------------------------------------------------
     // Queries
     //--------------------------------------------------------------------------------------------------
@@ -454,6 +487,23 @@ impl MockEnv {
             .unwrap()
     }
 
+    pub fn query_unclaimed_astroport_rewards_for_lp(
+        &self,
+        account_id: &str,
+        lp_denom: &str,
+    ) -> Vec<Coin> {
+        self.app
+            .wrap()
+            .query_wasm_smart(
+                self.incentives.clone().addr,
+                &StakedAstroLpRewards {
+                    account_id: account_id.to_string(),
+                    lp_denom: lp_denom.to_string(),
+                },
+            )
+            .unwrap()
+    }
+
     pub fn query_unclaimed_rewards(&self, account_id: &str) -> Vec<Coin> {
         self.app
             .wrap()
@@ -465,6 +515,36 @@ impl MockEnv {
                     start_after_collateral_denom: None,
                     start_after_incentive_denom: None,
                     limit: None,
+                },
+            )
+            .unwrap()
+    }
+
+    pub fn query_staked_astro_lp_rewards(&self, account_id: &str, lp_denom: &str) -> Vec<Coin> {
+        self.app
+            .wrap()
+            .query_wasm_smart(
+                self.incentives.clone().addr,
+                &StakedAstroLpRewards {
+                    account_id: account_id.to_string(),
+                    lp_denom: lp_denom.to_string(),
+                },
+            )
+            .unwrap()
+    }
+
+    pub fn query_staked_lp_position(
+        &self,
+        account_id: &str,
+        lp_denom: &str,
+    ) -> StakedLpPositionResponse {
+        self.app
+            .wrap()
+            .query_wasm_smart(
+                self.incentives.clone().addr,
+                &StakedAstroLpPosition {
+                    account_id: account_id.to_string(),
+                    lp_denom: lp_denom.to_string(),
                 },
             )
             .unwrap()
@@ -849,7 +929,7 @@ impl MockEnvBuilder {
         let incentives =
             Incentives::new(Addr::unchecked(self.get_incentives().address()), rover.clone());
 
-        let params = self.get_params_contract();
+        let params: mars_types::adapters::params::ParamsBase<Addr> = self.get_params_contract();
         self.add_params_to_contract();
 
         let health_contract = self.get_health_contract();
@@ -1266,6 +1346,20 @@ impl MockEnvBuilder {
             .unwrap();
 
         IncentivesUnchecked::new(addr.to_string())
+    }
+
+    pub fn deploy_astroport_incentives(&mut self) -> Addr {
+        let code_id = self.app.store_code(mock_astro_incentives_contract());
+        self.app
+            .instantiate_contract(
+                code_id,
+                Addr::unchecked("astroport_incentives_owner"),
+                &Empty {},
+                &[],
+                "mock-astroport-incentives",
+                None,
+            )
+            .unwrap()
     }
 
     fn deploy_vault(&mut self, vault: &VaultTestInfo) -> Addr {

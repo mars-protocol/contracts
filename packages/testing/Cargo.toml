@@ -36,6 +36,7 @@ mars-account-nft               = { workspace = true }
 mars-address-provider          = { workspace = true }
 mars-credit-manager            = { workspace = true }
 mars-incentives                = { workspace = true }
+mars-mock-astroport-incentives = { workspace = true }
 mars-mock-incentives           = { workspace = true }
 mars-mock-oracle               = { workspace = true }
 mars-mock-pyth                 = { workspace = true }

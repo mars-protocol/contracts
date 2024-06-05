@@ -85,6 +85,7 @@ export interface Positions {
   debts: DebtAmount[]
   deposits: Coin[]
   lends: Coin[]
+  staked_astro_lps: Coin[]
   vaults: VaultPosition[]
 }
 export interface DebtAmount {

@@ -13,6 +13,7 @@ use mars_vault::msg::{ExecuteMsg, ExtensionExecuteMsg};
 
 use crate::{
     borrow::borrow,
+    claim_astro_lp_rewards::claim_lp_rewards,
     claim_rewards::{claim_rewards, send_rewards},
     deposit::{assert_deposit_caps, deposit},
     error::{ContractError, ContractResult},
@@ -20,13 +21,16 @@ use crate::{
     hls::assert_hls_rules,
     lend::lend,
     liquidate::assert_not_self_liquidation,
+    liquidate_astro_lp::liquidate_astro_lp,
     liquidate_deposit::liquidate_deposit,
     liquidate_lend::liquidate_lend,
     reclaim::reclaim,
     refund::refund_coin_balances,
     repay::{repay, repay_for_recipient},
+    stake_astro_lp::stake_lp,
     state::{ACCOUNT_KINDS, ACCOUNT_NFT, REENTRANCY_GUARD, VAULTS},
     swap::swap_exact_in,
+    unstake_astro_lp::unstake_lp,
     update_coin_balances::{update_coin_balance, update_coin_balance_after_vault_liquidation},
     utils::{assert_is_token_owner, get_account_kind},
     vault::{
@@ -259,6 +263,14 @@ pub fn dispatch_actions(
                         position_type,
                     },
                 }),
+                LiquidateRequest::StakedAstroLp(lp_denom) => {
+                    callbacks.push(CallbackMsg::Liquidate {
+                        liquidator_account_id: account_id.to_string(),
+                        liquidatee_account_id: liquidatee_account_id.to_string(),
+                        debt_coin,
+                        request: LiquidateRequest::StakedAstroLp(lp_denom),
+                    })
+                }
             },
             Action::SwapExactIn {
                 coin_in,
@@ -317,6 +329,24 @@ pub fn dispatch_actions(
                 account_id: account_id.to_string(),
                 lp_token,
                 slippage,
+            }),
+            Action::StakeAstroLp {
+                lp_token,
+            } => callbacks.push(CallbackMsg::StakeAstroLp {
+                account_id: account_id.to_string(),
+                lp_token,
+            }),
+            Action::UnstakeAstroLp {
+                lp_token,
+            } => callbacks.push(CallbackMsg::UnstakeAstroLp {
+                account_id: account_id.to_string(),
+                lp_token,
+            }),
+            Action::ClaimAstroLpRewards {
+                lp_denom,
+            } => callbacks.push(CallbackMsg::ClaimAstroLpRewards {
+                account_id: account_id.to_string(),
+                lp_denom,
             }),
             Action::RefundAllCoinBalances {} => {
                 callbacks.push(CallbackMsg::RefundAllCoinBalances {
@@ -516,6 +546,14 @@ pub fn execute_callback(
                     request_vault,
                     position_type,
                 ),
+                LiquidateRequest::StakedAstroLp(request_coin_denom) => liquidate_astro_lp(
+                    deps,
+                    env,
+                    &liquidator_account_id,
+                    &liquidatee_account_id,
+                    debt_coin,
+                    &request_coin_denom,
+                ),
             }
         }
         CallbackMsg::SwapExactIn {
@@ -582,5 +620,17 @@ pub fn execute_callback(
             previous_balances,
             recipient,
         } => send_rewards(deps, &env.contract.address, &account_id, recipient, previous_balances),
+        CallbackMsg::StakeAstroLp {
+            account_id,
+            lp_token,
+        } => stake_lp(deps, &account_id, lp_token),
+        CallbackMsg::UnstakeAstroLp {
+            account_id,
+            lp_token,
+        } => unstake_lp(deps, &account_id, lp_token),
+        CallbackMsg::ClaimAstroLpRewards {
+            account_id,
+            lp_denom,
+        } => claim_lp_rewards(deps, &account_id, &lp_denom),
     }
 }

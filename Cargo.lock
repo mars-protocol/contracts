@@ -2179,6 +2179,7 @@ dependencies = [
  "mars-account-nft",
  "mars-address-provider",
  "mars-liquidation",
+ "mars-mock-astroport-incentives",
  "mars-mock-incentives",
  "mars-mock-oracle",
  "mars-mock-red-bank",
@@ -2242,6 +2243,7 @@ name = "mars-integration-tests"
 version = "2.0.0"
 dependencies = [
  "anyhow",
+ "astroport 5.0.0-rc.1-tokenfactory",
  "cosmwasm-std",
  "cw-it",
  "cw-multi-test",
@@ -2281,6 +2283,19 @@ dependencies = [
 ]
 
 [[package]]
+name = "mars-mock-astroport-incentives"
+version = "2.0.0"
+dependencies = [
+ "astroport 5.0.0-rc.1-tokenfactory",
+ "cosmwasm-schema",
+ "cosmwasm-std",
+ "cw-storage-plus 1.2.0",
+ "cw-utils 1.0.3",
+ "mars-types",
+ "thiserror",
+]
+
+[[package]]
 name = "mars-mock-credit-manager"
 version = "2.0.0"
 dependencies = [
@@ -2295,6 +2310,7 @@ name = "mars-mock-incentives"
 version = "2.0.0"
 dependencies = [
  "cosmwasm-std",
+ "cw-paginate",
  "cw-storage-plus 1.2.0",
  "mars-types",
 ]
@@ -2703,6 +2719,7 @@ dependencies = [
  "mars-address-provider",
  "mars-credit-manager",
  "mars-incentives",
+ "mars-mock-astroport-incentives",
  "mars-mock-incentives",
  "mars-mock-oracle",
  "mars-mock-pyth",

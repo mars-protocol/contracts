@@ -116,6 +116,9 @@ pub enum LiquidateRequest<T> {
         request_vault: T,
         position_type: VaultPositionType,
     },
+    /// Pay back debt of a liquidatable credit manager account for a via liquidating an Astro LP position.
+    /// LP shares are transfered from the liquidatable to the liquidator.
+    StakedAstroLp(String),
 }
 
 /// The list of actions that users can perform on their positions
@@ -198,6 +201,18 @@ pub enum Action {
     WithdrawLiquidity {
         lp_token: ActionCoin,
         slippage: Decimal,
+    },
+    /// Stake lp token in astroport incentives contract via mars incentives
+    StakeAstroLp {
+        lp_token: ActionCoin,
+    },
+    /// Unstake lp token from astroport incentives contract via mars incentives
+    UnstakeAstroLp {
+        lp_token: ActionCoin,
+    },
+    /// Claim accrued LP incentive rewards from astroport incentives contract via mars incentives
+    ClaimAstroLpRewards {
+        lp_denom: String,
     },
     /// Refunds all coin balances back to user wallet
     RefundAllCoinBalances {},
@@ -339,6 +354,25 @@ pub enum CallbackMsg {
         coins_in: Vec<ActionCoin>,
         lp_token_out: String,
         slippage: Decimal,
+    },
+    /// Stake lp token in astroport incentives contract via mars incentives
+    StakeAstroLp {
+        // Account id staking the LP
+        account_id: String,
+        // Amount / denom to stake
+        lp_token: ActionCoin,
+    },
+    /// Unstake lp token from astroport incentives contract via mars incentives.
+    UnstakeAstroLp {
+        // account id  unstaking the LP
+        account_id: String,
+        // lp coin to unstake
+        lp_token: ActionCoin,
+    },
+    /// Claim all accrued rewards for LP position in astroport incentives
+    ClaimAstroLpRewards {
+        account_id: String,
+        lp_denom: String,
     },
     /// Send LP token and withdraw corresponding reserve assets from pool.
     /// If `lp_token.amount: AccountBalance`, the account balance of `lp_token.denom` will be used.

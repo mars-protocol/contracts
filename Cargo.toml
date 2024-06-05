@@ -16,6 +16,7 @@ members  = [
   "contracts/vault",
 
   # mock contracts
+  "contracts/mock-astroport-incentives",
   "contracts/mock-credit-manager",
   "contracts/mock-health",
   "contracts/mock-incentives",
@@ -131,14 +132,15 @@ mars-vault                     = { path = "./contracts/vault" }
 mars-zapper-base               = { path = "./contracts/v2-zapper/base" }
 
 # mocks
-mars-mock-credit-manager = { path = "./contracts/mock-credit-manager" }
-mars-mock-incentives     = { path = "./contracts/mock-incentives" }
-mars-mock-oracle         = { path = "./contracts/mock-oracle" }
-mars-mock-red-bank       = { path = "./contracts/mock-red-bank" }
-mars-mock-vault          = { path = "./contracts/mock-vault" }
-mars-mock-rover-health   = { path = "./contracts/mock-health" }
-mars-swapper-mock        = { path = "./contracts/swapper/mock" }
-mars-zapper-mock         = { path = "./contracts/v2-zapper/mock" }
+mars-mock-astroport-incentives  = { path = "./contracts/mock-astroport-incentives" }
+mars-mock-credit-manager        = { path = "./contracts/mock-credit-manager" }
+mars-mock-incentives            = { path = "./contracts/mock-incentives" }
+mars-mock-oracle                = { path = "./contracts/mock-oracle" }
+mars-mock-red-bank              = { path = "./contracts/mock-red-bank" }
+mars-mock-vault                 = { path = "./contracts/mock-vault" }
+mars-mock-rover-health          = { path = "./contracts/mock-health" }
+mars-swapper-mock               = { path = "./contracts/swapper/mock" }
+mars-zapper-mock                = { path = "./contracts/v2-zapper/mock" }
 
 [profile.release]
 codegen-units    = 1

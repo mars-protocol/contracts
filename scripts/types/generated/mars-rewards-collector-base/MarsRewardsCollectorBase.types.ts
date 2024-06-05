@@ -169,6 +169,21 @@ export type Action =
       }
     }
   | {
+      stake_astro_lp: {
+        lp_token: ActionCoin
+      }
+    }
+  | {
+      unstake_astro_lp: {
+        lp_token: ActionCoin
+      }
+    }
+  | {
+      claim_astro_lp_rewards: {
+        lp_denom: string
+      }
+    }
+  | {
       refund_all_coin_balances: {}
     }
 export type ActionAmount =
@@ -188,6 +203,9 @@ export type LiquidateRequestForVaultBaseForString =
         position_type: VaultPositionType
         request_vault: VaultBaseForString
       }
+    }
+  | {
+      staked_astro_lp: string
     }
 export type VaultPositionType = 'u_n_l_o_c_k_e_d' | 'l_o_c_k_e_d' | 'u_n_l_o_c_k_i_n_g'
 export type SwapperRoute =

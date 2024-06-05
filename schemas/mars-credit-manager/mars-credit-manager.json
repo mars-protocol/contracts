@@ -742,6 +742,72 @@
             "additionalProperties": false
           },
           {
+            "description": "Stake lp token in astroport incentives contract via mars incentives",
+            "type": "object",
+            "required": [
+              "stake_astro_lp"
+            ],
+            "properties": {
+              "stake_astro_lp": {
+                "type": "object",
+                "required": [
+                  "lp_token"
+                ],
+                "properties": {
+                  "lp_token": {
+                    "$ref": "#/definitions/ActionCoin"
+                  }
+                },
+                "additionalProperties": false
+              }
+            },
+            "additionalProperties": false
+          },
+          {
+            "description": "Unstake lp token from astroport incentives contract via mars incentives",
+            "type": "object",
+            "required": [
+              "unstake_astro_lp"
+            ],
+            "properties": {
+              "unstake_astro_lp": {
+                "type": "object",
+                "required": [
+                  "lp_token"
+                ],
+                "properties": {
+                  "lp_token": {
+                    "$ref": "#/definitions/ActionCoin"
+                  }
+                },
+                "additionalProperties": false
+              }
+            },
+            "additionalProperties": false
+          },
+          {
+            "description": "Claim accrued LP incentive rewards from astroport incentives contract via mars incentives",
+            "type": "object",
+            "required": [
+              "claim_astro_lp_rewards"
+            ],
+            "properties": {
+              "claim_astro_lp_rewards": {
+                "type": "object",
+                "required": [
+                  "lp_denom"
+                ],
+                "properties": {
+                  "lp_denom": {
+                    "type": "string"
+                  }
+                },
+                "additionalProperties": false
+              }
+            },
+            "additionalProperties": false
+          },
+          {
             "description": "Refunds all coin balances back to user wallet",
             "type": "object",
             "required": [
@@ -1485,6 +1551,84 @@
             "additionalProperties": false
           },
           {
+            "description": "Stake lp token in astroport incentives contract via mars incentives",
+            "type": "object",
+            "required": [
+              "stake_astro_lp"
+            ],
+            "properties": {
+              "stake_astro_lp": {
+                "type": "object",
+                "required": [
+                  "account_id",
+                  "lp_token"
+                ],
+                "properties": {
+                  "account_id": {
+                    "type": "string"
+                  },
+                  "lp_token": {
+                    "$ref": "#/definitions/ActionCoin"
+                  }
+                },
+                "additionalProperties": false
+              }
+            },
+            "additionalProperties": false
+          },
+          {
+            "description": "Unstake lp token from astroport incentives contract via mars incentives.",
+            "type": "object",
+            "required": [
+              "unstake_astro_lp"
+            ],
+            "properties": {
+              "unstake_astro_lp": {
+                "type": "object",
+                "required": [
+                  "account_id",
+                  "lp_token"
+                ],
+                "properties": {
+                  "account_id": {
+                    "type": "string"
+                  },
+                  "lp_token": {
+                    "$ref": "#/definitions/ActionCoin"
+                  }
+                },
+                "additionalProperties": false
+              }
+            },
+            "additionalProperties": false
+          },
+          {
+            "description": "Claim all accrued rewards for LP position in astroport incentives",
+            "type": "object",
+            "required": [
+              "claim_astro_lp_rewards"
+            ],
+            "properties": {
+              "claim_astro_lp_rewards": {
+                "type": "object",
+                "required": [
+                  "account_id",
+                  "lp_denom"
+                ],
+                "properties": {
+                  "account_id": {
+                    "type": "string"
+                  },
+                  "lp_denom": {
+                    "type": "string"
+                  }
+                },
+                "additionalProperties": false
+              }
+            },
+            "additionalProperties": false
+          },
+          {
             "description": "Send LP token and withdraw corresponding reserve assets from pool. If `lp_token.amount: AccountBalance`, the account balance of `lp_token.denom` will be used.",
             "type": "object",
             "required": [
@@ -1874,6 +2018,19 @@
               }
             },
             "additionalProperties": false
+          },
+          {
+            "description": "Pay back debt of a liquidatable credit manager account for a via liquidating an Astro LP position. LP shares are transfered from the liquidatable to the liquidator.",
+            "type": "object",
+            "required": [
+              "staked_astro_lp"
+            ],
+            "properties": {
+              "staked_astro_lp": {
+                "type": "string"
+              }
+            },
+            "additionalProperties": false
           }
         ]
       },
@@ -1927,6 +2084,19 @@
                   }
                 },
                 "additionalProperties": false
+              }
+            },
+            "additionalProperties": false
+          },
+          {
+            "description": "Pay back debt of a liquidatable credit manager account for a via liquidating an Astro LP position. LP shares are transfered from the liquidatable to the liquidator.",
+            "type": "object",
+            "required": [
+              "staked_astro_lp"
+            ],
+            "properties": {
+              "staked_astro_lp": {
+                "type": "string"
               }
             },
             "additionalProperties": false
@@ -3324,6 +3494,7 @@
         "debts",
         "deposits",
         "lends",
+        "staked_astro_lps",
         "vaults"
       ],
       "properties": {
@@ -3346,6 +3517,12 @@
           }
         },
         "lends": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/Coin"
+          }
+        },
+        "staked_astro_lps": {
           "type": "array",
           "items": {
             "$ref": "#/definitions/Coin"

@@ -17,12 +17,11 @@ use mars_types::{
 
 use crate::{
     helpers::{
-        calculate_rewards_from_astroport_incentive_state,
-        compute_updated_astroport_incentive_states, compute_user_unclaimed_rewards,
+        calculate_rewards_for_staked_astro_lp_position, compute_updated_astro_incentive_states,
+        compute_user_unclaimed_rewards,
     },
-    state,
     state::{
-        ASTRO_INCENTIVE_STATES, ASTRO_USER_LP_DEPOSITS, CONFIG, DEFAULT_LIMIT, EMISSIONS,
+        self, ASTRO_INCENTIVE_STATES, ASTRO_USER_LP_DEPOSITS, CONFIG, DEFAULT_LIMIT, EMISSIONS,
         EPOCH_DURATION, INCENTIVE_STATES, MAX_LIMIT, OWNER, WHITELIST, WHITELIST_COUNT,
     },
     ContractError,
@@ -93,8 +92,7 @@ pub fn query_incentive_states(
         .collect()
 }
 
-/// Query the unclaimed astroport rewards
-pub fn query_unclaimed_astroport_rewards(
+pub fn query_unclaimed_astro_lp_rewards(
     deps: Deps,
     mars_incentives_addr: &str,
     astroport_incentives_addr: &str,
@@ -115,9 +113,7 @@ pub fn query_unclaimed_astroport_rewards(
     Ok(native_coins)
 }
 
-/// Fetch rewards for a user, grouped by LP position
-/// Has optional pagination on LP denom
-pub fn query_lp_rewards_for_user(
+pub fn query_staked_astro_lp_rewards_for_user(
     deps: Deps,
     env: &Env,
     astroport_incentives_addr: &Addr,
@@ -145,7 +141,7 @@ pub fn query_lp_rewards_for_user(
                 denom,
                 amount,
             };
-            let rewards = query_lp_rewards_for_position(
+            let rewards = query_staked_astro_lp_rewards_for_coin(
                 deps,
                 env,
                 astroport_incentives_addr,
@@ -158,12 +154,36 @@ pub fn query_lp_rewards_for_user(
     )
 }
 
-/// Fetch the rewards owed to a user.
-///
-/// The incentives contract deposits / stakes all LP on behalf
-/// off the user, so the rewards accounting is all tracked internally
-/// by the incentives contract.
-pub fn query_lp_rewards_for_position(
+pub fn query_staked_astro_lp_rewards_for_denom(
+    deps: Deps,
+    env: &Env,
+    account_id: &str,
+    lp_denom: &str,
+) -> Result<Vec<Coin>, ContractError> {
+    let lp_amount =
+        ASTRO_USER_LP_DEPOSITS.may_load(deps.storage, (&account_id, lp_denom))?.unwrap_or_default();
+
+    let lp_coin = Coin {
+        denom: lp_denom.to_string(),
+        amount: lp_amount,
+    };
+
+    let astroport_incentives_addr = address_provider::helpers::query_contract_addr(
+        deps,
+        &CONFIG.load(deps.storage)?.address_provider,
+        MarsAddressType::AstroportIncentives,
+    )?;
+
+    query_staked_astro_lp_rewards_for_coin(
+        deps,
+        env,
+        &astroport_incentives_addr,
+        account_id,
+        &lp_coin,
+    )
+}
+
+pub fn query_staked_astro_lp_rewards_for_coin(
     deps: Deps,
     env: &Env,
     astroport_incentives_addr: &Addr,
@@ -171,7 +191,7 @@ pub fn query_lp_rewards_for_position(
     lp_coin: &Coin,
 ) -> Result<Vec<Coin>, ContractError> {
     let lp_denom = &lp_coin.denom;
-    let pending_rewards: Vec<Coin> = query_unclaimed_astroport_rewards(
+    let pending_rewards: Vec<Coin> = query_unclaimed_astro_lp_rewards(
         deps,
         env.contract.address.as_ref(),
         astroport_incentives_addr.as_ref(),
@@ -182,7 +202,7 @@ pub fn query_lp_rewards_for_position(
     // Update our global indexes for each reward. We only accept native tokens,
     // cw20 will just be swallowed by contract
     let incentives_to_update =
-        compute_updated_astroport_incentive_states(deps.storage, pending_rewards, lp_denom)?;
+        compute_updated_astro_incentive_states(deps.storage, pending_rewards, lp_denom)?;
 
     let mut incentive_states: HashMap<String, Decimal> = ASTRO_INCENTIVE_STATES
         .prefix(lp_denom)
@@ -192,7 +212,7 @@ pub fn query_lp_rewards_for_position(
     // Update our incentive states with the newly updated incentive states to ensure we are up to date.
     incentive_states.extend(incentives_to_update);
 
-    let reward_coins = calculate_rewards_from_astroport_incentive_state(
+    let reward_coins = calculate_rewards_for_staked_astro_lp_position(
         &mut deps.storage.into(),
         account_id,
         lp_coin,
@@ -308,13 +328,12 @@ pub fn query_emissions(
     Ok(emissions.into_iter().map(|x| x.into()).collect())
 }
 
-pub fn query_user_lp_position(
+pub fn query_staked_astro_lp_position(
     deps: Deps,
     env: Env,
     account_id: String,
     denom: String,
 ) -> StdResult<StakedLpPositionResponse> {
-    // fetch position for lp position
     let config = CONFIG.load(deps.storage)?;
     let astroport_incentive_addr = address_provider::helpers::query_contract_addr(
         deps,
@@ -322,7 +341,6 @@ pub fn query_user_lp_position(
         MarsAddressType::AstroportIncentives,
     )?;
 
-    // query the position
     let amount = ASTRO_USER_LP_DEPOSITS.may_load(deps.storage, (&account_id, &denom))?.ok_or(
         ContractError::NoStakedLp {
             account_id: account_id.clone(),
@@ -335,7 +353,7 @@ pub fn query_user_lp_position(
         amount,
     };
 
-    let rewards = query_lp_rewards_for_position(
+    let rewards = query_staked_astro_lp_rewards_for_coin(
         deps,
         &env,
         &astroport_incentive_addr,
@@ -351,7 +369,7 @@ pub fn query_user_lp_position(
     Ok(result)
 }
 
-pub fn query_user_lp_positions(
+pub fn query_staked_astro_lp_positions(
     deps: Deps,
     env: Env,
     account_id: String,
@@ -379,7 +397,7 @@ pub fn query_user_lp_positions(
                 denom,
                 amount,
             };
-            let rewards = query_lp_rewards_for_position(
+            let rewards = query_staked_astro_lp_rewards_for_coin(
                 deps,
                 &env,
                 &astroport_incentive_addr,

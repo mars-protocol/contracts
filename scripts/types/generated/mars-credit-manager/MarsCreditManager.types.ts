@@ -156,6 +156,21 @@ export type Action =
       }
     }
   | {
+      stake_astro_lp: {
+        lp_token: ActionCoin
+      }
+    }
+  | {
+      unstake_astro_lp: {
+        lp_token: ActionCoin
+      }
+    }
+  | {
+      claim_astro_lp_rewards: {
+        lp_denom: string
+      }
+    }
+  | {
       refund_all_coin_balances: {}
     }
 export type ActionAmount =
@@ -175,6 +190,9 @@ export type LiquidateRequestForVaultBaseForString =
         position_type: VaultPositionType
         request_vault: VaultBaseForString
       }
+    }
+  | {
+      staked_astro_lp: string
     }
 export type VaultPositionType = 'u_n_l_o_c_k_e_d' | 'l_o_c_k_e_d' | 'u_n_l_o_c_k_i_n_g'
 export type SwapperRoute =
@@ -352,6 +370,24 @@ export type CallbackMsg =
       }
     }
   | {
+      stake_astro_lp: {
+        account_id: string
+        lp_token: ActionCoin
+      }
+    }
+  | {
+      unstake_astro_lp: {
+        account_id: string
+        lp_token: ActionCoin
+      }
+    }
+  | {
+      claim_astro_lp_rewards: {
+        account_id: string
+        lp_denom: string
+      }
+    }
+  | {
       withdraw_liquidity: {
         account_id: string
         lp_token: ActionCoin
@@ -398,6 +434,9 @@ export type LiquidateRequestForVaultBaseForAddr =
         position_type: VaultPositionType
         request_vault: VaultBaseForAddr
       }
+    }
+  | {
+      staked_astro_lp: string
     }
 export type ChangeExpected = 'increase' | 'decrease'
 export interface Coin {
@@ -619,6 +658,7 @@ export interface Positions {
   debts: DebtAmount[]
   deposits: Coin[]
   lends: Coin[]
+  staked_astro_lps: Coin[]
   vaults: VaultPosition[]
 }
 export interface DebtAmount {

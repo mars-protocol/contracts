@@ -45,7 +45,7 @@ export type ExecuteMsg =
       }
     }
   | {
-      claim_astro_lp_rewards: {
+      claim_staked_astro_lp_rewards: {
         account_id: string
         lp_denom: string
       }
@@ -120,6 +120,12 @@ export interface ActionCoin {
 }
 export type QueryMsg =
   | {
+      staked_astro_lp_rewards: {
+        account_id: string
+        lp_denom: string
+      }
+    }
+  | {
       active_emissions: {
         collateral_denom: string
       }
@@ -141,19 +147,6 @@ export type QueryMsg =
       }
     }
   | {
-      staked_lp_positions: {
-        account_id: string
-        limit?: number | null
-        start_after?: string | null
-      }
-    }
-  | {
-      staked_lp_position: {
-        account_id: string
-        lp_denom: string
-      }
-    }
-  | {
       emission: {
         collateral_denom: string
         incentive_denom: string
@@ -166,6 +159,19 @@ export type QueryMsg =
         incentive_denom: string
         limit?: number | null
         start_after_timestamp?: number | null
+      }
+    }
+  | {
+      staked_astro_lp_positions: {
+        account_id: string
+        limit?: number | null
+        start_after?: string | null
+      }
+    }
+  | {
+      staked_astro_lp_position: {
+        account_id: string
+        lp_denom: string
       }
     }
   | {
@@ -216,6 +222,10 @@ export interface PaginationResponseForStakedLpPositionResponse {
 }
 export interface Metadata {
   has_more: boolean
+}
+export interface PaginationResponseForTupleOfStringAndArrayOfCoin {
+  data: [string, Coin[]][]
+  metadata: Metadata
 }
 export type ArrayOfCoin = Coin[]
 export type ArrayOfWhitelistEntry = WhitelistEntry[]
