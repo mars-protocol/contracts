@@ -3,8 +3,11 @@ use cosmwasm_std::{
 };
 
 use crate::{
-    query::{query_staked_astro_lp_rewards_for_user, query_staked_astro_lp_amount, query_unclaimed_rewards},
-    state::{PENDING_ASTROPORT_REWARDS, STAKED_LP_POSITIONS, UNCLAIMED_REWARDS},
+    query::{
+        query_staked_astro_lp_amount, query_staked_astro_lp_rewards_for_user,
+        query_unclaimed_rewards,
+    },
+    state::{PENDING_ASTRO_REWARDS, STAKED_ASTRO_LP_POSITIONS, UNCLAIMED_REWARDS},
 };
 
 pub fn claim_astro_lp_rewards(
@@ -81,15 +84,18 @@ pub fn set_incentive_rewards(
     let lp_denom = collateral_denom;
     let incentive_amount = emission_per_second;
 
-    let mut pending_astro_rewards: Vec<Coin> =
-        query_staked_astro_lp_rewards_for_user(deps.as_ref(), account_id.clone(), lp_denom.clone())?;
+    let mut pending_astro_rewards: Vec<Coin> = query_staked_astro_lp_rewards_for_user(
+        deps.as_ref(),
+        account_id.clone(),
+        lp_denom.clone(),
+    )?;
 
     pending_astro_rewards.push(Coin {
         denom: incentive_denom,
         amount: incentive_amount,
     });
 
-    PENDING_ASTROPORT_REWARDS.save(deps.storage, (account_id, lp_denom), &pending_astro_rewards)?;
+    PENDING_ASTRO_REWARDS.save(deps.storage, (account_id, lp_denom), &pending_astro_rewards)?;
 
     Ok(Response::new())
 }
@@ -105,14 +111,14 @@ pub fn stake_astro_lp(
 
     let new_amount = staked_coin.amount.checked_add(lp_coin.amount)?;
 
-    STAKED_LP_POSITIONS.save(deps.storage, (account_id, lp_coin.denom), &new_amount)?;
+    STAKED_ASTRO_LP_POSITIONS.save(deps.storage, (account_id, lp_coin.denom), &new_amount)?;
 
     Ok(Response::new())
 }
 
 pub fn unstake_astro_lp(
     deps: DepsMut,
-    _: MessageInfo,
+    info: MessageInfo,
     account_id: String,
     lp_coin: Coin,
 ) -> StdResult<Response> {
@@ -122,10 +128,20 @@ pub fn unstake_astro_lp(
     let new_amount = staked_coin.amount.checked_sub(lp_coin.amount)?;
 
     if new_amount.is_zero() {
-        STAKED_LP_POSITIONS.remove(deps.storage, (account_id, lp_coin.denom));
+        STAKED_ASTRO_LP_POSITIONS.remove(deps.storage, (account_id, lp_coin.denom.clone()));
     } else {
-        STAKED_LP_POSITIONS.save(deps.storage, (account_id, lp_coin.denom), &new_amount)?;
+        STAKED_ASTRO_LP_POSITIONS.save(
+            deps.storage,
+            (account_id, lp_coin.denom.clone()),
+            &new_amount,
+        )?;
     }
 
-    Ok(Response::new())
+    // Mock env responsible for seeding contract with coins
+    let transfer_msg = CosmosMsg::Bank(BankMsg::Send {
+        to_address: info.sender.to_string(),
+        amount: vec![lp_coin],
+    });
+
+    Ok(Response::new().add_message(transfer_msg))
 }

@@ -520,7 +520,7 @@ impl MockEnv {
             .unwrap()
     }
 
-    pub fn query_pending_astroport_rewards(&self, account_id: &str, lp_denom: &str) -> Vec<Coin> {
+    pub fn query_staked_astro_lp_rewards(&self, account_id: &str, lp_denom: &str) -> Vec<Coin> {
         self.app
             .wrap()
             .query_wasm_smart(

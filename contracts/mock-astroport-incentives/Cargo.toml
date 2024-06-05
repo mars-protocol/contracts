@@ -19,7 +19,7 @@ backtraces = ["cosmwasm-std/backtraces"]
 library    = []
 
 [dependencies]
-astroport       = { workspace = true }
+astroport       = "=5.0.0-rc.1-tokenfactory"
 cosmwasm-schema = { workspace = true }
 cosmwasm-std    = { workspace = true }
 cw-storage-plus = { workspace = true }

@@ -4,7 +4,7 @@ use cw_storage_plus::Bound;
 use mars_types::incentives::{PaginatedStakedLpResponse, StakedLpPositionResponse};
 
 use crate::state::{
-    DEFAULT_LIMIT, MAX_LIMIT, PENDING_ASTROPORT_REWARDS, STAKED_LP_POSITIONS, UNCLAIMED_REWARDS,
+    DEFAULT_LIMIT, MAX_LIMIT, PENDING_ASTRO_REWARDS, STAKED_ASTRO_LP_POSITIONS, UNCLAIMED_REWARDS,
 };
 
 pub fn query_unclaimed_rewards(
@@ -23,9 +23,7 @@ pub fn query_staked_astro_lp_rewards_for_user(
     account_id: String,
     lp_denom: String,
 ) -> StdResult<Vec<Coin>> {
-    Ok(PENDING_ASTROPORT_REWARDS
-        .may_load(deps.storage, (account_id, lp_denom))?
-        .unwrap_or_default())
+    Ok(PENDING_ASTRO_REWARDS.may_load(deps.storage, (account_id, lp_denom))?.unwrap_or_default())
 }
 
 pub fn query_staked_lp_astro_lp_position(
@@ -52,7 +50,7 @@ pub fn query_all_staked_lp_positions_for_account(
     let limit: u32 = limit.unwrap_or(DEFAULT_LIMIT).min(MAX_LIMIT);
 
     paginate_prefix_query(
-        &STAKED_LP_POSITIONS,
+        &STAKED_ASTRO_LP_POSITIONS,
         deps.storage,
         account_id.clone(),
         start,
@@ -62,8 +60,11 @@ pub fn query_all_staked_lp_positions_for_account(
                 denom,
                 amount,
             };
-            let rewards =
-                query_staked_astro_lp_rewards_for_user(deps, account_id.clone(), lp_coin.denom.clone())?;
+            let rewards = query_staked_astro_lp_rewards_for_user(
+                deps,
+                account_id.clone(),
+                lp_coin.denom.clone(),
+            )?;
 
             Ok(StakedLpPositionResponse {
                 lp_coin,
@@ -73,8 +74,12 @@ pub fn query_all_staked_lp_positions_for_account(
     )
 }
 
-pub fn query_staked_astro_lp_amount(deps: Deps, account_id: String, lp_denom: String) -> StdResult<Coin> {
-    let staked_amount = crate::state::STAKED_LP_POSITIONS
+pub fn query_staked_astro_lp_amount(
+    deps: Deps,
+    account_id: String,
+    lp_denom: String,
+) -> StdResult<Coin> {
+    let staked_amount = crate::state::STAKED_ASTRO_LP_POSITIONS
         .may_load(deps.storage, (account_id, lp_denom.clone()))?
         .unwrap_or_default();
     Ok(Coin {

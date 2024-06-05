@@ -92,7 +92,9 @@ pub fn query(deps: Deps, _env: Env, msg: incentives::QueryMsg) -> StdResult<Bina
             account_id,
             lp_denom,
             ..
-        } => to_json_binary(&query::query_staked_astro_lp_rewards_for_user(deps, account_id, lp_denom)?),
+        } => to_json_binary(&query::query_staked_astro_lp_rewards_for_user(
+            deps, account_id, lp_denom,
+        )?),
         incentives::QueryMsg::StakedAstroLpPosition {
             account_id,
             lp_denom,

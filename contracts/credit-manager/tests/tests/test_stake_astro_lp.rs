@@ -53,7 +53,7 @@ fn stake_claims_rewards() {
 
     mock.add_astro_incentive_reward(&account_id, lp_denom, reward.clone());
 
-    let unclaimed = mock.query_pending_astroport_rewards(&account_id, lp_denom);
+    let unclaimed = mock.query_staked_astro_lp_rewards(&account_id, lp_denom);
     assert_eq!(unclaimed.len(), 1);
 
     let positions = mock.query_positions(&account_id);
@@ -66,7 +66,7 @@ fn stake_claims_rewards() {
     assert_eq!(positions.deposits.len(), 1);
 
     // Assert correct lp balance in contract
-    let lp_coin = mock.query_balance(&mock.rover, &lp_denom);
+    let lp_coin = mock.query_balance(&mock.rover, lp_denom);
     assert_eq!(positions.deposits[0].amount, lp_coin.amount);
 
     // stake again
@@ -92,6 +92,6 @@ fn stake_claims_rewards() {
     assert_eq!(positions.deposits.len(), 1);
 
     // Assert correct lp balance in contract
-    let lp_coin = mock.query_balance(&mock.rover, &lp_denom);
+    let lp_coin = mock.query_balance(&mock.rover, lp_denom);
     assert_eq!(Uint128::zero(), lp_coin.amount);
 }

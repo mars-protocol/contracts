@@ -106,7 +106,7 @@ fn claim_rewards_without_active_schedule() {
     incentives
         .claim_astro_rewards(&mut mock_env, &credit_manager, "1".to_string(), lp_denom)
         .unwrap();
-    let lp_balance = mock_env.query_balance(&mock_env.credit_manager, &lp_denom)?;
+    let lp_balance = mock_env.query_balance(&mock_env.credit_manager, lp_denom).unwrap();
     assert_eq!(lp_balance.amount, Uint128::new(0));
 }
 

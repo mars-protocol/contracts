@@ -17,7 +17,7 @@ use mars_types::{
 
 use crate::{
     helpers::{
-        calculate_rewards_for_staked_astro_lp_position, compute_updated_astroport_incentive_states,
+        calculate_rewards_for_staked_astro_lp_position, compute_updated_astro_incentive_states,
         compute_user_unclaimed_rewards,
     },
     state::{
@@ -202,7 +202,7 @@ pub fn query_staked_astro_lp_rewards_for_coin(
     // Update our global indexes for each reward. We only accept native tokens,
     // cw20 will just be swallowed by contract
     let incentives_to_update =
-        compute_updated_astroport_incentive_states(deps.storage, pending_rewards, lp_denom)?;
+        compute_updated_astro_incentive_states(deps.storage, pending_rewards, lp_denom)?;
 
     let mut incentive_states: HashMap<String, Decimal> = ASTRO_INCENTIVE_STATES
         .prefix(lp_denom)
