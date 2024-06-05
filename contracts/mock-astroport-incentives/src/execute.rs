@@ -15,7 +15,6 @@ pub fn incentivise(
     lp_token: String,
     schedule: InputSchedule,
 ) -> StdResult<Response> {
-    // TODO verify coins were sent to the contract
     let incentives_schedule = IncentivesSchedule::from_input(&env, &schedule)?;
 
     let reward_denom = match &incentives_schedule.reward_info {
