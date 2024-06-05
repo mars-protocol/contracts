@@ -49,10 +49,15 @@ pub fn unstake_lp(
     // unstake msg
     let unstake_msg = incentives.unstake_astro_lp_msg(account_id, &updated_coin)?;
 
-    Ok(Response::new()
+    let mut res = Response::new()
         .add_message(unstake_msg)
         .add_attribute("action", "unstake_astro_lp")
-        .add_attribute("rewards", lp_position.rewards.as_slice().to_string())
         .add_attribute("account_id", account_id)
-        .add_attribute("lp_unstaked", updated_coin.to_string()))
+        .add_attribute("lp_unstaked", updated_coin.to_string());
+
+    if lp_position.rewards.len() > 0 {
+        res = res.add_attribute("rewards", lp_position.rewards.as_slice().to_string());
+    }
+
+    Ok(res)
 }

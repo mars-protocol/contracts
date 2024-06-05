@@ -17,7 +17,7 @@ use crate::{
         calculate_rewards_for_staked_astro_lp_position, claim_rewards_msg,
         compute_updated_astroport_incentive_states, MaybeMutStorage,
     },
-    query::query_unclaimed_astroport_rewards,
+    query::query_unclaimed_astro_lp_rewards,
     state::{ASTRO_INCENTIVE_STATES, ASTRO_TOTAL_LP_DEPOSITS, ASTRO_USER_LP_DEPOSITS, CONFIG},
     ContractError::{self, NoStakedLp},
 };
@@ -29,7 +29,7 @@ fn claim_global_staked_lp_rewards(
     mars_incentives_addr: &str,
     lp_denom: &str,
 ) -> Result<Response, ContractError> {
-    let pending_rewards: Vec<Coin> = query_unclaimed_astroport_rewards(
+    let pending_rewards: Vec<Coin> = query_unclaimed_astro_lp_rewards(
         deps.as_ref(),
         mars_incentives_addr,
         astroport_incentives_addr,

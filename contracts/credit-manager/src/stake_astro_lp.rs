@@ -37,10 +37,14 @@ pub fn stake_lp(deps: DepsMut, account_id: &str, lp_coin: ActionCoin) -> Contrac
 
     // stake msg
     let stake_msg = incentives.stake_astro_lp_msg(account_id, updated_coin)?;
-
-    Ok(Response::new()
+    let mut res = Response::new()
         .add_message(stake_msg)
-        .add_attribute("rewards", rewards.as_slice().to_string())
         .add_attribute("action", "stake_astro_lp")
-        .add_attribute("account_id", account_id))
+        .add_attribute("account_id", account_id);
+
+    if rewards.len() > 0 {
+        res = res.add_attribute("rewards", rewards.as_slice().to_string());
+    }
+
+    Ok(res)
 }

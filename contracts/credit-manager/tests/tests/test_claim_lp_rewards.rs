@@ -65,7 +65,12 @@ fn claiming_a_single_reward() {
     // Check account id deposit balance
     let positions = mock.query_positions(&account_id);
     assert_eq!(positions.deposits.len(), 1);
+    assert_eq!(positions.deposits[0].denom, reward.denom.clone());
     assert_eq!(positions.deposits[0].amount, reward.amount);
+
+    let coin = mock.query_balance(&mock.rover, &reward.denom);
+    assert_eq!(coin.amount, reward.amount);
+
 }
 
 #[test]
@@ -114,6 +119,18 @@ fn claiming_multiple_rewards() {
     // Check account id deposit balance
     let positions = mock.query_positions(&account_id);
     assert_eq!(positions.deposits.len(), 2);
-    assert_eq!(positions.deposits[0].amount, reward_1.amount);
-    assert_eq!(positions.deposits[1].amount, reward_2.amount);
+    assert_eq!(positions.deposits[1].denom, reward_1.denom.clone());
+    assert_eq!(positions.deposits[1].amount, reward_1.amount);
+    assert_eq!(positions.deposits[0].denom, reward_2.denom.clone());
+    assert_eq!(positions.deposits[0].amount, reward_2.amount);
+
+    // Check contract has assets
+    let reward_balance_1 = mock.query_balance(&mock.rover, &reward_1.denom);
+    assert_eq!(reward_balance_1.amount, reward_1.amount);
+    let reward_balance_2 = mock.query_balance(&mock.rover, &reward_2.denom);
+    assert_eq!(reward_balance_2.amount, reward_2.amount);
+
+    // Assert no LP coins in the contract
+    let lp_coin = mock.query_balance(&mock.rover, &lp_denom);
+    assert_eq!(Uint128::zero(), lp_coin.amount);
 }

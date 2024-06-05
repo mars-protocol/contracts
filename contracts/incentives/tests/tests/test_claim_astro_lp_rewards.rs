@@ -113,7 +113,7 @@ fn lp_lifecycle() {
     // - LP in incentives = 0
     // - Rewards available = 0
     assert_eq!(ASTRO_TOTAL_LP_DEPOSITS.may_load(&deps.storage, lp_denom).unwrap(), None);
-    let rewards = query::query_unclaimed_astroport_rewards(
+    let rewards = query::query_unclaimed_astro_lp_rewards(
         deps.as_ref(),
         env.contract.address.as_ref(),
         astroport_incentives_addr.as_ref(),

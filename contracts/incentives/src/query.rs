@@ -92,7 +92,7 @@ pub fn query_incentive_states(
         .collect()
 }
 
-pub fn query_unclaimed_astroport_rewards(
+pub fn query_unclaimed_astro_lp_rewards(
     deps: Deps,
     mars_incentives_addr: &str,
     astroport_incentives_addr: &str,
@@ -113,7 +113,7 @@ pub fn query_unclaimed_astroport_rewards(
     Ok(native_coins)
 }
 
-pub fn query_lp_rewards_for_user(
+pub fn query_staked_astro_lp_rewards_for_user(
     deps: Deps,
     env: &Env,
     astroport_incentives_addr: &Addr,
@@ -191,7 +191,7 @@ pub fn query_staked_astro_lp_rewards_for_coin(
     lp_coin: &Coin,
 ) -> Result<Vec<Coin>, ContractError> {
     let lp_denom = &lp_coin.denom;
-    let pending_rewards: Vec<Coin> = query_unclaimed_astroport_rewards(
+    let pending_rewards: Vec<Coin> = query_unclaimed_astro_lp_rewards(
         deps,
         env.contract.address.as_ref(),
         astroport_incentives_addr.as_ref(),

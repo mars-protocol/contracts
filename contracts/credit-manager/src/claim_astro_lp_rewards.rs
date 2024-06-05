@@ -25,10 +25,14 @@ pub fn claim_lp_rewards(
     }
 
     let claim_rewards_msg = incentives.claim_staked_astro_lp_rewards_msg(account_id, lp_denom)?;
-
-    Ok(Response::new()
+    let mut res = Response::new()
         .add_message(claim_rewards_msg)
-        .add_attribute("rewards", rewards.as_slice().to_string())
         .add_attribute("action", "claim_astro_lp_rewards")
-        .add_attribute("account_id", account_id))
+        .add_attribute("account_id", account_id);
+
+    if rewards.len() > 0 {
+        res = res.add_attribute("rewards", rewards.as_slice().to_string());
+    }
+
+    Ok(res)
 }
