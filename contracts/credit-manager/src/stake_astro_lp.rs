@@ -42,7 +42,7 @@ pub fn stake_lp(deps: DepsMut, account_id: &str, lp_coin: ActionCoin) -> Contrac
         .add_attribute("action", "stake_astro_lp")
         .add_attribute("account_id", account_id);
 
-    if rewards.len() > 0 {
+    if !rewards.is_empty() {
         res = res.add_attribute("rewards", rewards.as_slice().to_string());
     }
 

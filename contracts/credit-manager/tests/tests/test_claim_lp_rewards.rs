@@ -13,7 +13,7 @@ fn claiming_rewards_when_there_are_none() {
     let account_id = mock.create_credit_account(&user).unwrap();
     let lp_denom = "factory12345";
 
-    let unclaimed = mock.query_pending_astroport_rewards(&account_id, lp_denom);
+    let unclaimed = mock.query_staked_astro_lp_rewards(&account_id, lp_denom);
     assert!(unclaimed.is_empty());
 
     let res = mock.update_credit_account(
@@ -40,12 +40,12 @@ fn claiming_a_single_reward() {
         amount: Uint128::new(1000000),
     };
 
-    let unclaimed = mock.query_pending_astroport_rewards(&account_id, lp_denom);
+    let unclaimed = mock.query_staked_astro_lp_rewards(&account_id, lp_denom);
     assert!(unclaimed.is_empty());
 
     mock.add_astro_incentive_reward(&account_id, lp_denom, reward.clone());
 
-    let unclaimed = mock.query_pending_astroport_rewards(&account_id, lp_denom);
+    let unclaimed = mock.query_staked_astro_lp_rewards(&account_id, lp_denom);
     assert_eq!(unclaimed.len(), 1);
 
     // Check account id deposit balance
@@ -92,13 +92,13 @@ fn claiming_multiple_rewards() {
         amount: Uint128::new(1000000),
     };
 
-    let unclaimed = mock.query_pending_astroport_rewards(&account_id, lp_denom);
+    let unclaimed = mock.query_staked_astro_lp_rewards(&account_id, lp_denom);
     assert!(unclaimed.is_empty());
 
     mock.add_astro_incentive_reward(&account_id, lp_denom, reward_1.clone());
     mock.add_astro_incentive_reward(&account_id, lp_denom, reward_2.clone());
 
-    let unclaimed = mock.query_pending_astroport_rewards(&account_id, lp_denom);
+    let unclaimed = mock.query_staked_astro_lp_rewards(&account_id, lp_denom);
     assert_eq!(unclaimed.len(), 2);
 
     // Check account id deposit balance
@@ -130,6 +130,6 @@ fn claiming_multiple_rewards() {
     assert_eq!(reward_balance_2.amount, reward_2.amount);
 
     // Assert no LP coins in the contract
-    let lp_coin = mock.query_balance(&mock.rover, &lp_denom);
+    let lp_coin = mock.query_balance(&mock.rover, lp_denom);
     assert_eq!(Uint128::zero(), lp_coin.amount);
 }

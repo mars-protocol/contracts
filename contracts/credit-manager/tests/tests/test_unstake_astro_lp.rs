@@ -1,4 +1,4 @@
-use cosmwasm_std::{coins, Addr, Coin, Uint128};
+use cosmwasm_std::{coin, coins, Addr, Coin, Uint128};
 use mars_credit_manager::error::ContractError;
 use mars_testing::multitest::helpers::{assert_err, uosmo_info, AccountToFund};
 use mars_types::credit_manager::{Action, ActionAmount, ActionCoin};
@@ -73,7 +73,7 @@ fn unstake() {
                 lp_token: ActionCoin::from(&lp_coin.clone()),
             },
         ],
-        &[lp_coin],
+        &[lp_coin.clone()],
     )
     .unwrap();
 
@@ -97,8 +97,8 @@ fn unstake() {
     assert_eq!(positions.deposits[0].denom, lp_denom.to_string());
 
     // Assert correct lp balance in contract
-    let lp_coin = mock.query_balance(&mock.rover, &lp_denom);
-    assert_eq!(positions.deposits[0].amount, lp_coin.amount);
+    let cm_lp_coin = mock.query_balance(&mock.rover, lp_denom);
+    assert_eq!(positions.deposits[0].amount, cm_lp_coin.amount);
 
     // Entire remaining amount
     mock.update_credit_account(
@@ -121,8 +121,8 @@ fn unstake() {
     assert_eq!(positions.deposits[0].denom, lp_denom.to_string());
 
     // Assert correct lp balance in contract
-    let lp_coin = mock.query_balance(&mock.rover, &lp_denom);
-    assert_eq!(Uint128::zero(), lp_coin.amount);
+    let cm_lp_coin = mock.query_balance(&mock.rover, lp_denom);
+    assert_eq!(cm_lp_coin.amount, lp_coin.amount);
 }
 
 #[test]
@@ -142,15 +142,9 @@ fn unstake_claims_rewards() {
     let user = Addr::unchecked("user");
     let account_id = mock.create_credit_account(&user).unwrap();
     let lp_amount = Uint128::new(100);
-    let reward = Coin {
-        denom: coin_info.denom.clone(),
-        amount: Uint128::new(1000000),
-    };
 
-    let lp_coin = Coin {
-        denom: lp_denom.to_string(),
-        amount: lp_amount,
-    };
+    let reward = coin(1000000u128, coin_info.denom.clone());
+    let lp_coin = coin(lp_amount.u128(), lp_denom.to_string());
 
     // stake
     mock.update_credit_account(
@@ -197,6 +191,6 @@ fn unstake_claims_rewards() {
     assert_eq!(positions.staked_lp[0].denom, lp_denom.to_string());
 
     // Assert correct lp balance in contract
-    let lp_coin = mock.query_balance(&mock.rover, &lp_denom);
-    assert_eq!(positions.deposits[0].amount, Uint128::new(50));
+    let lp_coin = mock.query_balance(&mock.rover, lp_denom);
+    assert_eq!(positions.deposits[0].amount, lp_coin.amount);
 }

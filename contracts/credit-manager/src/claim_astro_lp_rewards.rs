@@ -30,7 +30,7 @@ pub fn claim_lp_rewards(
         .add_attribute("action", "claim_astro_lp_rewards")
         .add_attribute("account_id", account_id);
 
-    if rewards.len() > 0 {
+    if !rewards.is_empty() {
         res = res.add_attribute("rewards", rewards.as_slice().to_string());
     }
 

@@ -55,7 +55,7 @@ pub fn unstake_lp(
         .add_attribute("account_id", account_id)
         .add_attribute("lp_unstaked", updated_coin.to_string());
 
-    if lp_position.rewards.len() > 0 {
+    if !lp_position.rewards.is_empty() {
         res = res.add_attribute("rewards", lp_position.rewards.as_slice().to_string());
     }
 
