@@ -425,7 +425,7 @@ impl MockEnv {
     }
 
     pub fn add_astro_incentive_reward(&mut self, account_id: &str, lp_denom: &str, coin: Coin) {
-        // Register reward in mock contract
+        // This is a bit of a hack to set up astroport lp rewards in our mock contract, using the existing API.
         self.app
             .execute_contract(
                 self.rover.clone(),
@@ -433,7 +433,9 @@ impl MockEnv {
                 &SetAssetIncentive {
                     collateral_denom: lp_denom.to_string(),
                     incentive_denom: coin.denom.clone(),
+                    // Emision per second is used for amount
                     emission_per_second: coin.amount,
+                    // Start time is used for account_id. The account id is parsed as a u64
                     start_time: account_id.parse().unwrap(),
                     duration: Default::default(),
                 },
