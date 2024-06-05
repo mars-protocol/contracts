@@ -81,7 +81,7 @@ fn staked_lp_positions_contribute_to_health() {
         vec![Liquidate {
             liquidatee_account_id: liquidatee_account_id.clone(),
             debt_coin: uosmo_info.to_coin(10),
-            request: LiquidateRequest::AstroLp(lp_info.denom),
+            request: LiquidateRequest::StakedAstroLp(lp_info.denom),
         }],
         &[],
     );
@@ -153,7 +153,7 @@ fn liquidatee_does_not_have_requested_staked_lp_coin() {
             Liquidate {
                 liquidatee_account_id: liquidatee_account_id.clone(),
                 debt_coin: uosmo_info.to_coin(10),
-                request: LiquidateRequest::AstroLp(ujake_info.denom),
+                request: LiquidateRequest::StakedAstroLp(ujake_info.denom),
             },
         ],
         &[uosmo_info.to_coin(10)],
@@ -225,7 +225,7 @@ fn staked_lp_position_partially_liquidated() {
             Liquidate {
                 liquidatee_account_id: liquidatee_account_id.clone(),
                 debt_coin: uatom_info.to_coin(45),
-                request: LiquidateRequest::AstroLp(uosmo_info.denom),
+                request: LiquidateRequest::StakedAstroLp(uosmo_info.denom),
             },
         ],
         &[uatom_info.to_coin(45)],

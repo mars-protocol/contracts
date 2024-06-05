@@ -261,12 +261,14 @@ pub fn dispatch_actions(
                         position_type,
                     },
                 }),
-                LiquidateRequest::AstroLp(lp_denom) => callbacks.push(CallbackMsg::Liquidate {
-                    liquidator_account_id: account_id.to_string(),
-                    liquidatee_account_id: liquidatee_account_id.to_string(),
-                    debt_coin,
-                    request: LiquidateRequest::AstroLp(lp_denom),
-                }),
+                LiquidateRequest::StakedAstroLp(lp_denom) => {
+                    callbacks.push(CallbackMsg::Liquidate {
+                        liquidator_account_id: account_id.to_string(),
+                        liquidatee_account_id: liquidatee_account_id.to_string(),
+                        debt_coin,
+                        request: LiquidateRequest::StakedAstroLp(lp_denom),
+                    })
+                }
             },
             Action::SwapExactIn {
                 coin_in,
@@ -542,7 +544,7 @@ pub fn execute_callback(
                     request_vault,
                     position_type,
                 ),
-                LiquidateRequest::AstroLp(request_coin_denom) => liquidate_astro_lp(
+                LiquidateRequest::StakedAstroLp(request_coin_denom) => liquidate_astro_lp(
                     deps,
                     env,
                     &liquidator_account_id,

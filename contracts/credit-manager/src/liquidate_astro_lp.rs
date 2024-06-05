@@ -19,7 +19,7 @@ pub fn liquidate_astro_lp(
     let incentives = INCENTIVES.load(deps.storage)?;
 
     // Check how much LP coins is available for withdraw (can be withdrawn from Astro)
-    let lp_position = incentives.query_astroport_staked_lp_position(
+    let lp_position = incentives.query_staked_astro_lp_position(
         &deps.querier,
         liquidatee_account_id,
         request_coin_denom,
@@ -44,7 +44,7 @@ pub fn liquidate_astro_lp(
 
     // Liquidatee's LP coin withdrawn from Astro
     let withdraw_from_liquidatee_msg =
-        incentives.unstake_astro_lp_msg(liquidatee_account_id, liquidatee_request.clone())?;
+        incentives.unstake_astro_lp_msg(liquidatee_account_id, &liquidatee_request)?;
 
     // Liquidator gets portion of withdrawn LP coin
     increment_coin_balance(deps.storage, liquidator_account_id, &liquidator_request)?;

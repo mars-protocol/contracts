@@ -118,7 +118,7 @@ pub enum LiquidateRequest<T> {
     },
     /// Pay back debt of a liquidatable credit manager account for a via liquidating an Astro LP position.
     /// LP shares are transfered from the liquidatable to the liquidator.
-    AstroLp(String),
+    StakedAstroLp(String),
 }
 
 /// The list of actions that users can perform on their positions
