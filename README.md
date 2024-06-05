@@ -171,7 +171,7 @@ cargo make test
 | mars-params            | [`osmo1nlmdxt9ctql2jr47qd4fpgzg84cjswxyw6q99u4y4u4q6c2f5ksq7ysent`][17] | [`v2.0.3`][46] |
 | mars-red-bank          | [`osmo1c3ljch9dfw5kf52nfwpxd2zmj2ese7agnx0p9tenkrryasrle5sqf3ftpg`][18] | [`v2.0.5`][49] |
 | mars-rewards-collector | [`osmo1urvqe5mw00ws25yqdd4c4hlh8kdyf567mpcml7cdve9w08z0ydcqvsrgdy`][19] | [`v2.0.4`][47] |
-| mars-swapper           | [`osmo1wee0z8c7tcawyl647eapqs4a88q8jpa7ddy6nn2nrs7t47p2zhxswetwla`][20] | [`v2.0.6`][50] |
+| mars-swapper           | [`osmo1wee0z8c7tcawyl647eapqs4a88q8jpa7ddy6nn2nrs7t47p2zhxswetwla`][20] | [`v2.0.7`][50] |
 | mars-zapper            | [`osmo17qwvc70pzc9mudr8t02t3pl74hhqsgwnskl734p4hug3s8mkerdqzduf7c`][21] | [`v2.0.0`][43] |
 
 ### devnet (Osmosis)
@@ -272,5 +272,5 @@ Contents of this repository are open source under [GNU General Public License v3
 [47]: https://github.com/mars-protocol/contracts/releases/tag/v2.0.4
 [48]: https://github.com/mars-protocol/contracts/releases/tag/v1.2.2
 [49]: https://github.com/mars-protocol/contracts/releases/tag/v2.0.5
-[50]: https://github.com/mars-protocol/contracts/releases/tag/v2.0.6
+[50]: https://github.com/mars-protocol/contracts/releases/tag/v2.0.7
 [51]: https://github.com/mars-protocol/contracts/releases/tag/v1.3.0
