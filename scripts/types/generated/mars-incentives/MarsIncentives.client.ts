@@ -19,8 +19,6 @@ import {
   Coin,
   ActionCoin,
   QueryMsg,
-  PaginationResponseForTupleOfStringAndArrayOfCoin,
-  Metadata,
   ArrayOfActiveEmission,
   ActiveEmission,
   ConfigResponse,
@@ -31,12 +29,14 @@ import {
   ArrayOfIncentiveStateResponse,
   StakedLpPositionResponse,
   PaginationResponseForStakedLpPositionResponse,
+  Metadata,
+  PaginationResponseForTupleOfStringAndArrayOfCoin,
   ArrayOfCoin,
   ArrayOfWhitelistEntry,
 } from './MarsIncentives.types'
 export interface MarsIncentivesReadOnlyInterface {
   contractAddress: string
-  accountStakedLpRewards: ({
+  stakedLpRewards: ({
     accountId,
     lpDenom,
   }: {
@@ -123,7 +123,7 @@ export class MarsIncentivesQueryClient implements MarsIncentivesReadOnlyInterfac
   constructor(client: CosmWasmClient, contractAddress: string) {
     this.client = client
     this.contractAddress = contractAddress
-    this.accountStakedLpRewards = this.accountStakedLpRewards.bind(this)
+    this.stakedLpRewards = this.stakedLpRewards.bind(this)
     this.activeEmissions = this.activeEmissions.bind(this)
     this.config = this.config.bind(this)
     this.incentiveState = this.incentiveState.bind(this)
@@ -136,7 +136,7 @@ export class MarsIncentivesQueryClient implements MarsIncentivesReadOnlyInterfac
     this.whitelist = this.whitelist.bind(this)
   }
 
-  accountStakedLpRewards = async ({
+  stakedLpRewards = async ({
     accountId,
     lpDenom,
   }: {
@@ -144,7 +144,7 @@ export class MarsIncentivesQueryClient implements MarsIncentivesReadOnlyInterfac
     lpDenom: string
   }): Promise<PaginationResponseForTupleOfStringAndArrayOfCoin> => {
     return this.client.queryContractSmart(this.contractAddress, {
-      account_staked_lp_rewards: {
+      staked_lp_rewards: {
         account_id: accountId,
         lp_denom: lpDenom,
       },

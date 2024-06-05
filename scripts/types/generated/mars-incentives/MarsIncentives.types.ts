@@ -120,7 +120,7 @@ export interface ActionCoin {
 }
 export type QueryMsg =
   | {
-      account_staked_lp_rewards: {
+      staked_lp_rewards: {
         account_id: string
         lp_denom: string
       }
@@ -186,13 +186,6 @@ export type QueryMsg =
   | {
       whitelist: {}
     }
-export interface PaginationResponseForTupleOfStringAndArrayOfCoin {
-  data: [string, Coin[]][]
-  metadata: Metadata
-}
-export interface Metadata {
-  has_more: boolean
-}
 export type ArrayOfActiveEmission = ActiveEmission[]
 export interface ActiveEmission {
   denom: string
@@ -225,6 +218,13 @@ export interface StakedLpPositionResponse {
 }
 export interface PaginationResponseForStakedLpPositionResponse {
   data: StakedLpPositionResponse[]
+  metadata: Metadata
+}
+export interface Metadata {
+  has_more: boolean
+}
+export interface PaginationResponseForTupleOfStringAndArrayOfCoin {
+  data: [string, Coin[]][]
   metadata: Metadata
 }
 export type ArrayOfCoin = Coin[]
