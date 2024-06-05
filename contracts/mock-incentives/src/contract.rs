@@ -88,7 +88,7 @@ pub fn query(deps: Deps, _env: Env, msg: incentives::QueryMsg) -> StdResult<Bina
             account_id,
             ..
         } => to_json_binary(&query_unclaimed_rewards(deps, &user, &account_id)?),
-        incentives::QueryMsg::AccountStakedLpRewards {
+        incentives::QueryMsg::StakedLpRewards {
             account_id,
             lp_denom,
             ..

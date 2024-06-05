@@ -207,7 +207,7 @@ pub enum MigrateV1ToV2 {
 pub enum QueryMsg {
     /// Query account staked LP rewards
     #[returns(PaginatedLpRewardsResponse)]
-    AccountStakedLpRewards {
+    StakedLpRewards {
         /// The id of the account who owns the LP
         account_id: String,
         /// Denom of LP that is accruing rewards

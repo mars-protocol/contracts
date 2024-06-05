@@ -117,7 +117,7 @@ impl Incentives {
     ) -> StdResult<Vec<Coin>> {
         querier.query_wasm_smart(
             self.addr.to_string(),
-            &QueryMsg::AccountStakedLpRewards {
+            &QueryMsg::StakedLpRewards {
                 account_id: account_id.to_string(),
                 lp_denom: lp_denom.to_string(),
             },
