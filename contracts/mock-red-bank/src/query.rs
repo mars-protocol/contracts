@@ -15,7 +15,40 @@ pub fn query_market(deps: Deps, denom: String) -> StdResult<Market> {
 
 pub fn query_debt(deps: Deps, user: String, denom: String) -> StdResult<UserDebtResponse> {
     let user_addr = deps.api.addr_validate(&user)?;
-    let amount = load_debt_amount(deps.storage, &user_addr, &denom)?;
+    let amount = load_debt_amount(deps.storage, &user_addr, "", &denom)?;
+    Ok(UserDebtResponse {
+        denom,
+        amount,
+        amount_scaled: Uint128::zero(),
+        uncollateralized: false,
+    })
+}
+
+pub fn query_debt_v2(deps: Deps, user: String, denom: String, account_id: Option<String>) -> StdResult<UserDebtResponse> {
+    let user_addr = deps.api.addr_validate(&user)?;
+    let amount = load_debt_amount(deps.storage, &user_addr, &account_id.unwrap_or_default(), &denom)?;
+    Ok(UserDebtResponse {
+        denom,
+        amount,
+        amount_scaled: Uint128::zero(),
+        uncollateralized: false,
+    })
+}
+
+pub fn query_debts(deps: Deps, user: String, denom: String) -> StdResult<UserDebtResponse> {
+    let user_addr = deps.api.addr_validate(&user)?;
+    let amount = load_debt_amount(deps.storage, &user_addr, "", &denom)?;
+    Ok(UserDebtResponse {
+        denom,
+        amount,
+        amount_scaled: Uint128::zero(),
+        uncollateralized: false,
+    })
+}
+
+pub fn query_debts_v2(deps: Deps, user: String, denom: String, account_id: Option<String>) -> StdResult<UserDebtResponse> {
+    let user_addr = deps.api.addr_validate(&user)?;
+    let amount = load_debt_amount(deps.storage, &user_addr, &account_id.unwrap_or_default(), &denom)?;
     Ok(UserDebtResponse {
         denom,
         amount,

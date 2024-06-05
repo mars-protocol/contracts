@@ -74,9 +74,31 @@ pub enum ExecuteMsg {
         recipient: Option<String>,
     },
 
+    /// Borrow native coins. If borrow allowed, amount is added to caller's debt
+    /// and sent to the address.
+    BorrowV2 {
+        /// Credit account id (Rover)
+        account_id: Option<String>,
+        /// Asset to borrow
+        denom: String,
+        /// Amount to borrow
+        amount: Uint128,
+        /// The address where the borrowed amount is sent
+        recipient: Option<String>,
+    },
+
     /// Repay native coins loan. Coins used to repay must be sent in the
     /// transaction this call is made.
     Repay {
+        /// Repay the funds for the user
+        on_behalf_of: Option<String>,
+    },
+
+    /// Repay native coins loan. Coins used to repay must be sent in the
+    /// transaction this call is made.
+    RepayV2 {
+        /// Credit account id (Rover)
+        account_id: Option<String>,
         /// Repay the funds for the user
         on_behalf_of: Option<String>,
     },
@@ -171,10 +193,27 @@ pub enum QueryMsg {
         denom: String,
     },
 
+    /// Get user debt position for a specific asset
+    #[returns(crate::red_bank::UserDebtResponse)]
+    UserDebtV2 {
+        user: String,
+        account_id: Option<String>,
+        denom: String,
+    },
+
     /// Get all debt positions for a user
     #[returns(Vec<crate::red_bank::UserDebtResponse>)]
     UserDebts {
         user: String,
+        start_after: Option<String>,
+        limit: Option<u32>,
+    },
+
+    /// Get all debt positions for a user with pagination
+    #[returns(cw_paginate::PaginationResponse<crate::red_bank::UserDebtResponse>)]
+    UserDebtsV2 {
+        user: String,
+        account_id: Option<String>,
         start_after: Option<String>,
         limit: Option<u32>,
     },

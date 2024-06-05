@@ -51,21 +51,6 @@ pub enum QueryMsg {
         start_after: Option<(String, String)>,
         limit: Option<u32>,
     },
-    /// Enumerate debt shares for all token positions; start_after accepts (account_id, denom)
-    #[returns(Vec<SharesResponseItem>)]
-    AllDebtShares {
-        start_after: Option<(String, String)>,
-        limit: Option<u32>,
-    },
-    /// Total debt shares issued for Coin
-    #[returns(DebtShares)]
-    TotalDebtShares(String),
-    /// Enumerate total debt shares for all supported coins; start_after accepts denom string
-    #[returns(Vec<DebtShares>)]
-    AllTotalDebtShares {
-        start_after: Option<String>,
-        limit: Option<u32>,
-    },
     /// Enumerate all vault positions; start_after accepts (account_id, addr)
     #[returns(Vec<VaultPositionResponseItem>)]
     AllVaultPositions {
@@ -127,8 +112,6 @@ pub struct LentShares {
 #[cw_serde]
 pub struct DebtAmount {
     pub denom: String,
-    /// number of shares in debt pool
-    pub shares: Uint128,
     /// amount of coins
     pub amount: Uint128,
 }

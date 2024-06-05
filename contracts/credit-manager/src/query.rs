@@ -4,8 +4,8 @@ use cw_storage_plus::Bound;
 use mars_types::{
     adapters::vault::{Vault, VaultBase, VaultPosition, VaultPositionValue, VaultUnchecked},
     credit_manager::{
-        Account, CoinBalanceResponseItem, ConfigResponse, DebtAmount, DebtShares, Positions,
-        SharesResponseItem, VaultPositionResponseItem, VaultUtilizationResponse,
+        Account, CoinBalanceResponseItem, ConfigResponse, Positions, VaultPositionResponseItem,
+        VaultUtilizationResponse,
     },
     health::AccountKind,
     oracle::ActionKind,
@@ -14,11 +14,10 @@ use mars_types::{
 use crate::{
     error::ContractResult,
     state::{
-        ACCOUNT_KINDS, ACCOUNT_NFT, COIN_BALANCES, DEBT_SHARES, HEALTH_CONTRACT, INCENTIVES,
-        MAX_SLIPPAGE, MAX_UNLOCKING_POSITIONS, ORACLE, OWNER, PARAMS, RED_BANK, REWARDS_COLLECTOR,
-        SWAPPER, TOTAL_DEBT_SHARES, VAULT_POSITIONS, ZAPPER,
+        ACCOUNT_KINDS, ACCOUNT_NFT, COIN_BALANCES, HEALTH_CONTRACT, INCENTIVES, MAX_SLIPPAGE,
+        MAX_UNLOCKING_POSITIONS, ORACLE, OWNER, PARAMS, RED_BANK, REWARDS_COLLECTOR, SWAPPER,
+        VAULT_POSITIONS, ZAPPER,
     },
-    utils::debt_shares_to_amount,
     vault::vault_utilization_in_deposit_cap_denom,
 };
 
@@ -63,12 +62,13 @@ pub fn query_config(deps: Deps) -> ContractResult<ConfigResponse> {
 }
 
 pub fn query_positions(deps: Deps, account_id: &str) -> ContractResult<Positions> {
+    let red_bank = RED_BANK.load(deps.storage)?;
     Ok(Positions {
         account_id: account_id.to_string(),
         account_kind: ACCOUNT_KINDS.load(deps.storage, account_id).unwrap_or(AccountKind::Default),
         deposits: query_coin_balances(deps, account_id)?,
-        debts: query_debt_amounts(deps, account_id)?,
-        lends: RED_BANK.load(deps.storage)?.query_all_lent(&deps.querier, account_id)?,
+        debts: red_bank.query_all_debt(&deps.querier, account_id)?,
+        lends: red_bank.query_all_lent(&deps.querier, account_id)?,
         vaults: query_vault_positions(deps, account_id)?,
         staked_astro_lps: INCENTIVES
             .load(deps.storage)?
@@ -93,22 +93,6 @@ pub fn query_all_coin_balances(
     })
 }
 
-fn query_debt_amounts(deps: Deps, account_id: &str) -> ContractResult<Vec<DebtAmount>> {
-    DEBT_SHARES
-        .prefix(account_id)
-        .range(deps.storage, None, None, Order::Ascending)
-        .map(|res| {
-            let (denom, shares) = res?;
-            let coin = debt_shares_to_amount(deps, &denom, shares)?;
-            Ok(DebtAmount {
-                denom,
-                shares,
-                amount: coin.amount,
-            })
-        })
-        .collect()
-}
-
 pub fn query_coin_balances(deps: Deps, account_id: &str) -> ContractResult<Vec<Coin>> {
     COIN_BALANCES
         .prefix(account_id)
@@ -121,23 +105,6 @@ pub fn query_coin_balances(deps: Deps, account_id: &str) -> ContractResult<Vec<C
             })
         })
         .collect()
-}
-
-pub fn query_all_debt_shares(
-    deps: Deps,
-    start_after: Option<(String, String)>,
-    limit: Option<u32>,
-) -> StdResult<Vec<SharesResponseItem>> {
-    let start = start_after
-        .as_ref()
-        .map(|(account_id, denom)| Bound::exclusive((account_id.as_str(), denom.as_str())));
-    paginate_map(&DEBT_SHARES, deps.storage, start, limit, |(account_id, denom), shares| {
-        Ok(SharesResponseItem {
-            account_id,
-            denom,
-            shares,
-        })
-    })
 }
 
 pub fn query_vault_utilization(
@@ -230,28 +197,6 @@ pub fn query_all_vault_positions(
                 vault: VaultBase::new(addr),
                 amount,
             },
-        })
-    })
-}
-
-pub fn query_total_debt_shares(deps: Deps, denom: &str) -> StdResult<DebtShares> {
-    let shares = TOTAL_DEBT_SHARES.load(deps.storage, denom)?;
-    Ok(DebtShares {
-        denom: denom.to_string(),
-        shares,
-    })
-}
-
-pub fn query_all_total_debt_shares(
-    deps: Deps,
-    start_after: Option<String>,
-    limit: Option<u32>,
-) -> StdResult<Vec<DebtShares>> {
-    let start = start_after.as_ref().map(|denom| Bound::exclusive(denom.as_str()));
-    paginate_map(&TOTAL_DEBT_SHARES, deps.storage, start, limit, |denom, shares| {
-        Ok(DebtShares {
-            denom,
-            shares,
         })
     })
 }

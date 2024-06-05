@@ -14,6 +14,7 @@ use crate::{
     user::User,
 };
 
+
 /// Add debt for the borrower and send the borrowed funds
 pub fn borrow(
     deps: DepsMut,
@@ -22,6 +23,18 @@ pub fn borrow(
     denom: String,
     borrow_amount: Uint128,
     recipient: Option<String>,
+) -> Result<Response, ContractError> {
+    borrow_v2(deps, env, info, denom, borrow_amount, recipient, None)
+}
+
+pub fn borrow_v2(
+    deps: DepsMut,
+    env: Env,
+    info: MessageInfo,
+    denom: String,
+    borrow_amount: Uint128,
+    recipient: Option<String>,
+    account_id: Option<String>,
 ) -> Result<Response, ContractError> {
     let borrower = User(&info.sender);
 
@@ -109,7 +122,13 @@ pub fn borrow(
         get_scaled_debt_amount(borrow_amount, &borrow_market, env.block.time.seconds())?;
 
     borrow_market.increase_debt(borrow_amount_scaled)?;
-    borrower.increase_debt(deps.storage, &denom, borrow_amount_scaled, uncollateralized_debt)?;
+    borrower.increase_debt(
+        deps.storage,
+        &denom,
+        borrow_amount_scaled,
+        uncollateralized_debt,
+        account_id,
+    )?;
 
     response = update_interest_rates(&env, &mut borrow_market, response)?;
     MARKETS.save(deps.storage, &denom, &borrow_market)?;

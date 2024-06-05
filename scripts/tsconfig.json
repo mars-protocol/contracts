@@ -28,5 +28,5 @@
     "allowJs": true
   },
   "include": ["**/*.ts", "**/*.tsx", "types.d.ts"],
-  "exclude": ["node_modules", "./build/**/*", "types/generated/**/*", "health/example-react"]
+  "exclude": ["node_modules", "./build/**/*", "types/generated/**/*"]
 }

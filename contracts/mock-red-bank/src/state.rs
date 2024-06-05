@@ -4,8 +4,8 @@ use mars_types::red_bank::Market;
 
 // Map<Denom, Market>
 pub const MARKETS: Map<&str, Market> = Map::new("markets");
-// Map<(DebtHolder, CoinDenom), AmountOfDebt>
-pub const DEBT_AMOUNT: Map<(Addr, String), Uint128> = Map::new("debt_amount");
+// Map<(DebtHolder, CmAccountId, CoinDenom), AmountOfDebt>
+pub const DEBT_AMOUNT: Map<(Addr, String, String), Uint128> = Map::new("debt_amount");
 // Map<(Addr, CmAccountId, CoinDenom), AmountOfCollateral>
 pub const COLLATERAL_AMOUNT: Map<(String, String, String), Uint128> = Map::new("collateral_amount");
 // Map<(Addr, CmAccountId), Vec<CoinDenom>> : Used for tracking total denoms user deposited

@@ -117,10 +117,42 @@ pub fn query_user_debt(
     user_addr: Addr,
     denom: String,
 ) -> Result<UserDebtResponse, ContractError> {
+    let user_id = UserId::credit_manager(user_addr, "".to_string());
+    let user_id_key: UserIdKey = user_id.try_into()?;
+
     let Debt {
         amount_scaled,
         uncollateralized,
-    } = DEBTS.may_load(deps.storage, (&user_addr, &denom))?.unwrap_or_default();
+    } = DEBTS.may_load(deps.storage, (&user_id_key, &denom))?.unwrap_or_default();
+
+    let block_time = block.time.seconds();
+    let market = MARKETS.load(deps.storage, &denom)?;
+    let amount = get_underlying_debt_amount(amount_scaled, &market, block_time)?;
+
+    Ok(UserDebtResponse {
+        denom,
+        amount_scaled,
+        amount,
+        uncollateralized,
+    })
+}
+
+// todo: Create tests for this query
+pub fn query_user_debt_v2(
+    deps: Deps,
+    block: &BlockInfo,
+    user_addr: Addr,
+    account_id: Option<String>,
+    denom: String,
+) -> Result<UserDebtResponse, ContractError> {
+    let acc_id = account_id.unwrap_or("".to_string());
+    let user_id = UserId::credit_manager(user_addr, acc_id);
+    let user_id_key: UserIdKey = user_id.try_into()?;
+
+    let Debt {
+        amount_scaled,
+        uncollateralized,
+    } = DEBTS.may_load(deps.storage, (&user_id_key, &denom))?.unwrap_or_default();
 
     let block_time = block.time.seconds();
     let market = MARKETS.load(deps.storage, &denom)?;
@@ -143,11 +175,14 @@ pub fn query_user_debts(
 ) -> Result<Vec<UserDebtResponse>, ContractError> {
     let block_time = block.time.seconds();
 
+    let user_id = UserId::credit_manager(user_addr, "".to_string());
+    let user_id_key: UserIdKey = user_id.try_into()?;
+
     let start = start_after.map(|denom| Bound::ExclusiveRaw(denom.into_bytes()));
     let limit = limit.unwrap_or(DEFAULT_LIMIT).min(MAX_LIMIT) as usize;
 
     DEBTS
-        .prefix(&user_addr)
+        .prefix(&user_id_key)
         .range(deps.storage, start, None, Order::Ascending)
         .take(limit)
         .map(|item| {
@@ -166,6 +201,40 @@ pub fn query_user_debts(
             })
         })
         .collect()
+}
+
+// todo: Create tests for this query
+pub fn query_user_debts_v2(
+    deps: Deps,
+    block: &BlockInfo,
+    user_addr: Addr,
+    account_id: Option<String>,
+    start_after: Option<String>,
+    limit: Option<u32>,
+) -> Result<PaginationResponse<UserDebtResponse>, ContractError> {
+    let block_time = block.time.seconds();
+
+    let acc_id = account_id.unwrap_or("".to_string());
+
+    let user_id = UserId::credit_manager(user_addr, acc_id);
+    let user_id_key: UserIdKey = user_id.try_into()?;
+
+    let start = start_after.map(|denom| Bound::ExclusiveRaw(denom.into_bytes()));
+    let limit = limit.unwrap_or(DEFAULT_LIMIT).min(MAX_LIMIT);
+
+    paginate_prefix_query(&DEBTS, deps.storage, &user_id_key, start, Some(limit), |denom, debt| {
+        let market = MARKETS.load(deps.storage, &denom)?;
+
+        let amount_scaled = debt.amount_scaled;
+        let amount = get_underlying_debt_amount(amount_scaled, &market, block_time)?;
+
+        Ok(UserDebtResponse {
+            denom,
+            amount_scaled,
+            amount,
+            uncollateralized: debt.uncollateralized,
+        })
+    })
 }
 
 pub fn query_user_collateral(

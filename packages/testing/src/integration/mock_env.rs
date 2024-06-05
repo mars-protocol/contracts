@@ -484,11 +484,46 @@ impl RedBank {
         )
     }
 
+    // todo: also make sure this is acvtually used
+    pub fn borrow_v2(
+        &self,
+        env: &mut MockEnv,
+        sender: &Addr,
+        account_id: Option<String>,
+        denom: &str,
+        amount: u128,
+    ) -> AnyResult<AppResponse> {
+        env.app.execute_contract(
+            sender.clone(),
+            self.contract_addr.clone(),
+            &red_bank::ExecuteMsg::BorrowV2 {
+                account_id,
+                denom: denom.to_string(),
+                amount: amount.into(),
+                recipient: None,
+            },
+            &[],
+        )
+    }
+
     pub fn repay(&self, env: &mut MockEnv, sender: &Addr, coin: Coin) -> AnyResult<AppResponse> {
         env.app.execute_contract(
             sender.clone(),
             self.contract_addr.clone(),
             &red_bank::ExecuteMsg::Repay {
+                on_behalf_of: None,
+            },
+            &[coin],
+        )
+    }
+
+    // todo: make sure this is actyually used
+    pub fn repay_v2(&self, env: &mut MockEnv, sender: &Addr, coin: Coin, account_id: Option<String>) -> AnyResult<AppResponse> {
+        env.app.execute_contract(
+            sender.clone(),
+            self.contract_addr.clone(),
+            &red_bank::ExecuteMsg::RepayV2 {
+                account_id,
                 on_behalf_of: None,
             },
             &[coin],
@@ -606,13 +641,38 @@ impl RedBank {
         res.into_iter().map(|r| (r.denom.clone(), r)).collect()
     }
 
-    pub fn query_user_debt(&self, env: &mut MockEnv, user: &Addr, denom: &str) -> UserDebtResponse {
+    pub fn query_user_debt(
+        &self,
+        env: &mut MockEnv,
+        user: &Addr,
+        denom: &str,
+    ) -> UserDebtResponse {
         env.app
             .wrap()
             .query_wasm_smart(
                 self.contract_addr.clone(),
                 &red_bank::QueryMsg::UserDebt {
                     user: user.to_string(),
+                    denom: denom.to_string(),
+                },
+            )
+            .unwrap()
+    }
+
+    pub fn query_user_debt_v2(
+        &self,
+        env: &mut MockEnv,
+        user: &Addr,
+        account_id: &str,
+        denom: &str,
+    ) -> UserDebtResponse {
+        env.app
+            .wrap()
+            .query_wasm_smart(
+                self.contract_addr.clone(),
+                &red_bank::QueryMsg::UserDebtV2 {
+                    user: user.to_string(),
+                    account_id: Some(account_id.to_string()),
                     denom: denom.to_string(),
                 },
             )
@@ -631,6 +691,29 @@ impl RedBank {
                 self.contract_addr.clone(),
                 &red_bank::QueryMsg::UserDebts {
                     user: user.to_string(),
+                    start_after: None,
+                    limit: Some(100),
+                },
+            )
+            .unwrap();
+        res.into_iter().map(|r| (r.denom.clone(), r)).collect()
+    }
+
+    // todo: make sure this is used? Probably during testing
+    pub fn query_user_debts_v2(
+        &self,
+        env: &mut MockEnv,
+        user: &Addr,
+        account_id: &str,
+    ) -> HashMap<String, UserDebtResponse> {
+        let res: Vec<UserDebtResponse> = env
+            .app
+            .wrap()
+            .query_wasm_smart(
+                self.contract_addr.clone(),
+                &red_bank::QueryMsg::UserDebtsV2 {
+                    user: user.to_string(),
+                    account_id: Some(account_id.to_string()),
                     start_after: None,
                     limit: Some(100),
                 },

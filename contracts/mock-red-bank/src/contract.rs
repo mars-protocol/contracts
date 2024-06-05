@@ -32,14 +32,16 @@ pub fn execute(
             denom,
             params,
         } => init_asset(deps, env, denom, params),
-        red_bank::ExecuteMsg::Borrow {
+        red_bank::ExecuteMsg::BorrowV2 {
+            account_id,
             denom,
             amount,
             ..
-        } => borrow(deps, info, denom, amount),
-        red_bank::ExecuteMsg::Repay {
+        } => borrow(deps, info, account_id, denom, amount),
+        red_bank::ExecuteMsg::RepayV2 {
+            account_id,
             ..
-        } => repay(deps, info),
+        } => repay(deps, info, account_id),
         red_bank::ExecuteMsg::Deposit {
             account_id,
             on_behalf_of: _,
@@ -63,6 +65,7 @@ pub fn query(deps: Deps, _env: Env, msg: red_bank::QueryMsg) -> StdResult<Binary
         red_bank::QueryMsg::Market {
             denom,
         } => to_json_binary(&query_market(deps, denom)?),
+        // todo: check if also need to rewrite this (for tests)
         red_bank::QueryMsg::UserDebt {
             user,
             denom,

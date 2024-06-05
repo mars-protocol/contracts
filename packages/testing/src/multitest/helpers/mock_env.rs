@@ -38,9 +38,9 @@ use mars_types::{
     address_provider::{self, MarsAddressType},
     credit_manager::{
         Account, Action, CallbackMsg, CoinBalanceResponseItem, ConfigResponse, ConfigUpdates,
-        DebtShares, ExecuteMsg, InstantiateMsg, Positions,
-        QueryMsg::{self, EstimateProvideLiquidity, VaultPositionValue},
-        SharesResponseItem, VaultPositionResponseItem, VaultUtilizationResponse,
+        ExecuteMsg, InstantiateMsg, Positions, QueryMsg,
+        QueryMsg::{EstimateProvideLiquidity, VaultPositionValue},
+        VaultPositionResponseItem, VaultUtilizationResponse,
     },
     health::{
         AccountKind, ExecuteMsg::UpdateConfig, HealthValuesResponse,
@@ -69,6 +69,7 @@ use mars_types::{
         QueryMsg::EstimateExactInSwap, SwapperRoute,
     },
 };
+use mars_types::red_bank::QueryMsg::UserDebtV2;
 use mars_vault::{
     msg::InstantiateMsg as ManagedVaultInstantiateMsg, performance_fee::PerformanceFeeConfig,
 };
@@ -714,47 +715,6 @@ impl MockEnv {
             .unwrap()
     }
 
-    pub fn query_all_debt_shares(
-        &self,
-        start_after: Option<(String, String)>,
-        limit: Option<u32>,
-    ) -> Vec<SharesResponseItem> {
-        self.app
-            .wrap()
-            .query_wasm_smart(
-                self.rover.clone(),
-                &QueryMsg::AllDebtShares {
-                    start_after,
-                    limit,
-                },
-            )
-            .unwrap()
-    }
-
-    pub fn query_all_total_debt_shares(
-        &self,
-        start_after: Option<String>,
-        limit: Option<u32>,
-    ) -> Vec<DebtShares> {
-        self.app
-            .wrap()
-            .query_wasm_smart(
-                self.rover.clone(),
-                &QueryMsg::AllTotalDebtShares {
-                    start_after,
-                    limit,
-                },
-            )
-            .unwrap()
-    }
-
-    pub fn query_total_debt_shares(&self, denom: &str) -> DebtShares {
-        self.app
-            .wrap()
-            .query_wasm_smart(self.rover.clone(), &QueryMsg::TotalDebtShares(denom.to_string()))
-            .unwrap()
-    }
-
     pub fn query_red_bank_debt(&self, denom: &str) -> UserDebtResponse {
         let config = self.query_config();
         self.app
@@ -763,6 +723,21 @@ impl MockEnv {
                 config.red_bank,
                 &UserDebt {
                     user: self.rover.to_string(),
+                    denom: denom.into(),
+                },
+            )
+            .unwrap()
+    }
+
+    pub fn query_red_bank_debt_v2(&self, account_id: &str, denom: &str) -> UserDebtResponse {
+        let config = self.query_config();
+        self.app
+            .wrap()
+            .query_wasm_smart(
+                config.red_bank,
+                &UserDebtV2 {
+                    user: self.rover.to_string(),
+                    account_id: Some(account_id.to_string()),
                     denom: denom.into(),
                 },
             )

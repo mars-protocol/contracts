@@ -40,14 +40,16 @@ pub fn init_asset(
 pub fn borrow(
     deps: DepsMut,
     info: MessageInfo,
+    account_id: Option<String>,
     denom: String,
     amount: Uint128,
 ) -> StdResult<Response> {
-    let debt_amount = load_debt_amount(deps.storage, &info.sender, &denom)?;
+    let account_id = account_id.unwrap_or("".to_string());
+    let debt_amount = load_debt_amount(deps.storage, &info.sender, &account_id, &denom)?;
 
     DEBT_AMOUNT.save(
         deps.storage,
-        (info.sender.clone(), denom.clone()),
+        (info.sender.clone(), account_id, denom.clone()),
         &debt_amount.checked_add(amount)?.checked_add(Uint128::new(1))?, // The extra unit is simulated accrued interest
     )?;
 
@@ -59,14 +61,16 @@ pub fn borrow(
     Ok(Response::new().add_message(transfer_msg))
 }
 
-pub fn repay(deps: DepsMut, info: MessageInfo) -> StdResult<Response> {
+pub fn repay(deps: DepsMut, info: MessageInfo, account_id: Option<String>) -> StdResult<Response> {
+    let account_id = account_id.unwrap_or("".to_string());
+
     let coin_sent =
         one_coin(&info).map_err(|_| StdError::generic_err("Repay coin reqs not met"))?;
-    let debt_amount = load_debt_amount(deps.storage, &info.sender, &coin_sent.denom)?;
+    let debt_amount = load_debt_amount(deps.storage, &info.sender, &account_id, &coin_sent.denom)?;
 
     DEBT_AMOUNT.save(
         deps.storage,
-        (info.sender, coin_sent.denom.clone()),
+        (info.sender, account_id, coin_sent.denom.clone()),
         &debt_amount.checked_sub(coin_sent.amount)?,
     )?;
 

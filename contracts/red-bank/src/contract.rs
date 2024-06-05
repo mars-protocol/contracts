@@ -86,12 +86,45 @@ pub fn execute(
             cw_utils::nonpayable(&info)?;
             borrow::borrow(deps, env, info, denom, amount, recipient)
         }
+        ExecuteMsg::BorrowV2 {
+            account_id,
+            denom,
+            amount,
+            recipient,
+        } => {
+            MIGRATION_GUARD.assert_unlocked(deps.storage)?;
+            cw_utils::nonpayable(&info)?;
+            borrow::borrow_v2(deps, env, info, denom, amount, recipient, account_id)
+        }
         ExecuteMsg::Repay {
             on_behalf_of,
         } => {
             MIGRATION_GUARD.assert_unlocked(deps.storage)?;
             let sent_coin = cw_utils::one_coin(&info)?;
-            repay::repay(deps, env, info, on_behalf_of, sent_coin.denom, sent_coin.amount)
+            repay::repay(
+                deps,
+                env,
+                info,
+                on_behalf_of,
+                sent_coin.denom,
+                sent_coin.amount,
+            )
+        }
+        ExecuteMsg::RepayV2 {
+            account_id,
+            on_behalf_of,
+        } => {
+            MIGRATION_GUARD.assert_unlocked(deps.storage)?;
+            let sent_coin = cw_utils::one_coin(&info)?;
+            repay::repay_v2(
+                deps,
+                env,
+                info,
+                on_behalf_of,
+                sent_coin.denom,
+                sent_coin.amount,
+                account_id,
+            )
         }
         ExecuteMsg::Liquidate {
             user,
@@ -152,6 +185,16 @@ pub fn query(deps: Deps, env: Env, msg: QueryMsg) -> Result<Binary, ContractErro
             let user_addr = deps.api.addr_validate(&user)?;
             to_json_binary(&query::query_user_debt(deps, &env.block, user_addr, denom)?)
         }
+        QueryMsg::UserDebtV2 {
+            user,
+            account_id,
+            denom,
+        } => {
+            let user_addr = deps.api.addr_validate(&user)?;
+            to_json_binary(&query::query_user_debt_v2(
+                deps, &env.block, user_addr, account_id, denom,
+            )?)
+        }
         QueryMsg::UserDebts {
             user,
             start_after,
@@ -162,6 +205,22 @@ pub fn query(deps: Deps, env: Env, msg: QueryMsg) -> Result<Binary, ContractErro
                 deps,
                 &env.block,
                 user_addr,
+                start_after,
+                limit,
+            )?)
+        }
+        QueryMsg::UserDebtsV2 {
+            user,
+            account_id,
+            start_after,
+            limit,
+        } => {
+            let user_addr = deps.api.addr_validate(&user)?;
+            to_json_binary(&query::query_user_debts_v2(
+                deps,
+                &env.block,
+                user_addr,
+                account_id,
                 start_after,
                 limit,
             )?)

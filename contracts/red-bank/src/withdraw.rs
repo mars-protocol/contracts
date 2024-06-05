@@ -48,11 +48,10 @@ pub fn withdraw(
     }
 
     let withdrawer = User(&info.sender);
-    let acc_id = account_id.clone().unwrap_or("".to_string());
 
     let mut market = MARKETS.load(deps.storage, &denom)?;
 
-    let collateral = withdrawer.collateral(deps.storage, &denom, &acc_id)?;
+    let collateral = withdrawer.collateral(deps.storage, &denom, account_id.clone())?;
     let withdrawer_balance_scaled_before = collateral.amount_scaled;
 
     if withdrawer_balance_scaled_before.is_zero() {
@@ -86,12 +85,12 @@ pub fn withdraw(
     // if asset is used as collateral and user is borrowing we need to validate health factor after withdraw,
     // otherwise no reasons to block the withdraw
     if collateral.enabled
-        && withdrawer.is_borrowing(deps.storage)
+        && withdrawer.is_borrowing(deps.storage, account_id.clone())?
         && !assert_below_liq_threshold_after_withdraw(
             &deps.as_ref(),
             &env,
             withdrawer.address(),
-            &acc_id,
+            &account_id.clone().unwrap_or("".to_string()),
             oracle_addr,
             params_addr,
             &denom,
