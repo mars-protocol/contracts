@@ -57,7 +57,7 @@ pub enum ExtensionExecuteMsg {
 
 #[cw_serde]
 pub enum ExtensionQueryMsg {
-    VaultInfo,
+    VaultInfo {},
 
     UserUnlocks {
         /// The address of the user to query
