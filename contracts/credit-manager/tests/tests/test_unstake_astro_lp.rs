@@ -1,5 +1,6 @@
 use cosmwasm_std::{coins, Addr, Coin, Uint128};
-use mars_testing::multitest::helpers::{uosmo_info, AccountToFund};
+use mars_credit_manager::error::ContractError;
+use mars_testing::multitest::helpers::{assert_err, uosmo_info, AccountToFund};
 use mars_types::credit_manager::{Action, ActionAmount, ActionCoin};
 
 use super::helpers::MockEnv;
@@ -28,7 +29,13 @@ fn unstake_fails_if_no_lp_staked() {
         }],
         &[],
     );
-    assert!(res.is_err());
+    assert_err(
+        res,
+        ContractError::InsufficientFunds {
+            requested: Uint128::new(100u128),
+            available: Uint128::zero(),
+        },
+    );
 }
 
 #[test]
