@@ -1,4 +1,5 @@
 use cosmwasm_std::{DepsMut, Event, Response};
+use mars_types::traits::Stringify;
 
 use crate::{
     error::{ContractError, ContractResult},
@@ -26,12 +27,9 @@ pub fn claim_lp_rewards(
 
     let claim_rewards_msg = incentives.claim_lp_rewards_msg(account_id, lp_denom)?;
 
-    let event = Event::new("mars/incentives/claim_lp_rewards")
-        .add_attribute("rewards", format!("{:?}", rewards));
-
     Ok(Response::new()
         .add_message(claim_rewards_msg)
-        .add_event(event)
+        .add_attribute("rewards", rewards.as_slice().to_string())
         .add_attribute("action", "claim_lp_rewards")
         .add_attribute("account_id", account_id))
 }
