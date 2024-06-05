@@ -6,4 +6,4 @@ use cw_storage_plus::Map;
 pub const INCENTIVE_SCHEDULES: Map<(&str, &str), IncentivesSchedule> =
     Map::new("astro_incentive_schedules");
 pub const ASTRO_LP_INCENTIVE_DEPOSITS: Map<(&str, &str), Uint128> =
-    Map::new("astroport_incentive_lp_deposits");
+    Map::new("astro_incentive_lp_deposits");

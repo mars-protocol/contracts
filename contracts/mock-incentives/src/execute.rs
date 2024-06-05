@@ -3,7 +3,7 @@ use cosmwasm_std::{
 };
 
 use crate::{
-    query::{query_pending_astroport_rewards, query_staked_amount, query_unclaimed_rewards},
+    query::{query_staked_astro_lp_rewards_for_user, query_staked_astro_lp_amount, query_unclaimed_rewards},
     state::{PENDING_ASTROPORT_REWARDS, STAKED_LP_POSITIONS, UNCLAIMED_REWARDS},
 };
 
@@ -14,7 +14,7 @@ pub fn claim_astro_lp_rewards(
     lp_denom: String,
 ) -> StdResult<Response> {
     let pending_astro_rewards: Vec<Coin> =
-        query_pending_astroport_rewards(deps.as_ref(), account_id.clone(), lp_denom)?;
+        query_staked_astro_lp_rewards_for_user(deps.as_ref(), account_id.clone(), lp_denom)?;
 
     let transfer_msg = CosmosMsg::Bank(BankMsg::Send {
         to_address: info.sender.to_string(),
@@ -82,7 +82,7 @@ pub fn set_incentive_rewards(
     let incentive_amount = emission_per_second;
 
     let mut pending_astro_rewards: Vec<Coin> =
-        query_pending_astroport_rewards(deps.as_ref(), account_id.clone(), lp_denom.clone())?;
+        query_staked_astro_lp_rewards_for_user(deps.as_ref(), account_id.clone(), lp_denom.clone())?;
 
     pending_astro_rewards.push(Coin {
         denom: incentive_denom,
@@ -101,7 +101,7 @@ pub fn stake_astro_lp(
     lp_coin: Coin,
 ) -> StdResult<Response> {
     let staked_coin =
-        query_staked_amount(deps.as_ref(), account_id.clone(), lp_coin.denom.clone())?;
+        query_staked_astro_lp_amount(deps.as_ref(), account_id.clone(), lp_coin.denom.clone())?;
 
     let new_amount = staked_coin.amount.checked_add(lp_coin.amount)?;
 
@@ -117,7 +117,7 @@ pub fn unstake_astro_lp(
     lp_coin: Coin,
 ) -> StdResult<Response> {
     let staked_coin =
-        query_staked_amount(deps.as_ref(), account_id.clone(), lp_coin.denom.clone())?;
+        query_staked_astro_lp_amount(deps.as_ref(), account_id.clone(), lp_coin.denom.clone())?;
 
     let new_amount = staked_coin.amount.checked_sub(lp_coin.amount)?;
 

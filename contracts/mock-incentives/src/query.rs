@@ -18,7 +18,7 @@ pub fn query_unclaimed_rewards(
         .unwrap_or_default())
 }
 
-pub fn query_pending_astroport_rewards(
+pub fn query_staked_astro_lp_rewards_for_user(
     deps: Deps,
     account_id: String,
     lp_denom: String,
@@ -28,13 +28,13 @@ pub fn query_pending_astroport_rewards(
         .unwrap_or_default())
 }
 
-pub fn query_staked_lp_position(
+pub fn query_staked_lp_astro_lp_position(
     deps: Deps,
     account_id: String,
     lp_denom: String,
 ) -> StdResult<StakedLpPositionResponse> {
-    let staked_coin = query_staked_amount(deps, account_id.clone(), lp_denom.clone())?;
-    let rewards = query_pending_astroport_rewards(deps, account_id, lp_denom)?;
+    let staked_coin = query_staked_astro_lp_amount(deps, account_id.clone(), lp_denom.clone())?;
+    let rewards = query_staked_astro_lp_rewards_for_user(deps, account_id, lp_denom)?;
 
     Ok(StakedLpPositionResponse {
         lp_coin: staked_coin,
@@ -63,7 +63,7 @@ pub fn query_all_staked_lp_positions_for_account(
                 amount,
             };
             let rewards =
-                query_pending_astroport_rewards(deps, account_id.clone(), lp_coin.denom.clone())?;
+                query_staked_astro_lp_rewards_for_user(deps, account_id.clone(), lp_coin.denom.clone())?;
 
             Ok(StakedLpPositionResponse {
                 lp_coin,
@@ -73,7 +73,7 @@ pub fn query_all_staked_lp_positions_for_account(
     )
 }
 
-pub fn query_staked_amount(deps: Deps, account_id: String, lp_denom: String) -> StdResult<Coin> {
+pub fn query_staked_astro_lp_amount(deps: Deps, account_id: String, lp_denom: String) -> StdResult<Coin> {
     let staked_amount = crate::state::STAKED_LP_POSITIONS
         .may_load(deps.storage, (account_id, lp_denom.clone()))?
         .unwrap_or_default();

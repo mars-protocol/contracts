@@ -70,7 +70,7 @@ pub fn withdraw(
     ASTRO_LP_INCENTIVE_DEPOSITS.update(deps.storage, (&sender, &lp_token), |value_opt| {
         value_opt
             .unwrap_or_else(Uint128::zero)
-            .checked_sub(amount)
+            .checked_sub(amount)?
             .map_err(|_| StdError::generic_err("overflow"))
     })?;
 
