@@ -15,8 +15,8 @@ use crate::{
     query::{
         query_accounts, query_all_coin_balances, query_all_debt_shares,
         query_all_total_debt_shares, query_all_vault_positions, query_all_vault_utilizations,
-        query_config, query_positions, query_total_debt_shares, query_vault_position_value,
-        query_vault_utilization,
+        query_config, query_positions, query_total_debt_shares, query_vault_bindings,
+        query_vault_position_value, query_vault_utilization,
     },
     repay::repay_from_wallet,
     update_config::{update_config, update_nft_config, update_owner},
@@ -132,6 +132,10 @@ pub fn query(deps: Deps, env: Env, msg: QueryMsg) -> ContractResult<Binary> {
         QueryMsg::VaultPositionValue {
             vault_position,
         } => to_json_binary(&query_vault_position_value(deps, vault_position)?),
+        QueryMsg::VaultBindings {
+            start_after,
+            limit,
+        } => to_json_binary(&query_vault_bindings(deps, start_after, limit)?),
     };
     res.map_err(Into::into)
 }

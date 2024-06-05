@@ -74,6 +74,8 @@ import {
   ArrayOfCoin,
   Positions,
   DebtAmount,
+  ArrayOfVaultBinding,
+  VaultBinding,
   VaultPositionValue,
   CoinValue,
 } from './MarsCreditManager.types'
@@ -206,6 +208,14 @@ export const marsCreditManagerQueryKeys = {
         args,
       },
     ] as const,
+  vaultBindings: (contractAddress: string | undefined, args?: Record<string, unknown>) =>
+    [
+      {
+        ...marsCreditManagerQueryKeys.address(contractAddress)[0],
+        method: 'vault_bindings',
+        args,
+      },
+    ] as const,
 }
 export interface MarsCreditManagerReactQuery<TResponse, TData = TResponse> {
   client: MarsCreditManagerQueryClient | undefined
@@ -215,6 +225,33 @@ export interface MarsCreditManagerReactQuery<TResponse, TData = TResponse> {
   > & {
     initialData?: undefined
   }
+}
+export interface MarsCreditManagerVaultBindingsQuery<TData>
+  extends MarsCreditManagerReactQuery<ArrayOfVaultBinding, TData> {
+  args: {
+    limit?: number
+    startAfter?: string
+  }
+}
+export function useMarsCreditManagerVaultBindingsQuery<TData = ArrayOfVaultBinding>({
+  client,
+  args,
+  options,
+}: MarsCreditManagerVaultBindingsQuery<TData>) {
+  return useQuery<ArrayOfVaultBinding, Error, TData>(
+    marsCreditManagerQueryKeys.vaultBindings(client?.contractAddress, args),
+    () =>
+      client
+        ? client.vaultBindings({
+            limit: args.limit,
+            startAfter: args.startAfter,
+          })
+        : Promise.reject(new Error('Invalid client')),
+    {
+      ...options,
+      enabled: !!client && (options?.enabled != undefined ? options.enabled : true),
+    },
+  )
 }
 export interface MarsCreditManagerVaultPositionValueQuery<TData>
   extends MarsCreditManagerReactQuery<VaultPositionValue, TData> {

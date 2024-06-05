@@ -17,7 +17,7 @@ export interface InstantiateMsg {
   vault_token_subdenom: string
 }
 export interface PerformanceFeeConfig {
-  fee: Decimal
+  fee_rate: Decimal
   withdrawal_interval: number
 }
 export type ExecuteMsg =
@@ -90,7 +90,9 @@ export type QueryMsg =
       vault_extension: ExtensionQueryMsg
     }
 export type ExtensionQueryMsg =
-  | 'vault_info'
+  | {
+      vault_info: {}
+    }
   | {
       user_unlocks: {
         user_address: string

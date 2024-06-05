@@ -28,7 +28,7 @@ use crate::{
     refund::refund_coin_balances,
     repay::{repay, repay_for_recipient},
     stake_astro_lp::stake_lp,
-    state::{ACCOUNT_KINDS, ACCOUNT_NFT, REENTRANCY_GUARD},
+    state::{ACCOUNT_KINDS, ACCOUNT_NFT, REENTRANCY_GUARD, VAULTS},
     swap::swap_exact_in,
     unstake_astro_lp::unstake_lp,
     update_coin_balances::{update_coin_balance, update_coin_balance_after_vault_liquidation},
@@ -71,6 +71,8 @@ pub fn create_credit_account(
     } = &kind
     {
         let vault = deps.api.addr_validate(vault_addr)?;
+
+        VAULTS.save(deps.storage, &next_id, &vault)?;
 
         let bind_msg = CosmosMsg::Wasm(WasmMsg::Execute {
             contract_addr: vault.into(),

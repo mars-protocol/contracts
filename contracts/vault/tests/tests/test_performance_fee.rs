@@ -126,7 +126,7 @@ fn cannot_withdraw_zero_performance_fee() {
         &credit_manager,
         0,
         PerformanceFeeConfig {
-            fee: Decimal::from_str("0.0000208").unwrap(),
+            fee_rate: Decimal::from_str("0.0000208").unwrap(),
             withdrawal_interval: 60,
         },
     );
@@ -173,7 +173,7 @@ fn cannot_withdraw_if_withdrawal_interval_not_passed() {
         &credit_manager,
         0,
         PerformanceFeeConfig {
-            fee: Decimal::from_str("0.0000208").unwrap(),
+            fee_rate: Decimal::from_str("0.0000208").unwrap(),
             withdrawal_interval: performance_fee_interval,
         },
     );
@@ -231,7 +231,7 @@ fn cannot_withdraw_if_withdrawal_interval_not_passed() {
         &fund_manager,
         &managed_vault_addr,
         Some(PerformanceFeeConfig {
-            fee: Decimal::from_str("0.000046287042457350").unwrap(),
+            fee_rate: Decimal::from_str("0.000046287042457350").unwrap(),
             withdrawal_interval: 1563,
         }),
     );
@@ -279,7 +279,7 @@ fn performance_fee_correctly_accumulated() {
         &credit_manager,
         0,
         PerformanceFeeConfig {
-            fee: Decimal::from_str("0.0000208").unwrap(),
+            fee_rate: Decimal::from_str("0.0000208").unwrap(),
             withdrawal_interval: 60,
         },
     );
@@ -326,7 +326,7 @@ fn performance_fee_correctly_accumulated() {
     assert_eq!(
         performance_fee,
         PerformanceFeeState {
-            updated_at: first_deposit_time,
+            last_withdrawal: first_deposit_time,
             base_tokens_amt: deposited_amt,
             accumulated_pnl: Int128::zero(),
             accumulated_fee: Uint128::zero()
@@ -360,7 +360,7 @@ fn performance_fee_correctly_accumulated() {
     assert_eq!(
         performance_fee,
         PerformanceFeeState {
-            updated_at: first_deposit_time,
+            last_withdrawal: first_deposit_time,
             base_tokens_amt: Uint128::new(140000000),
             accumulated_pnl: Int128::new(20000000),
             accumulated_fee: Uint128::new(40352)
@@ -390,7 +390,7 @@ fn performance_fee_correctly_accumulated() {
     assert_eq!(
         performance_fee,
         PerformanceFeeState {
-            updated_at: first_deposit_time,
+            last_withdrawal: first_deposit_time,
             base_tokens_amt: Uint128::new(75000000),
             accumulated_pnl: Int128::new(-60000000),
             accumulated_fee: Uint128::zero()
@@ -424,7 +424,7 @@ fn performance_fee_correctly_accumulated() {
     assert_eq!(
         performance_fee,
         PerformanceFeeState {
-            updated_at: first_deposit_time,
+            last_withdrawal: first_deposit_time,
             base_tokens_amt: Uint128::new(419284958),
             accumulated_pnl: Int128::new(315000000),
             accumulated_fee: Uint128::new(2050776)
@@ -444,7 +444,7 @@ fn performance_fee_correctly_accumulated() {
         &fund_manager,
         &managed_vault_addr,
         Some(PerformanceFeeConfig {
-            fee: Decimal::from_str("0.0000408").unwrap(),
+            fee_rate: Decimal::from_str("0.0000408").unwrap(),
             withdrawal_interval: 60,
         }),
     )
@@ -455,7 +455,7 @@ fn performance_fee_correctly_accumulated() {
     assert_eq!(
         performance_fee,
         PerformanceFeeState {
-            updated_at: fee_withdraw_time,
+            last_withdrawal: fee_withdraw_time,
             base_tokens_amt: Uint128::new(808455326),
             accumulated_pnl: Int128::zero(),
             accumulated_fee: Uint128::zero()
@@ -489,7 +489,7 @@ fn performance_fee_correctly_accumulated() {
     assert_eq!(
         performance_fee,
         PerformanceFeeState {
-            updated_at: fee_withdraw_time,
+            last_withdrawal: fee_withdraw_time,
             base_tokens_amt: Uint128::new(903455326),
             accumulated_pnl: Int128::new(40000000),
             accumulated_fee: Uint128::new(78336)

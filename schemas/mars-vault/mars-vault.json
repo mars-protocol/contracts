@@ -69,11 +69,11 @@
       "PerformanceFeeConfig": {
         "type": "object",
         "required": [
-          "fee",
+          "fee_rate",
           "withdrawal_interval"
         ],
         "properties": {
-          "fee": {
+          "fee_rate": {
             "description": "The percentage of the performance fee that will be charged on the profits",
             "allOf": [
               {
@@ -267,11 +267,11 @@
       "PerformanceFeeConfig": {
         "type": "object",
         "required": [
-          "fee",
+          "fee_rate",
           "withdrawal_interval"
         ],
         "properties": {
-          "fee": {
+          "fee_rate": {
             "description": "The percentage of the performance fee that will be charged on the profits",
             "allOf": [
               {
@@ -481,10 +481,17 @@
       "ExtensionQueryMsg": {
         "oneOf": [
           {
-            "type": "string",
-            "enum": [
+            "type": "object",
+            "required": [
               "vault_info"
-            ]
+            ],
+            "properties": {
+              "vault_info": {
+                "type": "object",
+                "additionalProperties": false
+              }
+            },
+            "additionalProperties": false
           },
           {
             "type": "object",

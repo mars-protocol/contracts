@@ -104,7 +104,7 @@ pub fn query_vault_info(mock_env: &MockEnv, vault: &Addr) -> VaultInfoResponseEx
         .wrap()
         .query_wasm_smart(
             vault.to_string(),
-            &QueryMsg::VaultExtension(ExtensionQueryMsg::VaultInfo),
+            &QueryMsg::VaultExtension(ExtensionQueryMsg::VaultInfo {}),
         )
         .unwrap()
 }

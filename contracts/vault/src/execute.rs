@@ -9,14 +9,14 @@ use mars_types::{
 };
 
 use crate::{
-    contract::Vault,
     error::ContractError,
     msg::UnlockState,
     performance_fee::PerformanceFeeConfig,
     state::{
-        ACCOUNT_NFT, COOLDOWN_PERIOD, CREDIT_MANAGER, HEALTH, ORACLE, PERFORMANCE_FEE_CONFIG,
-        PERFORMANCE_FEE_STATE, UNLOCKS, VAULT_ACC_ID,
+        ACCOUNT_NFT, BASE_TOKEN, COOLDOWN_PERIOD, CREDIT_MANAGER, HEALTH, ORACLE,
+        PERFORMANCE_FEE_CONFIG, PERFORMANCE_FEE_STATE, UNLOCKS, VAULT_ACC_ID, VAULT_TOKEN,
     },
+    vault_token::{calculate_base_tokens, calculate_vault_tokens},
 };
 
 pub fn bind_credit_manager_account(
@@ -35,7 +35,7 @@ pub fn bind_credit_manager_account(
 
     VAULT_ACC_ID.save(deps.storage, &account_id)?;
 
-    let event = Event::new("vault/bind_credit_manager_account")
+    let event = Event::new("bind_credit_manager_account")
         .add_attributes(vec![attr("account_id", account_id)]);
     Ok(Response::new().add_event(event))
 }
@@ -57,34 +57,30 @@ pub fn deposit(
         recipient.map_or(Ok(info.sender.clone()), |r| deps.api.addr_validate(&r))?;
 
     // load state
-    let vault = Vault::default();
-    let base_token = vault.base_token.load(deps.storage)?.to_string();
-    let vault_token = vault.vault_token.load(deps.storage)?;
+    let base_token = BASE_TOKEN.load(deps.storage)?.to_string();
+    let vault_token = VAULT_TOKEN.load(deps.storage)?;
 
     // check that only the expected base token was sent
     let amount = cw_utils::must_pay(info, &base_token)?;
 
     // calculate vault tokens
-    let total_staked_amount = total_base_tokens_in_account(deps.as_ref())?;
+    let total_base_tokens = total_base_tokens_in_account(deps.as_ref())?;
     let vault_token_supply = vault_token.query_total_supply(deps.as_ref())?;
 
     let mut performance_fee_state = PERFORMANCE_FEE_STATE.load(deps.storage)?;
     let performance_fee_config = PERFORMANCE_FEE_CONFIG.load(deps.storage)?;
     performance_fee_state.update_fee_and_pnl(
         env.block.time.seconds(),
-        total_staked_amount,
+        total_base_tokens,
         &performance_fee_config,
     )?;
-    performance_fee_state.update_base_tokens_after_deposit(total_staked_amount, amount)?;
+    performance_fee_state.update_base_tokens_after_deposit(total_base_tokens, amount)?;
     PERFORMANCE_FEE_STATE.save(deps.storage, &performance_fee_state)?;
-    let total_staked_amount_without_fee =
-        total_staked_amount.checked_sub(performance_fee_state.accumulated_fee)?;
+    let total_base_tokens_without_fee =
+        total_base_tokens.checked_sub(performance_fee_state.accumulated_fee)?;
 
-    let vault_tokens = vault.calculate_vault_tokens(
-        amount,
-        total_staked_amount_without_fee,
-        vault_token_supply,
-    )?;
+    let vault_tokens =
+        calculate_vault_tokens(amount, total_base_tokens_without_fee, vault_token_supply)?;
 
     let coin_deposited = Coin {
         denom: base_token,
@@ -101,7 +97,7 @@ pub fn deposit(
         funds: vec![coin_deposited],
     });
 
-    let event = Event::new("vault/deposit").add_attributes(vec![
+    let event = Event::new("deposit").add_attributes(vec![
         attr("action", "mint_vault_tokens"),
         attr("recipient", vault_token_recipient.to_string()),
         attr("mint_amount", vault_tokens),
@@ -132,8 +128,7 @@ pub fn unlock(
     }
 
     // load state
-    let vault = Vault::default();
-    let vault_token = vault.vault_token.load(deps.storage)?;
+    let vault_token = VAULT_TOKEN.load(deps.storage)?;
 
     // Cannot unlock more than total vault token supply.
     let vault_token_supply = vault_token.query_total_supply(deps.as_ref())?;
@@ -167,7 +162,7 @@ pub fn unlock(
 }
 
 pub fn redeem(
-    mut deps: DepsMut,
+    deps: DepsMut,
     env: Env,
     info: &MessageInfo,
     recipient: Option<String>,
@@ -181,9 +176,8 @@ pub fn redeem(
     let recipient = recipient.map_or(Ok(info.sender.clone()), |x| deps.api.addr_validate(&x))?;
 
     // load state
-    let vault = Vault::default();
-    let base_token = vault.base_token.load(deps.storage)?;
-    let vault_token = vault.vault_token.load(deps.storage)?;
+    let base_token = BASE_TOKEN.load(deps.storage)?;
+    let vault_token = VAULT_TOKEN.load(deps.storage)?;
 
     // check that only the expected base token was sent
     let vault_token_amount = cw_utils::must_pay(info, &vault_token.to_string())?;
@@ -218,46 +212,50 @@ pub fn redeem(
         });
     }
 
-    let total_staked_amount = total_base_tokens_in_account(deps.as_ref())?;
+    let total_base_tokens = total_base_tokens_in_account(deps.as_ref())?;
 
     let mut performance_fee_state = PERFORMANCE_FEE_STATE.load(deps.storage)?;
     let performance_fee_config = PERFORMANCE_FEE_CONFIG.load(deps.storage)?;
     performance_fee_state.update_fee_and_pnl(
         env.block.time.seconds(),
-        total_staked_amount,
+        total_base_tokens,
         &performance_fee_config,
     )?;
 
-    let total_staked_amount_without_fee =
-        total_staked_amount.checked_sub(performance_fee_state.accumulated_fee)?;
-    let (tokens_to_withdraw, burn_res) = vault.burn_vault_tokens_for_base_tokens(
-        deps.branch(),
-        &env,
-        total_staked_amount_without_fee,
+    let total_base_tokens_without_fee =
+        total_base_tokens.checked_sub(performance_fee_state.accumulated_fee)?;
+
+    // calculate base tokens based on the given amount of vault tokens
+    let vault_token_supply = vault_token.query_total_supply(deps.as_ref())?;
+    let tokens_to_redeem = calculate_base_tokens(
         vault_token_amount,
+        total_base_tokens_without_fee,
+        vault_token_supply,
     )?;
 
-    performance_fee_state
-        .update_base_tokens_after_redeem(total_staked_amount, tokens_to_withdraw)?;
+    performance_fee_state.update_base_tokens_after_redeem(total_base_tokens, tokens_to_redeem)?;
 
     PERFORMANCE_FEE_STATE.save(deps.storage, &performance_fee_state)?;
 
     let withdraw_from_cm = prepare_credit_manager_msg(
         deps.as_ref(),
         base_token,
-        tokens_to_withdraw,
+        tokens_to_redeem,
         recipient.to_string(),
         vault_acc_id,
     )?;
 
-    let event = Event::new("vault/redeem").add_attributes(vec![
+    let event = Event::new("redeem").add_attributes(vec![
         attr("action", "burn_vault_tokens"),
         attr("recipient", recipient.clone()),
         attr("vault_token_amount", vault_token_amount),
-        attr("lp_tokens_to_withdraw", tokens_to_withdraw),
+        attr("lp_tokens_to_withdraw", tokens_to_redeem),
     ]);
 
-    Ok(burn_res.add_message(withdraw_from_cm).add_event(event))
+    Ok(vault_token
+        .burn(deps, &env, vault_token_amount)?
+        .add_message(withdraw_from_cm)
+        .add_event(event))
 }
 
 fn prepare_credit_manager_msg(
@@ -367,8 +365,7 @@ pub fn total_base_tokens_in_account(deps: Deps) -> Result<Uint128, ContractError
         },
     )?;
 
-    let vault = Vault::default();
-    let base_token = vault.base_token.load(deps.storage)?;
+    let base_token = BASE_TOKEN.load(deps.storage)?;
 
     let health = HEALTH.load(deps.storage)?;
     let health_values = health.query_health_values(
@@ -408,19 +405,19 @@ pub fn withdraw_performance_fee(
         });
     }
 
-    let total_staked_amount = total_base_tokens_in_account(deps.as_ref())?;
+    let total_base_tokens = total_base_tokens_in_account(deps.as_ref())?;
 
     let mut performance_fee_state = PERFORMANCE_FEE_STATE.load(deps.storage)?;
     let performance_fee_config = PERFORMANCE_FEE_CONFIG.load(deps.storage)?;
     performance_fee_state.update_fee_and_pnl(
         env.block.time.seconds(),
-        total_staked_amount,
+        total_base_tokens,
         &performance_fee_config,
     )?;
     let accumulated_performace_fee = performance_fee_state.accumulated_fee;
     performance_fee_state.reset_state_by_manager(
         env.block.time.seconds(),
-        total_staked_amount,
+        total_base_tokens,
         &performance_fee_config,
     )?;
 
@@ -437,8 +434,7 @@ pub fn withdraw_performance_fee(
         attr("amount", accumulated_performace_fee),
     ]);
 
-    let vault = Vault::default();
-    let base_token = vault.base_token.load(deps.storage)?;
+    let base_token = BASE_TOKEN.load(deps.storage)?;
 
     let withdraw_from_cm = prepare_credit_manager_msg(
         deps.as_ref(),

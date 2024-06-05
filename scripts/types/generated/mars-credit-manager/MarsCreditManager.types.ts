@@ -560,6 +560,12 @@ export type QueryMsg =
         vault_position: VaultPosition
       }
     }
+  | {
+      vault_bindings: {
+        limit?: number | null
+        start_after?: string | null
+      }
+    }
 export type VaultPositionAmount =
   | {
       unlocked: VaultAmount
@@ -659,6 +665,11 @@ export interface DebtAmount {
   amount: Uint128
   denom: string
   shares: Uint128
+}
+export type ArrayOfVaultBinding = VaultBinding[]
+export interface VaultBinding {
+  account_id: string
+  vault_address: string
 }
 export interface VaultPositionValue {
   base_coin: CoinValue

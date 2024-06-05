@@ -40,7 +40,7 @@ use mars_types::{
         Account, Action, CallbackMsg, CoinBalanceResponseItem, ConfigResponse, ConfigUpdates,
         DebtShares, ExecuteMsg, InstantiateMsg, Positions,
         QueryMsg::{self, EstimateProvideLiquidity, VaultPositionValue},
-        SharesResponseItem, VaultPositionResponseItem, VaultUtilizationResponse,
+        SharesResponseItem, VaultBinding, VaultPositionResponseItem, VaultUtilizationResponse,
     },
     health::{
         AccountKind, ExecuteMsg::UpdateConfig, HealthValuesResponse,
@@ -904,6 +904,20 @@ impl MockEnv {
             )
             .unwrap()
     }
+
+    pub fn query_vault_bindings(
+        &self,
+        start_after: Option<String>,
+        limit: Option<u32>,
+    ) -> StdResult<PaginationResponse<VaultBinding>> {
+        self.app.wrap().query_wasm_smart(
+            self.rover.clone(),
+            &QueryMsg::VaultBindings {
+                start_after,
+                limit,
+            },
+        )
+    }
 }
 
 impl MockEnvBuilder {
@@ -1604,7 +1618,7 @@ pub fn deploy_managed_vault(app: &mut CustomApp, sender: &Addr, credit_manager: 
         credit_manager,
         60,
         PerformanceFeeConfig {
-            fee: Decimal::zero(),
+            fee_rate: Decimal::zero(),
             withdrawal_interval: 0,
         },
     )

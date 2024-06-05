@@ -39,7 +39,7 @@ fn instantiate_with_empty_metadata() {
             vault_account_id: None,
             cooldown_period: 60,
             performance_fee_config: PerformanceFeeConfig {
-                fee: Decimal::zero(),
+                fee_rate: Decimal::zero(),
                 withdrawal_interval: 0
             }
         }
@@ -73,7 +73,7 @@ fn instantiate_with_metadata() {
                 credit_manager: credit_manager.to_string(),
                 cooldown_period: 8521,
                 performance_fee_config: PerformanceFeeConfig {
-                    fee: Decimal::from_str("0.000046287042457349").unwrap(),
+                    fee_rate: Decimal::from_str("0.000046287042457349").unwrap(),
                     withdrawal_interval: 1563,
                 },
             },
@@ -96,7 +96,7 @@ fn instantiate_with_metadata() {
             vault_account_id: None,
             cooldown_period: 8521,
             performance_fee_config: PerformanceFeeConfig {
-                fee: Decimal::from_str("0.000046287042457349").unwrap(),
+                fee_rate: Decimal::from_str("0.000046287042457349").unwrap(),
                 withdrawal_interval: 1563,
             }
         }
@@ -128,7 +128,7 @@ fn cannot_instantiate_with_invalid_performance_fee() {
             credit_manager: credit_manager.to_string(),
             cooldown_period: 8521,
             performance_fee_config: PerformanceFeeConfig {
-                fee: Decimal::from_str("0.000046287042457350").unwrap(),
+                fee_rate: Decimal::from_str("0.000046287042457350").unwrap(),
                 withdrawal_interval: 1563,
             },
         },

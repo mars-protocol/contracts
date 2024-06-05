@@ -5,9 +5,16 @@ use mars_types::adapters::{account_nft::AccountNft, health::HealthContract, orac
 use crate::{
     msg::UnlockState,
     performance_fee::{PerformanceFeeConfig, PerformanceFeeState},
+    token_factory::TokenFactoryDenom,
 };
 
 pub const OWNER: Owner = Owner::new("owner");
+
+/// The vault token implementation for this vault
+pub const VAULT_TOKEN: Item<TokenFactoryDenom> = Item::new("vault_token");
+
+/// The token that is depositable to the vault
+pub const BASE_TOKEN: Item<String> = Item::new("base_token");
 
 pub const CREDIT_MANAGER: Item<String> = Item::new("cm_addr");
 pub const VAULT_ACC_ID: Item<String> = Item::new("vault_acc_id");

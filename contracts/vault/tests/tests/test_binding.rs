@@ -46,7 +46,7 @@ fn only_credit_manager_can_bind_account() {
             vault_account_id: Some("2024".to_string()),
             cooldown_period: 60,
             performance_fee_config: PerformanceFeeConfig {
-                fee: Decimal::zero(),
+                fee_rate: Decimal::zero(),
                 withdrawal_interval: 0
             }
         }
