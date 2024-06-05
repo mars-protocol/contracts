@@ -401,10 +401,8 @@ fn query_staked_astro_lp_position() {
     );
 
     assert_eq!(res.lp_coin.denom, "uastro".to_string());
-
     assert_eq!(res.lp_coin.amount, Uint128::new(100u128));
-
     assert_eq!(res.rewards[0].amount, reward_coin.amount);
-
     assert_eq!(res.rewards[0].denom, reward_coin.denom);
+    assert_eq!(res.rewards.len(), 1);
 }
