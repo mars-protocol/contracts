@@ -131,5 +131,5 @@ fn claiming_multiple_rewards() {
 
     // Assert no LP coins in the contract
     let lp_coin = mock.query_balance(&mock.rover, lp_denom);
-    assert_eq!(Uint128::zero(), lp_coin.amount);
+    assert!(lp_coin.amount.is_zero());
 }

@@ -59,11 +59,11 @@ fn stake_claims_rewards() {
     let positions = mock.query_positions(&account_id);
     assert_eq!(positions.staked_lp.len(), 1);
     // 100 staked LP,  100 unstaked lp
-    assert_eq!(positions.staked_lp[0].amount, Uint128::new(100));
     assert_eq!(positions.staked_lp[0].denom, lp_coin.denom);
+    assert_eq!(positions.staked_lp[0].amount, Uint128::new(100));
+    assert_eq!(positions.deposits.len(), 1);
     assert_eq!(positions.deposits[0].denom, lp_coin.denom);
     assert_eq!(positions.deposits[0].amount, Uint128::new(100));
-    assert_eq!(positions.deposits.len(), 1);
 
     // Assert correct lp balance in contract
     let lp_coin = mock.query_balance(&mock.rover, lp_denom);
@@ -85,13 +85,13 @@ fn stake_claims_rewards() {
 
     let positions = mock.query_positions(&account_id);
     assert_eq!(positions.staked_lp.len(), 1);
-    assert_eq!(positions.staked_lp[0].amount, Uint128::new(200));
     assert_eq!(positions.staked_lp[0].denom, lp_denom);
+    assert_eq!(positions.staked_lp[0].amount, Uint128::new(200));
+    assert_eq!(positions.deposits.len(), 1);
     assert_eq!(positions.deposits[0].denom, reward.denom);
     assert_eq!(positions.deposits[0].amount, reward.amount);
-    assert_eq!(positions.deposits.len(), 1);
 
     // Assert correct lp balance in contract
     let lp_coin = mock.query_balance(&mock.rover, lp_denom);
-    assert_eq!(Uint128::zero(), lp_coin.amount);
+    assert!(lp_coin.amount.is_zero());
 }
