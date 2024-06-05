@@ -34,6 +34,11 @@ export function isAstroportRoute(route: OsmosisRoute | AstroportRoute): route is
   return !isOsmosisRoute(route)
 }
 
+export interface AstroportConfig {
+  factory: string
+  router: string
+}
+
 export interface DeploymentConfig {
   mainnet: boolean
   deployerMnemonic: string
@@ -84,6 +89,7 @@ export interface DeploymentConfig {
   assets: AssetConfig[]
   vaults: VaultConfig[]
   oracleConfigs: OracleConfig[]
+  astroportConfig?: AstroportConfig
 }
 
 export interface AssetConfig {
