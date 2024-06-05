@@ -45,7 +45,7 @@ export type ExecuteMsg =
       }
     }
   | {
-      claim_astro_lp_rewards: {
+      claim_staked_astro_lp_rewards: {
         account_id: string
         lp_denom: string
       }
@@ -120,7 +120,7 @@ export interface ActionCoin {
 }
 export type QueryMsg =
   | {
-      staked_lp_rewards: {
+      staked_astro_lp_rewards: {
         account_id: string
         lp_denom: string
       }
@@ -162,14 +162,14 @@ export type QueryMsg =
       }
     }
   | {
-      staked_lp_positions: {
+      staked_astro_lp_positions: {
         account_id: string
         limit?: number | null
         start_after?: string | null
       }
     }
   | {
-      staked_lp_position: {
+      staked_astro_lp_position: {
         account_id: string
         lp_denom: string
       }

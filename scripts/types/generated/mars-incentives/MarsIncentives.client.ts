@@ -36,7 +36,7 @@ import {
 } from './MarsIncentives.types'
 export interface MarsIncentivesReadOnlyInterface {
   contractAddress: string
-  stakedLpRewards: ({
+  stakedAstroLpRewards: ({
     accountId,
     lpDenom,
   }: {
@@ -85,7 +85,7 @@ export interface MarsIncentivesReadOnlyInterface {
     limit?: number
     startAfterTimestamp?: number
   }) => Promise<ArrayOfEmissionResponse>
-  stakedLpPositions: ({
+  stakedAstroLpPositions: ({
     accountId,
     limit,
     startAfter,
@@ -94,7 +94,7 @@ export interface MarsIncentivesReadOnlyInterface {
     limit?: number
     startAfter?: string
   }) => Promise<PaginationResponseForStakedLpPositionResponse>
-  stakedLpPosition: ({
+  stakedAstroLpPosition: ({
     accountId,
     lpDenom,
   }: {
@@ -123,20 +123,20 @@ export class MarsIncentivesQueryClient implements MarsIncentivesReadOnlyInterfac
   constructor(client: CosmWasmClient, contractAddress: string) {
     this.client = client
     this.contractAddress = contractAddress
-    this.stakedLpRewards = this.stakedLpRewards.bind(this)
+    this.stakedAstroLpRewards = this.stakedAstroLpRewards.bind(this)
     this.activeEmissions = this.activeEmissions.bind(this)
     this.config = this.config.bind(this)
     this.incentiveState = this.incentiveState.bind(this)
     this.incentiveStates = this.incentiveStates.bind(this)
     this.emission = this.emission.bind(this)
     this.emissions = this.emissions.bind(this)
-    this.stakedLpPositions = this.stakedLpPositions.bind(this)
-    this.stakedLpPosition = this.stakedLpPosition.bind(this)
+    this.stakedAstroLpPositions = this.stakedAstroLpPositions.bind(this)
+    this.stakedAstroLpPosition = this.stakedAstroLpPosition.bind(this)
     this.userUnclaimedRewards = this.userUnclaimedRewards.bind(this)
     this.whitelist = this.whitelist.bind(this)
   }
 
-  stakedLpRewards = async ({
+  stakedAstroLpRewards = async ({
     accountId,
     lpDenom,
   }: {
@@ -144,7 +144,7 @@ export class MarsIncentivesQueryClient implements MarsIncentivesReadOnlyInterfac
     lpDenom: string
   }): Promise<PaginationResponseForTupleOfStringAndArrayOfCoin> => {
     return this.client.queryContractSmart(this.contractAddress, {
-      staked_lp_rewards: {
+      staked_astro_lp_rewards: {
         account_id: accountId,
         lp_denom: lpDenom,
       },
@@ -234,7 +234,7 @@ export class MarsIncentivesQueryClient implements MarsIncentivesReadOnlyInterfac
       },
     })
   }
-  stakedLpPositions = async ({
+  stakedAstroLpPositions = async ({
     accountId,
     limit,
     startAfter,
@@ -244,14 +244,14 @@ export class MarsIncentivesQueryClient implements MarsIncentivesReadOnlyInterfac
     startAfter?: string
   }): Promise<PaginationResponseForStakedLpPositionResponse> => {
     return this.client.queryContractSmart(this.contractAddress, {
-      staked_lp_positions: {
+      staked_astro_lp_positions: {
         account_id: accountId,
         limit,
         start_after: startAfter,
       },
     })
   }
-  stakedLpPosition = async ({
+  stakedAstroLpPosition = async ({
     accountId,
     lpDenom,
   }: {
@@ -259,7 +259,7 @@ export class MarsIncentivesQueryClient implements MarsIncentivesReadOnlyInterfac
     lpDenom: string
   }): Promise<StakedLpPositionResponse> => {
     return this.client.queryContractSmart(this.contractAddress, {
-      staked_lp_position: {
+      staked_astro_lp_position: {
         account_id: accountId,
         lp_denom: lpDenom,
       },
@@ -361,7 +361,7 @@ export interface MarsIncentivesInterface extends MarsIncentivesReadOnlyInterface
     memo?: string,
     _funds?: Coin[],
   ) => Promise<ExecuteResult>
-  claimAstroLpRewards: (
+  claimStakedAstroLpRewards: (
     {
       accountId,
       lpDenom,
@@ -439,7 +439,7 @@ export class MarsIncentivesClient
     this.setAssetIncentive = this.setAssetIncentive.bind(this)
     this.balanceChange = this.balanceChange.bind(this)
     this.claimRewards = this.claimRewards.bind(this)
-    this.claimAstroLpRewards = this.claimAstroLpRewards.bind(this)
+    this.claimStakedAstroLpRewards = this.claimStakedAstroLpRewards.bind(this)
     this.stakeAstroLp = this.stakeAstroLp.bind(this)
     this.unstakeAstroLp = this.unstakeAstroLp.bind(this)
     this.updateConfig = this.updateConfig.bind(this)
@@ -575,7 +575,7 @@ export class MarsIncentivesClient
       _funds,
     )
   }
-  claimAstroLpRewards = async (
+  claimStakedAstroLpRewards = async (
     {
       accountId,
       lpDenom,
@@ -591,7 +591,7 @@ export class MarsIncentivesClient
       this.sender,
       this.contractAddress,
       {
-        claim_astro_lp_rewards: {
+        claim_staked_astro_lp_rewards: {
           account_id: accountId,
           lp_denom: lpDenom,
         },

@@ -231,10 +231,10 @@
       {
         "type": "object",
         "required": [
-          "claim_astro_lp_rewards"
+          "claim_staked_astro_lp_rewards"
         ],
         "properties": {
-          "claim_astro_lp_rewards": {
+          "claim_staked_astro_lp_rewards": {
             "type": "object",
             "required": [
               "account_id",
@@ -588,10 +588,10 @@
         "description": "Query account staked LP rewards",
         "type": "object",
         "required": [
-          "staked_lp_rewards"
+          "staked_astro_lp_rewards"
         ],
         "properties": {
-          "staked_lp_rewards": {
+          "staked_astro_lp_rewards": {
             "type": "object",
             "required": [
               "account_id",
@@ -801,10 +801,10 @@
         "description": "Enumerate a users LP positions with pagination",
         "type": "object",
         "required": [
-          "staked_lp_positions"
+          "staked_astro_lp_positions"
         ],
         "properties": {
-          "staked_lp_positions": {
+          "staked_astro_lp_positions": {
             "type": "object",
             "required": [
               "account_id"
@@ -840,10 +840,10 @@
         "description": "Get specific details on a users LP Position",
         "type": "object",
         "required": [
-          "staked_lp_position"
+          "staked_astro_lp_position"
         ],
         "properties": {
-          "staked_lp_position": {
+          "staked_astro_lp_position": {
             "type": "object",
             "required": [
               "account_id",
@@ -1169,7 +1169,7 @@
         }
       }
     },
-    "staked_lp_position": {
+    "staked_astro_lp_position": {
       "$schema": "http://json-schema.org/draft-07/schema#",
       "title": "StakedLpPositionResponse",
       "type": "object",
@@ -1211,7 +1211,7 @@
         }
       }
     },
-    "staked_lp_positions": {
+    "staked_astro_lp_positions": {
       "$schema": "http://json-schema.org/draft-07/schema#",
       "title": "PaginationResponse_for_StakedLpPositionResponse",
       "type": "object",
@@ -1284,7 +1284,7 @@
         }
       }
     },
-    "staked_lp_rewards": {
+    "staked_astro_lp_rewards": {
       "$schema": "http://json-schema.org/draft-07/schema#",
       "title": "PaginationResponse_for_Tuple_of_String_and_Array_of_Coin",
       "type": "object",
