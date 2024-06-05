@@ -112,12 +112,12 @@ impl MarsMockQuerier {
         &mut self,
         lp_denom: &str,
         // We will only every use the incentives contract as the user addr
-        user_addr: &str,
+        account_id: &str,
         reward_assets: Vec<Asset>,
     ) {
         self.astroport_incentives_querier
             .unclaimed_rewards
-            .insert((user_addr.to_string(), lp_denom.to_string()), reward_assets);
+            .insert((account_id.to_string(), lp_denom.to_string()), reward_assets);
     }
 
     pub fn set_query_pool_response(&mut self, pool_id: u64, pool_response: PoolResponse) {
