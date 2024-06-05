@@ -33,7 +33,7 @@ pub fn compute_health(
         })
         .collect::<StdResult<HashMap<_, _>>>()?;
     let vault_base_token_denoms = vault_infos.values().map(|v| &v.base_token).collect::<Vec<_>>();
-    let staked_lp_denoms = positions.staked_lp.iter().map(|d| &d.denom).collect::<Vec<_>>();
+    let staked_lp_denoms = positions.staked_astro_lps.iter().map(|d| &d.denom).collect::<Vec<_>>();
 
     // Collect prices + asset
     let mut denoms_data: DenomsData = Default::default();

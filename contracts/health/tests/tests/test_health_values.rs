@@ -58,7 +58,7 @@ fn computes_correct_position_with_zero_assets() {
             debts: vec![],
             lends: vec![],
             vaults: vec![],
-            staked_lp: vec![],
+            staked_astro_lps: vec![],
         },
     );
 
@@ -105,7 +105,7 @@ fn adds_vault_base_denoms_to_oracle_and_red_bank() {
                     }]),
                 }),
             }],
-            staked_lp: vec![],
+            staked_astro_lps: vec![],
         },
     );
 
@@ -221,7 +221,7 @@ fn whitelisted_coins_work() {
             debts: vec![],
             lends: vec![],
             vaults: vec![],
-            staked_lp: vec![],
+            staked_astro_lps: vec![],
         },
     );
 
@@ -279,7 +279,7 @@ fn vault_whitelist_affects_max_ltv() {
                 vault: vault.clone(),
                 amount: VaultPositionAmount::Unlocked(VaultAmount::new(vault_token_amount)),
             }],
-            staked_lp: vec![],
+            staked_astro_lps: vec![],
         },
     );
 
@@ -381,7 +381,7 @@ fn not_whitelisted_coins_work() {
             debts: vec![],
             lends: vec![],
             vaults: vec![],
-            staked_lp: vec![],
+            staked_astro_lps: vec![],
         },
     );
 

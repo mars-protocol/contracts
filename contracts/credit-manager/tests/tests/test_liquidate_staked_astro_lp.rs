@@ -244,15 +244,15 @@ fn staked_lp_position_partially_liquidated() {
     let atom_debt = get_debt("uatom", &position.debts);
     assert_eq!(atom_debt.amount, Uint128::new(956));
 
-    assert_eq!(position.staked_lp.len(), 1);
-    let osmo_staked_lp = get_coin("uosmo", &position.staked_lp);
+    assert_eq!(position.staked_astro_lps.len(), 1);
+    let osmo_staked_lp = get_coin("uosmo", &position.staked_astro_lps);
     assert_eq!(osmo_staked_lp.amount, Uint128::new(46));
 
     assert_eq!(position.lends.len(), 0);
 
     // Assert liquidator's new position
     let position = mock.query_positions(&liquidator_account_id);
-    assert_eq!(position.staked_lp.len(), 0);
+    assert_eq!(position.staked_astro_lps.len(), 0);
     assert_eq!(position.lends.len(), 0);
     assert_eq!(position.debts.len(), 0);
     assert_eq!(position.deposits.len(), 1);
@@ -266,7 +266,7 @@ fn staked_lp_position_partially_liquidated() {
     let rc_osmo_deposited = get_coin("uosmo", &position.deposits);
     assert_eq!(rc_osmo_deposited.amount, Uint128::new(4));
     assert_eq!(position.lends.len(), 0);
-    assert_eq!(position.staked_lp.len(), 0);
+    assert_eq!(position.staked_astro_lps.len(), 0);
     assert_eq!(position.debts.len(), 0);
 
     // Liq HF should improve
