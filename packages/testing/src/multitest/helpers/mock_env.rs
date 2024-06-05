@@ -1524,7 +1524,7 @@ pub fn deploy_managed_vault(app: &mut CustomApp, sender: &Addr, credit_manager: 
         credit_manager,
         60,
         PerformanceFeeConfig {
-            fee: Decimal::zero(),
+            fee_rate: Decimal::zero(),
             withdrawal_interval: 0,
         },
     )

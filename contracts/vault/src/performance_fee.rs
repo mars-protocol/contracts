@@ -8,13 +8,13 @@ const ONE_HOUR_IN_SEC: u64 = 3600u64;
 
 /// The maximum performance fee per 1h that can be set (equal to 0.0046287042457349%).
 /// It is equivalent to 50% per year.
-const MAX_PERFORMANCE_FEE: Decimal = Decimal::raw(46287042457349);
+const MAX_PERFORMANCE_FEE_RATE: Decimal = Decimal::raw(46287042457349);
 
 #[cw_serde]
 #[derive(Default)]
 pub struct PerformanceFeeConfig {
     /// The percentage of the performance fee that will be charged on the profits
-    pub fee: Decimal,
+    pub fee_rate: Decimal,
 
     /// The interval in seconds at which the performance fee can be withdrawn by the manager
     pub withdrawal_interval: u64,
@@ -22,10 +22,10 @@ pub struct PerformanceFeeConfig {
 
 impl PerformanceFeeConfig {
     pub fn validate(&self) -> Result<(), ContractError> {
-        if self.fee > MAX_PERFORMANCE_FEE {
+        if self.fee_rate > MAX_PERFORMANCE_FEE_RATE {
             return Err(ContractError::InvalidPerformanceFee {
-                expected: MAX_PERFORMANCE_FEE,
-                actual: self.fee,
+                expected: MAX_PERFORMANCE_FEE_RATE,
+                actual: self.fee_rate,
             });
         }
 
@@ -36,7 +36,7 @@ impl PerformanceFeeConfig {
 #[cw_serde]
 pub struct PerformanceFeeState {
     /// The timestamp (sec) of the last fee withdrawal
-    pub updated_at: u64,
+    pub last_withdrawal: u64,
 
     /// The total amount of base tokens in the vault account in Credit Manager
     pub base_tokens_amt: Uint128,
@@ -51,7 +51,7 @@ pub struct PerformanceFeeState {
 impl Default for PerformanceFeeState {
     fn default() -> Self {
         Self {
-            updated_at: u64::MAX,
+            last_withdrawal: u64::MAX,
             base_tokens_amt: Uint128::zero(),
             accumulated_pnl: Int128::zero(),
             accumulated_fee: Uint128::zero(),
@@ -67,8 +67,8 @@ impl PerformanceFeeState {
         config: &PerformanceFeeConfig,
     ) -> StdResult<()> {
         // initial state, first time update by deposit
-        if self.updated_at == u64::MAX {
-            self.updated_at = current_time;
+        if self.last_withdrawal == u64::MAX {
+            self.last_withdrawal = current_time;
             self.accumulated_pnl = Int128::zero();
             self.accumulated_fee = Uint128::zero();
             return Ok(());
@@ -98,9 +98,9 @@ impl PerformanceFeeState {
         current_time: u64,
         config: &PerformanceFeeConfig,
     ) -> StdResult<Decimal> {
-        let time_diff_in_sec = current_time - self.updated_at;
+        let time_diff_in_sec = current_time - self.last_withdrawal;
         let time_diff_in_hours = time_diff_in_sec / ONE_HOUR_IN_SEC;
-        Ok(config.fee.checked_mul(Decimal::from_ratio(time_diff_in_hours, 1u128))?)
+        Ok(config.fee_rate.checked_mul(Decimal::from_ratio(time_diff_in_hours, 1u128))?)
     }
 
     pub fn update_base_tokens_after_deposit(
@@ -133,14 +133,14 @@ impl PerformanceFeeState {
             return Err(ContractError::ZeroPerformanceFee {});
         }
 
-        let time_diff = current_time - self.updated_at;
+        let time_diff = current_time - self.last_withdrawal;
         if time_diff < config.withdrawal_interval {
             return Err(ContractError::WithdrawalIntervalNotPassed {});
         }
 
         let updated_liquidity = total_base_tokens - self.accumulated_fee;
 
-        self.updated_at = current_time;
+        self.last_withdrawal = current_time;
         self.accumulated_pnl = Int128::zero();
         self.accumulated_fee = Uint128::zero();
         self.base_tokens_amt = updated_liquidity;
