@@ -40,7 +40,7 @@ fn hls_account_kind_passed_along() {
             vault: vault.clone(),
             amount: VaultPositionAmount::Unlocked(VaultAmount::new(vault_token_amount)),
         }],
-        staked_lp: vec![],
+        staked_astro_lps: vec![],
     };
     mock.set_positions_response(account_id, &positions);
     mock.set_price(debt_token, Decimal::one(), ActionKind::Default);

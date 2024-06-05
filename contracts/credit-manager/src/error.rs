@@ -116,6 +116,9 @@ pub enum ContractError {
     #[error("Nothing lent to reclaim")]
     NoneLent,
 
+    #[error("No Astro LP available")]
+    NoAstroLp,
+
     #[error(
         "{account_id:?} is not a liquidatable credit account. Health factor: {lqdt_health_factor:?}."
     )]
