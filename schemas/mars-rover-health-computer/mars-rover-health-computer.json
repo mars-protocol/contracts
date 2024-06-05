@@ -355,6 +355,7 @@
         "debts",
         "deposits",
         "lends",
+        "staked_lp",
         "vaults"
       ],
       "properties": {
@@ -377,6 +378,12 @@
           }
         },
         "lends": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/Coin"
+          }
+        },
+        "staked_lp": {
           "type": "array",
           "items": {
             "$ref": "#/definitions/Coin"

@@ -1,4 +1,5 @@
 pub mod borrow;
+pub mod claim_astro_lp_rewards;
 pub mod claim_rewards;
 pub mod contract;
 pub mod deposit;
@@ -16,8 +17,10 @@ pub mod query;
 pub mod reclaim;
 pub mod refund;
 pub mod repay;
+pub mod stake_astro_lp;
 pub mod state;
 pub mod swap;
+pub mod unstake_astro_lp;
 pub mod update_coin_balances;
 pub mod update_config;
 pub mod utils;

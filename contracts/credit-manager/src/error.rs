@@ -90,6 +90,12 @@ pub enum ContractError {
         reason: String,
     },
 
+    #[error("Insufficient funds. Requested {requested:?}, available {available:?}")]
+    InsufficientFunds {
+        requested: Uint128,
+        available: Uint128,
+    },
+
     #[error("{reason:?}")]
     InvalidConfig {
         reason: String,

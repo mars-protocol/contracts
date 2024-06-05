@@ -13,6 +13,7 @@ use mars_vault::msg::{ExecuteMsg, ExtensionExecuteMsg};
 
 use crate::{
     borrow::borrow,
+    claim_astro_lp_rewards::claim_lp_rewards,
     claim_rewards::{claim_rewards, send_rewards},
     deposit::{assert_deposit_caps, deposit},
     error::{ContractError, ContractResult},
@@ -25,8 +26,10 @@ use crate::{
     reclaim::reclaim,
     refund::refund_coin_balances,
     repay::{repay, repay_for_recipient},
+    stake_astro_lp::stake_lp,
     state::{ACCOUNT_KINDS, ACCOUNT_NFT, REENTRANCY_GUARD},
     swap::swap_exact_in,
+    unstake_astro_lp::unstake_lp,
     update_coin_balances::{update_coin_balance, update_coin_balance_after_vault_liquidation},
     utils::{assert_is_token_owner, get_account_kind},
     vault::{
@@ -316,6 +319,24 @@ pub fn dispatch_actions(
                 lp_token,
                 slippage,
             }),
+            Action::StakeAstroLp {
+                lp_token,
+            } => callbacks.push(CallbackMsg::StakeAstroLp {
+                account_id: account_id.to_string(),
+                lp_token,
+            }),
+            Action::UnstakeAstroLp {
+                lp_token,
+            } => callbacks.push(CallbackMsg::UnstakeAstroLp {
+                account_id: account_id.to_string(),
+                lp_token,
+            }),
+            Action::ClaimAstroLpRewards {
+                lp_denom,
+            } => callbacks.push(CallbackMsg::ClaimAstroLpRewards {
+                account_id: account_id.to_string(),
+                lp_denom,
+            }),
             Action::RefundAllCoinBalances {} => {
                 callbacks.push(CallbackMsg::RefundAllCoinBalances {
                     account_id: account_id.to_string(),
@@ -580,5 +601,17 @@ pub fn execute_callback(
             previous_balances,
             recipient,
         } => send_rewards(deps, &env.contract.address, &account_id, recipient, previous_balances),
+        CallbackMsg::StakeAstroLp {
+            account_id,
+            lp_token,
+        } => stake_lp(deps, &account_id, lp_token),
+        CallbackMsg::UnstakeAstroLp {
+            account_id,
+            lp_token,
+        } => unstake_lp(deps, &account_id, lp_token),
+        CallbackMsg::ClaimAstroLpRewards {
+            account_id,
+            lp_denom,
+        } => claim_lp_rewards(deps, &account_id, &lp_denom),
     }
 }

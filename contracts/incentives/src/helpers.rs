@@ -217,7 +217,7 @@ pub fn update_incentive_index(
 }
 
 /// Compute the incentive states for the lp based on the rewards given
-pub fn compute_updated_astroport_incentive_states(
+pub fn compute_updated_astro_incentive_states(
     storage: &dyn Storage,
     pending_rewards: Vec<Coin>,
     lp_denom: &str,
@@ -240,7 +240,7 @@ pub fn compute_updated_astroport_incentive_states(
             .unwrap_or(Decimal::zero());
 
         let updated_incentive =
-            compute_astroport_incentive_index(&previous_index, reward.amount, total_lp_amount)?;
+            compute_astro_incentive_index(&previous_index, reward.amount, total_lp_amount)?;
 
         updated_incentives.insert(reward_denom, updated_incentive);
     }
@@ -248,7 +248,7 @@ pub fn compute_updated_astroport_incentive_states(
     Ok(updated_incentives)
 }
 
-pub fn calculate_rewards_from_astroport_incentive_state(
+pub fn calculate_rewards_for_staked_astro_lp_position(
     mut storage: &mut MaybeMutStorage,
     account_id: &str,
     lp_coin: &Coin,
@@ -289,7 +289,7 @@ pub fn calculate_rewards_from_astroport_incentive_state(
     Ok(payables)
 }
 
-pub fn compute_astroport_incentive_index(
+pub fn compute_astro_incentive_index(
     previous_index: &Decimal,
     claimed_rewards_amount: Uint128,
     total_lp_amount: Uint128,
