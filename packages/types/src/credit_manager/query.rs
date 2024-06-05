@@ -90,6 +90,12 @@ pub enum QueryMsg {
     VaultPositionValue {
         vault_position: VaultPosition,
     },
+    /// Enumerate all vault bindings; start_after accepts account_id
+    #[returns(Vec<VaultBinding>)]
+    VaultBindings {
+        start_after: Option<String>,
+        limit: Option<u32>,
+    },
 }
 
 #[cw_serde]
@@ -186,4 +192,10 @@ pub struct ConfigResponse {
 pub struct Account {
     pub id: String,
     pub kind: AccountKind,
+}
+
+#[cw_serde]
+pub struct VaultBinding {
+    pub account_id: String,
+    pub vault_address: String,
 }
