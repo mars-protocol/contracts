@@ -44,7 +44,7 @@ fn claim_for_user(
     lp_denom: String,
 ) -> Result<Response, ContractError> {
     let info = mock_info(sender, &[]);
-    let msg = ExecuteMsg::ClaimAstroLpRewards {
+    let msg = ExecuteMsg::ClaimStakedAstroLpRewards {
         account_id,
         lp_denom,
     };
@@ -76,7 +76,7 @@ fn assert_user_rewards(
     lp_coin: Coin,
     rewards: Vec<Coin>,
 ) {
-    let actual_rewards = query::query_lp_rewards_for_position(
+    let actual_rewards = query::query_staked_astro_lp_rewards_for_coin(
         deps,
         &env,
         &astroport_incentives_addr,

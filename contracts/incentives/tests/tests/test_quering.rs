@@ -335,7 +335,7 @@ fn query_staked_lp_positions_with_pagination() {
 
     let page_1: PaginatedStakedLpResponse = th_query(
         deps.as_ref(),
-        QueryMsg::StakedLpPositions {
+        QueryMsg::StakedAstroLpPositions {
             account_id: account_id.clone(),
             start_after: None,
             limit: Some(51),
@@ -347,7 +347,7 @@ fn query_staked_lp_positions_with_pagination() {
 
     let page_2: PaginatedStakedLpResponse = th_query(
         deps.as_ref(),
-        QueryMsg::StakedLpPositions {
+        QueryMsg::StakedAstroLpPositions {
             account_id: account_id.clone(),
             start_after: page_1.data.last().map(|x| x.lp_coin.denom.clone()),
             limit: None,
@@ -394,7 +394,7 @@ fn query_staked_astro_lp_position() {
 
     let res: StakedLpPositionResponse = th_query(
         deps.as_ref(),
-        QueryMsg::StakedLpPosition {
+        QueryMsg::StakedAstroLpPosition {
             account_id: account_id.clone(),
             lp_denom: lp_denom.clone(),
         },

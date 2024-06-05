@@ -1,5 +1,8 @@
-use cosmwasm_std::{Coin, DepsMut, Response};
-use mars_types::credit_manager::{ActionAmount, ActionCoin};
+use cosmwasm_std::{coin, DepsMut, Response};
+use mars_types::{
+    credit_manager::{ActionAmount, ActionCoin},
+    traits::Stringify,
+};
 
 use crate::{
     error::ContractResult,
@@ -11,7 +14,7 @@ pub fn stake_lp(deps: DepsMut, account_id: &str, lp_coin: ActionCoin) -> Contrac
     let incentives = INCENTIVES.load(deps.storage)?;
 
     // Query rewards user is receiving to update their balances
-    let rewards = incentives.query_astroport_staked_lp_rewards(
+    let rewards = incentives.query_staked_astro_lp_rewards(
         &deps.querier,
         account_id,
         lp_coin.denom.as_str(),
@@ -24,10 +27,7 @@ pub fn stake_lp(deps: DepsMut, account_id: &str, lp_coin: ActionCoin) -> Contrac
         ActionAmount::AccountBalance => coin_balance,
     };
 
-    let updated_coin = Coin {
-        denom: lp_coin.denom,
-        amount: new_amount,
-    };
+    let updated_coin = coin(new_amount.u128(), lp_coin.denom.as_str());
 
     decrement_coin_balance(deps.storage, account_id, &updated_coin)?;
 
@@ -40,6 +40,7 @@ pub fn stake_lp(deps: DepsMut, account_id: &str, lp_coin: ActionCoin) -> Contrac
 
     Ok(Response::new()
         .add_message(stake_msg)
-        .add_attribute("action", "stake_lp")
+        .add_attribute("rewards", rewards.as_slice().to_string())
+        .add_attribute("action", "stake_astro_lp")
         .add_attribute("account_id", account_id))
 }

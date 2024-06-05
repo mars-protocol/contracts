@@ -48,7 +48,7 @@ use mars_types::{
     },
     incentives::{
         ExecuteMsg::{BalanceChange, SetAssetIncentive},
-        QueryMsg::{StakedLpPosition, StakedLpRewards, UserUnclaimedRewards},
+        QueryMsg::{StakedAstroLpPosition, StakedAstroLpRewards, UserUnclaimedRewards},
         StakedLpPositionResponse,
     },
     oracle::{ActionKind, PriceResponse, QueryMsg::Price as OraclePrice},
@@ -496,7 +496,7 @@ impl MockEnv {
             .wrap()
             .query_wasm_smart(
                 self.incentives.clone().addr,
-                &StakedLpRewards {
+                &StakedAstroLpRewards {
                     account_id: account_id.to_string(),
                     lp_denom: lp_denom.to_string(),
                 },
@@ -525,7 +525,7 @@ impl MockEnv {
             .wrap()
             .query_wasm_smart(
                 self.incentives.clone().addr,
-                &StakedLpRewards {
+                &StakedAstroLpRewards {
                     account_id: account_id.to_string(),
                     lp_denom: lp_denom.to_string(),
                 },
@@ -542,7 +542,7 @@ impl MockEnv {
             .wrap()
             .query_wasm_smart(
                 self.incentives.clone().addr,
-                &StakedLpPosition {
+                &StakedAstroLpPosition {
                     account_id: account_id.to_string(),
                     lp_denom: lp_denom.to_string(),
                 },

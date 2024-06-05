@@ -247,7 +247,7 @@ impl Incentives {
         env.app.execute_contract(
             sender.clone(),
             self.contract_addr.clone(),
-            &incentives::ExecuteMsg::ClaimAstroLpRewards {
+            &incentives::ExecuteMsg::ClaimStakedAstroLpRewards {
                 account_id,
                 lp_denom: lp_denom.to_string(),
             },
@@ -325,7 +325,7 @@ impl Incentives {
     ) -> StdResult<Vec<Coin>> {
         env.app.wrap().query_wasm_smart(
             self.contract_addr.clone(),
-            &incentives::QueryMsg::StakedLpRewards {
+            &incentives::QueryMsg::StakedAstroLpRewards {
                 account_id,
                 lp_denom: lp_denom.to_string(),
             },

@@ -14,7 +14,7 @@ use mars_types::{
 
 use crate::{
     helpers::{
-        calculate_rewards_from_astroport_incentive_state, claim_rewards_msg,
+        calculate_rewards_for_staked_astro_lp_position, claim_rewards_msg,
         compute_updated_astroport_incentive_states, MaybeMutStorage,
     },
     query::query_unclaimed_astroport_rewards,
@@ -22,8 +22,8 @@ use crate::{
     ContractError::{self, NoStakedLp},
 };
 
-/// Fetch the new rewards from astroport, and update our global incentive states.
-fn claim_rewards_from_astro(
+/// Fetches all pending rewards from all users LP in astroport, and updates the lp incentive states
+fn claim_global_staked_lp_rewards(
     deps: &mut DepsMut,
     astroport_incentives_addr: &str,
     mars_incentives_addr: &str,
@@ -36,14 +36,14 @@ fn claim_rewards_from_astro(
         lp_denom,
     )?;
 
-    let res = update_incentive_states(deps.storage, lp_denom, pending_rewards)?;
+    let res = update_incentive_states_for_lp_denom(deps.storage, lp_denom, pending_rewards)?;
 
     Ok(res
         .add_event(Event::new("mars/incentives/claimed_astro_incentive_rewards"))
         .add_message(claim_rewards_msg(astroport_incentives_addr, lp_denom)?))
 }
 
-pub fn execute_unstake_astro_lp(
+pub fn execute_unstake_lp(
     deps: DepsMut,
     env: Env,
     info: MessageInfo,
@@ -92,7 +92,7 @@ pub fn execute_unstake_astro_lp(
     )
 }
 
-pub fn execute_stake_astro_lp(
+pub fn execute_stake_lp(
     deps: DepsMut,
     env: Env,
     info: MessageInfo,
@@ -137,7 +137,7 @@ fn update_user_lp_position(
         .unwrap_or(Uint128::zero());
 
     // Claim all rewards from astroport before any modification
-    let mut res = claim_astro_rewards_for_lp_position(
+    let mut res = claim_rewards_for_staked_lp_position(
         &mut deps,
         astroport_incentives_addr,
         mars_incentives_addr,
@@ -151,7 +151,7 @@ fn update_user_lp_position(
         // Deposit stakes lp coin in astroport incentives
         LpModification::Deposit => {
             // Update our accounting
-            increment_lp_deposit(deps.storage, account_id, &lp_coin)?;
+            increment_staked_lp(deps.storage, account_id, &lp_coin)?;
 
             // stake in astroport incentives
             res.add_message(CosmosMsg::Wasm(WasmMsg::Execute {
@@ -165,7 +165,7 @@ fn update_user_lp_position(
 
         LpModification::Withdraw => {
             // Update our lp amount accounting
-            decrement_lp_deposit(deps.storage, account_id, &lp_coin)?;
+            decrement_staked_lp(deps.storage, account_id, &lp_coin)?;
 
             // Add two messages
             // - unstake from astroport incentives (lp_amount)
@@ -196,7 +196,7 @@ fn update_user_lp_position(
     Ok(res.add_event(modification_event))
 }
 
-fn increment_lp_deposit(
+fn increment_staked_lp(
     store: &mut dyn Storage,
     account_id: &str,
     lp_coin: &Coin,
@@ -218,7 +218,7 @@ fn increment_lp_deposit(
     Ok(())
 }
 
-fn decrement_lp_deposit(
+fn decrement_staked_lp(
     store: &mut dyn Storage,
     account_id: &str,
     lp_coin: &Coin,
@@ -249,7 +249,7 @@ fn decrement_lp_deposit(
     Ok(())
 }
 
-fn update_incentive_states(
+fn update_incentive_states_for_lp_denom(
     storage: &mut dyn Storage,
     lp_denom: &str,
     pending_rewards: Vec<Coin>,
@@ -266,7 +266,7 @@ fn update_incentive_states(
     Ok(Response::new())
 }
 
-pub fn execute_claim_astro_rewards_for_lp_position(
+pub fn execute_claim_rewards_for_staked_lp_position(
     mut deps: DepsMut,
     env: Env,
     info: MessageInfo,
@@ -298,7 +298,7 @@ pub fn execute_claim_astro_rewards_for_lp_position(
             denom: lp_denom.to_string(),
         })?;
 
-    claim_astro_rewards_for_lp_position(
+    claim_rewards_for_staked_lp_position(
         &mut deps,
         astroport_incentives_addr.as_str(),
         &mars_incentives_addr,
@@ -312,7 +312,7 @@ pub fn execute_claim_astro_rewards_for_lp_position(
 /// Claims astroport rewards for a user.
 ///
 /// Response returned includes msg to send rewards to credit manager
-fn claim_astro_rewards_for_lp_position(
+fn claim_rewards_for_staked_lp_position(
     deps: &mut DepsMut,
     astroport_incentives_addr: &str,
     mars_incentives_addr: &str,
@@ -321,8 +321,12 @@ fn claim_astro_rewards_for_lp_position(
     lp_denom: &str,
     staked_lp_amount: Uint128,
 ) -> Result<Response, ContractError> {
-    let mut res =
-        claim_rewards_from_astro(deps, astroport_incentives_addr, mars_incentives_addr, lp_denom)?;
+    let mut res = claim_global_staked_lp_rewards(
+        deps,
+        astroport_incentives_addr,
+        mars_incentives_addr,
+        lp_denom,
+    )?;
 
     let mut event = Event::new("mars/incentives/claimed_lp_rewards")
         .add_attribute("account_id", account_id.to_string());
@@ -370,7 +374,7 @@ fn calculate_claimable_rewards(
         .range(storage.to_storage(), None, None, Ascending)
         .collect::<StdResult<HashMap<String, Decimal>>>()?;
 
-    calculate_rewards_from_astroport_incentive_state(
+    calculate_rewards_for_staked_astro_lp_position(
         storage,
         account_id,
         &lp_coin,

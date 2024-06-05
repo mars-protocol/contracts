@@ -1,4 +1,4 @@
-pub mod astroport_incentives;
+pub mod astro_incentives;
 pub mod config;
 pub mod contract;
 mod error;

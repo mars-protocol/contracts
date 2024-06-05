@@ -1,4 +1,4 @@
-use cosmwasm_std::{DepsMut, Event, Response};
+use cosmwasm_std::{DepsMut, Response};
 use mars_types::traits::Stringify;
 
 use crate::{
@@ -15,8 +15,7 @@ pub fn claim_lp_rewards(
     let incentives = INCENTIVES.load(deps.storage)?;
 
     // Query rewards user is receiving, update balance
-    let rewards =
-        incentives.query_astroport_staked_lp_rewards(&deps.querier, account_id, lp_denom)?;
+    let rewards = incentives.query_staked_astro_lp_rewards(&deps.querier, account_id, lp_denom)?;
     if rewards.is_empty() {
         return Err(ContractError::NoAmount);
     }
@@ -25,11 +24,11 @@ pub fn claim_lp_rewards(
         increment_coin_balance(deps.storage, account_id, reward)?;
     }
 
-    let claim_rewards_msg = incentives.claim_lp_rewards_msg(account_id, lp_denom)?;
+    let claim_rewards_msg = incentives.claim_staked_astro_lp_rewards_msg(account_id, lp_denom)?;
 
     Ok(Response::new()
         .add_message(claim_rewards_msg)
         .add_attribute("rewards", rewards.as_slice().to_string())
-        .add_attribute("action", "claim_lp_rewards")
+        .add_attribute("action", "claim_astro_lp_rewards")
         .add_attribute("account_id", account_id))
 }

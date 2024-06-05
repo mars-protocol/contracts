@@ -153,7 +153,7 @@ pub enum ExecuteMsg {
         limit: Option<u32>,
     },
 
-    ClaimAstroLpRewards {
+    ClaimStakedAstroLpRewards {
         account_id: String,
         lp_denom: String,
     },
@@ -207,7 +207,7 @@ pub enum MigrateV1ToV2 {
 pub enum QueryMsg {
     /// Query account staked LP rewards
     #[returns(PaginatedLpRewardsResponse)]
-    StakedLpRewards {
+    StakedAstroLpRewards {
         /// The id of the account who owns the LP
         account_id: String,
         /// Denom of LP that is accruing rewards
@@ -278,7 +278,7 @@ pub enum QueryMsg {
 
     /// Enumerate a users LP positions with pagination
     #[returns(PaginatedStakedLpResponse)]
-    StakedLpPositions {
+    StakedAstroLpPositions {
         /// The id of the account who owns the LP
         account_id: String,
         /// Start pagination after this lp denom, if used.
@@ -290,7 +290,7 @@ pub enum QueryMsg {
 
     /// Get specific details on a users LP Position
     #[returns(StakedLpPositionResponse)]
-    StakedLpPosition {
+    StakedAstroLpPosition {
         /// The id of the account who owns the LP
         account_id: String,
         /// The denom of the LP position

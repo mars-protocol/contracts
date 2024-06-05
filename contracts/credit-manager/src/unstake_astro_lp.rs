@@ -1,5 +1,8 @@
-use cosmwasm_std::{Coin, DepsMut, Response};
-use mars_types::credit_manager::{ActionAmount, ActionCoin};
+use cosmwasm_std::{coin, DepsMut, Response};
+use mars_types::{
+    credit_manager::{ActionAmount, ActionCoin},
+    traits::Stringify,
+};
 
 use crate::{
     error::{ContractError, ContractResult},
@@ -15,7 +18,7 @@ pub fn unstake_lp(
     let incentives = INCENTIVES.load(deps.storage)?;
 
     // Query rewards user is receiving, update balance
-    let lp_position = incentives.query_astroport_staked_lp_position(
+    let lp_position = incentives.query_staked_astro_lp_position(
         &deps.querier,
         account_id,
         lp_coin.denom.as_str(),
@@ -39,19 +42,17 @@ pub fn unstake_lp(
         ActionAmount::AccountBalance => lp_position.lp_coin.amount,
     };
 
-    let updated_coin = Coin {
-        denom: lp_coin.denom.clone(),
-        amount: new_amount,
-    };
+    let updated_coin = coin(new_amount.u128(), lp_coin.denom.as_str());
 
     increment_coin_balance(deps.storage, account_id, &updated_coin)?;
 
     // unstake msg
-    let unstake_msg = incentives.unstake_astro_lp_msg(account_id, updated_coin)?;
+    let unstake_msg = incentives.unstake_astro_lp_msg(account_id, &updated_coin)?;
 
     Ok(Response::new()
         .add_message(unstake_msg)
-        .add_attribute("action", "unstake_lp")
+        .add_attribute("action", "unstake_astro_lp")
+        .add_attribute("rewards", lp_position.rewards.as_slice().to_string())
         .add_attribute("account_id", account_id)
-        .add_attribute("lp_unstaked", format!("{}{}", new_amount, &lp_coin.denom)))
+        .add_attribute("lp_unstaked", updated_coin.to_string()))
 }

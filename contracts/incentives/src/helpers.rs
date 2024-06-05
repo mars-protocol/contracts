@@ -248,7 +248,7 @@ pub fn compute_updated_astroport_incentive_states(
     Ok(updated_incentives)
 }
 
-pub fn calculate_rewards_from_astroport_incentive_state(
+pub fn calculate_rewards_for_staked_astro_lp_position(
     mut storage: &mut MaybeMutStorage,
     account_id: &str,
     lp_coin: &Coin,

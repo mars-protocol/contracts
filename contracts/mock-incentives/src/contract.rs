@@ -35,7 +35,7 @@ pub fn execute(
             account_id,
             ..
         } => claim_rewards(deps, info, account_id),
-        incentives::ExecuteMsg::ClaimAstroLpRewards {
+        incentives::ExecuteMsg::ClaimStakedAstroLpRewards {
             account_id,
             lp_denom,
         } => claim_astro_lp_rewards(deps, info, account_id, lp_denom),
@@ -88,17 +88,17 @@ pub fn query(deps: Deps, _env: Env, msg: incentives::QueryMsg) -> StdResult<Bina
             account_id,
             ..
         } => to_json_binary(&query_unclaimed_rewards(deps, &user, &account_id)?),
-        incentives::QueryMsg::StakedLpRewards {
+        incentives::QueryMsg::StakedAstroLpRewards {
             account_id,
             lp_denom,
             ..
         } => to_json_binary(&query::query_pending_astroport_rewards(deps, account_id, lp_denom)?),
-        incentives::QueryMsg::StakedLpPosition {
+        incentives::QueryMsg::StakedAstroLpPosition {
             account_id,
             lp_denom,
             ..
         } => to_json_binary(&query::query_staked_lp_position(deps, account_id, lp_denom)?),
-        incentives::QueryMsg::StakedLpPositions {
+        incentives::QueryMsg::StakedAstroLpPositions {
             account_id,
             start_after,
             limit,

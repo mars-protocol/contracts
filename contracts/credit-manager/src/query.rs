@@ -72,7 +72,7 @@ pub fn query_positions(deps: Deps, account_id: &str) -> ContractResult<Positions
         vaults: query_vault_positions(deps, account_id)?,
         staked_lp: INCENTIVES
             .load(deps.storage)?
-            .query_all_staked_lp_coins(&deps.querier, account_id)?,
+            .query_all_staked_astro_lp_coins(&deps.querier, account_id)?,
     })
 }
 
