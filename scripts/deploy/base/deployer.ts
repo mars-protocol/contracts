@@ -1,6 +1,7 @@
 import { SigningCosmWasmClient } from '@cosmjs/cosmwasm-stargate'
 import {
   AssetConfig,
+  AstroportConfig,
   DeploymentConfig,
   OracleConfig,
   SwapperExecuteMsg,
@@ -20,7 +21,10 @@ import {
   ExecuteMsg as CreditManagerExecute,
   InstantiateMsg as RoverInstantiateMsg,
 } from '../../types/generated/mars-credit-manager/MarsCreditManager.types'
-import { InstantiateMsg as AstroportSwapperInstantiateMsg } from '../../types/generated/mars-swapper-astroport/MarsSwapperAstroport.types'
+import {
+  InstantiateMsg as AstroportSwapperInstantiateMsg,
+  AstroportConfig as SwapperAstroportConfig,
+} from '../../types/generated/mars-swapper-astroport/MarsSwapperAstroport.types'
 import { InstantiateMsg as OsmosisSwapperInstantiateMsg } from '../../types/generated/mars-swapper-osmosis/MarsSwapperOsmosis.types'
 import { InstantiateMsg as ParamsInstantiateMsg } from '../../types/generated/mars-params/MarsParams.types'
 import { ExecuteMsg as ParamsExecuteMsg } from '../../types/generated/mars-params/MarsParams.types'
@@ -282,33 +286,6 @@ export class Deployer {
     )
   }
 
-  async grantCreditLines() {
-    if (this.storage.actions.grantedCreditLines) {
-      printGray('Credit lines already granted')
-      return
-    }
-
-    const wallet = await getWallet(this.config.deployerMnemonic, this.config.chain.prefix)
-    const client = await setupClient(this.config, wallet)
-    const addr = await getAddress(wallet)
-
-    for (const creditLineCoin of this.config.creditLineCoins) {
-      const msg = {
-        update_uncollateralized_loan_limit: {
-          user: this.storage.addresses.creditManager,
-          denom: creditLineCoin.denom,
-          new_limit: creditLineCoin.creditLine,
-        },
-      }
-      printBlue(
-        `Granting credit line to Rover for: ${creditLineCoin.creditLine} ${creditLineCoin.denom}`,
-      )
-      await client.execute(addr, this.storage.addresses.redBank!, msg, 'auto')
-    }
-
-    this.storage.actions.grantedCreditLines = true
-  }
-
   async updateCreditManagerOwner() {
     if (!this.config.multisigAddr) throw new Error('No multisig addresses to transfer ownership to')
 
@@ -529,6 +506,25 @@ export class Deployer {
     printYellow(`${vaultConfig.symbol} updated.`)
 
     this.storage.actions.vaultsSet.push(vaultConfig.vault.addr)
+  }
+
+  async updateSwapperAstroportConfig(config: AstroportConfig) {
+    printBlue(`Updating swapper astroport config...`)
+
+    const swapperConfig: SwapperAstroportConfig = {
+      router: config.router,
+      factory: config.factory,
+      oracle: this.storage.addresses.oracle!,
+    }
+
+    await this.cwClient.execute(
+      this.deployerAddr,
+      this.storage.addresses.swapper!,
+      { update_config: { config: swapperConfig } },
+      'auto',
+    )
+
+    printYellow(`Swapper astroport config updated.`)
   }
 
   async setRoutes() {
