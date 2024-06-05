@@ -957,6 +957,19 @@
               }
             },
             "additionalProperties": false
+          },
+          {
+            "description": "Pay back debt of a liquidatable credit manager account for a via liquidating an Astro LP position. LP shares are transfered from the liquidatable to the liquidator.",
+            "type": "object",
+            "required": [
+              "staked_astro_lp"
+            ],
+            "properties": {
+              "staked_astro_lp": {
+                "type": "string"
+              }
+            },
+            "additionalProperties": false
           }
         ]
       },

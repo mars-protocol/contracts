@@ -355,7 +355,7 @@
         "debts",
         "deposits",
         "lends",
-        "staked_lp",
+        "staked_astro_lps",
         "vaults"
       ],
       "properties": {
@@ -383,7 +383,7 @@
             "$ref": "#/definitions/Coin"
           }
         },
-        "staked_lp": {
+        "staked_astro_lps": {
           "type": "array",
           "items": {
             "$ref": "#/definitions/Coin"
