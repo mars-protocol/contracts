@@ -70,7 +70,6 @@ fn claiming_a_single_reward() {
 
     let coin = mock.query_balance(&mock.rover, &reward.denom);
     assert_eq!(coin.amount, reward.amount);
-
 }
 
 #[test]
