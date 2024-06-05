@@ -64,23 +64,23 @@ pub fn deposit(
     let amount = cw_utils::must_pay(info, &base_token)?;
 
     // calculate vault tokens
-    let total_staked_amount = total_base_tokens_in_account(deps.as_ref())?;
+    let total_base_tokens = total_base_tokens_in_account(deps.as_ref())?;
     let vault_token_supply = vault_token.query_total_supply(deps.as_ref())?;
 
     let mut performance_fee_state = PERFORMANCE_FEE_STATE.load(deps.storage)?;
     let performance_fee_config = PERFORMANCE_FEE_CONFIG.load(deps.storage)?;
     performance_fee_state.update_fee_and_pnl(
         env.block.time.seconds(),
-        total_staked_amount,
+        total_base_tokens,
         &performance_fee_config,
     )?;
-    performance_fee_state.update_base_tokens_after_deposit(total_staked_amount, amount)?;
+    performance_fee_state.update_base_tokens_after_deposit(total_base_tokens, amount)?;
     PERFORMANCE_FEE_STATE.save(deps.storage, &performance_fee_state)?;
-    let total_staked_amount_without_fee =
-        total_staked_amount.checked_sub(performance_fee_state.accumulated_fee)?;
+    let total_base_tokens_without_fee =
+        total_base_tokens.checked_sub(performance_fee_state.accumulated_fee)?;
 
     let vault_tokens =
-        calculate_vault_tokens(amount, total_staked_amount_without_fee, vault_token_supply)?;
+        calculate_vault_tokens(amount, total_base_tokens_without_fee, vault_token_supply)?;
 
     let coin_deposited = Coin {
         denom: base_token,
@@ -212,28 +212,28 @@ pub fn redeem(
         });
     }
 
-    let total_staked_amount = total_base_tokens_in_account(deps.as_ref())?;
+    let total_base_tokens = total_base_tokens_in_account(deps.as_ref())?;
 
     let mut performance_fee_state = PERFORMANCE_FEE_STATE.load(deps.storage)?;
     let performance_fee_config = PERFORMANCE_FEE_CONFIG.load(deps.storage)?;
     performance_fee_state.update_fee_and_pnl(
         env.block.time.seconds(),
-        total_staked_amount,
+        total_base_tokens,
         &performance_fee_config,
     )?;
 
-    let total_staked_amount_without_fee =
-        total_staked_amount.checked_sub(performance_fee_state.accumulated_fee)?;
+    let total_base_tokens_without_fee =
+        total_base_tokens.checked_sub(performance_fee_state.accumulated_fee)?;
 
     // calculate base tokens based on the given amount of vault tokens
     let vault_token_supply = vault_token.query_total_supply(deps.as_ref())?;
     let tokens_to_redeem = calculate_base_tokens(
         vault_token_amount,
-        total_staked_amount_without_fee,
+        total_base_tokens_without_fee,
         vault_token_supply,
     )?;
 
-    performance_fee_state.update_base_tokens_after_redeem(total_staked_amount, tokens_to_redeem)?;
+    performance_fee_state.update_base_tokens_after_redeem(total_base_tokens, tokens_to_redeem)?;
 
     PERFORMANCE_FEE_STATE.save(deps.storage, &performance_fee_state)?;
 
@@ -405,19 +405,19 @@ pub fn withdraw_performance_fee(
         });
     }
 
-    let total_staked_amount = total_base_tokens_in_account(deps.as_ref())?;
+    let total_base_tokens = total_base_tokens_in_account(deps.as_ref())?;
 
     let mut performance_fee_state = PERFORMANCE_FEE_STATE.load(deps.storage)?;
     let performance_fee_config = PERFORMANCE_FEE_CONFIG.load(deps.storage)?;
     performance_fee_state.update_fee_and_pnl(
         env.block.time.seconds(),
-        total_staked_amount,
+        total_base_tokens,
         &performance_fee_config,
     )?;
     let accumulated_performace_fee = performance_fee_state.accumulated_fee;
     performance_fee_state.reset_state_by_manager(
         env.block.time.seconds(),
-        total_staked_amount,
+        total_base_tokens,
         &performance_fee_config,
     )?;
 

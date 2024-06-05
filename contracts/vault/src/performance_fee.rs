@@ -63,7 +63,7 @@ impl PerformanceFeeState {
     pub fn update_fee_and_pnl(
         &mut self,
         current_time: u64,
-        total_staked_base_tokens: Uint128,
+        total_base_tokens: Uint128,
         config: &PerformanceFeeConfig,
     ) -> StdResult<()> {
         // initial state, first time update by deposit
@@ -75,7 +75,7 @@ impl PerformanceFeeState {
         }
 
         let accumulated_pnl_i256 = Int256::from(self.accumulated_pnl)
-            + (Int256::from(total_staked_base_tokens) - Int256::from(self.base_tokens_amt));
+            + (Int256::from(total_base_tokens) - Int256::from(self.base_tokens_amt));
         // should be safe to convert to i128, the value should be in the range of i128
         let accumulated_pnl_i128: Int128 = accumulated_pnl_i256.try_into()?;
 

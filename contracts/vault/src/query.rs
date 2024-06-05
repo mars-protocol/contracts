@@ -27,17 +27,14 @@ pub fn query_vault_info(deps: Deps) -> ContractResult<VaultInfoResponseExt> {
 
 pub fn query_user_unlocks(deps: Deps, user_addr: Addr) -> ContractResult<Vec<VaultUnlock>> {
     let vault_token_supply = VAULT_TOKEN.load(deps.storage)?.query_total_supply(deps)?;
-    let total_staked_amount = total_base_tokens_in_account(deps)?;
+    let total_base_tokens = total_base_tokens_in_account(deps)?;
 
     let unlocks = UNLOCKS.may_load(deps.storage, user_addr.to_string())?.unwrap_or_default();
     unlocks
         .into_iter()
         .map(|unlock| {
-            let base_tokens = calculate_base_tokens(
-                unlock.vault_tokens,
-                total_staked_amount,
-                vault_token_supply,
-            )?;
+            let base_tokens =
+                calculate_base_tokens(unlock.vault_tokens, total_base_tokens, vault_token_supply)?;
             Ok(VaultUnlock {
                 created_at: unlock.created_at,
                 cooldown_end: unlock.cooldown_end,
@@ -50,12 +47,12 @@ pub fn query_user_unlocks(deps: Deps, user_addr: Addr) -> ContractResult<Vec<Vau
 
 pub fn convert_to_vault_tokens(deps: Deps, amount: Uint128) -> ContractResult<Uint128> {
     let vault_token_supply = VAULT_TOKEN.load(deps.storage)?.query_total_supply(deps)?;
-    let total_staked_amount = total_base_tokens_in_account(deps)?;
-    Ok(calculate_vault_tokens(amount, total_staked_amount, vault_token_supply)?)
+    let total_base_tokens = total_base_tokens_in_account(deps)?;
+    Ok(calculate_vault_tokens(amount, total_base_tokens, vault_token_supply)?)
 }
 
 pub fn convert_to_base_tokens(deps: Deps, amount: Uint128) -> ContractResult<Uint128> {
     let vault_token_supply = VAULT_TOKEN.load(deps.storage)?.query_total_supply(deps)?;
-    let total_staked_amount = total_base_tokens_in_account(deps)?;
-    Ok(calculate_base_tokens(amount, total_staked_amount, vault_token_supply)?)
+    let total_base_tokens = total_base_tokens_in_account(deps)?;
+    Ok(calculate_base_tokens(amount, total_base_tokens, vault_token_supply)?)
 }
