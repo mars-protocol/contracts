@@ -106,6 +106,8 @@ fn claim_rewards_without_active_schedule() {
     incentives
         .claim_astro_rewards(&mut mock_env, &credit_manager, "1".to_string(), lp_denom)
         .unwrap();
+    let lp_balance = mock_env.query_balance(&mock_env.credit_manager, &lp_denom)?;
+    assert_eq!(lp_balance.amount, Uint128::new(0));
 }
 
 #[test]
@@ -166,9 +168,9 @@ fn unstake_claims_rewards() {
     // Ensure that balance of credit manager is updated with rewards paid
     let reward_balance = mock_env.query_balance(&credit_manager, reward_denom).unwrap();
     assert_eq!(reward_balance, lp_rewards[0]);
+    assert_eq!(lp_rewards.len(), 1);
 
     // Ensure our lp balance is incremented in credit manager
-
     let lp_balance = mock_env.query_balance(&credit_manager, lp_denom).unwrap();
     assert_eq!(lp_balance, lp_coin);
 }
