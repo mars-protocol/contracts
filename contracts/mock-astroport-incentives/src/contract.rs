@@ -1,4 +1,4 @@
-use astroport::incentives::{ExecuteMsg, QueryMsg};
+use astroport_v5::incentives::{ExecuteMsg, QueryMsg};
 #[cfg(not(feature = "library"))]
 use cosmwasm_std::entry_point;
 use cosmwasm_std::{

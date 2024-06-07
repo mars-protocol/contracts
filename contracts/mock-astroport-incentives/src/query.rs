@@ -1,6 +1,6 @@
 use std::str::FromStr;
 
-use astroport::asset::Asset;
+use astroport_v5::asset::Asset;
 use cosmwasm_std::{Coin, Decimal256, Deps, Env, StdResult, Uint128};
 
 use crate::state::{ASTRO_LP_INCENTIVE_DEPOSITS, INCENTIVE_SCHEDULES};
@@ -18,7 +18,7 @@ pub fn query_rewards(
             .range(deps.storage, None, None, cosmwasm_std::Order::Ascending)
             .map(
                 |item: Result<
-                    (String, astroport::incentives::IncentivesSchedule),
+                    (String, astroport_v5::incentives::IncentivesSchedule),
                     cosmwasm_std::StdError,
                 >| {
                     let (reward_denom, schedule) = item.unwrap();
