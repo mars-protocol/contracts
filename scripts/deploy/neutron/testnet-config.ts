@@ -5,6 +5,12 @@ const nobleUsdcDenom = 'ibc/4C19E7EC06C1AB2EC2D70C6855FEB6D48E9CE174913991DA0A51
 const atomDenom = 'ibc/C4CFF46FD6DE35CA4CF4CE031E643C8FDC9BA4B99AE598E9B0ED98FE3A2319F9'
 const marsDenom = 'ibc/584A4A23736884E0C198FD1EE932455A9357A492A7B94324E4A02B5628687831'
 
+const pclLpMarsUsdcDenom =
+  'factory/neutron1sf456kx85dz0wfjs4sx0s80dyzmc360pfc0rdzactxt8xrse9ykqsdpy2y/astroport/share'
+const pclLpMarsDenom = 'factory/neutron1wm8jd0hrw79pfhhm9xmuq43jwz4wtukvxfgkkw/mars'
+const pclLpUsdcDenom = 'factory/neutron1wm8jd0hrw79pfhhm9xmuq43jwz4wtukvxfgkkw/usdc'
+const pclLpMarsUsdcPairAddr = 'neutron1sf456kx85dz0wfjs4sx0s80dyzmc360pfc0rdzactxt8xrse9ykqsdpy2y'
+
 const protocolAdminAddr = 'neutron1ke0vqqzyymlp5esr8gjwuzh94ysnpvj8er5hm7'
 
 const marsNeutronChannelId = 'channel-97'
@@ -22,7 +28,7 @@ const safetyFundAddr = 'mars1s4hgh56can3e33e0zqpnjxh0t5wdf7u3pze575'
 const feeCollectorAddr = 'mars17xpfvakm2amg962yls6f84z3kell8c5ldy6e7x'
 
 // Pyth configuration
-const pythAddr = 'neutron1f86ct5az9qpz2hqfd5uxru02px2a3tz5zkw7hugd7acqq496dcms22ehpy'
+const pythAddr = 'neutron15ldst8t80982akgr8w8ekcytejzkmfpgdkeq4xgtge48qs7435jqp87u3t'
 const pythAtomID = 'b00b60f88b03a6a625a8d1c048c3f66653edf217439983d037e7222c4e612819'
 const pythUsdcID = 'eaa020c61cc479712813461ce153894a96a6c00b21ed0cfc2798d1f9a9e9c94a'
 const pythNtrnID = 'a8e6517966a52cb1df864b2764f3629fde3f21d2b640b5c572fcd654cbccd65e'
@@ -92,6 +98,33 @@ export const usdOracle: OracleConfig = {
   price_source: {
     fixed: {
       price: '1000000',
+    },
+  },
+}
+
+export const pclLpMarsUsdcOracle: OracleConfig = {
+  denom: pclLpMarsUsdcDenom,
+  price_source: {
+    pcl_liquidity_token: {
+      pair_address: pclLpMarsUsdcPairAddr,
+    },
+  },
+}
+
+export const pclLpMarsOracle: OracleConfig = {
+  denom: pclLpMarsDenom,
+  price_source: {
+    fixed: {
+      price: '0.84',
+    },
+  },
+}
+
+export const pclLpUsdcOracle: OracleConfig = {
+  denom: pclLpUsdcDenom,
+  price_source: {
+    fixed: {
+      price: '1.05',
     },
   },
 }
@@ -230,18 +263,18 @@ export const usdcMarsRoute = {
 // Asset configurations
 export const ntrnAsset: AssetConfig = {
   denom: 'untrn',
-  max_loan_to_value: '0.35',
-  liquidation_threshold: '0.40',
+  max_loan_to_value: '0.54',
+  liquidation_threshold: '0.55',
   liquidation_bonus: {
-    max_lb: '0.05',
-    min_lb: '0',
-    slope: '2',
+    max_lb: '0.2',
+    min_lb: '0.05',
+    slope: '1',
     starting_lb: '0',
   },
   protocol_liquidation_fee: '0.5',
   symbol: 'NTRN',
   credit_manager: {
-    whitelisted: false,
+    whitelisted: true,
   },
   red_bank: {
     borrow_enabled: true,
@@ -259,18 +292,18 @@ export const ntrnAsset: AssetConfig = {
 
 export const atomAsset: AssetConfig = {
   denom: atomDenom,
-  max_loan_to_value: '0.68',
-  liquidation_threshold: '0.7',
+  max_loan_to_value: '0.74',
+  liquidation_threshold: '0.75',
   liquidation_bonus: {
-    max_lb: '0.05',
-    min_lb: '0',
-    slope: '2',
+    max_lb: '0.2',
+    min_lb: '0.05',
+    slope: '1',
     starting_lb: '0',
   },
   protocol_liquidation_fee: '0.5',
   symbol: 'ATOM',
   credit_manager: {
-    whitelisted: false,
+    whitelisted: true,
   },
   red_bank: {
     borrow_enabled: true,
@@ -279,27 +312,114 @@ export const atomAsset: AssetConfig = {
   deposit_cap: '150000000000',
   reserve_factor: '0.1',
   interest_rate_model: {
-    optimal_utilization_rate: '0.7',
+    optimal_utilization_rate: '0.8',
     base: '0',
-    slope_1: '0.2',
+    slope_1: '0.14',
     slope_2: '3',
   },
 }
 
 export const nobleUSDCAsset: AssetConfig = {
   denom: nobleUsdcDenom,
-  max_loan_to_value: '0.74',
-  liquidation_threshold: '0.75',
+  max_loan_to_value: '0.795',
+  liquidation_threshold: '0.8',
   liquidation_bonus: {
-    max_lb: '0.05',
-    min_lb: '0',
-    slope: '2',
+    max_lb: '0.2',
+    min_lb: '0.05',
+    slope: '1',
     starting_lb: '0',
   },
   protocol_liquidation_fee: '0.5',
   symbol: 'nobleUSDC',
   credit_manager: {
-    whitelisted: false,
+    whitelisted: true,
+  },
+  red_bank: {
+    borrow_enabled: true,
+    deposit_enabled: true,
+  },
+  deposit_cap: '500000000000',
+  reserve_factor: '0.1',
+  interest_rate_model: {
+    optimal_utilization_rate: '0.8',
+    base: '0',
+    slope_1: '0.2',
+    slope_2: '2',
+  },
+}
+
+export const pclLpMarsUsdcAsset: AssetConfig = {
+  denom: pclLpMarsUsdcDenom,
+  max_loan_to_value: '0.35',
+  liquidation_threshold: '0.40',
+  liquidation_bonus: {
+    max_lb: '0.2',
+    min_lb: '0.05',
+    slope: '1',
+    starting_lb: '0',
+  },
+  protocol_liquidation_fee: '0.5',
+  symbol: 'PCL_LP_MARS_USDC',
+  credit_manager: {
+    whitelisted: true,
+  },
+  red_bank: {
+    borrow_enabled: true,
+    deposit_enabled: true,
+  },
+  deposit_cap: '1000000000000000000',
+  reserve_factor: '0.1',
+  interest_rate_model: {
+    optimal_utilization_rate: '0.6',
+    base: '0',
+    slope_1: '0.15',
+    slope_2: '3',
+  },
+}
+
+export const pclLpMarsAsset: AssetConfig = {
+  denom: pclLpMarsDenom,
+  max_loan_to_value: '0.74',
+  liquidation_threshold: '0.75',
+  liquidation_bonus: {
+    max_lb: '0.2',
+    min_lb: '0.05',
+    slope: '1',
+    starting_lb: '0',
+  },
+  protocol_liquidation_fee: '0.5',
+  symbol: 'PCL_LP_MARS',
+  credit_manager: {
+    whitelisted: true,
+  },
+  red_bank: {
+    borrow_enabled: true,
+    deposit_enabled: true,
+  },
+  deposit_cap: '500000000000',
+  reserve_factor: '0.1',
+  interest_rate_model: {
+    optimal_utilization_rate: '0.8',
+    base: '0',
+    slope_1: '0.125',
+    slope_2: '2',
+  },
+}
+
+export const pclLpUsdcAsset: AssetConfig = {
+  denom: pclLpUsdcDenom,
+  max_loan_to_value: '0.74',
+  liquidation_threshold: '0.75',
+  liquidation_bonus: {
+    max_lb: '0.2',
+    min_lb: '0.05',
+    slope: '1',
+    starting_lb: '0',
+  },
+  protocol_liquidation_fee: '0.5',
+  symbol: 'PCL_LP_USDC',
+  credit_manager: {
+    whitelisted: true,
   },
   red_bank: {
     borrow_enabled: true,
@@ -362,9 +482,24 @@ export const neutronTestnetConfig: DeploymentConfig = {
   maxSlippage: '0.2',
   zapperContractName: 'mars_zapper_astroport',
   runTests: false,
-  assets: [ntrnAsset, atomAsset, nobleUSDCAsset],
+  assets: [
+    ntrnAsset,
+    atomAsset,
+    nobleUSDCAsset,
+    pclLpMarsUsdcAsset,
+    pclLpMarsAsset,
+    pclLpUsdcAsset,
+  ],
   vaults: [],
-  oracleConfigs: [usdOracle, nobleUSDCOracle, atomOracle, ntrnOracle],
+  oracleConfigs: [
+    usdOracle,
+    nobleUSDCOracle,
+    atomOracle,
+    ntrnOracle,
+    pclLpMarsUsdcOracle,
+    pclLpMarsOracle,
+    pclLpUsdcOracle,
+  ],
   astroportConfig: {
     factory: astroportFactory,
     router: astroportRouter,
