@@ -22,7 +22,7 @@ library           = []
 osmosis-test-tube = ["cw-it/osmosis-test-tube", "mars-testing/osmosis-test-tube"]
 
 [dependencies]
-astroport         = { workspace = true }
+astroport-v5      = { workspace = true }
 cosmwasm-schema   = { workspace = true }
 cosmwasm-std      = { workspace = true }
 cw2               = { workspace = true }
@@ -30,6 +30,8 @@ mars-swapper-base = { workspace = true }
 mars-types        = { workspace = true }
 
 [dev-dependencies]
+# TODO: use only astroport-v5 once cw-it depends on new astroport
+astroport        = { workspace = true }
 anyhow           = { workspace = true }
 cw-it            = { workspace = true, features = ["astroport", "astroport-multi-test"] }
 mars-oracle-wasm = { workspace = true }
