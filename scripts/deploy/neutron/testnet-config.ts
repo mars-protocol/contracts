@@ -21,7 +21,6 @@ const rpcEndpoint = 'https://rpc-palvus.pion-1.ntrn.tech'
 const astroportFactory = 'neutron1jj0scx400pswhpjes589aujlqagxgcztw04srynmhf0f6zplzn2qqmhwj7'
 const astroportRouter = 'neutron12jm24l9lr9cupufqjuxpdjnnweana4h66tsx5cl800mke26td26sq7m05p'
 const astroportIncentives = 'neutron1slxs8heecwyw0n6zmj7unj3nenrfhk2zpagfz2lt87dnevmksgwsq9adkn'
-const astroportNtrnAtomPair = 'neutron1sm23jnz4lqd88etklvwlm66a0x6mhflaqlv65wwr7nwwxa6258ks6nshpq'
 
 // note the following three addresses are all 'mars' bech32 prefix
 const safetyFundAddr = 'mars1s4hgh56can3e33e0zqpnjxh0t5wdf7u3pze575'
@@ -496,9 +495,9 @@ export const neutronTestnetConfig: DeploymentConfig = {
     nobleUSDCOracle,
     atomOracle,
     ntrnOracle,
-    pclLpMarsUsdcOracle,
     pclLpMarsOracle,
     pclLpUsdcOracle,
+    pclLpMarsUsdcOracle,
   ],
   astroportConfig: {
     factory: astroportFactory,
