@@ -12,7 +12,8 @@ use crate::{
     instantiate::init,
     msg::{ExecuteMsg, ExtensionExecuteMsg, ExtensionQueryMsg, InstantiateMsg, QueryMsg},
     query::{
-        convert_to_base_tokens, convert_to_vault_tokens, query_user_unlocks, query_vault_info,
+        convert_to_base_tokens, convert_to_vault_tokens, query_all_unlocks, query_user_unlocks,
+        query_vault_info,
     },
     state::{BASE_TOKEN, PERFORMANCE_FEE_STATE, VAULT_TOKEN},
 };
@@ -100,6 +101,10 @@ pub fn query(deps: Deps, _env: Env, msg: QueryMsg) -> ContractResult<Binary> {
                 let user_addr = deps.api.addr_validate(&user_address)?;
                 to_json_binary(&query_user_unlocks(deps, user_addr)?)
             }
+            ExtensionQueryMsg::AllUnlocks {
+                start_after,
+                limit,
+            } => to_json_binary(&query_all_unlocks(deps, start_after, limit)?),
             ExtensionQueryMsg::PerformanceFeeState {} => {
                 to_json_binary(&PERFORMANCE_FEE_STATE.load(deps.storage)?)
             }

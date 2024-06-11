@@ -1,6 +1,7 @@
 use anyhow::Result as AnyResult;
 use cosmwasm_std::{Addr, Coin, Uint128};
 use cw_multi_test::{AppResponse, Executor};
+use cw_paginate::PaginationResponse;
 use mars_vault::{
     msg::{
         ExecuteMsg, ExtensionExecuteMsg, ExtensionQueryMsg, QueryMsg, VaultInfoResponseExt,
@@ -125,6 +126,25 @@ pub fn query_user_unlocks(mock_env: &MockEnv, vault: &Addr, user_addr: &Addr) ->
             vault.to_string(),
             &QueryMsg::VaultExtension(ExtensionQueryMsg::UserUnlocks {
                 user_address: user_addr.to_string(),
+            }),
+        )
+        .unwrap()
+}
+
+pub fn query_all_unlocks(
+    mock_env: &MockEnv,
+    vault: &Addr,
+    start_after: Option<(String, u64)>,
+    limit: Option<u32>,
+) -> PaginationResponse<VaultUnlock> {
+    mock_env
+        .app
+        .wrap()
+        .query_wasm_smart(
+            vault.to_string(),
+            &QueryMsg::VaultExtension(ExtensionQueryMsg::AllUnlocks {
+                start_after,
+                limit,
             }),
         )
         .unwrap()

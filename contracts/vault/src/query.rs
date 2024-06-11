@@ -1,4 +1,6 @@
 use cosmwasm_std::{Addr, Deps, Order, Uint128};
+use cw_paginate::{paginate_map_query, PaginationResponse, DEFAULT_LIMIT, MAX_LIMIT};
+use cw_storage_plus::Bound;
 
 use crate::{
     error::ContractResult,
@@ -37,6 +39,7 @@ pub fn query_user_unlocks(deps: Deps, user_addr: Addr) -> ContractResult<Vec<Vau
             let base_tokens =
                 calculate_base_tokens(unlock.vault_tokens, total_base_tokens, vault_token_supply)?;
             Ok(VaultUnlock {
+                user_address: user_addr.to_string(),
                 created_at: unlock.created_at,
                 cooldown_end: unlock.cooldown_end,
                 vault_tokens: unlock.vault_tokens,
@@ -44,6 +47,38 @@ pub fn query_user_unlocks(deps: Deps, user_addr: Addr) -> ContractResult<Vec<Vau
             })
         })
         .collect()
+}
+
+pub fn query_all_unlocks(
+    deps: Deps,
+    start_after: Option<(String, u64)>,
+    limit: Option<u32>,
+) -> ContractResult<PaginationResponse<VaultUnlock>> {
+    let start = start_after
+        .as_ref()
+        .map(|(user_addr, created_at)| Bound::exclusive((user_addr.as_str(), *created_at)));
+    let limit = limit.unwrap_or(DEFAULT_LIMIT).min(MAX_LIMIT);
+
+    let vault_token_supply = VAULT_TOKEN.load(deps.storage)?.query_total_supply(deps)?;
+    let total_base_tokens = total_base_tokens_in_account(deps)?;
+
+    paginate_map_query(
+        &UNLOCKS,
+        deps.storage,
+        start,
+        Some(limit),
+        |(user_addr, _created_at), unlock| {
+            let base_tokens =
+                calculate_base_tokens(unlock.vault_tokens, total_base_tokens, vault_token_supply)?;
+            Ok(VaultUnlock {
+                user_address: user_addr,
+                created_at: unlock.created_at,
+                cooldown_end: unlock.cooldown_end,
+                vault_tokens: unlock.vault_tokens,
+                base_tokens,
+            })
+        },
+    )
 }
 
 pub fn convert_to_vault_tokens(deps: Deps, amount: Uint128) -> ContractResult<Uint128> {

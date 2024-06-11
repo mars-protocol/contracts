@@ -64,6 +64,12 @@ pub enum ExtensionQueryMsg {
         user_address: String,
     },
 
+    AllUnlocks {
+        // (user address, created_at)
+        start_after: Option<(String, u64)>,
+        limit: Option<u32>,
+    },
+
     PerformanceFeeState {},
 }
 
@@ -106,6 +112,7 @@ pub struct UnlockState {
 #[cw_serde]
 #[derive(Default)]
 pub struct VaultUnlock {
+    pub user_address: String,
     pub created_at: u64,
     pub cooldown_end: u64,
     pub vault_tokens: Uint128,

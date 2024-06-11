@@ -2803,6 +2803,7 @@ dependencies = [
  "cosmwasm-schema",
  "cosmwasm-std",
  "cw-multi-test",
+ "cw-paginate",
  "cw-storage-plus 1.2.0",
  "cw-utils 1.0.3",
  "cw-vault-standard 0.4.0",
