@@ -99,6 +99,12 @@ export type ExtensionQueryMsg =
       }
     }
   | {
+      all_unlocks: {
+        limit?: number | null
+        start_after?: [string, number] | null
+      }
+    }
+  | {
       performance_fee_state: {}
     }
 export interface VaultInfoResponse {
