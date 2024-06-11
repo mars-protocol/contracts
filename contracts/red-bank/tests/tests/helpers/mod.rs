@@ -54,25 +54,30 @@ pub fn unset_collateral(deps: DepsMut, user_addr: &Addr, denom: &str) {
 pub fn set_debt(
     deps: DepsMut,
     user_addr: &Addr,
+    account_id: &str,
     denom: &str,
     amount_scaled: impl Into<Uint128>,
     uncollateralized: bool,
 ) {
+    let user_id = UserId::credit_manager(user_addr.clone(), account_id.to_string());
+    let user_id_key: UserIdKey = user_id.try_into().unwrap();
     let debt = Debt {
         amount_scaled: amount_scaled.into(),
         uncollateralized,
     };
-    DEBTS.save(deps.storage, (user_addr, denom), &debt).unwrap();
+    DEBTS.save(deps.storage, (&user_id_key, denom), &debt).unwrap();
 }
 
 /// Find if a user has a debt position in the specified asset
 pub fn has_debt_position(deps: Deps, user_addr: &Addr, denom: &str) -> bool {
-    DEBTS.may_load(deps.storage, (user_addr, denom)).unwrap().is_some()
+    let user_id = UserId::red_bank(user_addr.clone());
+    let user_id_key: UserIdKey = user_id.try_into().unwrap();
+    DEBTS.may_load(deps.storage, (&user_id_key, denom)).unwrap().is_some()
 }
 
 /// Find if a user has a collateral position in the specified asset, regardless of whether enabled
 pub fn has_collateral_position(deps: Deps, user_addr: &Addr, denom: &str) -> bool {
-    let user_id = UserId::credit_manager(user_addr.clone(), "".to_string());
+    let user_id = UserId::red_bank(user_addr.clone());
     let user_id_key: UserIdKey = user_id.try_into().unwrap();
     COLLATERALS.may_load(deps.storage, (&user_id_key, denom)).unwrap().is_some()
 }

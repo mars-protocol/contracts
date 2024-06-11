@@ -1,7 +1,7 @@
-use std::ops::{Add, Mul, Sub};
+use std::ops::{Add, Sub};
 
 use cosmwasm_std::{coin, coins, Addr, Decimal, OverflowError, OverflowOperation, Uint128};
-use mars_credit_manager::{borrow::DEFAULT_DEBT_SHARES_PER_COIN_BORROWED, error::ContractError};
+use mars_credit_manager::error::ContractError;
 use mars_types::{
     credit_manager::Action::{Borrow, Deposit, Repay, Withdraw},
     params::LiquidationBonus,
@@ -10,7 +10,7 @@ use mars_types::{
 use super::helpers::{
     assert_err, uosmo_info, AccountToFund, CoinInfo, MockEnv, DEFAULT_RED_BANK_COIN_BALANCE,
 };
-use crate::tests::helpers::{get_coin, get_debt, uatom_info};
+use crate::tests::helpers::{get_coin, uatom_info};
 
 #[test]
 fn only_token_owner_can_repay() {
@@ -244,18 +244,11 @@ fn repay_less_than_total_debt() {
     let expected_net_asset_amount = Uint128::new(330); // Deposit + Borrow - Repay
     assert_eq!(asset_res.amount, expected_net_asset_amount);
 
-    let debt_shares_res = position.debts.first().unwrap();
+    let debt_res = position.debts.first().unwrap();
     assert_eq!(position.debts.len(), 1);
-    assert_eq!(debt_shares_res.denom, coin_info.denom);
-
-    let former_total_debt_shares = Uint128::new(50).mul(DEFAULT_DEBT_SHARES_PER_COIN_BORROWED);
-    let debt_shares_paid =
-        former_total_debt_shares.multiply_ratio(Uint128::new(20), interim_red_bank_debt.amount);
-    let new_total_debt_shares = former_total_debt_shares.sub(debt_shares_paid);
-    assert_eq!(debt_shares_res.shares, new_total_debt_shares);
-
-    let res = mock.query_total_debt_shares(&coin_info.denom);
-    assert_eq!(res.shares, new_total_debt_shares);
+    assert_eq!(debt_res.denom, coin_info.denom);
+    let res = mock.query_red_bank_debt_v2(&account_id, &coin_info.denom);
+    assert_eq!(debt_res.amount, res.amount);
 
     let coin = mock.query_balance(&mock.rover, &coin_info.denom);
     assert_eq!(coin.amount, Uint128::new(330));
@@ -285,8 +278,8 @@ fn repay_less_than_total_debt() {
     // Full debt repaid and purged from storage
     assert_eq!(position.debts.len(), 0);
 
-    let res = mock.query_total_debt_shares(&coin_info.denom);
-    assert_eq!(res.shares, Uint128::zero());
+    let res = mock.query_red_bank_debt_v2(&account_id, &coin_info.denom);
+    assert_eq!(res.amount, Uint128::zero());
 
     let coin = mock.query_balance(&mock.rover, &coin_info.denom);
     assert_eq!(coin.amount, Uint128::new(299));
@@ -334,8 +327,8 @@ fn pays_max_debt_when_attempting_to_repay_more_than_owed() {
 
     assert_eq!(position.debts.len(), 0);
 
-    let res = mock.query_total_debt_shares(&coin_info.denom);
-    assert_eq!(res.shares, Uint128::zero());
+    let res = mock.query_red_bank_debt_v2(&account_id, &coin_info.denom);
+    assert_eq!(res.amount, Uint128::zero());
 
     let coin = mock.query_balance(&mock.rover, &coin_info.denom);
     assert_eq!(coin.amount, Uint128::new(299));
@@ -380,8 +373,8 @@ fn amount_none_repays_total_debt() {
     let position = mock.query_positions(&account_id);
     assert_eq!(position.debts.len(), 0);
 
-    let res = mock.query_total_debt_shares(&coin_info.denom);
-    assert_eq!(res.shares, Uint128::zero());
+    let res = mock.query_red_bank_debt_v2(&account_id, &coin_info.denom);
+    assert_eq!(res.amount, Uint128::zero());
 
     let coin = mock.query_balance(&mock.rover, &coin_info.denom);
     assert_eq!(coin.amount, Uint128::new(299));
@@ -427,7 +420,7 @@ fn amount_none_repays_no_more_than_available_asset() {
 
     let position = mock.query_positions(&account_id);
     assert_eq!(position.debts.len(), 1);
-    let uosmo_debt = get_debt(&uosmo_info.denom, &position.debts);
+    let uosmo_debt = get_coin(&uosmo_info.denom, &position.debts);
     // debt: 50 uosmo,
     // account balance: 40 uosmo (50 borrowed - 10 withdrawn)
     // repaying full balance should repay 40 uosmo

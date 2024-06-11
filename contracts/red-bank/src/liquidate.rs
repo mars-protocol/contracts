@@ -84,7 +84,7 @@ pub fn liquidate(
 
     // check if user has outstanding debt in the deposited asset that needs to be repayed
     let user_debt = DEBTS
-        .may_load(deps.storage, (&liquidatee_addr, &debt_denom))?
+        .may_load(deps.storage, (&user_id_key, &debt_denom))?
         .ok_or(ContractError::CannotLiquidateWhenNoDebtBalance {})?;
 
     // check if user has available collateral in specified collateral asset to be liquidated
@@ -204,7 +204,7 @@ pub fn liquidate(
     let debt_amount_scaled_delta =
         user_debt.amount_scaled.checked_sub(user_debt_amount_scaled_after)?;
 
-    liquidatee.decrease_debt(deps.storage, &debt_denom, debt_amount_scaled_delta)?;
+    liquidatee.decrease_debt(deps.storage, &debt_denom, debt_amount_scaled_delta, "")?;
 
     let market_debt_total_scaled_after =
         debt_market.debt_total_scaled.checked_sub(debt_amount_scaled_delta)?;

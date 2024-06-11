@@ -7,7 +7,7 @@ use mars_types::red_bank::{InitOrUpdateAssetParams, Market};
 
 use crate::{
     helpers::{load_collateral_amount, load_debt_amount},
-    state::{COLLATERAL_AMOUNT, COLLATERAL_DENOMS, DEBT_AMOUNT, MARKETS},
+    state::{COLLATERAL_AMOUNT, COLLATERAL_DENOMS, DEBT_AMOUNT, DEBT_DENOMS, MARKETS},
 };
 
 pub fn init_asset(
@@ -40,15 +40,31 @@ pub fn init_asset(
 pub fn borrow(
     deps: DepsMut,
     info: MessageInfo,
+    account_id: Option<String>,
     denom: String,
     amount: Uint128,
 ) -> StdResult<Response> {
-    let debt_amount = load_debt_amount(deps.storage, &info.sender, &denom)?;
+    let account_id = account_id.unwrap_or("".to_string());
+    let debt_amount = load_debt_amount(deps.storage, &info.sender, &account_id, &denom)?;
+
+    let am = DEBT_AMOUNT.may_load(deps.storage, (info.sender.to_string(), account_id.clone(), denom.clone()))?.unwrap_or(Uint128::zero());
 
     DEBT_AMOUNT.save(
         deps.storage,
-        (info.sender.clone(), denom.clone()),
+        (info.sender.to_string(), account_id.clone(), denom.clone()),
         &debt_amount.checked_add(amount)?.checked_add(Uint128::new(1))?, // The extra unit is simulated accrued interest
+    )?;
+
+    DEBT_DENOMS.update(
+        deps.storage,
+        (info.sender.to_string(), account_id),
+        |denoms_opt| -> StdResult<_> {
+            let mut denoms = denoms_opt.unwrap_or_default();
+            if !denoms.contains(&denom) {
+                denoms.push(denom.clone());
+            }
+            Ok(denoms)
+        },
     )?;
 
     let transfer_msg = CosmosMsg::Bank(BankMsg::Send {
@@ -59,15 +75,30 @@ pub fn borrow(
     Ok(Response::new().add_message(transfer_msg))
 }
 
-pub fn repay(deps: DepsMut, info: MessageInfo) -> StdResult<Response> {
+pub fn repay(deps: DepsMut, info: MessageInfo, account_id: Option<String>) -> StdResult<Response> {
+    let account_id = account_id.unwrap_or("".to_string());
+
     let coin_sent =
         one_coin(&info).map_err(|_| StdError::generic_err("Repay coin reqs not met"))?;
-    let debt_amount = load_debt_amount(deps.storage, &info.sender, &coin_sent.denom)?;
+    let total_debt = load_debt_amount(deps.storage, &info.sender, &account_id, &coin_sent.denom)?;
+    let new_amount = total_debt.checked_sub(coin_sent.amount)?;
 
     DEBT_AMOUNT.save(
         deps.storage,
-        (info.sender, coin_sent.denom.clone()),
-        &debt_amount.checked_sub(coin_sent.amount)?,
+        (info.sender.to_string(), account_id.clone(), coin_sent.denom.clone()),
+        &new_amount,
+    )?;
+
+    DEBT_DENOMS.update(
+        deps.storage,
+        (info.sender.to_string(), account_id),
+        |denoms_opt| -> StdResult<_> {
+            let mut denoms = denoms_opt.unwrap_or_default();
+            if new_amount.is_zero() {
+                denoms.retain(|s| s != &coin_sent.denom);
+            }
+            Ok(denoms)
+        },
     )?;
 
     Ok(Response::new())

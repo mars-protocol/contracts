@@ -1,12 +1,12 @@
-use std::ops::{Add, Mul};
+use std::ops::Add;
 
 use cosmwasm_std::{coin, coins, Addr, Coin, Decimal, Uint128};
-use mars_credit_manager::{borrow::DEFAULT_DEBT_SHARES_PER_COIN_BORROWED, error::ContractError};
+use mars_credit_manager::error::ContractError;
 use mars_mock_oracle::msg::CoinPrice;
 use mars_types::{
     credit_manager::{
         Action::{Borrow, Deposit, EnterVault, Repay, Withdraw},
-        ActionAmount, ActionCoin, DebtAmount,
+        ActionAmount, ActionCoin,
     },
     health::AccountKind,
     oracle::ActionKind,
@@ -344,7 +344,7 @@ fn cannot_borrow_more_but_not_liquidatable() {
         &account_id,
         &user,
         vec![Deposit(uosmo_info.to_coin(300)), Borrow(uatom_info.to_coin(50))],
-        &[Coin::new(300, uosmo_info.denom)],
+        &[Coin::new(300, uosmo_info.denom.clone())],
     )
     .unwrap();
 
@@ -603,25 +603,15 @@ fn debt_value() {
     assert!(!health.above_max_ltv);
     assert!(!health.liquidatable);
 
-    let red_bank_atom_debt = mock.query_red_bank_debt(&uatom_info.denom);
-
-    let user_a_debt_shares_atom =
-        user_a_borrowed_amount_atom.mul(DEFAULT_DEBT_SHARES_PER_COIN_BORROWED);
-    assert_eq!(user_a_debt_shares_atom, find_by_denom(&uatom_info.denom, &position_a.debts).shares);
+    let user_a_owed_atom = find_by_denom(&uatom_info.denom, &position_a.debts).amount;
+    assert_eq!(user_a_borrowed_amount_atom + Uint128::one(), user_a_owed_atom); // Simulate interest
 
     let position_b = mock.query_positions(&account_id_b);
-    let user_b_debt_shares_atom = user_a_debt_shares_atom
-        .multiply_ratio(user_b_borrowed_amount_atom, interim_red_bank_debt.amount);
-    assert_eq!(user_b_debt_shares_atom, find_by_denom(&uatom_info.denom, &position_b.debts).shares);
+    assert_eq!(
+        user_b_borrowed_amount_atom + Uint128::one(), // Simulate interest
+        find_by_denom(&uatom_info.denom, &position_b.debts).amount
+    );
 
-    let red_bank_atom_res = mock.query_total_debt_shares(&uatom_info.denom);
-
-    assert_eq!(red_bank_atom_res.shares, user_a_debt_shares_atom + user_b_debt_shares_atom);
-
-    let user_a_owed_atom = red_bank_atom_debt
-        .amount
-        .checked_mul_ceil((user_a_debt_shares_atom, red_bank_atom_res.shares))
-        .unwrap();
     let user_a_owed_atom_value = user_a_owed_atom.checked_mul_ceil(uatom_info.price).unwrap();
 
     let osmo_debt_value =
@@ -947,6 +937,6 @@ fn can_take_actions_if_ltv_does_not_weaken() {
     .unwrap();
 }
 
-fn find_by_denom<'a>(denom: &'a str, shares: &'a [DebtAmount]) -> &'a DebtAmount {
-    shares.iter().find(|item| item.denom == *denom).unwrap()
+fn find_by_denom<'a>(denom: &'a str, coins: &'a [Coin]) -> &'a Coin {
+    coins.iter().find(|item| item.denom == *denom).unwrap()
 }

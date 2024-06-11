@@ -7,7 +7,10 @@ use mars_types::red_bank;
 
 use crate::{
     execute::{borrow, deposit, init_asset, repay, withdraw},
-    query::{query_collateral, query_collaterals, query_collaterals_v2, query_debt, query_market},
+    query::{
+        query_collateral, query_collaterals, query_collaterals_v2, query_debt, query_debt_v2,
+        query_debts_v2, query_market,
+    },
 };
 
 #[cfg_attr(not(feature = "library"), entry_point)]
@@ -32,14 +35,16 @@ pub fn execute(
             denom,
             params,
         } => init_asset(deps, env, denom, params),
-        red_bank::ExecuteMsg::Borrow {
+        red_bank::ExecuteMsg::BorrowV2 {
+            account_id,
             denom,
             amount,
             ..
-        } => borrow(deps, info, denom, amount),
-        red_bank::ExecuteMsg::Repay {
+        } => borrow(deps, info, account_id, denom, amount),
+        red_bank::ExecuteMsg::RepayV2 {
+            account_id,
             ..
-        } => repay(deps, info),
+        } => repay(deps, info, account_id),
         red_bank::ExecuteMsg::Deposit {
             account_id,
             on_behalf_of: _,
@@ -67,6 +72,17 @@ pub fn query(deps: Deps, _env: Env, msg: red_bank::QueryMsg) -> StdResult<Binary
             user,
             denom,
         } => to_json_binary(&query_debt(deps, user, denom)?),
+        red_bank::QueryMsg::UserDebtV2 {
+            user,
+            denom,
+            account_id,
+        } => to_json_binary(&query_debt_v2(deps, user, denom, account_id)?),
+        red_bank::QueryMsg::UserDebtsV2 {
+            user,
+            account_id,
+            start_after,
+            limit,
+        } => to_json_binary(&query_debts_v2(deps, user, account_id, start_after, limit)?),
         red_bank::QueryMsg::UserCollateral {
             user,
             account_id,

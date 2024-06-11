@@ -7,7 +7,7 @@ use mars_types::{
         CoinValue, LockingVaultAmount, UnlockingPositions, Vault, VaultAmount, VaultPosition,
         VaultPositionAmount, VaultPositionValue, VaultUnlockingPosition,
     },
-    credit_manager::{DebtAmount, Positions},
+    credit_manager::Positions,
     health::AccountKind,
     params::VaultConfig,
 };
@@ -108,10 +108,9 @@ fn terra_ragnarok() {
                 denom: uluna.denom.clone(),
                 amount: deposit_amount,
             }],
-            debts: vec![DebtAmount {
+            debts: vec![Coin {
                 denom: uluna.denom.clone(),
                 amount: borrow_amount,
-                shares: Uint128::new(100),
             }],
             lends: vec![],
             vaults: vec![],
@@ -170,10 +169,9 @@ fn terra_ragnarok() {
                 denom: uluna.denom.clone(),
                 amount: deposit_amount,
             }],
-            debts: vec![DebtAmount {
+            debts: vec![Coin {
                 denom: uluna.denom,
                 amount: borrow_amount,
-                shares: Uint128::new(100),
             }],
             lends: vec![],
             vaults: vec![],
@@ -240,9 +238,8 @@ fn ltv_and_lqdt_adjusted_values() {
                     amount: borrow_amount,
                 },
             ],
-            debts: vec![DebtAmount {
+            debts: vec![Coin {
                 denom: ujuno.denom.clone(),
-                shares: Uint128::new(12345),
                 amount: borrow_amount.add(Uint128::one()), // simulated interest
             }],
             lends: vec![],
@@ -357,14 +354,12 @@ fn debt_value() {
                 },
             ],
             debts: vec![
-                DebtAmount {
+                Coin {
                     denom: ujuno.denom.clone(),
-                    shares: Uint128::new(12345),
                     amount: borrowed_amount_juno.add(Uint128::one()), // simulated interest
                 },
-                DebtAmount {
+                Coin {
                     denom: ustars.denom.clone(),
-                    shares: Uint128::new(12345),
                     amount: borrowed_amount_stars.add(Uint128::one()), // simulated interest
                 },
             ],
@@ -468,9 +463,8 @@ fn above_max_ltv_below_liq_threshold() {
             account_kind: AccountKind::Default,
 
             deposits: vec![coin(1200, &umars.denom), coin(33, &udai.denom)],
-            debts: vec![DebtAmount {
+            debts: vec![Coin {
                 denom: udai.denom,
-                shares: Default::default(),
                 amount: Uint128::new(3100),
             }],
             lends: vec![],
@@ -527,14 +521,12 @@ fn liquidatable() {
 
             deposits: vec![coin(1200, &umars.denom), coin(33, &udai.denom)],
             debts: vec![
-                DebtAmount {
+                Coin {
                     denom: udai.denom,
-                    shares: Default::default(),
                     amount: Uint128::new(3100),
                 },
-                DebtAmount {
+                Coin {
                     denom: umars.denom,
-                    shares: Default::default(),
                     amount: Uint128::new(200),
                 },
             ],
@@ -594,14 +586,12 @@ fn rover_whitelist_influences_max_ltv() {
 
             deposits: vec![coin(1200, &umars.denom), coin(33, &udai.denom)],
             debts: vec![
-                DebtAmount {
+                Coin {
                     denom: udai.denom,
-                    shares: Default::default(),
                     amount: Uint128::new(3100),
                 },
-                DebtAmount {
+                Coin {
                     denom: umars.denom,
-                    shares: Default::default(),
                     amount: Uint128::new(200),
                 },
             ],
@@ -685,14 +675,12 @@ fn unlocked_vault() {
 
             deposits: vec![coin(1200, &umars.denom), coin(33, &udai.denom)],
             debts: vec![
-                DebtAmount {
+                Coin {
                     denom: udai.denom,
-                    shares: Default::default(),
                     amount: Uint128::new(3100),
                 },
-                DebtAmount {
+                Coin {
                     denom: umars.denom,
-                    shares: Default::default(),
                     amount: Uint128::new(200),
                 },
             ],
@@ -779,14 +767,12 @@ fn locked_vault() {
 
             deposits: vec![coin(1200, &umars.denom), coin(33, &udai.denom)],
             debts: vec![
-                DebtAmount {
+                Coin {
                     denom: udai.denom,
-                    shares: Default::default(),
                     amount: Uint128::new(3100),
                 },
-                DebtAmount {
+                Coin {
                     denom: umars.denom,
-                    shares: Default::default(),
                     amount: Uint128::new(200),
                 },
             ],
@@ -876,14 +862,12 @@ fn locked_vault_with_unlocking_positions() {
 
             deposits: vec![coin(1200, &umars.denom), coin(33, &udai.denom)],
             debts: vec![
-                DebtAmount {
+                Coin {
                     denom: udai.denom.clone(),
-                    shares: Default::default(),
                     amount: Uint128::new(3100),
                 },
-                DebtAmount {
+                Coin {
                     denom: umars.denom,
-                    shares: Default::default(),
                     amount: Uint128::new(200),
                 },
             ],
@@ -982,14 +966,12 @@ fn vault_is_not_whitelisted() {
 
             deposits: vec![coin(1200, &umars.denom), coin(33, &udai.denom)],
             debts: vec![
-                DebtAmount {
+                Coin {
                     denom: udai.denom,
-                    shares: Default::default(),
                     amount: Uint128::new(3100),
                 },
-                DebtAmount {
+                Coin {
                     denom: umars.denom,
-                    shares: Default::default(),
                     amount: Uint128::new(200),
                 },
             ],
@@ -1082,14 +1064,12 @@ fn vault_base_token_is_not_whitelisted() {
 
             deposits: vec![coin(1200, &umars.denom), coin(33, &udai.denom)],
             debts: vec![
-                DebtAmount {
+                Coin {
                     denom: udai.denom,
-                    shares: Default::default(),
                     amount: Uint128::new(3100),
                 },
-                DebtAmount {
+                Coin {
                     denom: umars.denom,
-                    shares: Default::default(),
                     amount: Uint128::new(200),
                 },
             ],
@@ -1164,9 +1144,8 @@ fn lent_coins_used_as_collateral() {
             account_kind: AccountKind::Default,
 
             deposits: vec![coin(1200, &umars.denom), coin(23, &udai.denom)],
-            debts: vec![DebtAmount {
+            debts: vec![Coin {
                 denom: udai.denom.clone(),
-                shares: Default::default(),
                 amount: Uint128::new(3100),
             }],
             lends: vec![coin(10, udai.denom), coin(2, uluna.denom)],
@@ -1227,9 +1206,8 @@ fn allowed_lent_coins_influence_max_ltv() {
             account_kind: AccountKind::Default,
 
             deposits: vec![coin(1200, &umars.denom), coin(23, &udai.denom)],
-            debts: vec![DebtAmount {
+            debts: vec![Coin {
                 denom: udai.denom.clone(),
-                shares: Default::default(),
                 amount: Uint128::new(3100),
             }],
             lends: vec![coin(10, udai.denom), coin(2, uluna.denom)],

@@ -47,8 +47,9 @@ pub fn withdraw(
         return Err(ContractError::Mars(MarsError::Unauthorized {}));
     }
 
-    let withdrawer = User(&info.sender);
     let acc_id = account_id.clone().unwrap_or("".to_string());
+
+    let withdrawer = User(&info.sender);
 
     let mut market = MARKETS.load(deps.storage, &denom)?;
 
@@ -84,9 +85,9 @@ pub fn withdraw(
     let liquidation_related = info.sender == credit_manager_addr && liquidation_related;
 
     // if asset is used as collateral and user is borrowing we need to validate health factor after withdraw,
-    // otherwise no reasons to block the withdraw
+    // otherwise no reasons to block the withdrawal
     if collateral.enabled
-        && withdrawer.is_borrowing(deps.storage)
+        && withdrawer.is_borrowing(deps.storage, &acc_id)?
         && !assert_below_liq_threshold_after_withdraw(
             &deps.as_ref(),
             &env,

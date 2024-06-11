@@ -6,6 +6,7 @@ use mars_interest_rate::{
 use mars_red_bank::{contract::execute, error::ContractError, health, state::DEBTS};
 use mars_testing::{mock_env, MockEnvParams};
 use mars_types::{
+    keys::{UserId, UserIdKey},
     params::AssetParams,
     red_bank::{Debt, ExecuteMsg, Market},
 };
@@ -167,7 +168,11 @@ fn update_asset_collateral() {
             amount_scaled: token_3_debt_scaled,
             uncollateralized: false,
         };
-        DEBTS.save(deps.as_mut().storage, (&user_addr, denom_3), &debt).unwrap();
+
+        let user_id = UserId::credit_manager(user_addr.clone(), "".to_string());
+        let user_id_key: UserIdKey = user_id.try_into().unwrap();
+
+        DEBTS.save(deps.as_mut().storage, (&user_id_key, denom_3), &debt).unwrap();
 
         let positions = health::get_user_positions_map(
             &deps.as_ref(),

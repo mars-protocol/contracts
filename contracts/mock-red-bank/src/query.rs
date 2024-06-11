@@ -1,11 +1,11 @@
 use cosmwasm_std::{Deps, StdResult, Uint128};
-use cw_paginate::Metadata;
+use cw_paginate::{Metadata, PaginationResponse};
 use mars_types::red_bank::{
     Market, PaginatedUserCollateralResponse, UserCollateralResponse, UserDebtResponse,
 };
 
 use crate::{
-    helpers::{load_collateral_amount, load_collateral_denoms, load_debt_amount},
+    helpers::{load_collateral_amount, load_collateral_denoms, load_debt_amount, load_debt_denoms},
     state::MARKETS,
 };
 
@@ -15,13 +15,87 @@ pub fn query_market(deps: Deps, denom: String) -> StdResult<Market> {
 
 pub fn query_debt(deps: Deps, user: String, denom: String) -> StdResult<UserDebtResponse> {
     let user_addr = deps.api.addr_validate(&user)?;
-    let amount = load_debt_amount(deps.storage, &user_addr, &denom)?;
+    let amount = load_debt_amount(deps.storage, &user_addr, "", &denom)?;
     Ok(UserDebtResponse {
         denom,
         amount,
         amount_scaled: Uint128::zero(),
         uncollateralized: false,
     })
+}
+
+pub fn query_debt_v2(
+    deps: Deps,
+    user: String,
+    denom: String,
+    account_id: Option<String>,
+) -> StdResult<UserDebtResponse> {
+    let user_addr = deps.api.addr_validate(&user)?;
+    let amount =
+        load_debt_amount(deps.storage, &user_addr, &account_id.unwrap_or_default(), &denom)?;
+    Ok(UserDebtResponse {
+        denom,
+        amount,
+        amount_scaled: Uint128::zero(),
+        uncollateralized: false,
+    })
+}
+
+pub fn query_debts(deps: Deps, user: String, denom: String) -> StdResult<UserDebtResponse> {
+    let user_addr = deps.api.addr_validate(&user)?;
+    let amount = load_debt_amount(deps.storage, &user_addr, "", &denom)?;
+    Ok(UserDebtResponse {
+        denom,
+        amount,
+        amount_scaled: Uint128::zero(),
+        uncollateralized: false,
+    })
+}
+
+pub fn query_debts_v2(
+    deps: Deps,
+    user: String,
+    account_id: Option<String>,
+    start_after: Option<String>,
+    limit: Option<u32>,
+) -> StdResult<PaginationResponse<UserDebtResponse>> {
+    let user_addr = deps.api.addr_validate(&user)?;
+    let acc_id = account_id.clone().unwrap_or_default();
+    let denoms = load_debt_denoms(deps.storage, &user, &acc_id)?;
+    let limit = limit.unwrap_or(5) as usize; // red-bank can have different value as default, we only use it to validate if pagination works as expected
+
+    let (start_index, has_more) = match start_after {
+        Some(sa) => {
+            let start_index = denoms.iter().position(|denom| denom == &sa).unwrap_or(denoms.len());
+            let has_more = start_index + 1 < denoms.len();
+            (start_index + 1, has_more)
+        }
+        None => (0, denoms.len() > limit),
+    };
+
+    let debts = denoms
+        .iter()
+        .skip(start_index)
+        .take(limit)
+        .map(|denom| {
+            let amount = load_debt_amount(deps.storage, &user_addr, &acc_id, &denom)?;
+            Ok(UserDebtResponse {
+                denom: denom.clone(),
+                amount,
+                amount_scaled: Uint128::zero(),
+                uncollateralized: false,
+            })
+        })
+        .collect::<StdResult<Vec<_>>>()?;
+
+    let res: PaginationResponse<UserDebtResponse> = PaginationResponse {
+        data: debts,
+        metadata: Metadata {
+            has_more,
+        },
+    };
+
+    Ok(res)
 }
 
 pub fn query_collateral(

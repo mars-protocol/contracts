@@ -1,6 +1,6 @@
 use cosmwasm_std::{Coin, Decimal, StdResult, Uint128};
 use mars_rover_health_computer::HealthComputer;
-use mars_types::{credit_manager::DebtAmount, health::SwapKind};
+use mars_types::health::SwapKind;
 use proptest::{
     strategy::Strategy,
     test_runner::{Config, TestRunner},
@@ -96,9 +96,8 @@ fn add_swap(
             let debt_coin = new_h.positions.debts.get_mut(debt_coin_index).unwrap();
             debt_coin.amount += debt_amount;
         } else {
-            new_h.positions.debts.push(DebtAmount {
+            new_h.positions.debts.push(Coin {
                 denom: from_denom.to_string(),
-                shares: debt_amount * Uint128::new(1000),
                 amount: debt_amount,
             });
         }

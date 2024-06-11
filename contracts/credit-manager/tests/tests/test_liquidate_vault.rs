@@ -14,7 +14,7 @@ use mars_types::{
 };
 
 use super::helpers::{
-    assert_err, get_coin, get_debt, locked_vault_info, lp_token_info, uatom_info, ujake_info,
+    assert_err, get_coin, locked_vault_info, lp_token_info, uatom_info, ujake_info,
     unlocked_vault_info, uosmo_info, AccountToFund, MockEnv,
 };
 
@@ -405,7 +405,7 @@ fn liquidate_unlocked_vault() {
     assert_eq!(jake_balance.amount, Uint128::new(175));
 
     assert_eq!(position.debts.len(), 1);
-    let atom_debt = get_debt("ujake", &position.debts);
+    let atom_debt = get_coin("ujake", &position.debts);
     assert_eq!(atom_debt.amount, Uint128::new(126));
 
     // Assert liquidator's new position
@@ -514,7 +514,7 @@ fn liquidate_locked_vault() {
     assert_eq!(atom_balance.amount, Uint128::new(700));
 
     assert_eq!(position.debts.len(), 1);
-    let atom_debt = get_debt("uatom", &position.debts);
+    let atom_debt = get_coin("uatom", &position.debts);
     assert_eq!(atom_debt.amount, Uint128::new(671)); // 701 - 30
 
     // Assert liquidator's new position
@@ -652,7 +652,7 @@ fn liquidate_unlocking_liquidation_order() {
     assert_eq!(jake_balance.amount, Uint128::new(175));
 
     assert_eq!(position.debts.len(), 1);
-    let atom_debt = get_debt("ujake", &position.debts);
+    let atom_debt = get_coin("ujake", &position.debts);
     assert_eq!(atom_debt.amount, Uint128::new(136));
 
     // Assert liquidator's new position
@@ -765,7 +765,7 @@ fn liquidation_calculation_adjustment() {
     assert_eq!(jake_balance.amount, Uint128::new(175));
 
     assert_eq!(position.debts.len(), 1);
-    let jake_debt = get_debt("ujake", &position.debts);
+    let jake_debt = get_coin("ujake", &position.debts);
     assert_eq!(jake_debt.amount, Uint128::new(87));
 
     // Assert liquidator's new position

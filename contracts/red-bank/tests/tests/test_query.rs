@@ -5,11 +5,17 @@ use mars_interest_rate::{
     SCALING_FACTOR,
 };
 use mars_red_bank::{
-    query::{query_user_collaterals, query_user_collaterals_v2, query_user_debt, query_user_debts},
+    query::{
+        query_user_collaterals, query_user_collaterals_v2, query_user_debt, query_user_debt_v2,
+        query_user_debts, query_user_debts_v2,
+    },
     state::DEBTS,
 };
-use mars_types::red_bank::{
-    Debt, Market, MarketV2Response, QueryMsg, UserCollateralResponse, UserDebtResponse,
+use mars_types::{
+    keys::{UserId, UserIdKey},
+    red_bank::{
+        Debt, Market, MarketV2Response, QueryMsg, UserCollateralResponse, UserDebtResponse,
+    },
 };
 
 use super::helpers::{set_collateral, th_init_market, th_query, th_setup};
@@ -183,6 +189,9 @@ fn test_query_user_debt() {
 
     let env = mock_env();
 
+    let user_id = UserId::credit_manager(user_addr.clone(), "".to_string());
+    let user_id_key: UserIdKey = user_id.try_into().unwrap();
+
     // Save debt for market 1
     let debt_amount_1 = Uint128::new(1234000u128);
     let debt_amount_scaled_1 =
@@ -197,7 +206,7 @@ fn test_query_user_debt() {
         amount_scaled: debt_amount_scaled_1,
         uncollateralized: false,
     };
-    DEBTS.save(deps.as_mut().storage, (&user_addr, "coin_1"), &debt_1).unwrap();
+    DEBTS.save(deps.as_mut().storage, (&user_id_key, "coin_1"), &debt_1).unwrap();
 
     // Save debt for market 3
     let debt_amount_3 = Uint128::new(2221u128);
@@ -213,7 +222,7 @@ fn test_query_user_debt() {
         amount_scaled: debt_amount_scaled_3,
         uncollateralized: false,
     };
-    DEBTS.save(deps.as_mut().storage, (&user_addr, "coin_3"), &debt_3).unwrap();
+    DEBTS.save(deps.as_mut().storage, (&user_id_key, "coin_3"), &debt_3).unwrap();
 
     let debts = query_user_debts(deps.as_ref(), &env.block, user_addr, None, None).unwrap();
     assert_eq!(debts.len(), 2);
@@ -279,7 +288,11 @@ fn query_user_asset_debt() {
         amount_scaled: debt_amount_scaled_1,
         uncollateralized: false,
     };
-    DEBTS.save(deps.as_mut().storage, (&user_addr, "coin_1"), &debt_1).unwrap();
+
+    let user_id = UserId::credit_manager(user_addr.clone(), "".to_string());
+    let user_id_key: UserIdKey = user_id.try_into().unwrap();
+
+    DEBTS.save(deps.as_mut().storage, (&user_id_key, "coin_1"), &debt_1).unwrap();
 
     // Check asset with existing debt
     {
@@ -445,4 +458,281 @@ fn query_all_markets_v2() {
             },
         }
     );
+}
+
+#[test]
+fn test_query_user_debt_v2() {
+    let mut deps = th_setup(&[]);
+
+    let rb_user = Addr::unchecked("user1");
+    let cm_user = Addr::unchecked("user2");
+    let account_id = "123";
+
+    // Setup markets
+    let market_1_initial = th_init_market(
+        deps.as_mut(),
+        "coin_1",
+        &Market {
+            borrow_index: Decimal::one(),
+            borrow_rate: Decimal::one(),
+            ..Default::default()
+        },
+    );
+    let market_2_initial = th_init_market(
+        deps.as_mut(),
+        "coin_2",
+        &Market {
+            borrow_index: Decimal::one(),
+            borrow_rate: Decimal::one(),
+            ..Default::default()
+        },
+    );
+
+    let env = mock_env();
+
+    // Save debt for market 1
+    let debt_amount_1 = Uint128::new(1234567u128);
+    let debt_amount_scaled_1 =
+        get_scaled_debt_amount(debt_amount_1, &market_1_initial, env.block.time.seconds()).unwrap();
+    let debt_amount_at_query_1 = get_underlying_debt_amount(
+        debt_amount_scaled_1,
+        &market_1_initial,
+        env.block.time.seconds(),
+    )
+    .unwrap();
+    let debt_1 = Debt {
+        amount_scaled: debt_amount_scaled_1,
+        uncollateralized: false,
+    };
+
+    // Save debt for market 2
+    let debt_amount_2 = Uint128::new(789123u128);
+    let debt_amount_scaled_2 =
+        get_scaled_debt_amount(debt_amount_2, &market_2_initial, env.block.time.seconds()).unwrap();
+    let debt_amount_at_query_2 = get_underlying_debt_amount(
+        debt_amount_scaled_2,
+        &market_2_initial,
+        env.block.time.seconds(),
+    )
+        .unwrap();
+    let debt_2 = Debt {
+        amount_scaled: debt_amount_scaled_2,
+        uncollateralized: false,
+    };
+
+
+    let cm_user_id = UserId::credit_manager(cm_user.clone(), account_id.to_string());
+    let cm_user_id_key: UserIdKey = cm_user_id.try_into().unwrap();
+    let rb_user_id = UserId::credit_manager(rb_user.clone(), "".to_string());
+    let rb_user_id_key: UserIdKey = rb_user_id.try_into().unwrap();
+
+    DEBTS.save(deps.as_mut().storage, (&rb_user_id_key, "coin_2"), &debt_2).unwrap();
+    DEBTS.save(deps.as_mut().storage, (&cm_user_id_key, "coin_1"), &debt_1).unwrap();
+
+    // Check state for CM user
+    let res = query_user_debt_v2(
+        deps.as_ref(),
+        &env.block,
+        cm_user.clone(),
+        Some(account_id.to_string()),
+        "coin_1".to_string(),
+    )
+    .unwrap();
+    assert_eq!(
+        res,
+        UserDebtResponse {
+            denom: "coin_1".to_string(),
+            amount_scaled: debt_amount_scaled_1,
+            amount: debt_amount_at_query_1,
+            uncollateralized: false,
+        }
+    );
+
+    let res = query_user_debt_v2(
+        deps.as_ref(),
+        &env.block,
+        cm_user.clone(),
+        Some(account_id.to_string()),
+        "coin_2".to_string(),
+    )
+    .unwrap();
+    assert_eq!(
+        res,
+        UserDebtResponse {
+            denom: "coin_2".to_string(),
+            amount_scaled: Uint128::zero(),
+            amount: Uint128::zero(),
+            uncollateralized: false,
+        }
+    );
+
+    // Check state for RB user
+    let res = query_user_debt_v2(
+        deps.as_ref(),
+        &env.block,
+        rb_user.clone(),
+        None,
+        "coin_2".to_string(),
+    )
+        .unwrap();
+    assert_eq!(
+        res,
+        UserDebtResponse {
+            denom: "coin_2".to_string(),
+            amount_scaled: debt_amount_scaled_2,
+            amount: debt_amount_at_query_2,
+            uncollateralized: false,
+        }
+    );
+
+    let res = query_user_debt_v2(
+        deps.as_ref(),
+        &env.block,
+        rb_user,
+        None,
+        "coin_1".to_string(),
+    )
+        .unwrap();
+    assert_eq!(
+        res,
+        UserDebtResponse {
+            denom: "coin_1".to_string(),
+            amount_scaled: Uint128::zero(),
+            amount: Uint128::zero(),
+            uncollateralized: false,
+        }
+    );
+}
+
+#[test]
+fn test_query_user_debts_v2() {
+    let mut deps = th_setup(&[]);
+
+    let rb_user = Addr::unchecked("user1");
+    let cm_user = Addr::unchecked("user2");
+    let account_id = "123";
+
+    // Setup markets
+    let market_1_initial = th_init_market(
+        deps.as_mut(),
+        "coin_1",
+        &Market {
+            borrow_index: Decimal::one(),
+            borrow_rate: Decimal::one(),
+            ..Default::default()
+        },
+    );
+    let _market_2_initial = th_init_market(
+        deps.as_mut(),
+        "coin_2",
+        &Market {
+            borrow_index: Decimal::one(),
+            borrow_rate: Decimal::one(),
+            ..Default::default()
+        },
+    );
+    let market_3_initial = th_init_market(
+        deps.as_mut(),
+        "coin_3",
+        &Market {
+            borrow_index: Decimal::one(),
+            borrow_rate: Decimal::one(),
+            ..Default::default()
+        },
+    );
+
+    let env = mock_env();
+
+    let cm_user_id = UserId::credit_manager(cm_user.clone(), account_id.to_string());
+    let cm_user_id_key: UserIdKey = cm_user_id.try_into().unwrap();
+    let rb_user_id = UserId::credit_manager(rb_user.clone(), "".to_string());
+    let rb_user_id_key: UserIdKey = rb_user_id.try_into().unwrap();
+
+    // Save debt for market 1
+    let debt_amount_1 = Uint128::new(1234000u128);
+    let debt_amount_scaled_1 =
+        get_scaled_debt_amount(debt_amount_1, &market_1_initial, env.block.time.seconds()).unwrap();
+    let debt_amount_at_query_1 = get_underlying_debt_amount(
+        debt_amount_scaled_1,
+        &market_1_initial,
+        env.block.time.seconds(),
+    )
+    .unwrap();
+    let debt_1 = Debt {
+        amount_scaled: debt_amount_scaled_1,
+        uncollateralized: false,
+    };
+    DEBTS.save(deps.as_mut().storage, (&cm_user_id_key, "coin_1"), &debt_1).unwrap();
+    DEBTS.save(deps.as_mut().storage, (&rb_user_id_key, "coin_1"), &debt_1).unwrap();
+
+    // Save debt for market 3
+    let debt_amount_3 = Uint128::new(2221u128);
+    let debt_amount_scaled_3 =
+        get_scaled_debt_amount(debt_amount_3, &market_3_initial, env.block.time.seconds()).unwrap();
+    let debt_amount_at_query_3 = get_underlying_debt_amount(
+        debt_amount_scaled_3,
+        &market_3_initial,
+        env.block.time.seconds(),
+    )
+    .unwrap();
+
+    let debt_3 = Debt {
+        amount_scaled: debt_amount_scaled_3,
+        uncollateralized: false,
+    };
+    DEBTS.save(deps.as_mut().storage, (&cm_user_id_key, "coin_3"), &debt_3).unwrap();
+
+    // Check query with CM user
+    let res = query_user_debts_v2(
+        deps.as_ref(),
+        &env.block,
+        cm_user.clone(),
+        Some(account_id.to_string()),
+        None,
+        None,
+    )
+    .unwrap();
+    assert_eq!(res.data.len(), 2);
+    assert_eq!(res.metadata.has_more, false);
+    assert_eq!(
+        res.data[0],
+        UserDebtResponse {
+            denom: "coin_1".to_string(),
+            amount_scaled: debt_amount_scaled_1,
+            amount: debt_amount_at_query_1,
+            uncollateralized: false,
+        }
+    );
+    assert_eq!(
+        res.data[1],
+        UserDebtResponse {
+            denom: "coin_3".to_string(),
+            amount_scaled: debt_amount_scaled_3,
+            amount: debt_amount_at_query_3,
+            uncollateralized: false,
+        }
+    );
+
+    // Check state with RB user
+    let res = query_user_debts_v2(
+        deps.as_ref(),
+        &env.block,
+        rb_user.clone(),
+        None,
+        None,
+        None,
+    )
+        .unwrap();
+    assert_eq!(res.data.len(), 1);
+    assert_eq!(res.metadata.has_more, false);
+    assert_eq!(
+        res.data[0],
+        UserDebtResponse {
+            denom: "coin_1".to_string(),
+            amount_scaled: debt_amount_scaled_1,
+            amount: debt_amount_at_query_1,
+            uncollateralized: false,
+        }
+    );
+
 }

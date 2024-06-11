@@ -6,6 +6,7 @@ use mars_types::{
     keys::{UserId, UserIdKey},
     red_bank::{Collateral, Debt, Market},
 };
+use crate::error::ContractError;
 
 use crate::state::{COLLATERALS, DEBTS};
 
@@ -60,15 +61,24 @@ impl<'a> User<'a> {
         COLLATERALS.load(store, (&user_id_key, denom))
     }
 
-    /// Load the user's debt
-    pub fn debt(&self, store: &dyn Storage, denom: &str) -> StdResult<Debt> {
-        DEBTS.load(store, (self.0, denom))
+    /// Load the user's debt and error if it does not exist.
+    pub fn debt(&self, store: &dyn Storage, denom: &str, account_id: &str) -> Result<Debt, ContractError> {
+        let user_id = UserId::credit_manager(self.0.clone(), account_id.to_string());
+        let user_id_key: UserIdKey = user_id.try_into()?;
+        DEBTS.may_load(store, (&user_id_key, denom)).unwrap().ok_or(ContractError::CannotRepayZeroDebt {})
     }
 
     /// Load the user's scaled debt amount; default to zero if not borrowing.
-    pub fn debt_amount_scaled(&self, store: &dyn Storage, denom: &str) -> StdResult<Uint128> {
+    pub fn debt_amount_scaled(
+        &self,
+        store: &dyn Storage,
+        denom: &str,
+        account_id: &str,
+    ) -> StdResult<Uint128> {
+        let user_id = UserId::credit_manager(self.0.clone(), account_id.to_string());
+        let user_id_key: UserIdKey = user_id.try_into()?;
         let amount_scaled = DEBTS
-            .may_load(store, (self.0, denom))?
+            .may_load(store, (&user_id_key, denom))?
             .map(|debt| debt.amount_scaled)
             .unwrap_or_else(Uint128::zero);
         Ok(amount_scaled)
@@ -79,8 +89,10 @@ impl<'a> User<'a> {
     ///
     /// The user is borrowing if, in the `DEBTS` map, there is at least one denom stored under the
     /// user address prefix.
-    pub fn is_borrowing(&self, store: &dyn Storage) -> bool {
-        DEBTS.prefix(self.0).range(store, None, None, Order::Ascending).next().is_some()
+    pub fn is_borrowing(&self, store: &dyn Storage, account_id: &str) -> StdResult<bool> {
+        let user_id = UserId::credit_manager(self.0.clone(), account_id.to_string());
+        let user_id_key: UserIdKey = user_id.try_into()?;
+        Ok(DEBTS.prefix(&user_id_key).range(store, None, None, Order::Ascending).next().is_some())
     }
 
     /// Increase a user's collateral shares by the specified amount. Returns a message to inform the
@@ -100,7 +112,6 @@ impl<'a> User<'a> {
         account_id: Option<String>,
     ) -> StdResult<Response> {
         let acc_id = account_id.clone().unwrap_or("".to_string());
-
         let user_id = UserId::credit_manager(self.0.clone(), acc_id);
         let user_id_key: UserIdKey = user_id.try_into()?;
 
@@ -205,17 +216,24 @@ impl<'a> User<'a> {
         denom: &str,
         amount_scaled: Uint128,
         uncollateralized: bool,
+        account_id: &str,
     ) -> StdResult<()> {
-        DEBTS.update(store, (self.0, denom), |opt| -> StdResult<_> {
+        let user_id = UserId::credit_manager(self.0.clone(), account_id.to_string());
+        let user_id_key: UserIdKey = user_id.try_into()?;
+        DEBTS.update(store, (&user_id_key, denom), |opt| -> StdResult<_> {
             match opt {
-                Some(debt) => Ok(Debt {
-                    amount_scaled: debt.amount_scaled.checked_add(amount_scaled)?,
-                    uncollateralized,
-                }),
-                None => Ok(Debt {
-                    amount_scaled,
-                    uncollateralized,
-                }),
+                Some(debt) => {
+                    Ok(Debt {
+                        amount_scaled: debt.amount_scaled.checked_add(amount_scaled)?,
+                        uncollateralized,
+                    })
+                },
+                None => {
+                    Ok(Debt {
+                        amount_scaled,
+                        uncollateralized,
+                    })
+                },
             }
         })?;
         Ok(())
@@ -230,15 +248,18 @@ impl<'a> User<'a> {
         store: &mut dyn Storage,
         denom: &str,
         amount_scaled: Uint128,
+        account_id: &str,
     ) -> StdResult<()> {
-        let mut debt = DEBTS.load(store, (self.0, denom))?;
+        let user_id = UserId::credit_manager(self.0.clone(), account_id.to_string());
+        let user_id_key: UserIdKey = user_id.try_into()?;
+        let mut debt = DEBTS.load(store, (&user_id_key, denom))?;
 
         debt.amount_scaled = debt.amount_scaled.checked_sub(amount_scaled)?;
 
         if debt.amount_scaled.is_zero() {
-            DEBTS.remove(store, (self.0, denom));
+            DEBTS.remove(store, (&user_id_key, denom));
         } else {
-            DEBTS.save(store, (self.0, denom), &debt)?;
+            DEBTS.save(store, (&user_id_key, denom), &debt)?;
         }
 
         Ok(())

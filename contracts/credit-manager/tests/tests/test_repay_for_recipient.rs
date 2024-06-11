@@ -10,7 +10,7 @@ use mars_types::credit_manager::{
 use super::helpers::{
     assert_err, uatom_info, uosmo_info, AccountToFund, MockEnv, DEFAULT_RED_BANK_COIN_BALANCE,
 };
-use crate::tests::helpers::{get_coin, get_debt};
+use crate::tests::helpers::get_coin;
 
 #[test]
 fn only_rover_can_call_repay_for_recipient_callback() {
@@ -445,7 +445,7 @@ fn amount_none_repays_no_more_than_available_asset() {
     assert_eq!(get_coin(&uatom_info.denom, &recipient_position.deposits), uatom_info.to_coin(300));
     assert_eq!(get_coin(&uosmo_info.denom, &recipient_position.deposits), uosmo_info.to_coin(60));
     assert_eq!(recipient_position.debts.len(), 1);
-    let uosmo_debt = get_debt(&uosmo_info.denom, &recipient_position.debts);
+    let uosmo_debt = get_coin(&uosmo_info.denom, &recipient_position.debts);
     // recipient debt: 60 uosmo,
     // benefactor account balance: 50 uosmo
     // repaying with benefactor full balance, should repay 50 uosmo

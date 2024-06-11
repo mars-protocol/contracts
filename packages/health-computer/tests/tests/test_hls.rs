@@ -6,7 +6,7 @@ use mars_types::{
     adapters::vault::{
         CoinValue, Vault, VaultAmount, VaultPosition, VaultPositionAmount, VaultPositionValue,
     },
-    credit_manager::{DebtAmount, Positions},
+    credit_manager::Positions,
     health::AccountKind,
     params::{HlsParams, VaultConfig},
 };
@@ -127,14 +127,12 @@ fn hls_vault() {
             account_kind: AccountKind::HighLeveredStrategy,
             deposits: vec![coin(1200, &ustars.denom)],
             debts: vec![
-                DebtAmount {
+                Coin {
                     denom: udai.denom,
-                    shares: Default::default(),
                     amount: Uint128::new(3100),
                 },
-                DebtAmount {
+                Coin {
                     denom: ustars.denom,
-                    shares: Default::default(),
                     amount: Uint128::new(200),
                 },
             ],
@@ -275,14 +273,12 @@ fn hls_on_blacklisted_vault() {
             account_kind: AccountKind::HighLeveredStrategy,
             deposits: vec![coin(1200, &ustars.denom)],
             debts: vec![
-                DebtAmount {
+                Coin {
                     denom: udai.denom,
-                    shares: Default::default(),
                     amount: Uint128::new(3100),
                 },
-                DebtAmount {
+                Coin {
                     denom: ustars.denom,
-                    shares: Default::default(),
                     amount: Uint128::new(200),
                 },
             ],

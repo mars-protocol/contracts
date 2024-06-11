@@ -11,10 +11,7 @@ use mars_types::{
 
 use crate::{
     error::{ContractError, ContractResult},
-    state::{
-        ACCOUNT_KINDS, ACCOUNT_NFT, COIN_BALANCES, MAX_SLIPPAGE, PARAMS, RED_BANK,
-        TOTAL_DEBT_SHARES,
-    },
+    state::{ACCOUNT_KINDS, ACCOUNT_NFT, COIN_BALANCES, MAX_SLIPPAGE, PARAMS},
     update_coin_balances::query_balance,
 };
 
@@ -151,23 +148,6 @@ pub fn update_balance_after_vault_liquidation_msg(
             },
         ))?,
     }))
-}
-
-pub fn debt_shares_to_amount(deps: Deps, denom: &str, shares: Uint128) -> ContractResult<Coin> {
-    // total shares of debt issued for denom
-    let total_debt_shares = TOTAL_DEBT_SHARES.load(deps.storage, denom).unwrap_or(Uint128::zero());
-
-    // total rover debt amount in Redbank for asset
-    let red_bank = RED_BANK.load(deps.storage)?;
-    let total_debt_amount = red_bank.query_debt(&deps.querier, denom)?;
-
-    // Amount of debt for token's position. Rounded up to favor participants in the debt pool.
-    let amount = total_debt_amount.checked_mul_ceil((shares, total_debt_shares))?;
-
-    Ok(Coin {
-        denom: denom.to_string(),
-        amount,
-    })
 }
 
 pub trait IntoUint128 {

@@ -12,7 +12,7 @@ use mars_types::{
 };
 
 use super::helpers::{
-    assert_err, get_coin, get_debt, uatom_info, ujake_info, uosmo_info, AccountToFund, MockEnv,
+    assert_err, get_coin, uatom_info, ujake_info, uosmo_info, AccountToFund, MockEnv,
 };
 
 #[test]
@@ -241,7 +241,7 @@ fn staked_lp_position_partially_liquidated() {
     assert_eq!(atom_balance.amount, Uint128::new(1000));
 
     assert_eq!(position.debts.len(), 1);
-    let atom_debt = get_debt("uatom", &position.debts);
+    let atom_debt = get_coin("uatom", &position.debts);
     assert_eq!(atom_debt.amount, Uint128::new(956));
 
     assert_eq!(position.staked_astro_lps.len(), 1);
