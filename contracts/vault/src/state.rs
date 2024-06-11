@@ -28,7 +28,7 @@ pub const SUBTITLE: Item<String> = Item::new("subtitle");
 pub const DESCRIPTION: Item<String> = Item::new("desc");
 
 pub const COOLDOWN_PERIOD: Item<u64> = Item::new("cooldown_period");
-pub const UNLOCKS: Map<String, Vec<UnlockState>> = Map::new("unlocks");
+pub const UNLOCKS: Map<(&str, u64), UnlockState> = Map::new("unlocks");
 
 pub const PERFORMANCE_FEE_CONFIG: Item<PerformanceFeeConfig> = Item::new("performance_fee_config");
 pub const PERFORMANCE_FEE_STATE: Item<PerformanceFeeState> = Item::new("performance_fee_state");

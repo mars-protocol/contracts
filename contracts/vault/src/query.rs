@@ -1,4 +1,4 @@
-use cosmwasm_std::{Addr, Deps, Uint128};
+use cosmwasm_std::{Addr, Deps, Order, Uint128};
 
 use crate::{
     error::ContractResult,
@@ -29,10 +29,11 @@ pub fn query_user_unlocks(deps: Deps, user_addr: Addr) -> ContractResult<Vec<Vau
     let vault_token_supply = VAULT_TOKEN.load(deps.storage)?.query_total_supply(deps)?;
     let total_base_tokens = total_base_tokens_in_account(deps)?;
 
-    let unlocks = UNLOCKS.may_load(deps.storage, user_addr.to_string())?.unwrap_or_default();
-    unlocks
-        .into_iter()
-        .map(|unlock| {
+    UNLOCKS
+        .prefix(user_addr.as_str())
+        .range(deps.storage, None, None, Order::Ascending)
+        .map(|item| {
+            let (_created_at, unlock) = item?;
             let base_tokens =
                 calculate_base_tokens(unlock.vault_tokens, total_base_tokens, vault_token_supply)?;
             Ok(VaultUnlock {
