@@ -14,7 +14,7 @@ use mars_vault::msg::{ExecuteMsg, ExtensionExecuteMsg};
 use crate::{
     borrow::borrow,
     claim_astro_lp_rewards::claim_lp_rewards,
-    claim_rewards::{claim_rewards, send_rewards},
+    claim_rewards::claim_rewards,
     deposit::{assert_deposit_caps, deposit},
     error::{ContractError, ContractResult},
     health::{assert_max_ltv, query_health_state},
@@ -224,7 +224,6 @@ pub fn dispatch_actions(
             }),
             Action::ClaimRewards {} => callbacks.push(CallbackMsg::ClaimRewards {
                 account_id: account_id.to_string(),
-                recipient: info.sender.clone(),
             }),
             Action::EnterVault {
                 vault,
@@ -485,8 +484,7 @@ pub fn execute_callback(
         } => reclaim(deps, &account_id, &coin),
         CallbackMsg::ClaimRewards {
             account_id,
-            recipient,
-        } => claim_rewards(deps, env, &account_id, recipient),
+        } => claim_rewards(deps, &account_id),
         CallbackMsg::AssertMaxLTV {
             account_id,
             prev_health_state,
@@ -615,11 +613,6 @@ pub fn execute_callback(
             REENTRANCY_GUARD.try_unlock(deps.storage)?;
             Ok(Response::new().add_attribute("action", "remove_reentrancy_guard"))
         }
-        CallbackMsg::SendRewardsToAddr {
-            account_id,
-            previous_balances,
-            recipient,
-        } => send_rewards(deps, &env.contract.address, &account_id, recipient, previous_balances),
         CallbackMsg::StakeAstroLp {
             account_id,
             lp_token,
