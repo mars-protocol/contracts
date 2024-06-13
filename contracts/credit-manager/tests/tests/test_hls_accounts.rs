@@ -1,7 +1,8 @@
 use cosmwasm_std::{coins, Addr, Decimal, Uint128};
 use mars_credit_manager::error::ContractError;
+use mars_testing::multitest::helpers::coin_info;
 use mars_types::{
-    credit_manager::Action::{Borrow, Deposit, EnterVault, Lend},
+    credit_manager::Action::{Borrow, Deposit, EnterVault, Lend, StakeAstroLp},
     health::{AccountKind, HealthValuesResponse},
     oracle::ActionKind,
     params::{AssetParamsUpdate::AddOrUpdate, HlsAssetType},
@@ -126,14 +127,25 @@ fn wrong_correlations_does_not_qualify() {
     let jake_info = ujake_info();
     let lp_token = lp_token_info();
     let leverage_vault = unlocked_vault_info();
+    let staked_astro_lp = coin_info("factory12345");
 
     let user = Addr::unchecked("user");
     let mut mock = MockEnv::new()
-        .set_params(&[atom_info.clone(), jake_info.clone(), lp_token.clone()])
+        .set_params(&[
+            atom_info.clone(),
+            jake_info.clone(),
+            lp_token.clone(),
+            staked_astro_lp.clone(),
+        ])
         .vault_configs(&[leverage_vault.clone()])
         .fund_account(AccountToFund {
             addr: user.clone(),
-            funds: vec![jake_info.to_coin(300), atom_info.to_coin(300), lp_token.to_coin(300)],
+            funds: vec![
+                jake_info.to_coin(300),
+                atom_info.to_coin(300),
+                lp_token.to_coin(300),
+                staked_astro_lp.to_coin(300),
+            ],
         })
         .build()
         .unwrap();
@@ -204,6 +216,31 @@ fn wrong_correlations_does_not_qualify() {
             reason: format!(
                 "{} vault is not a correlated asset to debt {}",
                 vault.address, atom_info.denom
+            ),
+        },
+    );
+
+    // Case #4 - Staked Astro LP asset types are checked
+
+    let res = mock.update_credit_account(
+        &account_id,
+        &user,
+        vec![
+            Deposit(staked_astro_lp.to_coin(300)),
+            StakeAstroLp {
+                lp_token: staked_astro_lp.to_action_coin(300),
+            },
+            Borrow(atom_info.to_coin(1)),
+        ],
+        &[staked_astro_lp.to_coin(300)],
+    );
+
+    assert_err(
+        res,
+        ContractError::HLS {
+            reason: format!(
+                "{} staked astro lp is not a correlated asset to debt {}",
+                staked_astro_lp.denom, atom_info.denom
             ),
         },
     );
