@@ -823,7 +823,15 @@ fn withdraw_for_credit_manager_works_during_liquidation() {
 
     // credit manager should be able to borrow
     let cm_usdc_borrow_amt = 100000000u128;
-    red_bank.borrow_v2(&mut mock_env, &credit_manager, Some(account_id.to_string()),"uusdc", cm_usdc_borrow_amt).unwrap();
+    red_bank
+        .borrow_v2(
+            &mut mock_env,
+            &credit_manager,
+            Some(account_id.to_string()),
+            "uusdc",
+            cm_usdc_borrow_amt,
+        )
+        .unwrap();
 
     // check collaterals for credit manager account id before withdraw
     let cm_collaterals = red_bank.query_user_collaterals_with_acc_id(

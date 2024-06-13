@@ -578,8 +578,6 @@ fn debt_value() {
     )
     .unwrap();
 
-    let interim_red_bank_debt = mock.query_red_bank_debt(&uatom_info.denom);
-
     let user_b_deposit_amount = Uint128::new(101);
     let user_b_borrowed_amount_atom = Uint128::new(24);
 

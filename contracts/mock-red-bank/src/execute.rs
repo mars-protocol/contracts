@@ -47,8 +47,6 @@ pub fn borrow(
     let account_id = account_id.unwrap_or("".to_string());
     let debt_amount = load_debt_amount(deps.storage, &info.sender, &account_id, &denom)?;
 
-    let am = DEBT_AMOUNT.may_load(deps.storage, (info.sender.to_string(), account_id.clone(), denom.clone()))?.unwrap_or(Uint128::zero());
-
     DEBT_AMOUNT.save(
         deps.storage,
         (info.sender.to_string(), account_id.clone(), denom.clone()),

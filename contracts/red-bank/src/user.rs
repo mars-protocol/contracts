@@ -6,9 +6,11 @@ use mars_types::{
     keys::{UserId, UserIdKey},
     red_bank::{Collateral, Debt, Market},
 };
-use crate::error::ContractError;
 
-use crate::state::{COLLATERALS, DEBTS};
+use crate::{
+    error::ContractError,
+    state::{COLLATERALS, DEBTS},
+};
 
 /// A helper class providing an intuitive API for managing user positions in the contract store.
 ///
@@ -62,10 +64,18 @@ impl<'a> User<'a> {
     }
 
     /// Load the user's debt and error if it does not exist.
-    pub fn debt(&self, store: &dyn Storage, denom: &str, account_id: &str) -> Result<Debt, ContractError> {
+    pub fn debt(
+        &self,
+        store: &dyn Storage,
+        denom: &str,
+        account_id: &str,
+    ) -> Result<Debt, ContractError> {
         let user_id = UserId::credit_manager(self.0.clone(), account_id.to_string());
         let user_id_key: UserIdKey = user_id.try_into()?;
-        DEBTS.may_load(store, (&user_id_key, denom)).unwrap().ok_or(ContractError::CannotRepayZeroDebt {})
+        DEBTS
+            .may_load(store, (&user_id_key, denom))
+            .unwrap()
+            .ok_or(ContractError::CannotRepayZeroDebt {})
     }
 
     /// Load the user's scaled debt amount; default to zero if not borrowing.
@@ -222,18 +232,14 @@ impl<'a> User<'a> {
         let user_id_key: UserIdKey = user_id.try_into()?;
         DEBTS.update(store, (&user_id_key, denom), |opt| -> StdResult<_> {
             match opt {
-                Some(debt) => {
-                    Ok(Debt {
-                        amount_scaled: debt.amount_scaled.checked_add(amount_scaled)?,
-                        uncollateralized,
-                    })
-                },
-                None => {
-                    Ok(Debt {
-                        amount_scaled,
-                        uncollateralized,
-                    })
-                },
+                Some(debt) => Ok(Debt {
+                    amount_scaled: debt.amount_scaled.checked_add(amount_scaled)?,
+                    uncollateralized,
+                }),
+                None => Ok(Debt {
+                    amount_scaled,
+                    uncollateralized,
+                }),
             }
         })?;
         Ok(())

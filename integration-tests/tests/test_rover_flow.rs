@@ -35,12 +35,21 @@ fn rover_flow() {
     let uusdc_borrowed = 1_000_000_000_000u128;
     let uusdc_deposited = uusdc_borrowed + 100_000u128;
     mock_env.fund_account(&rover, &[coin(uusdc_deposited, "uusdc")]);
-    red_bank.deposit_with_acc_id(&mut mock_env, &rover.clone(), coin(uusdc_deposited, "uusdc"), Some(acc_id.clone().to_string())).unwrap();
+    red_bank
+        .deposit_with_acc_id(
+            &mut mock_env,
+            &rover.clone(),
+            coin(uusdc_deposited, "uusdc"),
+            Some(acc_id.to_string()),
+        )
+        .unwrap();
 
     // rover borrows more than deposited
     let balance = mock_env.query_balance(&rover, "uusdc").unwrap();
     assert_eq!(balance.amount.u128(), 0u128);
-    red_bank.borrow_v2(&mut mock_env, &rover, Some(acc_id.to_string()), "uusdc", uusdc_borrowed).unwrap();
+    red_bank
+        .borrow_v2(&mut mock_env, &rover, Some(acc_id.to_string()), "uusdc", uusdc_borrowed)
+        .unwrap();
 
     // fd
     let balance = mock_env.query_balance(&rover, "uusdc").unwrap();
@@ -57,20 +66,41 @@ fn rover_flow() {
     // rover deposits some atom
     let deposited_atom = 15_000_000_000u128;
     mock_env.fund_account(&rover, &[coin(deposited_atom, "uatom")]);
-    red_bank.deposit_with_acc_id(&mut mock_env, &rover, coin(deposited_atom, "uatom"), Some(acc_id.clone().to_string())).unwrap();
+    red_bank
+        .deposit_with_acc_id(
+            &mut mock_env,
+            &rover,
+            coin(deposited_atom, "uatom"),
+            Some(acc_id.to_string()),
+        )
+        .unwrap();
     let balance = mock_env.query_balance(&rover, "uatom").unwrap();
     assert_eq!(balance.amount.u128(), 0u128);
-    let collateral = red_bank.query_user_collateral_with_acc_id(&mut mock_env, &rover, Some(acc_id.clone().to_string()), "uatom");
+    let collateral = red_bank.query_user_collateral_with_acc_id(
+        &mut mock_env,
+        &rover,
+        Some(acc_id.to_string()),
+        "uatom",
+    );
     assert_eq!(collateral.amount.u128(), deposited_atom);
 
     // rover repay full debt
-    red_bank.repay_v2(&mut mock_env, &rover, coin(uusdc_borrowed, "uusdc"), Some(acc_id.clone().to_string())).unwrap();
+    red_bank
+        .repay_v2(
+            &mut mock_env,
+            &rover,
+            coin(uusdc_borrowed, "uusdc"),
+            Some(acc_id.to_string()),
+        )
+        .unwrap();
     let debt = red_bank.query_user_debt_v2(&mut mock_env, &rover, acc_id, "uusdc");
     assert!(!debt.uncollateralized);
     assert_eq!(debt.amount.u128(), 0u128);
 
     // after debt repayment rover is able to borrow (using deposited collateral)
-    red_bank.borrow_v2(&mut mock_env, &rover, Some(acc_id.clone().to_string()), "uusdc", 1u128).unwrap();
+    red_bank
+        .borrow_v2(&mut mock_env, &rover, Some(acc_id.to_string()), "uusdc", 1u128)
+        .unwrap();
     let debt = red_bank.query_user_debt_v2(&mut mock_env, &rover, acc_id, "uusdc");
     assert!(debt.uncollateralized);
     assert_eq!(debt.amount.u128(), 1u128);

@@ -514,12 +514,11 @@ fn test_query_user_debt_v2() {
         &market_2_initial,
         env.block.time.seconds(),
     )
-        .unwrap();
+    .unwrap();
     let debt_2 = Debt {
         amount_scaled: debt_amount_scaled_2,
         uncollateralized: false,
     };
-
 
     let cm_user_id = UserId::credit_manager(cm_user.clone(), account_id.to_string());
     let cm_user_id_key: UserIdKey = cm_user_id.try_into().unwrap();
@@ -567,14 +566,9 @@ fn test_query_user_debt_v2() {
     );
 
     // Check state for RB user
-    let res = query_user_debt_v2(
-        deps.as_ref(),
-        &env.block,
-        rb_user.clone(),
-        None,
-        "coin_2".to_string(),
-    )
-        .unwrap();
+    let res =
+        query_user_debt_v2(deps.as_ref(), &env.block, rb_user.clone(), None, "coin_2".to_string())
+            .unwrap();
     assert_eq!(
         res,
         UserDebtResponse {
@@ -585,14 +579,8 @@ fn test_query_user_debt_v2() {
         }
     );
 
-    let res = query_user_debt_v2(
-        deps.as_ref(),
-        &env.block,
-        rb_user,
-        None,
-        "coin_1".to_string(),
-    )
-        .unwrap();
+    let res =
+        query_user_debt_v2(deps.as_ref(), &env.block, rb_user, None, "coin_1".to_string()).unwrap();
     assert_eq!(
         res,
         UserDebtResponse {
@@ -693,7 +681,7 @@ fn test_query_user_debts_v2() {
     )
     .unwrap();
     assert_eq!(res.data.len(), 2);
-    assert_eq!(res.metadata.has_more, false);
+    assert!(!res.metadata.has_more);
     assert_eq!(
         res.data[0],
         UserDebtResponse {
@@ -714,17 +702,10 @@ fn test_query_user_debts_v2() {
     );
 
     // Check state with RB user
-    let res = query_user_debts_v2(
-        deps.as_ref(),
-        &env.block,
-        rb_user.clone(),
-        None,
-        None,
-        None,
-    )
-        .unwrap();
+    let res =
+        query_user_debts_v2(deps.as_ref(), &env.block, rb_user.clone(), None, None, None).unwrap();
     assert_eq!(res.data.len(), 1);
-    assert_eq!(res.metadata.has_more, false);
+    assert!(!res.metadata.has_more);
     assert_eq!(
         res.data[0],
         UserDebtResponse {
@@ -734,5 +715,4 @@ fn test_query_user_debts_v2() {
             uncollateralized: false,
         }
     );
-
 }

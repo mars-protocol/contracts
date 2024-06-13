@@ -78,7 +78,7 @@ pub fn query_debts_v2(
         .skip(start_index)
         .take(limit)
         .map(|denom| {
-            let amount = load_debt_amount(deps.storage, &user_addr, &acc_id, &denom)?;
+            let amount = load_debt_amount(deps.storage, &user_addr, &acc_id, denom)?;
             Ok(UserDebtResponse {
                 denom: denom.clone(),
                 amount,

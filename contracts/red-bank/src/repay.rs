@@ -1,12 +1,15 @@
 use cosmwasm_std::{Addr, DepsMut, Env, MessageInfo, Response, Uint128};
 use mars_interest_rate::{get_scaled_debt_amount, get_underlying_debt_amount};
-use mars_types::address_provider::{self, MarsAddressType};
+use mars_types::{
+    address_provider::{self, MarsAddressType},
+    error::MarsError,
+};
 use mars_utils::helpers::build_send_asset_msg;
 
 use crate::{
     error::ContractError,
     interest_rates::{apply_accumulated_interests, update_interest_rates},
-    state::{CONFIG, DEBTS, MARKETS},
+    state::{CONFIG, MARKETS},
     user::User,
 };
 
@@ -17,6 +20,7 @@ pub fn repay(
     on_behalf_of: Option<String>,
     denom: String,
     repay_amount: Uint128,
+    account_id: Option<String>,
 ) -> Result<Response, ContractError> {
     let config = CONFIG.load(deps.storage)?;
 
@@ -33,6 +37,13 @@ pub fn repay(
     let incentives_addr = &addresses[&MarsAddressType::Incentives];
     let credit_manager_addr = &addresses[&MarsAddressType::CreditManager];
 
+    // Don't allow red-bank users to create alternative account ids.
+    // Only allow credit-manager contract to create them.
+    // Even if account_id contains empty string we won't allow it.
+    if account_id.is_some() && info.sender != credit_manager_addr {
+        return Err(ContractError::Mars(MarsError::Unauthorized {}));
+    }
+
     let user_addr: Addr;
     let user = match on_behalf_of.as_ref() {
         // Cannot repay on behalf of credit-manager users. It creates accounting complexity for them.
@@ -46,10 +57,8 @@ pub fn repay(
         None => User(&info.sender),
     };
 
-    // Check new debt
-    let debt = DEBTS
-        .may_load(deps.storage, (user.address(), &denom))?
-        .ok_or(ContractError::CannotRepayZeroDebt {})?;
+    let acc_id = account_id.clone().unwrap_or("".to_string());
+    let debt = user.debt(deps.storage, &denom, &acc_id)?;
 
     let mut market = MARKETS.load(deps.storage, &denom)?;
 
@@ -86,7 +95,7 @@ pub fn repay(
         debt_amount_scaled_before.checked_sub(debt_amount_scaled_after)?;
 
     market.decrease_debt(debt_amount_scaled_delta)?;
-    user.decrease_debt(deps.storage, &denom, debt_amount_scaled_delta)?;
+    user.decrease_debt(deps.storage, &denom, debt_amount_scaled_delta, &acc_id)?;
 
     response = update_interest_rates(&env, &mut market, response)?;
     MARKETS.save(deps.storage, &denom, &market)?;

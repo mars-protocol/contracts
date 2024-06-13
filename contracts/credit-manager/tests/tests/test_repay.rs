@@ -225,8 +225,6 @@ fn repay_less_than_total_debt() {
     )
     .unwrap();
 
-    let interim_red_bank_debt = mock.query_red_bank_debt(&coin_info.denom);
-
     mock.update_credit_account(
         &account_id,
         &user,
