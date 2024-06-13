@@ -199,7 +199,7 @@ pub fn redeem(
         return Err(ContractError::UnlockedPositionsNotFound {});
     }
 
-    // clear state if no more unlocking positions
+    // remove unlocked positions
     for unlock in &unlocked {
         UNLOCKS.remove(deps.storage, (recipient.as_str(), unlock.created_at));
     }
