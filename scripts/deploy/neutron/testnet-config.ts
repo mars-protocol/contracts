@@ -363,7 +363,7 @@ export const pclLpMarsUsdcAsset: AssetConfig = {
     whitelisted: true,
   },
   red_bank: {
-    borrow_enabled: true,
+    borrow_enabled: false,
     deposit_enabled: true,
   },
   deposit_cap: '1000000000000000000',
