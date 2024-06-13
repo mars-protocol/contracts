@@ -358,18 +358,11 @@ fn hls_with_max_withdraw() {
             account_kind: AccountKind::Default,
 
             deposits: vec![coin(1200, &ustars.denom)],
-            debts: vec![
-                DebtAmount {
-                    denom: uatom.denom.clone(),
-                    shares: Default::default(),
-                    amount: Uint128::new(3100),
-                },
-                DebtAmount {
-                    denom: ustars.denom.clone(),
-                    shares: Default::default(),
-                    amount: Uint128::new(800),
-                },
-            ],
+            debts: vec![DebtAmount {
+                denom: ustars.denom.clone(),
+                shares: Default::default(),
+                amount: Uint128::new(800),
+            }],
             lends: vec![],
             vaults: vec![VaultPosition {
                 vault,

@@ -151,38 +151,13 @@ fn wrong_correlations_does_not_qualify() {
 
     assert_err(
         res,
-        ContractError::HLS {
-            reason: format!(
-                "{} deposit is not a correlated asset to debt {}",
-                jake_info.denom, atom_info.denom
-            ),
+        ContractError::AboveMaxLTV {
+            account_id: account_id.clone(),
+            max_ltv_health_factor: "0".to_string(),
         },
     );
 
-    // Case #2 - Some collateral assets are not in correlations list
-
-    let res = mock.update_credit_account(
-        &account_id,
-        &user,
-        vec![
-            Deposit(jake_info.to_coin(300)),
-            Deposit(atom_info.to_coin(300)),
-            Borrow(atom_info.to_coin(1)),
-        ],
-        &[jake_info.to_coin(300), atom_info.to_coin(300)],
-    );
-
-    assert_err(
-        res,
-        ContractError::HLS {
-            reason: format!(
-                "{} deposit is not a correlated asset to debt {}",
-                jake_info.denom, atom_info.denom
-            ),
-        },
-    );
-
-    // Case #3 - Lend asset types are checked
+    // Case #2 - Lend asset types are checked
 
     let res = mock.update_credit_account(
         &account_id,
@@ -206,7 +181,7 @@ fn wrong_correlations_does_not_qualify() {
         },
     );
 
-    // Case #4 - Vault asset types are checked
+    // Case #3 - Vault asset types are checked
 
     let vault = mock.get_vault(&leverage_vault);
     let res = mock.update_credit_account(
@@ -232,6 +207,51 @@ fn wrong_correlations_does_not_qualify() {
             ),
         },
     );
+}
+
+#[test]
+fn not_correlated_assets_do_not_infuence_hf() {
+    let atom_info = uatom_info();
+    let jake_info = ujake_info();
+    let lp_token = lp_token_info();
+    let leverage_vault = unlocked_vault_info();
+
+    let user = Addr::unchecked("user");
+    let mut mock = MockEnv::new()
+        .set_params(&[atom_info.clone(), jake_info.clone(), lp_token.clone()])
+        .vault_configs(&[leverage_vault.clone()])
+        .fund_account(AccountToFund {
+            addr: user.clone(),
+            funds: vec![jake_info.to_coin(300), atom_info.to_coin(300), lp_token.to_coin(300)],
+        })
+        .build()
+        .unwrap();
+
+    let account_id = mock.create_hls_account(&user);
+
+    mock.update_credit_account(
+        &account_id,
+        &user,
+        vec![Deposit(lp_token.to_coin(300)), Borrow(atom_info.to_coin(1))],
+        &[lp_token.to_coin(300)],
+    )
+    .unwrap();
+    let health_before =
+        mock.query_health(&account_id, AccountKind::HighLeveredStrategy, ActionKind::Default);
+
+    // Deposited asset is not correlated to debt asset
+    mock.update_credit_account(
+        &account_id,
+        &user,
+        vec![Deposit(jake_info.to_coin(300))],
+        &[jake_info.to_coin(300)],
+    )
+    .unwrap();
+
+    // Health factor should not change
+    let health =
+        mock.query_health(&account_id, AccountKind::HighLeveredStrategy, ActionKind::Default);
+    assert_eq!(health_before, health);
 }
 
 #[test]

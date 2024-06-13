@@ -9,7 +9,10 @@ use mars_types::{
     },
     credit_manager::{DebtAmount, Positions},
     health::AccountKind,
-    params::{AssetParams, CmSettings, HlsParams, LiquidationBonus, RedBankSettings, VaultConfig},
+    params::{
+        AssetParams, CmSettings, HlsAssetType, HlsParams, LiquidationBonus, RedBankSettings,
+        VaultConfig,
+    },
 };
 use proptest::{
     collection::vec,
@@ -266,7 +269,9 @@ fn random_vault_positions(vd: VaultsData) -> impl Strategy<Value = Vec<VaultPosi
 }
 
 pub fn random_health_computer() -> impl Strategy<Value = HealthComputer> {
-    (random_param_maps()).prop_flat_map(|(denoms_data, vaults_data)| {
+    (random_param_maps()).prop_flat_map(|(mut denoms_data, mut vaults_data)| {
+        update_hls_correlations(&mut denoms_data, &mut vaults_data);
+
         (
             random_account_kind(),
             random_coins(denoms_data.clone()),
@@ -289,4 +294,31 @@ pub fn random_health_computer() -> impl Strategy<Value = HealthComputer> {
                 vaults_data: vaults_data.clone(),
             })
     })
+}
+
+fn update_hls_correlations(denoms_data: &mut DenomsData, vaults_data: &mut VaultsData) {
+    // Add correlations to the denoms and vaults. This is necessary for the HealthComputer to be able to compute the health for HLS accounts.
+    let denoms = denoms_data
+        .params
+        .keys()
+        .map(|denom| HlsAssetType::Coin {
+            denom: denom.clone(),
+        })
+        .collect::<Vec<HlsAssetType<Addr>>>();
+    let vaults = vaults_data
+        .vault_configs
+        .keys()
+        .map(|addr| HlsAssetType::Vault {
+            addr: addr.clone(),
+        })
+        .collect::<Vec<HlsAssetType<Addr>>>();
+    let correlations = denoms.into_iter().chain(vaults).collect::<Vec<HlsAssetType<Addr>>>();
+
+    for (_, params) in denoms_data.params.iter_mut() {
+        params.credit_manager.hls.as_mut().unwrap().correlations = correlations.clone();
+    }
+
+    for (_, config) in vaults_data.vault_configs.iter_mut() {
+        config.hls.as_mut().unwrap().correlations = correlations.clone();
+    }
 }

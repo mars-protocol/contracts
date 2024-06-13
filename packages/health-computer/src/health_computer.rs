@@ -12,7 +12,7 @@ use mars_types::{
         },
         HealthResult, LiquidationPriceKind, SwapKind,
     },
-    params::{AssetParams, CmSettings, VaultConfig},
+    params::{AssetParams, CmSettings, HlsAssetType, VaultConfig},
 };
 #[cfg(feature = "javascript")]
 use tsify::Tsify;
@@ -534,6 +534,35 @@ impl HealthComputer {
                 // If the coin is not found (whitelisted), it is not considered for collateral
                 continue;
             };
+
+            match self.kind {
+                AccountKind::HighLeveredStrategy => {
+                    // HLS should have 0 or 1 debt denom in the account
+                    if let Some(debt) = self.positions.debts.first() {
+                        let debt_params = self
+                            .denoms_data
+                            .params
+                            .get(&debt.denom)
+                            .ok_or(MissingParams(debt.denom.clone()))?;
+                        let debt_hls = debt_params
+                            .credit_manager
+                            .hls
+                            .as_ref()
+                            .ok_or(MissingHLSParams(debt.denom.clone()))?;
+                        if !debt_hls.correlations.contains(&HlsAssetType::Coin {
+                            denom: c.denom.clone(),
+                        }) {
+                            continue;
+                        }
+                    } else if hls.is_none() {
+                        continue;
+                    }
+                }
+                AccountKind::Default => {}
+                AccountKind::FundManager {
+                    ..
+                } => {}
+            }
 
             let coin_price =
                 self.denoms_data.prices.get(&c.denom).ok_or(MissingPrice(c.denom.clone()))?;

@@ -30,26 +30,10 @@ pub fn assert_hls_rules(deps: Deps, account_id: &str) -> ContractResult<Response
             });
         };
 
-        // Rule #3: For that debt denom, verify all collateral assets are only those
-        //          within the correlated list for that debt denom
-
-        // === Deposits ===
-        for deposit in positions.deposits.iter() {
-            hls.correlations
-                .iter()
-                .find(|h| match h {
-                    HlsAssetType::Coin {
-                        denom,
-                    } => &deposit.denom == denom,
-                    _ => false,
-                })
-                .ok_or_else(|| ContractError::HLS {
-                    reason: format!(
-                        "{} deposit is not a correlated asset to debt {}",
-                        deposit.denom, debt.denom
-                    ),
-                })?;
-        }
+        // Rule #3: For that debt denom, verify all collateral assets excluding deposits are only those
+        //          within the correlated list for that debt denom.
+        //          Deposits can have claimed rewards which are not correlated. These assets will have
+        //          LTV = 0 and won't be considered for HF.
 
         // === Lends ===
         for lend in positions.lends.iter() {
