@@ -527,6 +527,24 @@ export class Deployer {
     printYellow(`Swapper astroport config updated.`)
   }
 
+  async setAstroportIncentivesAddress(addr: string) {
+    printBlue(`Updating address provider with astroport incentives...`)
+
+    const address: AddressResponseItem = {
+      address: addr,
+      address_type: 'astroport_incentives',
+    }
+
+    await this.cwClient.execute(
+      this.deployerAddr,
+      this.storage.addresses.addressProvider!,
+      { set_address: address },
+      'auto',
+    )
+
+    printYellow(`Address provider updated.`)
+  }
+
   async setRoutes() {
     printBlue('Setting Swapper Routes')
     for (const route of this.config.swapper.routes) {

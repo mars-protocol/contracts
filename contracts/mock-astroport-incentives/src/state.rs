@@ -1,4 +1,4 @@
-use astroport::incentives::IncentivesSchedule;
+use astroport_v5::incentives::IncentivesSchedule;
 use cosmwasm_std::Uint128;
 use cw_storage_plus::Map;
 

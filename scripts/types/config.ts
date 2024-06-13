@@ -37,6 +37,7 @@ export function isAstroportRoute(route: OsmosisRoute | AstroportRoute): route is
 export interface AstroportConfig {
   factory: string
   router: string
+  incentives: string
 }
 
 export interface DeploymentConfig {

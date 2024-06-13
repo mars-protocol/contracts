@@ -1,6 +1,6 @@
 use std::cmp::Ordering;
 
-use astroport::{
+use astroport_v5::{
     asset::{Asset, AssetInfo, PairInfo},
     factory::PairType,
     pair::{ConfigResponse, CumulativePricesResponse, PoolResponse, QueryMsg as PairQueryMsg},
@@ -146,7 +146,7 @@ pub fn query_token_precision(
     astroport_factory: &Addr,
     denom: &str,
 ) -> ContractResult<u8> {
-    Ok(astroport::querier::query_token_precision(
+    Ok(astroport_v5::querier::query_token_precision(
         querier,
         &AssetInfo::NativeToken {
             denom: denom.to_string(),

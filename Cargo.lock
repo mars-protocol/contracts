@@ -2413,6 +2413,7 @@ name = "mars-oracle-wasm"
 version = "2.0.0"
 dependencies = [
  "astroport 2.9.0",
+ "astroport 5.0.0-rc.1-tokenfactory",
  "cosmwasm-schema",
  "cosmwasm-std",
  "cw-it",
@@ -2642,6 +2643,7 @@ version = "2.0.0"
 dependencies = [
  "anyhow",
  "astroport 2.9.0",
+ "astroport 5.0.0-rc.1-tokenfactory",
  "cosmwasm-schema",
  "cosmwasm-std",
  "cw-it",

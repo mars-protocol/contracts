@@ -53,6 +53,7 @@ export const taskRunner = async ({ config, label }: TaskRunnerProps) => {
 
     if (config.swapper.name == 'astroport') {
       await deployer.updateSwapperAstroportConfig(config.astroportConfig!)
+      await deployer.setAstroportIncentivesAddress(config.astroportConfig!.incentives!)
     }
 
     // setup

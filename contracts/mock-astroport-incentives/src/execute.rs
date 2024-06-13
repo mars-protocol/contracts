@@ -1,4 +1,4 @@
-use astroport::{
+use astroport_v5::{
     asset::AssetInfo,
     incentives::{IncentivesSchedule, InputSchedule},
 };

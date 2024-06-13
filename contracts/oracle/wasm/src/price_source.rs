@@ -3,7 +3,7 @@ use std::{
     fmt,
 };
 
-use astroport::{
+use astroport_v5::{
     asset::PairInfo, factory::PairType, pair::TWAP_PRECISION,
     pair_concentrated::ConcentratedPoolParams, querier::simulate,
 };
@@ -747,8 +747,8 @@ fn query_xyk_liquidity_token_price(
     // XYK pool asserted during price source creation
     let pool = query_astroport_pool(&deps.querier, pair_address)?;
 
-    let coin0 = pool.assets[0].to_coin()?;
-    let coin1 = pool.assets[1].to_coin()?;
+    let coin0 = pool.assets[0].as_coin()?;
+    let coin1 = pool.assets[1].as_coin()?;
 
     lp_pricing::query_xyk_lp_price(
         deps,
@@ -772,8 +772,8 @@ fn query_pcl_liquidity_token_price(
 ) -> ContractResult<Decimal> {
     // PCL pool asserted during price source creation
     let pool = query_astroport_pool(&deps.querier, pair_address)?;
-    let coin0 = pool.assets[0].to_coin()?;
-    let coin1 = pool.assets[1].to_coin()?;
+    let coin0 = pool.assets[0].as_coin()?;
+    let coin1 = pool.assets[1].as_coin()?;
 
     let pool_config = query_astroport_config(&deps.querier, pair_address)?;
     let pool_params = match pool_config.params {
@@ -807,8 +807,8 @@ fn query_ss_liquidity_token_price(
 ) -> ContractResult<Decimal> {
     // StableSwap pool asserted during price source creation
     let pool = query_astroport_pool(&deps.querier, pair_address)?;
-    let coin0 = pool.assets[0].to_coin()?;
-    let coin1 = pool.assets[1].to_coin()?;
+    let coin0 = pool.assets[0].as_coin()?;
+    let coin1 = pool.assets[1].as_coin()?;
 
     let curve_invariant = query_astroport_ss_curve_invariant(&deps.querier, pair_address)?;
 
