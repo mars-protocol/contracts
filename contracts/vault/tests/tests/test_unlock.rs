@@ -9,7 +9,10 @@ use super::{
         query_user_unlocks,
     },
 };
-use crate::tests::{helpers::deploy_managed_vault, vault_helpers::query_convert_to_assets};
+use crate::tests::{
+    helpers::deploy_managed_vault,
+    vault_helpers::{query_all_unlocks, query_convert_to_assets},
+};
 
 #[test]
 fn unlock_if_credit_manager_account_not_binded() {
@@ -152,15 +155,17 @@ fn unlock_succeded() {
 
     let user_unlocks = query_user_unlocks(&mock, &managed_vault_addr, &user);
     assert_eq!(
-        user_unlocks,
+        user_unlocks.clone(),
         vec![
             VaultUnlock {
+                user_address: user.to_string(),
                 created_at: first_block_time,
                 cooldown_end: first_block_time + 60,
                 vault_tokens: first_unlock_amt,
                 base_tokens: first_base_tokens
             },
             VaultUnlock {
+                user_address: user.to_string(),
                 created_at: second_block_time,
                 cooldown_end: second_block_time + 60,
                 vault_tokens: second_unlock_amt,
@@ -168,4 +173,18 @@ fn unlock_succeded() {
             }
         ]
     );
+
+    let all_unlocks = query_all_unlocks(&mock, &managed_vault_addr, None, None);
+    assert!(!all_unlocks.metadata.has_more);
+    assert_eq!(user_unlocks.clone(), all_unlocks.data);
+
+    let all_unlocks = query_all_unlocks(
+        &mock,
+        &managed_vault_addr,
+        Some((user.to_string(), first_block_time)),
+        None,
+    );
+    assert!(!all_unlocks.metadata.has_more);
+    assert_eq!(all_unlocks.data.len(), 1);
+    assert_eq!(user_unlocks[1..], all_unlocks.data); // only the second unlock
 }

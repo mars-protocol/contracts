@@ -25,6 +25,7 @@ cosmwasm-std      = { workspace = true, features = ["cosmwasm_1_1"] }
 cw2               = { workspace = true }
 cw-storage-plus   = { workspace = true }
 cw-utils          = { workspace = true }
+cw-paginate       = { workspace = true }
 cw-vault-standard = { workspace = true }
 mars-owner        = { workspace = true }
 mars-types        = { workspace = true }

@@ -1,6 +1,6 @@
 use cosmwasm_std::{
     attr, ensure_eq, to_json_binary, Coin, CosmosMsg, Deps, DepsMut, Env, Event, MessageInfo,
-    Response, StdError, Uint128, WasmMsg,
+    Order, Response, StdResult, Uint128, WasmMsg,
 };
 use mars_types::{
     credit_manager::{self, Action, ActionAmount, ActionCoin, Positions, QueryMsg},
@@ -142,17 +142,15 @@ pub fn unlock(
     let current_time = env.block.time.seconds();
     let cooldown_period = COOLDOWN_PERIOD.load(deps.storage)?;
     let cooldown_end = current_time + cooldown_period;
-    UNLOCKS.update(deps.storage, info.sender.to_string(), |maybe_unlocks| {
-        let mut unlocks = maybe_unlocks.unwrap_or_default();
-
-        unlocks.push(UnlockState {
+    UNLOCKS.save(
+        deps.storage,
+        (info.sender.as_str(), current_time),
+        &UnlockState {
             created_at: current_time,
             cooldown_end,
             vault_tokens: amount,
-        });
-
-        Ok::<Vec<UnlockState>, StdError>(unlocks)
-    })?;
+        },
+    )?;
 
     Ok(Response::new()
         .add_attribute("action", "unlock")
@@ -182,11 +180,18 @@ pub fn redeem(
     // check that only the expected base token was sent
     let vault_token_amount = cw_utils::must_pay(info, &vault_token.to_string())?;
 
-    let unlocks = UNLOCKS.may_load(deps.storage, recipient.to_string())?.unwrap_or_default();
+    let unlocks = UNLOCKS
+        .prefix(recipient.as_str())
+        .range(deps.storage, None, None, Order::Ascending)
+        .map(|item| {
+            let (_created_at, unlock) = item?;
+            Ok(unlock)
+        })
+        .collect::<StdResult<Vec<UnlockState>>>()?;
 
     // find all unlocked positions
     let current_time = env.block.time.seconds();
-    let (unlocked, unlocking): (Vec<_>, Vec<_>) =
+    let (unlocked, _unlocking): (Vec<_>, Vec<_>) =
         unlocks.into_iter().partition(|us| us.cooldown_end <= current_time);
 
     // cannot withdraw when there is zero unlocked positions
@@ -194,11 +199,9 @@ pub fn redeem(
         return Err(ContractError::UnlockedPositionsNotFound {});
     }
 
-    // clear state if no more unlocking positions
-    if unlocking.is_empty() {
-        UNLOCKS.remove(deps.storage, recipient.to_string());
-    } else {
-        UNLOCKS.save(deps.storage, recipient.to_string(), &unlocking)?;
+    // remove unlocked positions
+    for unlock in &unlocked {
+        UNLOCKS.remove(deps.storage, (recipient.as_str(), unlock.created_at));
     }
 
     // compute the total vault tokens to be withdrawn
