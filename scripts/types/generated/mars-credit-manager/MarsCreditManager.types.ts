@@ -281,7 +281,6 @@ export type CallbackMsg =
   | {
       claim_rewards: {
         account_id: string
-        recipient: Addr
       }
     }
   | {
@@ -406,13 +405,6 @@ export type CallbackMsg =
     }
   | {
       remove_reentrancy_guard: {}
-    }
-  | {
-      send_rewards_to_addr: {
-        account_id: string
-        previous_balances: Coin[]
-        recipient: Addr
-      }
     }
 export type Addr = string
 export type HealthState =
