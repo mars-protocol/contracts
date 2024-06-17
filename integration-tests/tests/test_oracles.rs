@@ -1366,6 +1366,18 @@ fn setup_redbank(wasm: &Wasm<OsmosisTestApp>, signer: &SigningAccount) -> (Strin
     )
     .unwrap();
 
+    // We can simulate Astroport incentives contract deposits with own params address (we don't check deposit caps for Astroport incentives contract so it's safe to use params address here)
+    wasm.execute(
+        &addr_provider_addr,
+        &SetAddress {
+            address_type: MarsAddressType::AstroportIncentives,
+            address: params_addr.clone(),
+        },
+        &[],
+        signer,
+    )
+    .unwrap();
+
     let (market_params, asset_params) = default_asset_params("uosmo");
 
     wasm.execute(

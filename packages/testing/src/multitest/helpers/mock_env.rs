@@ -1090,6 +1090,8 @@ impl MockEnvBuilder {
         let health_contract = self.get_health_contract().into();
         let params = self.get_params_contract().into();
 
+        self.deploy_astroport_incentives();
+
         let addr = self
             .app
             .instantiate_contract(
@@ -1345,12 +1347,15 @@ impl MockEnvBuilder {
             )
             .unwrap();
 
+        self.set_address(MarsAddressType::Incentives, addr.clone());
+
         IncentivesUnchecked::new(addr.to_string())
     }
 
     pub fn deploy_astroport_incentives(&mut self) -> Addr {
         let code_id = self.app.store_code(mock_astro_incentives_contract());
-        self.app
+        let addr = self
+            .app
             .instantiate_contract(
                 code_id,
                 Addr::unchecked("astroport_incentives_owner"),
@@ -1359,7 +1364,11 @@ impl MockEnvBuilder {
                 "mock-astroport-incentives",
                 None,
             )
-            .unwrap()
+            .unwrap();
+
+        self.set_address(MarsAddressType::AstroportIncentives, addr.clone());
+
+        addr
     }
 
     fn deploy_vault(&mut self, vault: &VaultTestInfo) -> Addr {

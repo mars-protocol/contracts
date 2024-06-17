@@ -2471,6 +2471,7 @@ name = "mars-params"
 version = "2.0.1"
 dependencies = [
  "anyhow",
+ "astroport 5.0.0-rc.1-tokenfactory",
  "cosmwasm-schema",
  "cosmwasm-std",
  "cw-multi-test",

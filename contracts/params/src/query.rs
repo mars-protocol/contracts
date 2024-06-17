@@ -115,10 +115,17 @@ pub fn query_total_deposit(
     let addresses = address_provider::helpers::query_contract_addrs(
         deps,
         &address_provider_addr,
-        vec![MarsAddressType::RedBank, MarsAddressType::CreditManager],
+        vec![
+            MarsAddressType::RedBank,
+            MarsAddressType::CreditManager,
+            MarsAddressType::Incentives,
+            MarsAddressType::AstroportIncentives,
+        ],
     )?;
     let credit_manager_addr = &addresses[&MarsAddressType::CreditManager];
     let red_bank_addr = &addresses[&MarsAddressType::RedBank];
+    let incentives_addr = &addresses[&MarsAddressType::AstroportIncentives];
+    let astro_incentives_addr = &addresses[&MarsAddressType::AstroportIncentives];
 
     // amount of this asset deposited into Red Bank
     // if the market doesn't exist on RB, we default to zero
@@ -145,8 +152,12 @@ pub fn query_total_deposit(
     // note that this way, we don't include LP tokens or vault positions
     let cm_deposit = deps.querier.query_balance(credit_manager_addr, &denom)?.amount;
 
+    // amount of LP token deposited into Astroport incentives contract
+    let astro_deposit =
+        query_astro_incentives_deposit(deps, &denom, incentives_addr, astro_incentives_addr)?;
+
     // total deposited amount
-    let amount = rb_deposit.checked_add(cm_deposit)?;
+    let amount = rb_deposit.checked_add(cm_deposit)?.checked_add(astro_deposit)?;
 
     // additionally, we include the deposit cap in the response
     let asset_params = ASSET_PARAMS.load(deps.storage, &denom)?;
@@ -209,4 +220,27 @@ pub fn query_all_total_deposits_v2(
         data: total_deposits,
         metadata: rb_deposits.metadata,
     })
+}
+
+fn query_astro_incentives_deposit(
+    deps: Deps,
+    denom: &str,
+    incentives_addr: &Addr,
+    astro_incentives_addr: &Addr,
+) -> StdResult<Uint128> {
+    // Astro LP token denom structure: `factory/[pair_addr]/astroport/share`
+    let parts: Vec<&str> = denom.split('/').collect();
+    if parts.len() == 4 && parts[0] == "factory" && parts[2] == "astroport" && parts[3] == "share" {
+        // The deposit amount is the amount of the LP token deposited by Mars incentives contract
+        // on behalf of Credit Manager user in the Astroport incentives contract.
+        deps.querier.query_wasm_smart::<Uint128>(
+            astro_incentives_addr,
+            &astroport_v5::incentives::QueryMsg::Deposit {
+                lp_token: denom.to_string(),
+                user: incentives_addr.to_string(),
+            },
+        )
+    } else {
+        Ok(Uint128::zero())
+    }
 }
