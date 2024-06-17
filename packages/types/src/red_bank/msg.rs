@@ -142,6 +142,12 @@ pub struct InitOrUpdateAssetParams {
     pub interest_rate_model: Option<InterestRateModel>,
 }
 
+#[cw_serde]
+pub enum MigrateMsg {
+    V1_0_0ToV2_0_0 {},
+    V2_0_0ToV2_0_1 {},
+}
+
 /// Migrate from V1 to V2, only owner can call
 #[cw_serde]
 pub enum MigrateV1ToV2 {

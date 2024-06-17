@@ -135,5 +135,6 @@ pub fn migrate(deps: DepsMut, env: Env, msg: MigrateMsg) -> ContractResult<Respo
     match msg {
         MigrateMsg::V1_0_0ToV2_0_0(updates) => migrations::v2_0_0::migrate(deps, env, updates),
         MigrateMsg::V2_0_2ToV2_0_3 {} => migrations::v2_0_3::migrate(deps),
+        MigrateMsg::V2_0_3ToV2_0_4 {} => migrations::v2_0_4::migrate(deps),
     }
 }

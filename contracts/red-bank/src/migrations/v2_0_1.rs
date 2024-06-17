@@ -111,10 +111,6 @@ fn migrate_debts(deps: DepsMut, limit: usize) -> Result<Response, ContractError>
         v2_debts.pop(); // Remove the extra item used for checking if there are more items
     }
 
-    if v2_debts.is_empty() {
-        return Err(ContractError::DebtAlreadyMigrated {});
-    };
-
     // save debts
     for ((user_addr, denom), debt) in v2_debts.into_iter() {
         let user_id = UserId::credit_manager(user_addr, "".to_string());
@@ -157,7 +153,7 @@ fn migrate_cm_debts(deps: DepsMut, limit: usize) -> Result<Response, ContractErr
     let last_debt_key = if let Some((user_id_key, denom)) = last_debt_key {
         let user_id: UserId = user_id_key.try_into()?;
 
-        // On the first iteration the last_debt might not be the CM + accountId : todo: this is assumption
+        // On the first iteration the last_debt might not be the CM + accountId
         if !user_id.acc_id.is_empty() {
             Some((user_id.acc_id, denom))
         } else {
@@ -419,9 +415,19 @@ pub mod tests {
         let user_3_id_key: UserIdKey = user_id.try_into().unwrap();
         assert_eq!(debts.get(&(user_3_id_key, "ujake".to_string())).unwrap(), &user_3_jake_debt);
 
-        // try to migrate one more time, resulting in error
-        let res_err = migrate_debts(deps.as_mut(), 2).unwrap_err();
-        assert_eq!(res_err, ContractError::DebtAlreadyMigrated {});
+        // Try migrating once more, see that result is done
+        let res = migrate_debts(deps.as_mut(), 2).unwrap();
+
+        assert_eq!(
+            res.attributes,
+            vec![
+                attr("action", "migrate_debts"),
+                attr("result", "done"),
+                attr("start_after", "user_3-ujake"),
+                attr("limit", "2"),
+                attr("has_more", "false"),
+            ]
+        );
     }
 
     // todo: Implement migrate_cm_debts tests

@@ -154,7 +154,4 @@ pub enum ContractError {
 
     #[error("Cannot liquidate credit manager (use credit-manager contract liquidate function)")]
     CannotLiquidateCreditManager {},
-
-    #[error("Debt has already been migrated to the new state")]
-    DebtAlreadyMigrated {},
 }
