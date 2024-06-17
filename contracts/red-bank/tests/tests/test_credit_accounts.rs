@@ -3,7 +3,7 @@ use mars_testing::integration::{
     helpers::{osmo_asset_params, usdc_asset_params},
     mock_env::MockEnvBuilder,
 };
-use mars_types::{red_bank::UserHealthStatus};
+use mars_types::red_bank::UserHealthStatus;
 
 #[test]
 fn deposit_and_withdraw_for_credit_account_works() {

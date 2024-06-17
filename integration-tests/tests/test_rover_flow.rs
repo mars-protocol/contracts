@@ -86,21 +86,14 @@ fn rover_flow() {
 
     // rover repay full debt
     red_bank
-        .repay_v2(
-            &mut mock_env,
-            &rover,
-            coin(uusdc_borrowed, "uusdc"),
-            Some(acc_id.to_string()),
-        )
+        .repay_v2(&mut mock_env, &rover, coin(uusdc_borrowed, "uusdc"), Some(acc_id.to_string()))
         .unwrap();
     let debt = red_bank.query_user_debt_v2(&mut mock_env, &rover, acc_id, "uusdc");
     assert!(!debt.uncollateralized);
     assert_eq!(debt.amount.u128(), 0u128);
 
     // after debt repayment rover is able to borrow (using deposited collateral)
-    red_bank
-        .borrow_v2(&mut mock_env, &rover, Some(acc_id.to_string()), "uusdc", 1u128)
-        .unwrap();
+    red_bank.borrow_v2(&mut mock_env, &rover, Some(acc_id.to_string()), "uusdc", 1u128).unwrap();
     let debt = red_bank.query_user_debt_v2(&mut mock_env, &rover, acc_id, "uusdc");
     assert!(debt.uncollateralized);
     assert_eq!(debt.amount.u128(), 1u128);

@@ -153,6 +153,20 @@ pub enum MigrateV1ToV2 {
     ClearV1State {},
 }
 
+/// Migrate from V2 to V2.0.1, only owner can call
+#[cw_serde]
+pub enum MigrateV2ToV2_0_1 {
+    /// Migrate debts in batches
+    Debts {
+        limit: u32,
+    },
+    CreditManagerDebts {
+        limit: u32,
+    },
+    /// Clears old V2 state once all batches are migrated or after a certain time
+    ClearV2State {},
+}
+
 #[cw_serde]
 #[derive(QueryResponses)]
 pub enum QueryMsg {

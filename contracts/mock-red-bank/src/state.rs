@@ -1,4 +1,4 @@
-use cosmwasm_std::{Uint128};
+use cosmwasm_std::Uint128;
 use cw_storage_plus::Map;
 use mars_types::red_bank::Market;
 
