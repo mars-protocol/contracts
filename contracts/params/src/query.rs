@@ -178,10 +178,17 @@ pub fn query_all_total_deposits_v2(
     let addresses = query_contract_addrs(
         deps,
         &address_provider_addr,
-        vec![MarsAddressType::RedBank, MarsAddressType::CreditManager],
+        vec![
+            MarsAddressType::RedBank,
+            MarsAddressType::CreditManager,
+            MarsAddressType::Incentives,
+            MarsAddressType::AstroportIncentives,
+        ],
     )?;
     let credit_manager_addr = &addresses[&MarsAddressType::CreditManager];
     let red_bank_addr = &addresses[&MarsAddressType::RedBank];
+    let incentives_addr = &addresses[&MarsAddressType::Incentives];
+    let astro_incentives_addr = &addresses[&MarsAddressType::AstroportIncentives];
 
     let rb_deposits = deps.querier.query_wasm_smart::<PaginationResponse<MarketV2Response>>(
         red_bank_addr,
@@ -206,7 +213,16 @@ pub fn query_all_total_deposits_v2(
                 .find(|coin| coin.denom == denom)
                 .map(|coin| coin.amount)
                 .unwrap_or_else(Uint128::zero);
-            let amount = market.collateral_total_amount.checked_add(cm_deposit)?;
+            let astro_deposit = query_astro_incentives_deposit(
+                deps,
+                &denom,
+                incentives_addr,
+                astro_incentives_addr,
+            )?;
+            let amount = market
+                .collateral_total_amount
+                .checked_add(cm_deposit)?
+                .checked_add(astro_deposit)?;
             let asset_params = ASSET_PARAMS.load(deps.storage, &denom)?;
             Ok(TotalDepositResponse {
                 denom,
