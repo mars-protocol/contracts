@@ -316,12 +316,17 @@ pub fn dispatch_actions(
                 coins_in,
                 lp_token_out,
                 slippage,
-            } => callbacks.push(CallbackMsg::ProvideLiquidity {
-                account_id: account_id.to_string(),
-                lp_token_out,
-                coins_in,
-                slippage,
-            }),
+            } => {
+                callbacks.push(CallbackMsg::ProvideLiquidity {
+                    account_id: account_id.to_string(),
+                    lp_token_out: lp_token_out.clone(),
+                    coins_in,
+                    slippage,
+                });
+
+                // check the deposit cap of the LP output denom
+                denoms_for_cap_check.insert(lp_token_out);
+            }
             Action::WithdrawLiquidity {
                 lp_token,
                 slippage,

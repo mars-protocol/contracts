@@ -6,6 +6,9 @@ use mars_types::params::{HlsAssetType, HlsParamsUnchecked, LiquidationBonus};
 
 use super::{CoinInfo, VaultTestInfo};
 
+pub const ASTRO_LP_DENOM: &str =
+    "factory/neutron1sf456kx85dz0wfjs4sx0s80dyzmc360pfc0rdzactxt8xrse9ykqsdpy2y/astroport/share";
+
 pub fn coin_info(denom: &str) -> CoinInfo {
     CoinInfo {
         denom: denom.to_string(),

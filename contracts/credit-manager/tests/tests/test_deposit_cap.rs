@@ -2,6 +2,7 @@ use std::collections::HashMap;
 
 use cosmwasm_std::{Addr, Coin, Coins, Decimal, StdResult, Uint128};
 use mars_credit_manager::error::ContractError;
+use mars_testing::multitest::helpers::{coin_info, ASTRO_LP_DENOM};
 use mars_types::{
     credit_manager::{Action, ActionAmount, ActionCoin},
     params::{AssetParams, AssetParamsUpdate},
@@ -9,7 +10,7 @@ use mars_types::{
 };
 use test_case::test_case;
 
-use super::helpers::{uatom_info, uosmo_info, AccountToFund, MockEnv};
+use super::helpers::{AccountToFund, MockEnv};
 
 #[test_case(
     [].into(),
@@ -96,6 +97,31 @@ use super::helpers::{uatom_info, uosmo_info, AccountToFund, MockEnv};
     false;
     "a deposit action is below cap but a follow up swap action exceeds the cap"
 )]
+#[test_case(
+    [("uosmo", 1000), ("ujake", 1000), (ASTRO_LP_DENOM, 1000)].into(),
+    vec![
+        Action::Deposit(Coin {
+            denom: "uosmo".into(),
+            amount: Uint128::new(101),
+        }),
+        Action::Deposit(Coin {
+            denom: "ujake".into(),
+            amount: Uint128::new(456),
+        }),
+        Action::ProvideLiquidity { coins_in: vec![
+        ActionCoin {
+            denom: "uosmo".into(),
+            amount: ActionAmount::AccountBalance,
+        },
+        ActionCoin {
+            denom: "ujake".into(),
+            amount: ActionAmount::AccountBalance,
+        }],
+        lp_token_out: ASTRO_LP_DENOM.to_string(), slippage: Decimal::percent(5) }
+    ],
+    false;
+    "LP deposit cap exceeded"
+)]
 fn asserting_deposit_cap(
     deposit_caps: HashMap<&'static str, u128>,
     actions: Vec<Action>,
@@ -116,9 +142,14 @@ fn asserting_deposit_cap(
         .unwrap()
         .to_vec();
 
+    let mut params = vec![];
+    for denom in deposit_caps.keys() {
+        params.push(coin_info(denom));
+    }
+
     // set up mock environment
     let mut mock = MockEnv::new()
-        .set_params(&[uosmo_info(), uatom_info()])
+        .set_params(&params)
         .fund_account(AccountToFund {
             addr: user.clone(),
             funds: send_funds.clone(),
