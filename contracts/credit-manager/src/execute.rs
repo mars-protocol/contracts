@@ -162,6 +162,7 @@ pub fn dispatch_actions(
     // going up:
     // - Deposit: we check the deposited denom
     // - SwapExactIn: we check the output denom
+    // - ProvideLiquidity: we check the LP token denom
     // - ClaimRewards: we don't check here; the reward amount is likely small so
     //   won't have much impact; this is also difficult to handle given that now
     //   we have multi-rewards
