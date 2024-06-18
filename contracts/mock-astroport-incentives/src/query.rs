@@ -37,3 +37,7 @@ pub fn query_rewards(
         None => Ok(vec![]),
     }
 }
+
+pub fn query_deposit(deps: Deps, user: String, lp_token: String) -> StdResult<Uint128> {
+    Ok(ASTRO_LP_INCENTIVE_DEPOSITS.may_load(deps.storage, (&user, &lp_token))?.unwrap_or_default())
+}
