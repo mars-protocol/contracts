@@ -124,7 +124,7 @@ pub fn query_total_deposit(
     )?;
     let credit_manager_addr = &addresses[&MarsAddressType::CreditManager];
     let red_bank_addr = &addresses[&MarsAddressType::RedBank];
-    let incentives_addr = &addresses[&MarsAddressType::AstroportIncentives];
+    let incentives_addr = &addresses[&MarsAddressType::Incentives];
     let astro_incentives_addr = &addresses[&MarsAddressType::AstroportIncentives];
 
     // amount of this asset deposited into Red Bank
