@@ -529,7 +529,7 @@ impl HealthComputer {
                     },
                 liquidation_threshold,
                 ..
-            }) = self.coin_contribute_to_collateral(c)?
+            }) = self.coin_contribution_to_collateral(c)?
             else {
                 continue;
             };
@@ -565,7 +565,7 @@ impl HealthComputer {
         })
     }
 
-    fn coin_contribute_to_collateral(&self, coin: &Coin) -> HealthResult<Option<&AssetParams>> {
+    fn coin_contribution_to_collateral(&self, coin: &Coin) -> HealthResult<Option<&AssetParams>> {
         let Some(asset_params) = self.denoms_data.params.get(&coin.denom) else {
             // If the coin is not found (whitelisted), it is not considered for collateral
             return Ok(None);
