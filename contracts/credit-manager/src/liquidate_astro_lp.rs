@@ -38,6 +38,15 @@ pub fn liquidate_astro_lp(
         total_lp_amount,
     )?;
 
+    // Rewards are not accounted for in the liquidation calculation (health computer includes
+    // only staked astro lps in HF calculation).
+    // Rewards could increase the HF (they increase deposit balance - collateral), but the impact
+    // is minimal and additional complexity is not worth it.
+    // We only update liquidatee's balance with rewards.
+    for reward in lp_position.rewards.iter() {
+        increment_coin_balance(deps.storage, liquidatee_account_id, reward)?;
+    }
+
     // Liquidator pays down debt on behalf of liquidatee
     let repay_msg =
         repay_debt(deps.storage, &env, liquidator_account_id, liquidatee_account_id, &debt)?;
