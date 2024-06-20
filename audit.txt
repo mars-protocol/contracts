@@ -1,0 +1,1445 @@
+[cargo-make] INFO - cargo make 0.37.9
+[cargo-make] INFO - Calling cargo metadata to extract project info
+[cargo-make] INFO - Cargo metadata done
+[cargo-make] INFO - Build File: Makefile.toml
+[cargo-make] INFO - Task: audit
+[cargo-make] INFO - Profile: development
+[cargo-make] INFO - Running Task: legacy-migration
+[cargo-make] INFO - Execute Command: "rustup" "run" "1.75.0" "cargo" "audit"
+    Fetching advisory database from `https://github.com/RustSec/advisory-db.git`
+      Loaded 629 security advisories (from /Users/piobab/.cargo/advisory-db)
+    Updating crates.io index
+    Scanning Cargo.lock for vulnerabilities (446 crate dependencies)
+Crate:     curve25519-dalek
+Version:   3.2.0
+Title:     Timing variability in `curve25519-dalek`'s `Scalar29::sub`/`Scalar52::sub`
+Date:      2024-06-18
+ID:        RUSTSEC-2024-0344
+URL:       https://rustsec.org/advisories/RUSTSEC-2024-0344
+Solution:  Upgrade to >=4.1.3
+Dependency tree:
+curve25519-dalek 3.2.0
+└── ed25519-zebra 3.1.0
+    └── cosmwasm-crypto 1.5.5
+        └── cosmwasm-std 1.5.5
+            ├── test-tube 0.5.0
+            │   ├── osmosis-test-tube 22.1.0
+            │   │   ├── mars-zapper-osmosis 2.0.0
+            │   │   ├── mars-integration-tests 2.0.0
+            │   │   └── cw-it 0.3.0
+            │   │       ├── mars-zapper-astroport 2.0.0
+            │   │       ├── mars-testing 2.0.0
+            │   │       │   ├── mars-zapper-astroport 2.0.0
+            │   │       │   ├── mars-vault 2.0.0
+            │   │       │   │   ├── mars-testing 2.0.0
+            │   │       │   │   └── mars-credit-manager 2.0.3
+            │   │       │   │       └── mars-testing 2.0.0
+            │   │       │   ├── mars-swapper-osmosis 2.0.3
+            │   │       │   │   └── mars-integration-tests 2.0.0
+            │   │       │   ├── mars-swapper-astroport 2.0.0
+            │   │       │   │   └── mars-testing 2.0.0
+            │   │       │   ├── mars-rewards-collector-osmosis 2.0.1
+            │   │       │   │   ├── mars-testing 2.0.0
+            │   │       │   │   └── mars-integration-tests 2.0.0
+            │   │       │   ├── mars-rewards-collector-neutron 2.0.0
+            │   │       │   ├── mars-red-bank 2.0.1
+            │   │       │   │   ├── mars-testing 2.0.0
+            │   │       │   │   ├── mars-integration-tests 2.0.0
+            │   │       │   │   └── mars-incentives 2.0.0
+            │   │       │   │       ├── mars-testing 2.0.0
+            │   │       │   │       └── mars-integration-tests 2.0.0
+            │   │       │   ├── mars-params 2.0.1
+            │   │       │   │   ├── mars-testing 2.0.0
+            │   │       │   │   ├── mars-rover-health 2.0.0
+            │   │       │   │   │   ├── mars-testing 2.0.0
+            │   │       │   │   │   └── mars-credit-manager 2.0.3
+            │   │       │   │   ├── mars-integration-tests 2.0.0
+            │   │       │   │   └── mars-credit-manager 2.0.3
+            │   │       │   ├── mars-oracle-wasm 2.0.0
+            │   │       │   │   ├── mars-zapper-astroport 2.0.0
+            │   │       │   │   ├── mars-testing 2.0.0
+            │   │       │   │   └── mars-swapper-astroport 2.0.0
+            │   │       │   ├── mars-oracle-osmosis 2.0.1
+            │   │       │   │   ├── mars-testing 2.0.0
+            │   │       │   │   └── mars-integration-tests 2.0.0
+            │   │       │   ├── mars-integration-tests 2.0.0
+            │   │       │   ├── mars-incentives 2.0.0
+            │   │       │   ├── mars-health 2.0.0
+            │   │       │   │   ├── mars-red-bank 2.0.1
+            │   │       │   │   └── mars-liquidation 1.0.0
+            │   │       │   │       ├── mars-red-bank 2.0.1
+            │   │       │   │       └── mars-credit-manager 2.0.3
+            │   │       │   ├── mars-credit-manager 2.0.3
+            │   │       │   └── mars-address-provider 2.0.0
+            │   │       │       ├── mars-testing 2.0.0
+            │   │       │       └── mars-credit-manager 2.0.3
+            │   │       ├── mars-swapper-osmosis 2.0.3
+            │   │       ├── mars-swapper-astroport 2.0.0
+            │   │       ├── mars-oracle-wasm 2.0.0
+            │   │       ├── mars-integration-tests 2.0.0
+            │   │       └── mars-incentives 2.0.0
+            │   └── cw-it 0.3.0
+            ├── pyth-sdk-cw 1.2.0
+            │   ├── mars-testing 2.0.0
+            │   ├── mars-oracle-wasm 2.0.0
+            │   ├── mars-oracle-osmosis 2.0.1
+            │   ├── mars-oracle-base 2.0.0
+            │   │   ├── mars-oracle-wasm 2.0.0
+            │   │   ├── mars-oracle-osmosis 2.0.1
+            │   │   └── mars-integration-tests 2.0.0
+            │   └── mars-mock-pyth 2.0.0
+            │       └── mars-testing 2.0.0
+            ├── osmosis-test-tube 22.1.0
+            ├── osmosis-std 0.22.0
+            │   ├── test-tube 0.5.0
+            │   ├── osmosis-test-tube 22.1.0
+            │   ├── mars-zapper-osmosis 2.0.0
+            │   ├── mars-vault 2.0.0
+            │   ├── mars-testing 2.0.0
+            │   ├── mars-swapper-osmosis 2.0.3
+            │   ├── mars-rewards-collector-osmosis 2.0.1
+            │   ├── mars-osmosis 2.0.0
+            │   │   ├── mars-swapper-osmosis 2.0.3
+            │   │   ├── mars-rewards-collector-osmosis 2.0.1
+            │   │   ├── mars-oracle-osmosis 2.0.1
+            │   │   └── mars-integration-tests 2.0.0
+            │   ├── mars-oracle-osmosis 2.0.1
+            │   ├── mars-integration-tests 2.0.0
+            │   ├── mars-incentives 2.0.0
+            │   ├── cw-it 0.3.0
+            │   └── apollo-cw-multi-test 0.18.0
+            │       └── cw-it 0.3.0
+            ├── osmosis-std 0.16.2
+            │   └── cw-dex 0.3.1
+            │       ├── mars-zapper-osmosis 2.0.0
+            │       ├── mars-zapper-base 2.0.0
+            │       │   ├── mars-zapper-osmosis 2.0.0
+            │       │   └── mars-zapper-astroport 2.0.0
+            │       └── mars-zapper-astroport 2.0.0
+            ├── neutron-sdk 0.10.0
+            │   └── mars-rewards-collector-neutron 2.0.0
+            ├── mars-zapper-osmosis 2.0.0
+            ├── mars-zapper-mock 2.0.0
+            │   ├── mars-testing 2.0.0
+            │   └── mars-credit-manager 2.0.3
+            ├── mars-zapper-base 2.0.0
+            ├── mars-zapper-astroport 2.0.0
+            ├── mars-vault 2.0.0
+            ├── mars-utils 2.0.0
+            │   ├── mars-types 2.0.0
+            │   │   ├── mars-zapper-osmosis 2.0.0
+            │   │   ├── mars-zapper-mock 2.0.0
+            │   │   ├── mars-zapper-base 2.0.0
+            │   │   ├── mars-zapper-astroport 2.0.0
+            │   │   ├── mars-vault 2.0.0
+            │   │   ├── mars-testing 2.0.0
+            │   │   ├── mars-swapper-osmosis 2.0.3
+            │   │   ├── mars-swapper-mock 2.0.0
+            │   │   │   ├── mars-testing 2.0.0
+            │   │   │   └── mars-credit-manager 2.0.3
+            │   │   ├── mars-swapper-base 2.0.0
+            │   │   │   ├── mars-swapper-osmosis 2.0.3
+            │   │   │   └── mars-swapper-astroport 2.0.0
+            │   │   ├── mars-swapper-astroport 2.0.0
+            │   │   ├── mars-rover-health-computer 2.0.0
+            │   │   │   └── mars-rover-health 2.0.0
+            │   │   ├── mars-rover-health 2.0.0
+            │   │   ├── mars-rewards-collector-osmosis 2.0.1
+            │   │   ├── mars-rewards-collector-neutron 2.0.0
+            │   │   ├── mars-rewards-collector-base 2.0.0
+            │   │   │   ├── mars-rewards-collector-osmosis 2.0.1
+            │   │   │   └── mars-rewards-collector-neutron 2.0.0
+            │   │   ├── mars-red-bank 2.0.1
+            │   │   ├── mars-params 2.0.1
+            │   │   ├── mars-oracle-wasm 2.0.0
+            │   │   ├── mars-oracle-osmosis 2.0.1
+            │   │   ├── mars-oracle-base 2.0.0
+            │   │   ├── mars-mock-vault 2.0.0
+            │   │   │   ├── mars-testing 2.0.0
+            │   │   │   ├── mars-rover-health 2.0.0
+            │   │   │   └── mars-credit-manager 2.0.3
+            │   │   ├── mars-mock-rover-health 2.0.0
+            │   │   │   └── mars-account-nft 2.0.0
+            │   │   │       ├── mars-testing 2.0.0
+            │   │   │       └── mars-credit-manager 2.0.3
+            │   │   ├── mars-mock-red-bank 2.0.0
+            │   │   │   ├── mars-testing 2.0.0
+            │   │   │   └── mars-credit-manager 2.0.3
+            │   │   ├── mars-mock-oracle 2.0.0
+            │   │   │   ├── mars-vault 2.0.0
+            │   │   │   ├── mars-testing 2.0.0
+            │   │   │   ├── mars-rover-health 2.0.0
+            │   │   │   └── mars-credit-manager 2.0.3
+            │   │   ├── mars-mock-incentives 2.0.0
+            │   │   │   ├── mars-testing 2.0.0
+            │   │   │   └── mars-credit-manager 2.0.3
+            │   │   ├── mars-mock-credit-manager 2.0.0
+            │   │   │   ├── mars-rover-health 2.0.0
+            │   │   │   └── mars-account-nft 2.0.0
+            │   │   ├── mars-mock-astroport-incentives 2.0.0
+            │   │   │   ├── mars-testing 2.0.0
+            │   │   │   └── mars-credit-manager 2.0.3
+            │   │   ├── mars-liquidation 1.0.0
+            │   │   ├── mars-interest-rate 2.0.0
+            │   │   │   ├── mars-red-bank 2.0.1
+            │   │   │   └── mars-params 2.0.1
+            │   │   ├── mars-integration-tests 2.0.0
+            │   │   ├── mars-incentives 2.0.0
+            │   │   ├── mars-health 2.0.0
+            │   │   ├── mars-credit-manager 2.0.3
+            │   │   ├── mars-address-provider 2.0.0
+            │   │   └── mars-account-nft 2.0.0
+            │   ├── mars-rewards-collector-osmosis 2.0.1
+            │   ├── mars-rewards-collector-base 2.0.0
+            │   ├── mars-red-bank 2.0.1
+            │   ├── mars-params 2.0.1
+            │   ├── mars-oracle-osmosis 2.0.1
+            │   ├── mars-oracle-base 2.0.0
+            │   ├── mars-integration-tests 2.0.0
+            │   ├── mars-incentives 2.0.0
+            │   └── mars-credit-manager 2.0.3
+            ├── mars-utils 1.0.0
+            ├── mars-utils 1.0.0
+            │   └── mars-red-bank-types 1.0.0
+            │       └── mars-rover 1.0.0
+            │           └── mars-account-nft 2.0.0
+            ├── mars-types 2.0.0
+            ├── mars-testing 2.0.0
+            ├── mars-swapper-osmosis 2.0.3
+            ├── mars-swapper-mock 2.0.0
+            ├── mars-swapper-base 2.0.0
+            ├── mars-swapper-astroport 2.0.0
+            ├── mars-rover-health-computer 2.0.0
+            ├── mars-rover-health 2.0.0
+            ├── mars-rover 1.0.0
+            ├── mars-rewards-collector-osmosis 2.0.1
+            ├── mars-rewards-collector-neutron 2.0.0
+            ├── mars-rewards-collector-base 2.0.0
+            ├── mars-red-bank-types 1.0.0
+            ├── mars-red-bank-types 1.0.0
+            ├── mars-red-bank 2.0.1
+            ├── mars-params 2.0.1
+            ├── mars-owner 2.0.0
+            │   ├── mars-vault 2.0.0
+            │   ├── mars-types 2.0.0
+            │   ├── mars-testing 2.0.0
+            │   ├── mars-swapper-osmosis 2.0.3
+            │   ├── mars-swapper-base 2.0.0
+            │   ├── mars-rover-health 2.0.0
+            │   ├── mars-rewards-collector-osmosis 2.0.1
+            │   ├── mars-rewards-collector-base 2.0.0
+            │   ├── mars-red-bank 2.0.1
+            │   ├── mars-params 2.0.1
+            │   ├── mars-oracle-wasm 2.0.0
+            │   ├── mars-oracle-osmosis 2.0.1
+            │   ├── mars-oracle-base 2.0.0
+            │   ├── mars-incentives 2.0.0
+            │   ├── mars-credit-manager 2.0.3
+            │   ├── mars-address-provider 2.0.0
+            │   └── mars-account-nft 2.0.0
+            ├── mars-owner 1.2.0
+            │   ├── mars-rover 1.0.0
+            │   ├── mars-red-bank-types 1.0.0
+            │   └── mars-red-bank-types 1.0.0
+            ├── mars-osmosis 2.0.0
+            ├── mars-oracle-wasm 2.0.0
+            ├── mars-oracle-osmosis 2.0.1
+            ├── mars-oracle-base 2.0.0
+            ├── mars-mock-vault 2.0.0
+            ├── mars-mock-rover-health 2.0.0
+            ├── mars-mock-red-bank 2.0.0
+            ├── mars-mock-pyth 2.0.0
+            ├── mars-mock-oracle 2.0.0
+            ├── mars-mock-incentives 2.0.0
+            ├── mars-mock-credit-manager 2.0.0
+            ├── mars-mock-astroport-incentives 2.0.0
+            ├── mars-liquidation 1.0.0
+            ├── mars-interest-rate 2.0.0
+            ├── mars-integration-tests 2.0.0
+            ├── mars-incentives 2.0.0
+            ├── mars-health 2.0.0
+            ├── mars-health 1.0.0
+            │   └── mars-rover 1.0.0
+            ├── mars-credit-manager 2.0.3
+            ├── mars-address-provider 2.0.0
+            ├── mars-account-nft 2.0.0
+            ├── ica-oracle 1.0.0
+            │   ├── mars-testing 2.0.0
+            │   ├── mars-oracle-wasm 2.0.0
+            │   ├── mars-oracle-osmosis 2.0.1
+            │   ├── mars-oracle-base 2.0.0
+            │   └── mars-integration-tests 2.0.0
+            ├── cw721-base 0.18.0
+            │   ├── mars-types 2.0.0
+            │   ├── mars-testing 2.0.0
+            │   ├── mars-credit-manager 2.0.3
+            │   └── mars-account-nft 2.0.0
+            ├── cw721-base 0.16.0
+            │   ├── mars-rover 1.0.0
+            │   ├── mars-account-nft 2.0.0
+            │   └── cw721-base 0.18.0
+            ├── cw721 0.18.0
+            │   ├── mars-types 2.0.0
+            │   ├── mars-testing 2.0.0
+            │   ├── mars-credit-manager 2.0.3
+            │   ├── mars-account-nft 2.0.0
+            │   └── cw721-base 0.18.0
+            ├── cw721 0.16.0
+            │   ├── mars-rover 1.0.0
+            │   └── cw721-base 0.16.0
+            ├── cw3 1.1.1
+            │   └── astroport 3.11.1
+            │       ├── cw-it 0.3.0
+            │       └── astroport-incentives 1.0.0
+            │           └── cw-it 0.3.0
+            ├── cw20-base 0.15.1
+            │   ├── astroport-token 1.1.1
+            │   │   └── cw-it 0.3.0
+            │   └── astroport-liquidity-manager 1.0.3-astroport-v2
+            │       └── cw-it 0.3.0
+            ├── cw20 1.1.2
+            │   ├── cw3 1.1.1
+            │   ├── cw-dex 0.3.1
+            │   ├── cw-asset 3.1.1
+            │   │   ├── astroport 5.0.0-rc.1-tokenfactory
+            │   │   │   ├── mars-zapper-astroport 2.0.0
+            │   │   │   ├── mars-testing 2.0.0
+            │   │   │   ├── mars-swapper-astroport 2.0.0
+            │   │   │   ├── mars-oracle-wasm 2.0.0
+            │   │   │   ├── mars-mock-astroport-incentives 2.0.0
+            │   │   │   ├── mars-integration-tests 2.0.0
+            │   │   │   └── mars-incentives 2.0.0
+            │   │   └── astroport 3.11.1
+            │   ├── astroport-incentives 1.0.0
+            │   ├── astroport 5.0.0-rc.1-tokenfactory
+            │   ├── apollo-utils 0.1.2
+            │   │   ├── mars-zapper-astroport 2.0.0
+            │   │   └── cw-dex 0.3.1
+            │   └── apollo-cw-asset 0.1.2
+            │       ├── mars-zapper-astroport 2.0.0
+            │       ├── cw-dex 0.3.1
+            │       └── apollo-utils 0.1.2
+            ├── cw20 0.15.1
+            │   ├── cw20-base 0.15.1
+            │   ├── cw-it 0.3.0
+            │   ├── astroport-vesting 1.3.1
+            │   │   └── cw-it 0.3.0
+            │   ├── astroport-token 1.1.1
+            │   ├── astroport-staking 1.1.0
+            │   │   └── cw-it 0.3.0
+            │   ├── astroport-router 1.1.1
+            │   │   └── cw-it 0.3.0
+            │   ├── astroport-pair-stable 2.1.3
+            │   │   ├── cw-it 0.3.0
+            │   │   └── astroport-liquidity-manager 1.0.3-astroport-v2
+            │   ├── astroport-pair-concentrated 1.2.7
+            │   │   └── cw-it 0.3.0
+            │   ├── astroport-pair 1.3.2
+            │   │   ├── cw-it 0.3.0
+            │   │   └── astroport-liquidity-manager 1.0.3-astroport-v2
+            │   ├── astroport-maker 1.3.1
+            │   │   └── cw-it 0.3.0
+            │   ├── astroport-liquidity-manager 1.0.3-astroport-v2
+            │   ├── astroport-governance 1.2.0
+            │   │   ├── astroport-generator 2.3.0
+            │   │   │   └── cw-it 0.3.0
+            │   │   └── astro-satellite-package 0.1.0
+            │   │       └── astroport-maker 1.3.1
+            │   ├── astroport-generator 2.3.0
+            │   ├── astroport 3.11.1
+            │   └── astroport 2.9.0
+            │       ├── mars-testing 2.0.0
+            │       ├── mars-swapper-astroport 2.0.0
+            │       ├── mars-oracle-wasm 2.0.0
+            │       ├── cw-it 0.3.0
+            │       ├── astroport-whitelist 1.0.1
+            │       │   └── cw-it 0.3.0
+            │       ├── astroport-vesting 1.3.1
+            │       ├── astroport-token 1.1.1
+            │       ├── astroport-staking 1.1.0
+            │       ├── astroport-router 1.1.1
+            │       ├── astroport-pair-stable 2.1.3
+            │       ├── astroport-pair-concentrated 1.2.7
+            │       ├── astroport-pair 1.3.2
+            │       ├── astroport-native-coin-registry 1.0.1
+            │       │   └── cw-it 0.3.0
+            │       ├── astroport-maker 1.3.1
+            │       ├── astroport-liquidity-manager 1.0.3-astroport-v2
+            │       ├── astroport-governance 1.2.0
+            │       ├── astroport-generator 2.3.0
+            │       ├── astroport-factory 1.5.1
+            │       │   ├── cw-it 0.3.0
+            │       │   ├── astroport-pair-concentrated 1.2.7
+            │       │   └── astroport-liquidity-manager 1.0.3-astroport-v2
+            │       └── apollo-cw-asset 0.1.2
+            ├── cw2 1.1.2
+            │   ├── mars-zapper-osmosis 2.0.0
+            │   ├── mars-zapper-base 2.0.0
+            │   ├── mars-zapper-astroport 2.0.0
+            │   ├── mars-vault 2.0.0
+            │   ├── mars-swapper-osmosis 2.0.3
+            │   ├── mars-swapper-base 2.0.0
+            │   ├── mars-swapper-astroport 2.0.0
+            │   ├── mars-rover-health 2.0.0
+            │   ├── mars-rewards-collector-osmosis 2.0.1
+            │   ├── mars-rewards-collector-neutron 2.0.0
+            │   ├── mars-rewards-collector-base 2.0.0
+            │   ├── mars-red-bank 2.0.1
+            │   ├── mars-params 2.0.1
+            │   ├── mars-oracle-wasm 2.0.0
+            │   ├── mars-oracle-osmosis 2.0.1
+            │   ├── mars-oracle-base 2.0.0
+            │   ├── mars-incentives 2.0.0
+            │   ├── mars-credit-manager 2.0.3
+            │   ├── mars-address-provider 2.0.0
+            │   ├── mars-account-nft 2.0.0
+            │   ├── ica-oracle 1.0.0
+            │   ├── cw721-base 0.18.0
+            │   ├── cw-utils 1.0.3
+            │   │   ├── mars-zapper-osmosis 2.0.0
+            │   │   ├── mars-zapper-mock 2.0.0
+            │   │   ├── mars-zapper-base 2.0.0
+            │   │   ├── mars-vault 2.0.0
+            │   │   ├── mars-types 2.0.0
+            │   │   ├── mars-testing 2.0.0
+            │   │   ├── mars-rover-health 2.0.0
+            │   │   ├── mars-rover 1.0.0
+            │   │   ├── mars-red-bank 2.0.1
+            │   │   ├── mars-mock-vault 2.0.0
+            │   │   ├── mars-mock-red-bank 2.0.0
+            │   │   ├── mars-mock-astroport-incentives 2.0.0
+            │   │   ├── mars-credit-manager 2.0.3
+            │   │   ├── cw721-base 0.18.0
+            │   │   ├── cw721 0.18.0
+            │   │   ├── cw3 1.1.1
+            │   │   ├── cw20 1.1.2
+            │   │   ├── cw-vault-standard 0.4.0
+            │   │   │   ├── mars-vault 2.0.0
+            │   │   │   ├── mars-types 2.0.0
+            │   │   │   ├── mars-testing 2.0.0
+            │   │   │   ├── mars-rover-health 2.0.0
+            │   │   │   ├── mars-mock-vault 2.0.0
+            │   │   │   └── mars-credit-manager 2.0.3
+            │   │   ├── cw-vault-standard 0.2.0
+            │   │   │   └── mars-rover 1.0.0
+            │   │   ├── cw-ownable 0.5.1
+            │   │   │   └── cw721-base 0.18.0
+            │   │   ├── cw-multi-test 0.20.0
+            │   │   │   ├── mars-vault 2.0.0
+            │   │   │   ├── mars-testing 2.0.0
+            │   │   │   ├── mars-swapper-mock 2.0.0
+            │   │   │   ├── mars-rover-health 2.0.0
+            │   │   │   ├── mars-red-bank 2.0.1
+            │   │   │   ├── mars-params 2.0.1
+            │   │   │   ├── mars-integration-tests 2.0.0
+            │   │   │   ├── mars-credit-manager 2.0.3
+            │   │   │   └── mars-account-nft 2.0.0
+            │   │   ├── cw-dex 0.3.1
+            │   │   ├── astroport-pair-stable 2.1.3
+            │   │   ├── astroport-incentives 1.0.0
+            │   │   ├── astroport 5.0.0-rc.1-tokenfactory
+            │   │   ├── astroport 3.11.1
+            │   │   └── apollo-cw-multi-test 0.18.0
+            │   └── astroport-incentives 1.0.0
+            ├── cw2 0.16.0
+            │   ├── cw721-base 0.16.0
+            │   └── cw-utils 0.16.0
+            │       ├── cw721-base 0.16.0
+            │       └── cw721 0.16.0
+            ├── cw2 0.15.1
+            │   ├── cw20-base 0.15.1
+            │   ├── cw1-whitelist 0.15.1
+            │   │   ├── astroport-whitelist 1.0.1
+            │   │   └── astroport-generator 2.3.0
+            │   ├── cw-utils 0.15.1
+            │   │   ├── cw20-base 0.15.1
+            │   │   ├── cw20 0.15.1
+            │   │   ├── cw1-whitelist 0.15.1
+            │   │   ├── astroport-vesting 1.3.1
+            │   │   ├── astroport-pair-concentrated 1.2.7
+            │   │   └── astroport 2.9.0
+            │   ├── astroport-whitelist 1.0.1
+            │   ├── astroport-vesting 1.3.1
+            │   ├── astroport-token 1.1.1
+            │   ├── astroport-staking 1.1.0
+            │   ├── astroport-router 1.1.1
+            │   ├── astroport-pair-stable 2.1.3
+            │   ├── astroport-pair-concentrated 1.2.7
+            │   ├── astroport-pair 1.3.2
+            │   ├── astroport-native-coin-registry 1.0.1
+            │   ├── astroport-maker 1.3.1
+            │   ├── astroport-generator 2.3.0
+            │   └── astroport-factory 1.5.1
+            ├── cw1-whitelist 0.15.1
+            ├── cw1 0.15.1
+            │   └── cw1-whitelist 0.15.1
+            ├── cw-vault-standard 0.4.0
+            ├── cw-vault-standard 0.2.0
+            ├── cw-utils 1.0.3
+            ├── cw-utils 0.16.0
+            ├── cw-utils 0.15.1
+            ├── cw-storage-plus 1.2.0
+            │   ├── mars-zapper-mock 2.0.0
+            │   ├── mars-vault 2.0.0
+            │   ├── mars-utils 2.0.0
+            │   ├── mars-types 2.0.0
+            │   ├── mars-swapper-osmosis 2.0.3
+            │   ├── mars-swapper-base 2.0.0
+            │   ├── mars-rover-health 2.0.0
+            │   ├── mars-rover 1.0.0
+            │   ├── mars-rewards-collector-osmosis 2.0.1
+            │   ├── mars-rewards-collector-base 2.0.0
+            │   ├── mars-red-bank 2.0.1
+            │   ├── mars-params 2.0.1
+            │   ├── mars-owner 2.0.0
+            │   ├── mars-owner 1.2.0
+            │   ├── mars-oracle-wasm 2.0.0
+            │   ├── mars-oracle-osmosis 2.0.1
+            │   ├── mars-oracle-base 2.0.0
+            │   ├── mars-mock-vault 2.0.0
+            │   ├── mars-mock-rover-health 2.0.0
+            │   ├── mars-mock-red-bank 2.0.0
+            │   ├── mars-mock-oracle 2.0.0
+            │   ├── mars-mock-incentives 2.0.0
+            │   ├── mars-mock-credit-manager 2.0.0
+            │   ├── mars-mock-astroport-incentives 2.0.0
+            │   ├── mars-incentives 2.0.0
+            │   ├── mars-credit-manager 2.0.3
+            │   ├── mars-address-provider 2.0.0
+            │   ├── mars-account-nft 2.0.0
+            │   ├── ica-oracle 1.0.0
+            │   ├── cw721-base 0.18.0
+            │   ├── cw2 1.1.2
+            │   ├── cw-paginate 0.2.2
+            │   │   ├── mars-vault 2.0.0
+            │   │   ├── mars-types 2.0.0
+            │   │   ├── mars-testing 2.0.0
+            │   │   ├── mars-swapper-base 2.0.0
+            │   │   ├── mars-red-bank 2.0.1
+            │   │   ├── mars-params 2.0.1
+            │   │   ├── mars-mock-red-bank 2.0.0
+            │   │   ├── mars-mock-incentives 2.0.0
+            │   │   ├── mars-incentives 2.0.0
+            │   │   └── mars-credit-manager 2.0.3
+            │   ├── cw-ownable 0.5.1
+            │   ├── cw-multi-test 0.20.0
+            │   ├── cw-dex 0.3.1
+            │   ├── cw-asset 3.1.1
+            │   ├── astroport-liquidity-manager 1.0.3-astroport-v2
+            │   ├── astroport 5.0.0-rc.1-tokenfactory
+            │   ├── apollo-cw-multi-test 0.18.0
+            │   └── apollo-cw-asset 0.1.2
+            ├── cw-storage-plus 0.16.0
+            │   ├── cw721-base 0.16.0
+            │   └── cw2 0.16.0
+            ├── cw-storage-plus 0.15.1
+            │   ├── cw20-base 0.15.1
+            │   ├── cw2 0.15.1
+            │   ├── cw1-whitelist 0.15.1
+            │   ├── astroport-vesting 1.3.1
+            │   ├── astroport-staking 1.1.0
+            │   ├── astroport-router 1.1.1
+            │   ├── astroport-pair-stable 2.1.3
+            │   ├── astroport-pair-concentrated 1.2.7
+            │   ├── astroport-pair 1.3.2
+            │   ├── astroport-native-coin-registry 1.0.1
+            │   ├── astroport-maker 1.3.1
+            │   ├── astroport-incentives 1.0.0
+            │   ├── astroport-governance 1.2.0
+            │   ├── astroport-generator 2.3.0
+            │   ├── astroport-factory 1.5.1
+            │   ├── astroport-circular-buffer 0.2.0
+            │   │   └── astroport 5.0.0-rc.1-tokenfactory
+            │   ├── astroport-circular-buffer 0.1.0
+            │   │   └── astroport 3.11.1
+            │   ├── astroport 3.11.1
+            │   └── astroport 2.9.0
+            ├── cw-paginate 0.2.2
+            ├── cw-ownable 0.5.1
+            ├── cw-multi-test 0.20.0
+            ├── cw-it 0.3.0
+            ├── cw-dex 0.3.1
+            ├── cw-asset 3.1.1
+            ├── cw-address-like 1.0.4
+            │   ├── cw-ownable 0.5.1
+            │   └── cw-asset 3.1.1
+            ├── cosmwasm-storage 1.4.1
+            │   └── astroport-native-coin-registry 1.0.1
+            ├── astroport-whitelist 1.0.1
+            ├── astroport-vesting 1.3.1
+            ├── astroport-token 1.1.1
+            ├── astroport-staking 1.1.0
+            ├── astroport-router 1.1.1
+            ├── astroport-pair-stable 2.1.3
+            ├── astroport-pair-concentrated 1.2.7
+            ├── astroport-pair 1.3.2
+            ├── astroport-native-coin-registry 1.0.1
+            ├── astroport-maker 1.3.1
+            ├── astroport-liquidity-manager 1.0.3-astroport-v2
+            ├── astroport-incentives 1.0.0
+            ├── astroport-governance 1.2.0
+            ├── astroport-generator 2.3.0
+            ├── astroport-factory 1.5.1
+            ├── astroport-circular-buffer 0.2.0
+            ├── astroport-circular-buffer 0.1.0
+            ├── astroport 5.0.0-rc.1-tokenfactory
+            ├── astroport 3.11.1
+            ├── astroport 2.9.0
+            ├── astro-satellite-package 0.1.0
+            ├── apollo-utils 0.1.2
+            ├── apollo-cw-multi-test 0.18.0
+            └── apollo-cw-asset 0.1.2
+
+Crate:     yaml-rust
+Version:   0.4.5
+Warning:   unmaintained
+Title:     yaml-rust is unmaintained.
+Date:      2024-03-20
+ID:        RUSTSEC-2024-0320
+URL:       https://rustsec.org/advisories/RUSTSEC-2024-0320
+Dependency tree:
+yaml-rust 0.4.5
+└── config 0.13.3
+    └── cw-it 0.3.0
+        ├── mars-zapper-astroport 2.0.0
+        ├── mars-testing 2.0.0
+        │   ├── mars-zapper-astroport 2.0.0
+        │   ├── mars-vault 2.0.0
+        │   │   ├── mars-testing 2.0.0
+        │   │   └── mars-credit-manager 2.0.3
+        │   │       └── mars-testing 2.0.0
+        │   ├── mars-swapper-osmosis 2.0.3
+        │   │   └── mars-integration-tests 2.0.0
+        │   ├── mars-swapper-astroport 2.0.0
+        │   │   └── mars-testing 2.0.0
+        │   ├── mars-rewards-collector-osmosis 2.0.1
+        │   │   ├── mars-testing 2.0.0
+        │   │   └── mars-integration-tests 2.0.0
+        │   ├── mars-rewards-collector-neutron 2.0.0
+        │   ├── mars-red-bank 2.0.1
+        │   │   ├── mars-testing 2.0.0
+        │   │   ├── mars-integration-tests 2.0.0
+        │   │   └── mars-incentives 2.0.0
+        │   │       ├── mars-testing 2.0.0
+        │   │       └── mars-integration-tests 2.0.0
+        │   ├── mars-params 2.0.1
+        │   │   ├── mars-testing 2.0.0
+        │   │   ├── mars-rover-health 2.0.0
+        │   │   │   ├── mars-testing 2.0.0
+        │   │   │   └── mars-credit-manager 2.0.3
+        │   │   ├── mars-integration-tests 2.0.0
+        │   │   └── mars-credit-manager 2.0.3
+        │   ├── mars-oracle-wasm 2.0.0
+        │   │   ├── mars-zapper-astroport 2.0.0
+        │   │   ├── mars-testing 2.0.0
+        │   │   └── mars-swapper-astroport 2.0.0
+        │   ├── mars-oracle-osmosis 2.0.1
+        │   │   ├── mars-testing 2.0.0
+        │   │   └── mars-integration-tests 2.0.0
+        │   ├── mars-integration-tests 2.0.0
+        │   ├── mars-incentives 2.0.0
+        │   ├── mars-health 2.0.0
+        │   │   ├── mars-red-bank 2.0.1
+        │   │   └── mars-liquidation 1.0.0
+        │   │       ├── mars-red-bank 2.0.1
+        │   │       └── mars-credit-manager 2.0.3
+        │   ├── mars-credit-manager 2.0.3
+        │   └── mars-address-provider 2.0.0
+        │       ├── mars-testing 2.0.0
+        │       └── mars-credit-manager 2.0.3
+        ├── mars-swapper-osmosis 2.0.3
+        ├── mars-swapper-astroport 2.0.0
+        ├── mars-oracle-wasm 2.0.0
+        ├── mars-integration-tests 2.0.0
+        └── mars-incentives 2.0.0
+
+Crate:     borsh
+Version:   0.9.3
+Warning:   unsound
+Title:     Parsing borsh messages with ZST which are not-copy/clone is unsound
+Date:      2023-04-12
+ID:        RUSTSEC-2023-0033
+URL:       https://rustsec.org/advisories/RUSTSEC-2023-0033
+Dependency tree:
+borsh 0.9.3
+└── pyth-sdk 0.7.0
+    └── pyth-sdk-cw 1.2.0
+        ├── mars-testing 2.0.0
+        │   ├── mars-zapper-astroport 2.0.0
+        │   ├── mars-vault 2.0.0
+        │   │   ├── mars-testing 2.0.0
+        │   │   └── mars-credit-manager 2.0.3
+        │   │       └── mars-testing 2.0.0
+        │   ├── mars-swapper-osmosis 2.0.3
+        │   │   └── mars-integration-tests 2.0.0
+        │   ├── mars-swapper-astroport 2.0.0
+        │   │   └── mars-testing 2.0.0
+        │   ├── mars-rewards-collector-osmosis 2.0.1
+        │   │   ├── mars-testing 2.0.0
+        │   │   └── mars-integration-tests 2.0.0
+        │   ├── mars-rewards-collector-neutron 2.0.0
+        │   ├── mars-red-bank 2.0.1
+        │   │   ├── mars-testing 2.0.0
+        │   │   ├── mars-integration-tests 2.0.0
+        │   │   └── mars-incentives 2.0.0
+        │   │       ├── mars-testing 2.0.0
+        │   │       └── mars-integration-tests 2.0.0
+        │   ├── mars-params 2.0.1
+        │   │   ├── mars-testing 2.0.0
+        │   │   ├── mars-rover-health 2.0.0
+        │   │   │   ├── mars-testing 2.0.0
+        │   │   │   └── mars-credit-manager 2.0.3
+        │   │   ├── mars-integration-tests 2.0.0
+        │   │   └── mars-credit-manager 2.0.3
+        │   ├── mars-oracle-wasm 2.0.0
+        │   │   ├── mars-zapper-astroport 2.0.0
+        │   │   ├── mars-testing 2.0.0
+        │   │   └── mars-swapper-astroport 2.0.0
+        │   ├── mars-oracle-osmosis 2.0.1
+        │   │   ├── mars-testing 2.0.0
+        │   │   └── mars-integration-tests 2.0.0
+        │   ├── mars-integration-tests 2.0.0
+        │   ├── mars-incentives 2.0.0
+        │   ├── mars-health 2.0.0
+        │   │   ├── mars-red-bank 2.0.1
+        │   │   └── mars-liquidation 1.0.0
+        │   │       ├── mars-red-bank 2.0.1
+        │   │       └── mars-credit-manager 2.0.3
+        │   ├── mars-credit-manager 2.0.3
+        │   └── mars-address-provider 2.0.0
+        │       ├── mars-testing 2.0.0
+        │       └── mars-credit-manager 2.0.3
+        ├── mars-oracle-wasm 2.0.0
+        ├── mars-oracle-osmosis 2.0.1
+        ├── mars-oracle-base 2.0.0
+        │   ├── mars-oracle-wasm 2.0.0
+        │   ├── mars-oracle-osmosis 2.0.1
+        │   └── mars-integration-tests 2.0.0
+        └── mars-mock-pyth 2.0.0
+            └── mars-testing 2.0.0
+
+Crate:     ahash
+Version:   0.7.6
+Warning:   yanked
+Dependency tree:
+ahash 0.7.6
+├── hashbrown 0.12.3
+│   ├── ordered-multimap 0.4.3
+│   │   └── rust-ini 0.18.0
+│   │       └── config 0.13.3
+│   │           └── cw-it 0.3.0
+│   │               ├── mars-zapper-astroport 2.0.0
+│   │               ├── mars-testing 2.0.0
+│   │               │   ├── mars-zapper-astroport 2.0.0
+│   │               │   ├── mars-vault 2.0.0
+│   │               │   │   ├── mars-testing 2.0.0
+│   │               │   │   └── mars-credit-manager 2.0.3
+│   │               │   │       └── mars-testing 2.0.0
+│   │               │   ├── mars-swapper-osmosis 2.0.3
+│   │               │   │   └── mars-integration-tests 2.0.0
+│   │               │   ├── mars-swapper-astroport 2.0.0
+│   │               │   │   └── mars-testing 2.0.0
+│   │               │   ├── mars-rewards-collector-osmosis 2.0.1
+│   │               │   │   ├── mars-testing 2.0.0
+│   │               │   │   └── mars-integration-tests 2.0.0
+│   │               │   ├── mars-rewards-collector-neutron 2.0.0
+│   │               │   ├── mars-red-bank 2.0.1
+│   │               │   │   ├── mars-testing 2.0.0
+│   │               │   │   ├── mars-integration-tests 2.0.0
+│   │               │   │   └── mars-incentives 2.0.0
+│   │               │   │       ├── mars-testing 2.0.0
+│   │               │   │       └── mars-integration-tests 2.0.0
+│   │               │   ├── mars-params 2.0.1
+│   │               │   │   ├── mars-testing 2.0.0
+│   │               │   │   ├── mars-rover-health 2.0.0
+│   │               │   │   │   ├── mars-testing 2.0.0
+│   │               │   │   │   └── mars-credit-manager 2.0.3
+│   │               │   │   ├── mars-integration-tests 2.0.0
+│   │               │   │   └── mars-credit-manager 2.0.3
+│   │               │   ├── mars-oracle-wasm 2.0.0
+│   │               │   │   ├── mars-zapper-astroport 2.0.0
+│   │               │   │   ├── mars-testing 2.0.0
+│   │               │   │   └── mars-swapper-astroport 2.0.0
+│   │               │   ├── mars-oracle-osmosis 2.0.1
+│   │               │   │   ├── mars-testing 2.0.0
+│   │               │   │   └── mars-integration-tests 2.0.0
+│   │               │   ├── mars-integration-tests 2.0.0
+│   │               │   ├── mars-incentives 2.0.0
+│   │               │   ├── mars-health 2.0.0
+│   │               │   │   ├── mars-red-bank 2.0.1
+│   │               │   │   └── mars-liquidation 1.0.0
+│   │               │   │       ├── mars-red-bank 2.0.1
+│   │               │   │       └── mars-credit-manager 2.0.3
+│   │               │   ├── mars-credit-manager 2.0.3
+│   │               │   └── mars-address-provider 2.0.0
+│   │               │       ├── mars-testing 2.0.0
+│   │               │       └── mars-credit-manager 2.0.3
+│   │               ├── mars-swapper-osmosis 2.0.3
+│   │               ├── mars-swapper-astroport 2.0.0
+│   │               ├── mars-oracle-wasm 2.0.0
+│   │               ├── mars-integration-tests 2.0.0
+│   │               └── mars-incentives 2.0.0
+│   ├── indexmap 1.9.3
+│   │   └── h2 0.3.21
+│   │       ├── reqwest 0.11.24
+│   │       │   └── tendermint-rpc 0.34.1
+│   │       │       └── cosmrs 0.15.0
+│   │       │           ├── test-tube 0.5.0
+│   │       │           │   ├── osmosis-test-tube 22.1.0
+│   │       │           │   │   ├── mars-zapper-osmosis 2.0.0
+│   │       │           │   │   ├── mars-integration-tests 2.0.0
+│   │       │           │   │   └── cw-it 0.3.0
+│   │       │           │   └── cw-it 0.3.0
+│   │       │           ├── osmosis-test-tube 22.1.0
+│   │       │           └── cw-it 0.3.0
+│   │       └── hyper 0.14.27
+│   │           ├── reqwest 0.11.24
+│   │           └── hyper-rustls 0.24.2
+│   │               └── reqwest 0.11.24
+│   └── ed25519-zebra 3.1.0
+│       └── cosmwasm-crypto 1.5.5
+│           └── cosmwasm-std 1.5.5
+│               ├── test-tube 0.5.0
+│               ├── pyth-sdk-cw 1.2.0
+│               │   ├── mars-testing 2.0.0
+│               │   ├── mars-oracle-wasm 2.0.0
+│               │   ├── mars-oracle-osmosis 2.0.1
+│               │   ├── mars-oracle-base 2.0.0
+│               │   │   ├── mars-oracle-wasm 2.0.0
+│               │   │   ├── mars-oracle-osmosis 2.0.1
+│               │   │   └── mars-integration-tests 2.0.0
+│               │   └── mars-mock-pyth 2.0.0
+│               │       └── mars-testing 2.0.0
+│               ├── osmosis-test-tube 22.1.0
+│               ├── osmosis-std 0.22.0
+│               │   ├── test-tube 0.5.0
+│               │   ├── osmosis-test-tube 22.1.0
+│               │   ├── mars-zapper-osmosis 2.0.0
+│               │   ├── mars-vault 2.0.0
+│               │   ├── mars-testing 2.0.0
+│               │   ├── mars-swapper-osmosis 2.0.3
+│               │   ├── mars-rewards-collector-osmosis 2.0.1
+│               │   ├── mars-osmosis 2.0.0
+│               │   │   ├── mars-swapper-osmosis 2.0.3
+│               │   │   ├── mars-rewards-collector-osmosis 2.0.1
+│               │   │   ├── mars-oracle-osmosis 2.0.1
+│               │   │   └── mars-integration-tests 2.0.0
+│               │   ├── mars-oracle-osmosis 2.0.1
+│               │   ├── mars-integration-tests 2.0.0
+│               │   ├── mars-incentives 2.0.0
+│               │   ├── cw-it 0.3.0
+│               │   └── apollo-cw-multi-test 0.18.0
+│               │       └── cw-it 0.3.0
+│               ├── osmosis-std 0.16.2
+│               │   └── cw-dex 0.3.1
+│               │       ├── mars-zapper-osmosis 2.0.0
+│               │       ├── mars-zapper-base 2.0.0
+│               │       │   ├── mars-zapper-osmosis 2.0.0
+│               │       │   └── mars-zapper-astroport 2.0.0
+│               │       └── mars-zapper-astroport 2.0.0
+│               ├── neutron-sdk 0.10.0
+│               │   └── mars-rewards-collector-neutron 2.0.0
+│               ├── mars-zapper-osmosis 2.0.0
+│               ├── mars-zapper-mock 2.0.0
+│               │   ├── mars-testing 2.0.0
+│               │   └── mars-credit-manager 2.0.3
+│               ├── mars-zapper-base 2.0.0
+│               ├── mars-zapper-astroport 2.0.0
+│               ├── mars-vault 2.0.0
+│               ├── mars-utils 2.0.0
+│               │   ├── mars-types 2.0.0
+│               │   │   ├── mars-zapper-osmosis 2.0.0
+│               │   │   ├── mars-zapper-mock 2.0.0
+│               │   │   ├── mars-zapper-base 2.0.0
+│               │   │   ├── mars-zapper-astroport 2.0.0
+│               │   │   ├── mars-vault 2.0.0
+│               │   │   ├── mars-testing 2.0.0
+│               │   │   ├── mars-swapper-osmosis 2.0.3
+│               │   │   ├── mars-swapper-mock 2.0.0
+│               │   │   │   ├── mars-testing 2.0.0
+│               │   │   │   └── mars-credit-manager 2.0.3
+│               │   │   ├── mars-swapper-base 2.0.0
+│               │   │   │   ├── mars-swapper-osmosis 2.0.3
+│               │   │   │   └── mars-swapper-astroport 2.0.0
+│               │   │   ├── mars-swapper-astroport 2.0.0
+│               │   │   ├── mars-rover-health-computer 2.0.0
+│               │   │   │   └── mars-rover-health 2.0.0
+│               │   │   ├── mars-rover-health 2.0.0
+│               │   │   ├── mars-rewards-collector-osmosis 2.0.1
+│               │   │   ├── mars-rewards-collector-neutron 2.0.0
+│               │   │   ├── mars-rewards-collector-base 2.0.0
+│               │   │   │   ├── mars-rewards-collector-osmosis 2.0.1
+│               │   │   │   └── mars-rewards-collector-neutron 2.0.0
+│               │   │   ├── mars-red-bank 2.0.1
+│               │   │   ├── mars-params 2.0.1
+│               │   │   ├── mars-oracle-wasm 2.0.0
+│               │   │   ├── mars-oracle-osmosis 2.0.1
+│               │   │   ├── mars-oracle-base 2.0.0
+│               │   │   ├── mars-mock-vault 2.0.0
+│               │   │   │   ├── mars-testing 2.0.0
+│               │   │   │   ├── mars-rover-health 2.0.0
+│               │   │   │   └── mars-credit-manager 2.0.3
+│               │   │   ├── mars-mock-rover-health 2.0.0
+│               │   │   │   └── mars-account-nft 2.0.0
+│               │   │   │       ├── mars-testing 2.0.0
+│               │   │   │       └── mars-credit-manager 2.0.3
+│               │   │   ├── mars-mock-red-bank 2.0.0
+│               │   │   │   ├── mars-testing 2.0.0
+│               │   │   │   └── mars-credit-manager 2.0.3
+│               │   │   ├── mars-mock-oracle 2.0.0
+│               │   │   │   ├── mars-vault 2.0.0
+│               │   │   │   ├── mars-testing 2.0.0
+│               │   │   │   ├── mars-rover-health 2.0.0
+│               │   │   │   └── mars-credit-manager 2.0.3
+│               │   │   ├── mars-mock-incentives 2.0.0
+│               │   │   │   ├── mars-testing 2.0.0
+│               │   │   │   └── mars-credit-manager 2.0.3
+│               │   │   ├── mars-mock-credit-manager 2.0.0
+│               │   │   │   ├── mars-rover-health 2.0.0
+│               │   │   │   └── mars-account-nft 2.0.0
+│               │   │   ├── mars-mock-astroport-incentives 2.0.0
+│               │   │   │   ├── mars-testing 2.0.0
+│               │   │   │   └── mars-credit-manager 2.0.3
+│               │   │   ├── mars-liquidation 1.0.0
+│               │   │   ├── mars-interest-rate 2.0.0
+│               │   │   │   ├── mars-red-bank 2.0.1
+│               │   │   │   └── mars-params 2.0.1
+│               │   │   ├── mars-integration-tests 2.0.0
+│               │   │   ├── mars-incentives 2.0.0
+│               │   │   ├── mars-health 2.0.0
+│               │   │   ├── mars-credit-manager 2.0.3
+│               │   │   ├── mars-address-provider 2.0.0
+│               │   │   └── mars-account-nft 2.0.0
+│               │   ├── mars-rewards-collector-osmosis 2.0.1
+│               │   ├── mars-rewards-collector-base 2.0.0
+│               │   ├── mars-red-bank 2.0.1
+│               │   ├── mars-params 2.0.1
+│               │   ├── mars-oracle-osmosis 2.0.1
+│               │   ├── mars-oracle-base 2.0.0
+│               │   ├── mars-integration-tests 2.0.0
+│               │   ├── mars-incentives 2.0.0
+│               │   └── mars-credit-manager 2.0.3
+│               ├── mars-utils 1.0.0
+│               ├── mars-utils 1.0.0
+│               │   └── mars-red-bank-types 1.0.0
+│               │       └── mars-rover 1.0.0
+│               │           └── mars-account-nft 2.0.0
+│               ├── mars-types 2.0.0
+│               ├── mars-testing 2.0.0
+│               ├── mars-swapper-osmosis 2.0.3
+│               ├── mars-swapper-mock 2.0.0
+│               ├── mars-swapper-base 2.0.0
+│               ├── mars-swapper-astroport 2.0.0
+│               ├── mars-rover-health-computer 2.0.0
+│               ├── mars-rover-health 2.0.0
+│               ├── mars-rover 1.0.0
+│               ├── mars-rewards-collector-osmosis 2.0.1
+│               ├── mars-rewards-collector-neutron 2.0.0
+│               ├── mars-rewards-collector-base 2.0.0
+│               ├── mars-red-bank-types 1.0.0
+│               ├── mars-red-bank-types 1.0.0
+│               ├── mars-red-bank 2.0.1
+│               ├── mars-params 2.0.1
+│               ├── mars-owner 2.0.0
+│               │   ├── mars-vault 2.0.0
+│               │   ├── mars-types 2.0.0
+│               │   ├── mars-testing 2.0.0
+│               │   ├── mars-swapper-osmosis 2.0.3
+│               │   ├── mars-swapper-base 2.0.0
+│               │   ├── mars-rover-health 2.0.0
+│               │   ├── mars-rewards-collector-osmosis 2.0.1
+│               │   ├── mars-rewards-collector-base 2.0.0
+│               │   ├── mars-red-bank 2.0.1
+│               │   ├── mars-params 2.0.1
+│               │   ├── mars-oracle-wasm 2.0.0
+│               │   ├── mars-oracle-osmosis 2.0.1
+│               │   ├── mars-oracle-base 2.0.0
+│               │   ├── mars-incentives 2.0.0
+│               │   ├── mars-credit-manager 2.0.3
+│               │   ├── mars-address-provider 2.0.0
+│               │   └── mars-account-nft 2.0.0
+│               ├── mars-owner 1.2.0
+│               │   ├── mars-rover 1.0.0
+│               │   ├── mars-red-bank-types 1.0.0
+│               │   └── mars-red-bank-types 1.0.0
+│               ├── mars-osmosis 2.0.0
+│               ├── mars-oracle-wasm 2.0.0
+│               ├── mars-oracle-osmosis 2.0.1
+│               ├── mars-oracle-base 2.0.0
+│               ├── mars-mock-vault 2.0.0
+│               ├── mars-mock-rover-health 2.0.0
+│               ├── mars-mock-red-bank 2.0.0
+│               ├── mars-mock-pyth 2.0.0
+│               ├── mars-mock-oracle 2.0.0
+│               ├── mars-mock-incentives 2.0.0
+│               ├── mars-mock-credit-manager 2.0.0
+│               ├── mars-mock-astroport-incentives 2.0.0
+│               ├── mars-liquidation 1.0.0
+│               ├── mars-interest-rate 2.0.0
+│               ├── mars-integration-tests 2.0.0
+│               ├── mars-incentives 2.0.0
+│               ├── mars-health 2.0.0
+│               ├── mars-health 1.0.0
+│               │   └── mars-rover 1.0.0
+│               ├── mars-credit-manager 2.0.3
+│               ├── mars-address-provider 2.0.0
+│               ├── mars-account-nft 2.0.0
+│               ├── ica-oracle 1.0.0
+│               │   ├── mars-testing 2.0.0
+│               │   ├── mars-oracle-wasm 2.0.0
+│               │   ├── mars-oracle-osmosis 2.0.1
+│               │   ├── mars-oracle-base 2.0.0
+│               │   └── mars-integration-tests 2.0.0
+│               ├── cw721-base 0.18.0
+│               │   ├── mars-types 2.0.0
+│               │   ├── mars-testing 2.0.0
+│               │   ├── mars-credit-manager 2.0.3
+│               │   └── mars-account-nft 2.0.0
+│               ├── cw721-base 0.16.0
+│               │   ├── mars-rover 1.0.0
+│               │   ├── mars-account-nft 2.0.0
+│               │   └── cw721-base 0.18.0
+│               ├── cw721 0.18.0
+│               │   ├── mars-types 2.0.0
+│               │   ├── mars-testing 2.0.0
+│               │   ├── mars-credit-manager 2.0.3
+│               │   ├── mars-account-nft 2.0.0
+│               │   └── cw721-base 0.18.0
+│               ├── cw721 0.16.0
+│               │   ├── mars-rover 1.0.0
+│               │   └── cw721-base 0.16.0
+│               ├── cw3 1.1.1
+│               │   └── astroport 3.11.1
+│               │       ├── cw-it 0.3.0
+│               │       └── astroport-incentives 1.0.0
+│               │           └── cw-it 0.3.0
+│               ├── cw20-base 0.15.1
+│               │   ├── astroport-token 1.1.1
+│               │   │   └── cw-it 0.3.0
+│               │   └── astroport-liquidity-manager 1.0.3-astroport-v2
+│               │       └── cw-it 0.3.0
+│               ├── cw20 1.1.2
+│               │   ├── cw3 1.1.1
+│               │   ├── cw-dex 0.3.1
+│               │   ├── cw-asset 3.1.1
+│               │   │   ├── astroport 5.0.0-rc.1-tokenfactory
+│               │   │   │   ├── mars-zapper-astroport 2.0.0
+│               │   │   │   ├── mars-testing 2.0.0
+│               │   │   │   ├── mars-swapper-astroport 2.0.0
+│               │   │   │   ├── mars-oracle-wasm 2.0.0
+│               │   │   │   ├── mars-mock-astroport-incentives 2.0.0
+│               │   │   │   ├── mars-integration-tests 2.0.0
+│               │   │   │   └── mars-incentives 2.0.0
+│               │   │   └── astroport 3.11.1
+│               │   ├── astroport-incentives 1.0.0
+│               │   ├── astroport 5.0.0-rc.1-tokenfactory
+│               │   ├── apollo-utils 0.1.2
+│               │   │   ├── mars-zapper-astroport 2.0.0
+│               │   │   └── cw-dex 0.3.1
+│               │   └── apollo-cw-asset 0.1.2
+│               │       ├── mars-zapper-astroport 2.0.0
+│               │       ├── cw-dex 0.3.1
+│               │       └── apollo-utils 0.1.2
+│               ├── cw20 0.15.1
+│               │   ├── cw20-base 0.15.1
+│               │   ├── cw-it 0.3.0
+│               │   ├── astroport-vesting 1.3.1
+│               │   │   └── cw-it 0.3.0
+│               │   ├── astroport-token 1.1.1
+│               │   ├── astroport-staking 1.1.0
+│               │   │   └── cw-it 0.3.0
+│               │   ├── astroport-router 1.1.1
+│               │   │   └── cw-it 0.3.0
+│               │   ├── astroport-pair-stable 2.1.3
+│               │   │   ├── cw-it 0.3.0
+│               │   │   └── astroport-liquidity-manager 1.0.3-astroport-v2
+│               │   ├── astroport-pair-concentrated 1.2.7
+│               │   │   └── cw-it 0.3.0
+│               │   ├── astroport-pair 1.3.2
+│               │   │   ├── cw-it 0.3.0
+│               │   │   └── astroport-liquidity-manager 1.0.3-astroport-v2
+│               │   ├── astroport-maker 1.3.1
+│               │   │   └── cw-it 0.3.0
+│               │   ├── astroport-liquidity-manager 1.0.3-astroport-v2
+│               │   ├── astroport-governance 1.2.0
+│               │   │   ├── astroport-generator 2.3.0
+│               │   │   │   └── cw-it 0.3.0
+│               │   │   └── astro-satellite-package 0.1.0
+│               │   │       └── astroport-maker 1.3.1
+│               │   ├── astroport-generator 2.3.0
+│               │   ├── astroport 3.11.1
+│               │   └── astroport 2.9.0
+│               │       ├── mars-testing 2.0.0
+│               │       ├── mars-swapper-astroport 2.0.0
+│               │       ├── mars-oracle-wasm 2.0.0
+│               │       ├── cw-it 0.3.0
+│               │       ├── astroport-whitelist 1.0.1
+│               │       │   └── cw-it 0.3.0
+│               │       ├── astroport-vesting 1.3.1
+│               │       ├── astroport-token 1.1.1
+│               │       ├── astroport-staking 1.1.0
+│               │       ├── astroport-router 1.1.1
+│               │       ├── astroport-pair-stable 2.1.3
+│               │       ├── astroport-pair-concentrated 1.2.7
+│               │       ├── astroport-pair 1.3.2
+│               │       ├── astroport-native-coin-registry 1.0.1
+│               │       │   └── cw-it 0.3.0
+│               │       ├── astroport-maker 1.3.1
+│               │       ├── astroport-liquidity-manager 1.0.3-astroport-v2
+│               │       ├── astroport-governance 1.2.0
+│               │       ├── astroport-generator 2.3.0
+│               │       ├── astroport-factory 1.5.1
+│               │       │   ├── cw-it 0.3.0
+│               │       │   ├── astroport-pair-concentrated 1.2.7
+│               │       │   └── astroport-liquidity-manager 1.0.3-astroport-v2
+│               │       └── apollo-cw-asset 0.1.2
+│               ├── cw2 1.1.2
+│               │   ├── mars-zapper-osmosis 2.0.0
+│               │   ├── mars-zapper-base 2.0.0
+│               │   ├── mars-zapper-astroport 2.0.0
+│               │   ├── mars-vault 2.0.0
+│               │   ├── mars-swapper-osmosis 2.0.3
+│               │   ├── mars-swapper-base 2.0.0
+│               │   ├── mars-swapper-astroport 2.0.0
+│               │   ├── mars-rover-health 2.0.0
+│               │   ├── mars-rewards-collector-osmosis 2.0.1
+│               │   ├── mars-rewards-collector-neutron 2.0.0
+│               │   ├── mars-rewards-collector-base 2.0.0
+│               │   ├── mars-red-bank 2.0.1
+│               │   ├── mars-params 2.0.1
+│               │   ├── mars-oracle-wasm 2.0.0
+│               │   ├── mars-oracle-osmosis 2.0.1
+│               │   ├── mars-oracle-base 2.0.0
+│               │   ├── mars-incentives 2.0.0
+│               │   ├── mars-credit-manager 2.0.3
+│               │   ├── mars-address-provider 2.0.0
+│               │   ├── mars-account-nft 2.0.0
+│               │   ├── ica-oracle 1.0.0
+│               │   ├── cw721-base 0.18.0
+│               │   ├── cw-utils 1.0.3
+│               │   │   ├── mars-zapper-osmosis 2.0.0
+│               │   │   ├── mars-zapper-mock 2.0.0
+│               │   │   ├── mars-zapper-base 2.0.0
+│               │   │   ├── mars-vault 2.0.0
+│               │   │   ├── mars-types 2.0.0
+│               │   │   ├── mars-testing 2.0.0
+│               │   │   ├── mars-rover-health 2.0.0
+│               │   │   ├── mars-rover 1.0.0
+│               │   │   ├── mars-red-bank 2.0.1
+│               │   │   ├── mars-mock-vault 2.0.0
+│               │   │   ├── mars-mock-red-bank 2.0.0
+│               │   │   ├── mars-mock-astroport-incentives 2.0.0
+│               │   │   ├── mars-credit-manager 2.0.3
+│               │   │   ├── cw721-base 0.18.0
+│               │   │   ├── cw721 0.18.0
+│               │   │   ├── cw3 1.1.1
+│               │   │   ├── cw20 1.1.2
+│               │   │   ├── cw-vault-standard 0.4.0
+│               │   │   │   ├── mars-vault 2.0.0
+│               │   │   │   ├── mars-types 2.0.0
+│               │   │   │   ├── mars-testing 2.0.0
+│               │   │   │   ├── mars-rover-health 2.0.0
+│               │   │   │   ├── mars-mock-vault 2.0.0
+│               │   │   │   └── mars-credit-manager 2.0.3
+│               │   │   ├── cw-vault-standard 0.2.0
+│               │   │   │   └── mars-rover 1.0.0
+│               │   │   ├── cw-ownable 0.5.1
+│               │   │   │   └── cw721-base 0.18.0
+│               │   │   ├── cw-multi-test 0.20.0
+│               │   │   │   ├── mars-vault 2.0.0
+│               │   │   │   ├── mars-testing 2.0.0
+│               │   │   │   ├── mars-swapper-mock 2.0.0
+│               │   │   │   ├── mars-rover-health 2.0.0
+│               │   │   │   ├── mars-red-bank 2.0.1
+│               │   │   │   ├── mars-params 2.0.1
+│               │   │   │   ├── mars-integration-tests 2.0.0
+│               │   │   │   ├── mars-credit-manager 2.0.3
+│               │   │   │   └── mars-account-nft 2.0.0
+│               │   │   ├── cw-dex 0.3.1
+│               │   │   ├── astroport-pair-stable 2.1.3
+│               │   │   ├── astroport-incentives 1.0.0
+│               │   │   ├── astroport 5.0.0-rc.1-tokenfactory
+│               │   │   ├── astroport 3.11.1
+│               │   │   └── apollo-cw-multi-test 0.18.0
+│               │   └── astroport-incentives 1.0.0
+│               ├── cw2 0.16.0
+│               │   ├── cw721-base 0.16.0
+│               │   └── cw-utils 0.16.0
+│               │       ├── cw721-base 0.16.0
+│               │       └── cw721 0.16.0
+│               ├── cw2 0.15.1
+│               │   ├── cw20-base 0.15.1
+│               │   ├── cw1-whitelist 0.15.1
+│               │   │   ├── astroport-whitelist 1.0.1
+│               │   │   └── astroport-generator 2.3.0
+│               │   ├── cw-utils 0.15.1
+│               │   │   ├── cw20-base 0.15.1
+│               │   │   ├── cw20 0.15.1
+│               │   │   ├── cw1-whitelist 0.15.1
+│               │   │   ├── astroport-vesting 1.3.1
+│               │   │   ├── astroport-pair-concentrated 1.2.7
+│               │   │   └── astroport 2.9.0
+│               │   ├── astroport-whitelist 1.0.1
+│               │   ├── astroport-vesting 1.3.1
+│               │   ├── astroport-token 1.1.1
+│               │   ├── astroport-staking 1.1.0
+│               │   ├── astroport-router 1.1.1
+│               │   ├── astroport-pair-stable 2.1.3
+│               │   ├── astroport-pair-concentrated 1.2.7
+│               │   ├── astroport-pair 1.3.2
+│               │   ├── astroport-native-coin-registry 1.0.1
+│               │   ├── astroport-maker 1.3.1
+│               │   ├── astroport-generator 2.3.0
+│               │   └── astroport-factory 1.5.1
+│               ├── cw1-whitelist 0.15.1
+│               ├── cw1 0.15.1
+│               │   └── cw1-whitelist 0.15.1
+│               ├── cw-vault-standard 0.4.0
+│               ├── cw-vault-standard 0.2.0
+│               ├── cw-utils 1.0.3
+│               ├── cw-utils 0.16.0
+│               ├── cw-utils 0.15.1
+│               ├── cw-storage-plus 1.2.0
+│               │   ├── mars-zapper-mock 2.0.0
+│               │   ├── mars-vault 2.0.0
+│               │   ├── mars-utils 2.0.0
+│               │   ├── mars-types 2.0.0
+│               │   ├── mars-swapper-osmosis 2.0.3
+│               │   ├── mars-swapper-base 2.0.0
+│               │   ├── mars-rover-health 2.0.0
+│               │   ├── mars-rover 1.0.0
+│               │   ├── mars-rewards-collector-osmosis 2.0.1
+│               │   ├── mars-rewards-collector-base 2.0.0
+│               │   ├── mars-red-bank 2.0.1
+│               │   ├── mars-params 2.0.1
+│               │   ├── mars-owner 2.0.0
+│               │   ├── mars-owner 1.2.0
+│               │   ├── mars-oracle-wasm 2.0.0
+│               │   ├── mars-oracle-osmosis 2.0.1
+│               │   ├── mars-oracle-base 2.0.0
+│               │   ├── mars-mock-vault 2.0.0
+│               │   ├── mars-mock-rover-health 2.0.0
+│               │   ├── mars-mock-red-bank 2.0.0
+│               │   ├── mars-mock-oracle 2.0.0
+│               │   ├── mars-mock-incentives 2.0.0
+│               │   ├── mars-mock-credit-manager 2.0.0
+│               │   ├── mars-mock-astroport-incentives 2.0.0
+│               │   ├── mars-incentives 2.0.0
+│               │   ├── mars-credit-manager 2.0.3
+│               │   ├── mars-address-provider 2.0.0
+│               │   ├── mars-account-nft 2.0.0
+│               │   ├── ica-oracle 1.0.0
+│               │   ├── cw721-base 0.18.0
+│               │   ├── cw2 1.1.2
+│               │   ├── cw-paginate 0.2.2
+│               │   │   ├── mars-vault 2.0.0
+│               │   │   ├── mars-types 2.0.0
+│               │   │   ├── mars-testing 2.0.0
+│               │   │   ├── mars-swapper-base 2.0.0
+│               │   │   ├── mars-red-bank 2.0.1
+│               │   │   ├── mars-params 2.0.1
+│               │   │   ├── mars-mock-red-bank 2.0.0
+│               │   │   ├── mars-mock-incentives 2.0.0
+│               │   │   ├── mars-incentives 2.0.0
+│               │   │   └── mars-credit-manager 2.0.3
+│               │   ├── cw-ownable 0.5.1
+│               │   ├── cw-multi-test 0.20.0
+│               │   ├── cw-dex 0.3.1
+│               │   ├── cw-asset 3.1.1
+│               │   ├── astroport-liquidity-manager 1.0.3-astroport-v2
+│               │   ├── astroport 5.0.0-rc.1-tokenfactory
+│               │   ├── apollo-cw-multi-test 0.18.0
+│               │   └── apollo-cw-asset 0.1.2
+│               ├── cw-storage-plus 0.16.0
+│               │   ├── cw721-base 0.16.0
+│               │   └── cw2 0.16.0
+│               ├── cw-storage-plus 0.15.1
+│               │   ├── cw20-base 0.15.1
+│               │   ├── cw2 0.15.1
+│               │   ├── cw1-whitelist 0.15.1
+│               │   ├── astroport-vesting 1.3.1
+│               │   ├── astroport-staking 1.1.0
+│               │   ├── astroport-router 1.1.1
+│               │   ├── astroport-pair-stable 2.1.3
+│               │   ├── astroport-pair-concentrated 1.2.7
+│               │   ├── astroport-pair 1.3.2
+│               │   ├── astroport-native-coin-registry 1.0.1
+│               │   ├── astroport-maker 1.3.1
+│               │   ├── astroport-incentives 1.0.0
+│               │   ├── astroport-governance 1.2.0
+│               │   ├── astroport-generator 2.3.0
+│               │   ├── astroport-factory 1.5.1
+│               │   ├── astroport-circular-buffer 0.2.0
+│               │   │   └── astroport 5.0.0-rc.1-tokenfactory
+│               │   ├── astroport-circular-buffer 0.1.0
+│               │   │   └── astroport 3.11.1
+│               │   ├── astroport 3.11.1
+│               │   └── astroport 2.9.0
+│               ├── cw-paginate 0.2.2
+│               ├── cw-ownable 0.5.1
+│               ├── cw-multi-test 0.20.0
+│               ├── cw-it 0.3.0
+│               ├── cw-dex 0.3.1
+│               ├── cw-asset 3.1.1
+│               ├── cw-address-like 1.0.4
+│               │   ├── cw-ownable 0.5.1
+│               │   └── cw-asset 3.1.1
+│               ├── cosmwasm-storage 1.4.1
+│               │   └── astroport-native-coin-registry 1.0.1
+│               ├── astroport-whitelist 1.0.1
+│               ├── astroport-vesting 1.3.1
+│               ├── astroport-token 1.1.1
+│               ├── astroport-staking 1.1.0
+│               ├── astroport-router 1.1.1
+│               ├── astroport-pair-stable 2.1.3
+│               ├── astroport-pair-concentrated 1.2.7
+│               ├── astroport-pair 1.3.2
+│               ├── astroport-native-coin-registry 1.0.1
+│               ├── astroport-maker 1.3.1
+│               ├── astroport-liquidity-manager 1.0.3-astroport-v2
+│               ├── astroport-incentives 1.0.0
+│               ├── astroport-governance 1.2.0
+│               ├── astroport-generator 2.3.0
+│               ├── astroport-factory 1.5.1
+│               ├── astroport-circular-buffer 0.2.0
+│               ├── astroport-circular-buffer 0.1.0
+│               ├── astroport 5.0.0-rc.1-tokenfactory
+│               ├── astroport 3.11.1
+│               ├── astroport 2.9.0
+│               ├── astro-satellite-package 0.1.0
+│               ├── apollo-utils 0.1.2
+│               ├── apollo-cw-multi-test 0.18.0
+│               └── apollo-cw-asset 0.1.2
+└── hashbrown 0.11.2
+    └── borsh 0.9.3
+        └── pyth-sdk 0.7.0
+            └── pyth-sdk-cw 1.2.0
+
+Crate:     cw-vault-standard
+Version:   0.4.0
+Warning:   yanked
+Dependency tree:
+cw-vault-standard 0.4.0
+├── mars-vault 2.0.0
+│   ├── mars-testing 2.0.0
+│   │   ├── mars-zapper-astroport 2.0.0
+│   │   ├── mars-vault 2.0.0
+│   │   ├── mars-swapper-osmosis 2.0.3
+│   │   │   └── mars-integration-tests 2.0.0
+│   │   ├── mars-swapper-astroport 2.0.0
+│   │   │   └── mars-testing 2.0.0
+│   │   ├── mars-rewards-collector-osmosis 2.0.1
+│   │   │   ├── mars-testing 2.0.0
+│   │   │   └── mars-integration-tests 2.0.0
+│   │   ├── mars-rewards-collector-neutron 2.0.0
+│   │   ├── mars-red-bank 2.0.1
+│   │   │   ├── mars-testing 2.0.0
+│   │   │   ├── mars-integration-tests 2.0.0
+│   │   │   └── mars-incentives 2.0.0
+│   │   │       ├── mars-testing 2.0.0
+│   │   │       └── mars-integration-tests 2.0.0
+│   │   ├── mars-params 2.0.1
+│   │   │   ├── mars-testing 2.0.0
+│   │   │   ├── mars-rover-health 2.0.0
+│   │   │   │   ├── mars-testing 2.0.0
+│   │   │   │   └── mars-credit-manager 2.0.3
+│   │   │   │       └── mars-testing 2.0.0
+│   │   │   ├── mars-integration-tests 2.0.0
+│   │   │   └── mars-credit-manager 2.0.3
+│   │   ├── mars-oracle-wasm 2.0.0
+│   │   │   ├── mars-zapper-astroport 2.0.0
+│   │   │   ├── mars-testing 2.0.0
+│   │   │   └── mars-swapper-astroport 2.0.0
+│   │   ├── mars-oracle-osmosis 2.0.1
+│   │   │   ├── mars-testing 2.0.0
+│   │   │   └── mars-integration-tests 2.0.0
+│   │   ├── mars-integration-tests 2.0.0
+│   │   ├── mars-incentives 2.0.0
+│   │   ├── mars-health 2.0.0
+│   │   │   ├── mars-red-bank 2.0.1
+│   │   │   └── mars-liquidation 1.0.0
+│   │   │       ├── mars-red-bank 2.0.1
+│   │   │       └── mars-credit-manager 2.0.3
+│   │   ├── mars-credit-manager 2.0.3
+│   │   └── mars-address-provider 2.0.0
+│   │       ├── mars-testing 2.0.0
+│   │       └── mars-credit-manager 2.0.3
+│   └── mars-credit-manager 2.0.3
+├── mars-types 2.0.0
+│   ├── mars-zapper-osmosis 2.0.0
+│   ├── mars-zapper-mock 2.0.0
+│   │   ├── mars-testing 2.0.0
+│   │   └── mars-credit-manager 2.0.3
+│   ├── mars-zapper-base 2.0.0
+│   │   ├── mars-zapper-osmosis 2.0.0
+│   │   └── mars-zapper-astroport 2.0.0
+│   ├── mars-zapper-astroport 2.0.0
+│   ├── mars-vault 2.0.0
+│   ├── mars-testing 2.0.0
+│   ├── mars-swapper-osmosis 2.0.3
+│   ├── mars-swapper-mock 2.0.0
+│   │   ├── mars-testing 2.0.0
+│   │   └── mars-credit-manager 2.0.3
+│   ├── mars-swapper-base 2.0.0
+│   │   ├── mars-swapper-osmosis 2.0.3
+│   │   └── mars-swapper-astroport 2.0.0
+│   ├── mars-swapper-astroport 2.0.0
+│   ├── mars-rover-health-computer 2.0.0
+│   │   └── mars-rover-health 2.0.0
+│   ├── mars-rover-health 2.0.0
+│   ├── mars-rewards-collector-osmosis 2.0.1
+│   ├── mars-rewards-collector-neutron 2.0.0
+│   ├── mars-rewards-collector-base 2.0.0
+│   │   ├── mars-rewards-collector-osmosis 2.0.1
+│   │   └── mars-rewards-collector-neutron 2.0.0
+│   ├── mars-red-bank 2.0.1
+│   ├── mars-params 2.0.1
+│   ├── mars-oracle-wasm 2.0.0
+│   ├── mars-oracle-osmosis 2.0.1
+│   ├── mars-oracle-base 2.0.0
+│   │   ├── mars-oracle-wasm 2.0.0
+│   │   ├── mars-oracle-osmosis 2.0.1
+│   │   └── mars-integration-tests 2.0.0
+│   ├── mars-mock-vault 2.0.0
+│   │   ├── mars-testing 2.0.0
+│   │   ├── mars-rover-health 2.0.0
+│   │   └── mars-credit-manager 2.0.3
+│   ├── mars-mock-rover-health 2.0.0
+│   │   └── mars-account-nft 2.0.0
+│   │       ├── mars-testing 2.0.0
+│   │       └── mars-credit-manager 2.0.3
+│   ├── mars-mock-red-bank 2.0.0
+│   │   ├── mars-testing 2.0.0
+│   │   └── mars-credit-manager 2.0.3
+│   ├── mars-mock-oracle 2.0.0
+│   │   ├── mars-vault 2.0.0
+│   │   ├── mars-testing 2.0.0
+│   │   ├── mars-rover-health 2.0.0
+│   │   └── mars-credit-manager 2.0.3
+│   ├── mars-mock-incentives 2.0.0
+│   │   ├── mars-testing 2.0.0
+│   │   └── mars-credit-manager 2.0.3
+│   ├── mars-mock-credit-manager 2.0.0
+│   │   ├── mars-rover-health 2.0.0
+│   │   └── mars-account-nft 2.0.0
+│   ├── mars-mock-astroport-incentives 2.0.0
+│   │   ├── mars-testing 2.0.0
+│   │   └── mars-credit-manager 2.0.3
+│   ├── mars-liquidation 1.0.0
+│   ├── mars-interest-rate 2.0.0
+│   │   ├── mars-red-bank 2.0.1
+│   │   └── mars-params 2.0.1
+│   ├── mars-integration-tests 2.0.0
+│   ├── mars-incentives 2.0.0
+│   ├── mars-health 2.0.0
+│   ├── mars-credit-manager 2.0.3
+│   ├── mars-address-provider 2.0.0
+│   └── mars-account-nft 2.0.0
+├── mars-testing 2.0.0
+├── mars-rover-health 2.0.0
+├── mars-mock-vault 2.0.0
+└── mars-credit-manager 2.0.3
+
+warning: 4 allowed warnings found
+[cargo-make] ERROR - Error while executing command, exit code: 1
+[cargo-make] WARN - Build Failed.
