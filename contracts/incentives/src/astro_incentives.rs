@@ -243,7 +243,7 @@ fn decrement_staked_lp(
             .ok_or(ContractError::NoDeposits {
                 denom: lp_coin.denom.clone(),
             })?
-            .checked_add(lp_coin.amount)?)
+            .checked_sub(lp_coin.amount)?)
     })?;
 
     Ok(())
