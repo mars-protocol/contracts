@@ -177,7 +177,7 @@ pub fn redeem(
     let base_token = BASE_TOKEN.load(deps.storage)?;
     let vault_token = VAULT_TOKEN.load(deps.storage)?;
 
-    // check that only the expected base token was sent
+    // check that only the expected vault token was sent
     let vault_token_amount = cw_utils::must_pay(info, &vault_token.to_string())?;
 
     let unlocks = UNLOCKS
