@@ -132,11 +132,14 @@ fn update_user_lp_position(
     credit_manager_addr: &str,
     modification: LpModification,
 ) -> Result<Response, ContractError> {
+    // Astroport raises an error if there is no existing position and we query rewards.
+    // Therefore, we check first to ensure we don't fail first time somebody stakes
+    // https://github.com/astroport-fi/astroport-core/blob/main/contracts/tokenomics/incentives/src/state.rs#L539
     let total_staked_lp_amount =
         ASTRO_TOTAL_LP_DEPOSITS.may_load(deps.storage, &lp_coin.denom)?.unwrap_or(Uint128::zero());
 
     // Claim all rewards from astroport before any modification
-    let mut res = if total_staked_lp_amount.gt(&Uint128::zero()) {
+    let mut res = if !total_staked_lp_amount.is_zero() {
         let staked_lp_amount = ASTRO_USER_LP_DEPOSITS
             .may_load(deps.storage, (&account_id, &lp_coin.denom))?
             .unwrap_or(Uint128::zero());
