@@ -36,7 +36,7 @@ pub fn unstake_lp(
                     available: lp_position.lp_coin.amount,
                 });
             } else {
-                lp_position.lp_coin.amount.checked_sub(amt)?
+                amt
             }
         }
         ActionAmount::AccountBalance => lp_position.lp_coin.amount,
