@@ -115,9 +115,9 @@ pub fn compute_pcl_lp_price_model(
     // The curve_invariant is calculated with amounts scaled by Astroport, e.g. 1e18 ueth is stored as 1 eth.
     // So we need to scale the prices accordingly, so that they represent the price of 1 whole unit.
     let coin0_price_scaled =
-        Decimal256::from(coin0_price) * Decimal256::from_str("10")?.pow(u32::from(coin0_decimals));
+        Decimal256::from(coin0_price) * Decimal256::from_str("10")?.pow(coin0_decimals as u32);
     let coin1_price_scaled =
-        Decimal256::from(coin1_price) * Decimal256::from_str("10")?.pow(u32::from(coin1_decimals));
+        Decimal256::from(coin1_price) * Decimal256::from_str("10")?.pow(coin1_decimals as u32);
 
     // LP price according to the model
     // lp_price_model = 2 * virtual_price * sqrt(coin0_price * coin1_price)
