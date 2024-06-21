@@ -132,20 +132,26 @@ fn update_user_lp_position(
     credit_manager_addr: &str,
     modification: LpModification,
 ) -> Result<Response, ContractError> {
-    let staked_lp_amount = ASTRO_USER_LP_DEPOSITS
-        .may_load(deps.storage, (&account_id, &lp_coin.denom))?
-        .unwrap_or(Uint128::zero());
+    let total_staked_lp_amount =
+        ASTRO_TOTAL_LP_DEPOSITS.may_load(deps.storage, &lp_coin.denom)?.unwrap_or(Uint128::zero());
 
     // Claim all rewards from astroport before any modification
-    let mut res = claim_rewards_for_staked_lp_position(
-        &mut deps,
-        astroport_incentives_addr,
-        mars_incentives_addr,
-        credit_manager_addr,
-        account_id,
-        &lp_coin.denom,
-        staked_lp_amount,
-    )?;
+    let mut res = if total_staked_lp_amount.gt(&Uint128::zero()) {
+        let staked_lp_amount = ASTRO_USER_LP_DEPOSITS
+            .may_load(deps.storage, (&account_id, &lp_coin.denom))?
+            .unwrap_or(Uint128::zero());
+        claim_rewards_for_staked_lp_position(
+            &mut deps,
+            astroport_incentives_addr,
+            mars_incentives_addr,
+            credit_manager_addr,
+            account_id,
+            &lp_coin.denom,
+            staked_lp_amount,
+        )?
+    } else {
+        Response::new()
+    };
 
     res = match modification {
         // Deposit stakes lp coin in astroport incentives
