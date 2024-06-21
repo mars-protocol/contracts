@@ -1,9 +1,10 @@
 use cosmwasm_std::{
     attr, ensure_eq, to_json_binary, Coin, CosmosMsg, Deps, DepsMut, Env, Event, MessageInfo,
-    Order, Response, StdResult, Uint128, WasmMsg,
+    Order, Response, StdError, StdResult, Uint128, WasmMsg,
 };
 use mars_types::{
-    credit_manager::{self, Action, ActionAmount, ActionCoin, Positions, QueryMsg},
+    adapters::{account_nft::AccountNftBase, health::HealthContractBase, oracle::OracleBase},
+    credit_manager::{self, Action, ActionAmount, ActionCoin, ConfigResponse, Positions, QueryMsg},
     health::AccountKind,
     oracle::ActionKind,
 };
@@ -13,8 +14,8 @@ use crate::{
     msg::UnlockState,
     performance_fee::PerformanceFeeConfig,
     state::{
-        ACCOUNT_NFT, BASE_TOKEN, COOLDOWN_PERIOD, CREDIT_MANAGER, HEALTH, ORACLE,
-        PERFORMANCE_FEE_CONFIG, PERFORMANCE_FEE_STATE, UNLOCKS, VAULT_ACC_ID, VAULT_TOKEN,
+        BASE_TOKEN, COOLDOWN_PERIOD, CREDIT_MANAGER, PERFORMANCE_FEE_CONFIG, PERFORMANCE_FEE_STATE,
+        UNLOCKS, VAULT_ACC_ID, VAULT_TOKEN,
     },
     vault_token::{calculate_base_tokens, calculate_vault_tokens},
 };
@@ -362,7 +363,7 @@ pub fn total_base_tokens_in_account(deps: Deps) -> Result<Uint128, ContractError
     let vault_acc_id = VAULT_ACC_ID.load(deps.storage)?;
 
     let cm_acc_kind: AccountKind = deps.querier.query_wasm_smart(
-        cm_addr,
+        cm_addr.clone(),
         &QueryMsg::AccountKind {
             account_id: vault_acc_id.clone(),
         },
@@ -370,7 +371,9 @@ pub fn total_base_tokens_in_account(deps: Deps) -> Result<Uint128, ContractError
 
     let base_token = BASE_TOKEN.load(deps.storage)?;
 
-    let health = HEALTH.load(deps.storage)?;
+    let config: ConfigResponse = deps.querier.query_wasm_smart(cm_addr, &QueryMsg::Config {})?;
+
+    let health = HealthContractBase::new(deps.api.addr_validate(&config.health_contract)?);
     let health_values = health.query_health_values(
         &deps.querier,
         &vault_acc_id,
@@ -380,7 +383,7 @@ pub fn total_base_tokens_in_account(deps: Deps) -> Result<Uint128, ContractError
     let net_value =
         health_values.total_collateral_value.checked_sub(health_values.total_debt_value)?;
 
-    let oracle = ORACLE.load(deps.storage)?;
+    let oracle = OracleBase::new(deps.api.addr_validate(&config.oracle)?);
     let base_token_price =
         oracle.query_price(&deps.querier, &base_token, ActionKind::Default)?.price;
 
@@ -399,7 +402,14 @@ pub fn withdraw_performance_fee(
         return Err(ContractError::VaultAccountNotFound {});
     };
 
-    let acc_nft = ACCOUNT_NFT.load(deps.storage)?;
+    let cm_addr = CREDIT_MANAGER.load(deps.storage)?;
+    let config: ConfigResponse = deps.querier.query_wasm_smart(cm_addr, &QueryMsg::Config {})?;
+    let Some(acc_nft) = config.account_nft else {
+        return Err(ContractError::Std(StdError::generic_err(
+            "Account NFT contract address is not set in Credit Manager".to_string(),
+        )));
+    };
+    let acc_nft = AccountNftBase::new(deps.api.addr_validate(&acc_nft)?);
     let vault_acc_owner_addr = acc_nft.query_nft_token_owner(&deps.querier, &vault_acc_id)?;
     if vault_acc_owner_addr != info.sender {
         return Err(ContractError::NotTokenOwner {
