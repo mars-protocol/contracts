@@ -184,6 +184,48 @@ fn cannot_instantiate_with_zero_cooldown_period() {
     assert_vault_err(res, ContractError::ZeroCooldownPeriod {});
 }
 
+#[test]
+fn cannot_instantiate_with_invalid_base_denom() {
+    let fund_manager = Addr::unchecked("fund-manager");
+    let mut mock = MockEnv::new()
+        .fund_account(AccountToFund {
+            addr: fund_manager.clone(),
+            funds: vec![coin(1_000_000_000, "untrn")],
+        })
+        .build()
+        .unwrap();
+    let credit_manager = mock.rover.clone();
+
+    let contract_code_id = mock.app.store_code(mock_managed_vault_contract());
+    let res = mock.app.instantiate_contract(
+        contract_code_id,
+        fund_manager,
+        &InstantiateMsg {
+            base_token: "!*jadfaefc".to_string(),
+            vault_token_subdenom: "fund".to_string(),
+            title: None,
+            subtitle: None,
+            description: None,
+            credit_manager: credit_manager.to_string(),
+            cooldown_period: 24,
+            performance_fee_config: PerformanceFeeConfig {
+                fee_rate: Decimal::zero(),
+                withdrawal_interval: 0,
+            },
+        },
+        &[coin(10_000_000, "untrn")], // Token Factory fee for minting new denom. Configured in the Token Factory module in `mars-testing` package.
+        "mock-managed-vault",
+        None,
+    );
+
+    assert_vault_err(
+        res,
+        ContractError::Validation(ValidationError::InvalidDenom {
+            reason: "First character is not ASCII alphabetic".to_string(),
+        }),
+    );
+}
+
 fn assert_vault_err(res: AnyResult<Addr>, err: ContractError) {
     match res {
         Ok(_) => panic!("Result was not an error"),
