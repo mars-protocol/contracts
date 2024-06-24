@@ -1,8 +1,9 @@
 use cosmwasm_std::{DepsMut, Env, MessageInfo, Response};
 use mars_owner::OwnerInit;
+use mars_utils::helpers::validate_native_denom;
 
 use crate::{
-    error::ContractResult,
+    error::{ContractError, ContractResult},
     msg::InstantiateMsg,
     performance_fee::PerformanceFeeState,
     state::{
@@ -42,6 +43,10 @@ pub fn init(
         DESCRIPTION.save(deps.storage, &desc)?;
     }
 
+    if msg.cooldown_period == 0 {
+        return Err(ContractError::ZeroCooldownPeriod {});
+    }
+
     COOLDOWN_PERIOD.save(deps.storage, &msg.cooldown_period)?;
 
     // initialize performance fee state
@@ -53,6 +58,8 @@ pub fn init(
     let vault_token =
         TokenFactoryDenom::new(env.contract.address.to_string(), msg.vault_token_subdenom);
     VAULT_TOKEN.save(deps.storage, &vault_token)?;
+
+    validate_native_denom(&msg.base_token)?;
     BASE_TOKEN.save(deps.storage, &msg.base_token)?;
 
     Ok(vault_token.instantiate()?)

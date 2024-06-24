@@ -29,6 +29,7 @@ cw-paginate       = { workspace = true }
 cw-vault-standard = { workspace = true }
 mars-owner        = { workspace = true }
 mars-types        = { workspace = true }
+mars-utils        = { workspace = true }
 thiserror         = { workspace = true }
 osmosis-std       = { workspace = true }
 

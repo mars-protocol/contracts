@@ -1,4 +1,5 @@
 use cosmwasm_std::{coins, Addr, Coin, Uint128};
+use mars_credit_manager::error::ContractError;
 use mars_testing::multitest::helpers::AccountToFund;
 use mars_types::credit_manager::{Action, ActionAmount, ActionCoin};
 
@@ -27,6 +28,28 @@ fn stake_claims_rewards() {
         denom: lp_denom.to_string(),
         amount: Uint128::new(200),
     };
+
+    // should fail when trying to stake 0 amount
+    let err: ContractError = mock
+        .update_credit_account(
+            &account_id,
+            &user,
+            vec![
+                Action::Deposit(lp_coin.clone()),
+                Action::StakeAstroLp {
+                    lp_token: ActionCoin {
+                        denom: lp_denom.to_string(),
+                        amount: ActionAmount::Exact(Uint128::new(0)),
+                    },
+                },
+            ],
+            &[lp_coin.clone()],
+        )
+        .unwrap_err()
+        .downcast()
+        .unwrap();
+
+    assert_eq!(err, ContractError::NoAmount);
 
     // stake
     mock.update_credit_account(
