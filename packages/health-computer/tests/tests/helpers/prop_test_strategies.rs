@@ -273,8 +273,9 @@ pub fn random_health_computer() -> impl Strategy<Value = HealthComputer> {
             random_debts(denoms_data.clone()),
             random_coins(denoms_data.clone()),
             random_vault_positions(vaults_data.clone()),
+            random_coins(denoms_data.clone()),
         )
-            .prop_map(move |(kind, deposits, debts, lends, vaults)| HealthComputer {
+            .prop_map(move |(kind, deposits, debts, lends, vaults, staked_astro_lps)| HealthComputer {
                 kind: kind.clone(),
                 positions: Positions {
                     account_id: "123".to_string(),
@@ -283,7 +284,7 @@ pub fn random_health_computer() -> impl Strategy<Value = HealthComputer> {
                     debts,
                     lends,
                     vaults,
-                    staked_astro_lps: vec![],
+                    staked_astro_lps,
                 },
                 denoms_data: denoms_data.clone(),
                 vaults_data: vaults_data.clone(),
