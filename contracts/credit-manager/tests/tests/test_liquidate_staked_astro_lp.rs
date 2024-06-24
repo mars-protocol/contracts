@@ -1,4 +1,4 @@
-use cosmwasm_std::{coins, Addr, Decimal, Uint128};
+use cosmwasm_std::{coin, coins, Addr, Decimal, Uint128};
 use mars_credit_manager::error::{ContractError, ContractError::NotLiquidatable};
 use mars_mock_oracle::msg::CoinPrice;
 use mars_testing::multitest::helpers::coin_info;
@@ -203,6 +203,16 @@ fn staked_lp_position_partially_liquidated() {
     )
     .unwrap();
 
+    // Add rewards
+    let astro_reward = coin(54, "uastro");
+    let atom_reward = coin(4, "uatom");
+    mock.add_astro_incentive_reward(
+        &liquidatee_account_id,
+        &uosmo_info.denom,
+        astro_reward.clone(),
+    );
+    mock.add_astro_incentive_reward(&liquidatee_account_id, &uosmo_info.denom, atom_reward.clone());
+
     mock.price_change(CoinPrice {
         pricing: ActionKind::Liquidation,
         denom: uatom_info.denom.clone(),
@@ -234,11 +244,13 @@ fn staked_lp_position_partially_liquidated() {
 
     // Assert liquidatee's new position
     let position = mock.query_positions(&liquidatee_account_id);
-    assert_eq!(position.deposits.len(), 2);
+    assert_eq!(position.deposits.len(), 3);
     let osmo_balance = get_coin("uosmo", &position.deposits);
     assert_eq!(osmo_balance.amount, Uint128::new(600));
     let atom_balance = get_coin("uatom", &position.deposits);
-    assert_eq!(atom_balance.amount, Uint128::new(1000));
+    assert_eq!(atom_balance.amount, Uint128::new(1000) + atom_reward.amount);
+    let astro_balance = get_coin(&astro_reward.denom, &position.deposits);
+    assert_eq!(astro_balance.amount, astro_reward.amount);
 
     assert_eq!(position.debts.len(), 1);
     let atom_debt = get_debt("uatom", &position.debts);
