@@ -1,17 +1,13 @@
-use cosmwasm_std::{DepsMut, Env, MessageInfo, Response, StdError};
+use cosmwasm_std::{DepsMut, Env, MessageInfo, Response};
 use mars_owner::OwnerInit;
-use mars_types::{
-    adapters::{account_nft::AccountNftBase, health::HealthContractBase, oracle::OracleBase},
-    credit_manager::{ConfigResponse, QueryMsg as CreditManagerQueryMsg},
-};
 
 use crate::{
-    error::{ContractError, ContractResult},
+    error::ContractResult,
     msg::InstantiateMsg,
     performance_fee::PerformanceFeeState,
     state::{
-        ACCOUNT_NFT, BASE_TOKEN, COOLDOWN_PERIOD, CREDIT_MANAGER, DESCRIPTION, HEALTH, ORACLE,
-        OWNER, PERFORMANCE_FEE_CONFIG, PERFORMANCE_FEE_STATE, SUBTITLE, TITLE, VAULT_TOKEN,
+        BASE_TOKEN, COOLDOWN_PERIOD, CREDIT_MANAGER, DESCRIPTION, OWNER, PERFORMANCE_FEE_CONFIG,
+        PERFORMANCE_FEE_STATE, SUBTITLE, TITLE, VAULT_TOKEN,
     },
     token_factory::TokenFactoryDenom,
 };
@@ -31,24 +27,9 @@ pub fn init(
         },
     )?;
 
-    // initialize addresses of external contracts
+    // save credit manager address
     let credit_manager = deps.api.addr_validate(&msg.credit_manager)?;
     CREDIT_MANAGER.save(deps.storage, &credit_manager.to_string())?;
-    let config: ConfigResponse = deps
-        .querier
-        .query_wasm_smart(credit_manager.to_string(), &CreditManagerQueryMsg::Config {})?;
-    let oracle = OracleBase::new(config.oracle);
-    let health = HealthContractBase::new(config.health_contract);
-    ORACLE.save(deps.storage, &oracle.check(deps.api)?)?;
-    HEALTH.save(deps.storage, &health.check(deps.api)?)?;
-    if let Some(acc_nft) = config.account_nft {
-        let account_nft = AccountNftBase::new(acc_nft);
-        ACCOUNT_NFT.save(deps.storage, &account_nft.check(deps.api)?)?;
-    } else {
-        return Err(ContractError::Std(StdError::generic_err(
-            "Account NFT contract address is not set in Credit Manager".to_string(),
-        )));
-    }
 
     // update contract metadata
     if let Some(title) = msg.title {

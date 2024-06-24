@@ -1,6 +1,5 @@
 use cw_storage_plus::{Item, Map};
 use mars_owner::Owner;
-use mars_types::adapters::{account_nft::AccountNft, health::HealthContract, oracle::Oracle};
 
 use crate::{
     msg::UnlockState,
@@ -18,10 +17,6 @@ pub const BASE_TOKEN: Item<String> = Item::new("base_token");
 
 pub const CREDIT_MANAGER: Item<String> = Item::new("cm_addr");
 pub const VAULT_ACC_ID: Item<String> = Item::new("vault_acc_id");
-
-pub const ORACLE: Item<Oracle> = Item::new("oracle");
-pub const HEALTH: Item<HealthContract> = Item::new("health");
-pub const ACCOUNT_NFT: Item<AccountNft> = Item::new("account_nft");
 
 pub const TITLE: Item<String> = Item::new("title");
 pub const SUBTITLE: Item<String> = Item::new("subtitle");
