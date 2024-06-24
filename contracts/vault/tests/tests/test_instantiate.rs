@@ -3,6 +3,7 @@ use std::str::FromStr;
 use anyhow::Result as AnyResult;
 use cosmwasm_std::{coin, Addr, Decimal};
 use cw_multi_test::Executor;
+use mars_utils::error::ValidationError;
 use mars_vault::{
     error::ContractError,
     msg::{InstantiateMsg, VaultInfoResponseExt},
