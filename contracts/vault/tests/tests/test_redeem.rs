@@ -210,6 +210,10 @@ fn redeem_invalid_unlocked_amount() {
     let second_unlock = user_vault_token_balance.multiply_ratio(1u128, 4u128);
 
     execute_unlock(&mut mock, &user, &managed_vault_addr, first_unlock, &[]).unwrap();
+
+    // move time forward to create new unlock entry
+    mock.increment_by_time(5);
+
     execute_unlock(&mut mock, &user, &managed_vault_addr, second_unlock, &[]).unwrap();
 
     // try to redeem when cooldown period hasn't passed yet
@@ -226,7 +230,7 @@ fn redeem_invalid_unlocked_amount() {
     // move time forward to pass cooldown period
     mock.increment_by_time(vault_info_res.cooldown_period + 1);
 
-    let vault_tokens = first_unlock + second_unlock + Uint128::one();
+    let vault_tokens = first_unlock + second_unlock - Uint128::one();
     let res = execute_redeem(
         &mut mock,
         &user,
@@ -238,9 +242,81 @@ fn redeem_invalid_unlocked_amount() {
     assert_vault_err(
         res,
         ContractError::InvalidAmount {
-            reason: "provided vault tokens do not match total unlocked vault tokens".to_string(),
+            reason: "provided vault tokens is less than total unlocked amount".to_string(),
         },
     );
+}
+
+#[test]
+fn redeem_with_refund() {
+    let fund_manager = Addr::unchecked("fund-manager");
+    let user = Addr::unchecked("user");
+    let user_funded_amt = Uint128::new(1_000_000_000);
+    let mut mock = MockEnv::new()
+        .set_params(&[uusdc_info()])
+        .fund_account(AccountToFund {
+            addr: fund_manager.clone(),
+            funds: vec![coin(1_000_000_000, "untrn")],
+        })
+        .fund_account(AccountToFund {
+            addr: user.clone(),
+            funds: vec![coin(user_funded_amt.u128(), "uusdc")],
+        })
+        .build()
+        .unwrap();
+    let credit_manager = mock.rover.clone();
+
+    let managed_vault_addr = deploy_managed_vault(&mut mock.app, &fund_manager, &credit_manager);
+    let vault_info_res = query_vault_info(&mock, &managed_vault_addr);
+    let vault_token = vault_info_res.vault_token;
+
+    mock.create_credit_account_v2(
+        &fund_manager,
+        AccountKind::FundManager {
+            vault_addr: managed_vault_addr.to_string(),
+        },
+        None,
+    )
+    .unwrap();
+
+    let deposited_amt = Uint128::new(12_400_000);
+    execute_deposit(
+        &mut mock,
+        &user,
+        &managed_vault_addr,
+        Uint128::zero(), // we don't care about the amount, we are using the funds
+        None,
+        &[coin(deposited_amt.u128(), "uusdc")],
+    )
+    .unwrap();
+
+    let user_vault_token_balance_before = mock.query_balance(&user, &vault_token).amount;
+    let unlock = user_vault_token_balance_before.multiply_ratio(1u128, 4u128);
+
+    execute_unlock(&mut mock, &user, &managed_vault_addr, unlock, &[]).unwrap();
+
+    // move time forward to pass cooldown period
+    mock.increment_by_time(vault_info_res.cooldown_period + 1);
+
+    let refund_amt = Uint128::new(123);
+
+    let vault_tokens = unlock + refund_amt;
+    execute_redeem(
+        &mut mock,
+        &user,
+        &managed_vault_addr,
+        Uint128::zero(), // we don't care about the amount, we are using the funds
+        None,
+        &[coin(vault_tokens.u128(), vault_token.clone())],
+    )
+    .unwrap();
+
+    let contract_vault_token_balance = mock.query_balance(&managed_vault_addr, &vault_token).amount;
+    assert!(contract_vault_token_balance.is_zero());
+
+    // vault tokens should be refunded
+    let user_vault_token_balance = mock.query_balance(&user, &vault_token).amount;
+    assert_eq!(user_vault_token_balance, user_vault_token_balance_before - unlock);
 }
 
 /// There are rounding errors when converting back and forth between base tokens and vault tokens so there could be a difference of 1 base token.

@@ -1,6 +1,8 @@
+use std::cmp::min;
+
 use cosmwasm_std::{
-    attr, ensure_eq, to_json_binary, Coin, CosmosMsg, Deps, DepsMut, Env, Event, MessageInfo,
-    Order, Response, StdError, StdResult, Uint128, WasmMsg,
+    attr, ensure_eq, to_json_binary, BankMsg, Coin, CosmosMsg, Deps, DepsMut, Env, Event,
+    MessageInfo, Order, Response, StdError, StdResult, Uint128, WasmMsg,
 };
 use mars_types::{
     adapters::{account_nft::AccountNftBase, health::HealthContractBase, oracle::OracleBase},
@@ -101,7 +103,7 @@ pub fn deposit(
     let event = Event::new("deposit").add_attributes(vec![
         attr("action", "mint_vault_tokens"),
         attr("recipient", vault_token_recipient.to_string()),
-        attr("mint_amount", vault_tokens),
+        attr("vault_tokens_minted", vault_tokens),
     ]);
 
     Ok(vault_token
@@ -155,7 +157,7 @@ pub fn unlock(
 
     Ok(Response::new()
         .add_attribute("action", "unlock")
-        .add_attribute("vault_tokens", amount)
+        .add_attribute("vault_tokens_unlocked", amount)
         .add_attribute("created_at", current_time.to_string())
         .add_attribute("cooldown_end", cooldown_end.to_string()))
 }
@@ -179,7 +181,7 @@ pub fn redeem(
     let vault_token = VAULT_TOKEN.load(deps.storage)?;
 
     // check that only the expected vault token was sent
-    let vault_token_amount = cw_utils::must_pay(info, &vault_token.to_string())?;
+    let mut vault_tokens = cw_utils::must_pay(info, &vault_token.to_string())?;
 
     let unlocks = UNLOCKS
         .prefix(recipient.as_str())
@@ -209,12 +211,15 @@ pub fn redeem(
     let total_unlocked_vault_tokens =
         unlocked.into_iter().map(|us| us.vault_tokens).sum::<Uint128>();
 
-    // check that the total unlocked vault tokens match the provided vault tokens
-    if vault_token_amount != total_unlocked_vault_tokens {
+    // check that the the provided vault tokens is equal or greater than total unlocked vault tokens
+    if vault_tokens < total_unlocked_vault_tokens {
         return Err(ContractError::InvalidAmount {
-            reason: "provided vault tokens do not match total unlocked vault tokens".to_string(),
+            reason: "provided vault tokens is less than total unlocked amount".to_string(),
         });
     }
+
+    let refund_vault_tokens = vault_tokens - total_unlocked_vault_tokens;
+    vault_tokens = min(vault_tokens, total_unlocked_vault_tokens);
 
     let total_base_tokens = total_base_tokens_in_account(deps.as_ref())?;
 
@@ -231,35 +236,44 @@ pub fn redeem(
 
     // calculate base tokens based on the given amount of vault tokens
     let vault_token_supply = vault_token.query_total_supply(deps.as_ref())?;
-    let tokens_to_redeem = calculate_base_tokens(
-        vault_token_amount,
-        total_base_tokens_without_fee,
-        vault_token_supply,
-    )?;
+    let base_tokens_to_redeem =
+        calculate_base_tokens(vault_tokens, total_base_tokens_without_fee, vault_token_supply)?;
 
-    performance_fee_state.update_base_tokens_after_redeem(total_base_tokens, tokens_to_redeem)?;
+    performance_fee_state
+        .update_base_tokens_after_redeem(total_base_tokens, base_tokens_to_redeem)?;
 
     PERFORMANCE_FEE_STATE.save(deps.storage, &performance_fee_state)?;
 
     let withdraw_from_cm = prepare_credit_manager_msg(
         deps.as_ref(),
         base_token,
-        tokens_to_redeem,
+        base_tokens_to_redeem,
         recipient.to_string(),
         vault_acc_id,
     )?;
 
-    let event = Event::new("redeem").add_attributes(vec![
+    let mut response = vault_token.burn(deps, &env, vault_tokens)?.add_message(withdraw_from_cm);
+
+    let mut event = Event::new("redeem").add_attributes(vec![
         attr("action", "burn_vault_tokens"),
         attr("recipient", recipient.clone()),
-        attr("vault_token_amount", vault_token_amount),
-        attr("lp_tokens_to_withdraw", tokens_to_redeem),
+        attr("vault_tokens_burned", vault_tokens),
+        attr("base_tokens_redeemed", base_tokens_to_redeem),
     ]);
 
-    Ok(vault_token
-        .burn(deps, &env, vault_token_amount)?
-        .add_message(withdraw_from_cm)
-        .add_event(event))
+    if !refund_vault_tokens.is_zero() {
+        let transfer_msg = CosmosMsg::Bank(BankMsg::Send {
+            to_address: info.sender.to_string(),
+            amount: vec![Coin {
+                denom: vault_token.to_string(),
+                amount: refund_vault_tokens,
+            }],
+        });
+        response = response.add_message(transfer_msg);
+        event = event.add_attribute("vault_tokens_refunded", refund_vault_tokens);
+    }
+
+    Ok(response.add_event(event))
 }
 
 fn prepare_credit_manager_msg(
