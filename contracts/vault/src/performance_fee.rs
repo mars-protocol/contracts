@@ -69,8 +69,6 @@ impl PerformanceFeeState {
         // initial state, first time update by deposit
         if self.last_withdrawal == u64::MAX {
             self.last_withdrawal = current_time;
-            self.accumulated_pnl = Int128::zero();
-            self.accumulated_fee = Uint128::zero();
             return Ok(());
         }
 

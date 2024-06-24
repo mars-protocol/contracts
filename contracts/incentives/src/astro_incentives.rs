@@ -285,11 +285,7 @@ pub fn execute_claim_rewards_for_staked_lp_position(
 
     // To prevent configuration errors, we fetch address from current contract instead of address_provider
     let mars_incentives_addr = env.contract.address.to_string();
-    ensure_eq!(
-        info.sender,
-        &addresses[&MarsAddressType::CreditManager],
-        ContractError::Mars(MarsError::Unauthorized {})
-    );
+    ensure_eq!(info.sender, credit_manager_addr, ContractError::Mars(MarsError::Unauthorized {}));
 
     let staked_lp_amount = ASTRO_USER_LP_DEPOSITS
         .may_load(deps.storage, (&account_id, &lp_denom))?
