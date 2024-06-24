@@ -6,7 +6,10 @@ use cosmwasm_std::{
 use mars_incentives::{contract::execute, query, state::ASTRO_TOTAL_LP_DEPOSITS, ContractError};
 use mars_testing::{assert_eq_vec, MarsMockQuerier};
 use mars_types::{
-    credit_manager::{ActionAmount, ActionCoin},
+    credit_manager::{
+        ActionAmount::{self, Exact},
+        ActionCoin,
+    },
     incentives::ExecuteMsg,
 };
 
@@ -433,4 +436,205 @@ fn assert_only_credit_manager() {
         },
     )
     .expect_err("Unauthorized");
+}
+
+#[test]
+fn lp_states_update_correctly() {
+    // SETUP
+    let env = mock_env();
+    let mut deps: OwnedDeps<MemoryStorage, MockApi, MarsMockQuerier> = th_setup();
+
+    // Users
+    let user_a_id = "1";
+    let user_b_id = "2";
+
+    let credit_manager = Addr::unchecked("credit_manager");
+    let astroport_incentives_addr = Addr::unchecked("astroport_incentives");
+    deps.querier.set_astroport_incentives_address(astroport_incentives_addr.clone());
+
+    let lp_denom = "uusd/ubtc";
+
+    // State:
+    // - LP in incentives = 0
+    // - Rewards available = 0
+    assert_eq!(ASTRO_TOTAL_LP_DEPOSITS.may_load(&deps.storage, lp_denom).unwrap(), None);
+
+    deposit_for_user(
+        deps.as_mut(),
+        env.clone(),
+        credit_manager.as_str(),
+        user_a_id.to_string(),
+        Coin::new(100u128, lp_denom),
+    )
+    .unwrap();
+
+    deposit_for_user(
+        deps.as_mut(),
+        env.clone(),
+        credit_manager.as_str(),
+        user_b_id.to_string(),
+        Coin::new(200u128, lp_denom),
+    )
+    .unwrap();
+
+    // LP in incentives = 300
+    // User a = 100
+    // User b = 200
+    assert_eq!(
+        ASTRO_TOTAL_LP_DEPOSITS.load(&deps.storage, lp_denom).unwrap(),
+        Uint128::new(300u128)
+    );
+    assert_eq!(
+        query::query_staked_astro_lp_position(
+            deps.as_ref(),
+            env.clone(),
+            user_a_id.to_string(),
+            lp_denom.to_string()
+        )
+        .unwrap()
+        .lp_coin
+        .amount,
+        Uint128::new(100u128)
+    );
+    assert_eq!(
+        query::query_staked_astro_lp_position(
+            deps.as_ref(),
+            env.clone(),
+            user_b_id.to_string(),
+            lp_denom.to_string()
+        )
+        .unwrap()
+        .lp_coin
+        .amount,
+        Uint128::new(200u128)
+    );
+
+    unstake_for_user(
+        deps.as_mut(),
+        env.clone(),
+        credit_manager.as_str(),
+        user_a_id.to_string(),
+        ActionCoin {
+            denom: lp_denom.to_string(),
+            amount: Exact(Uint128::new(50u128)),
+        },
+    )
+    .unwrap();
+
+    // LP in incentives = 250
+    // User a = 50
+    // User b = 200
+    assert_eq!(
+        ASTRO_TOTAL_LP_DEPOSITS.load(&deps.storage, lp_denom).unwrap(),
+        Uint128::new(250u128)
+    );
+    assert_eq!(
+        query::query_staked_astro_lp_position(
+            deps.as_ref(),
+            env.clone(),
+            user_a_id.to_string(),
+            lp_denom.to_string()
+        )
+        .unwrap()
+        .lp_coin
+        .amount,
+        Uint128::new(50u128)
+    );
+    assert_eq!(
+        query::query_staked_astro_lp_position(
+            deps.as_ref(),
+            env.clone(),
+            user_b_id.to_string(),
+            lp_denom.to_string()
+        )
+        .unwrap()
+        .lp_coin
+        .amount,
+        Uint128::new(200u128)
+    );
+
+    unstake_for_user(
+        deps.as_mut(),
+        env.clone(),
+        credit_manager.as_str(),
+        user_b_id.to_string(),
+        ActionCoin {
+            denom: lp_denom.to_string(),
+            amount: mars_types::credit_manager::ActionAmount::AccountBalance,
+        },
+    )
+    .unwrap();
+
+    // LP in incentives = 50
+    // User a = 50
+    // User b = 0
+    assert_eq!(
+        ASTRO_TOTAL_LP_DEPOSITS.load(&deps.storage, lp_denom).unwrap(),
+        Uint128::new(50u128)
+    );
+    assert_eq!(
+        query::query_staked_astro_lp_position(
+            deps.as_ref(),
+            env.clone(),
+            user_a_id.to_string(),
+            lp_denom.to_string()
+        )
+        .unwrap()
+        .lp_coin
+        .amount,
+        Uint128::new(50u128)
+    );
+    assert_eq!(
+        query::query_staked_astro_lp_position(
+            deps.as_ref(),
+            env.clone(),
+            user_b_id.to_string(),
+            lp_denom.to_string()
+        )
+        .unwrap()
+        .lp_coin
+        .amount,
+        Uint128::new(0u128)
+    );
+
+    deposit_for_user(
+        deps.as_mut(),
+        env.clone(),
+        credit_manager.as_str(),
+        user_b_id.to_string(),
+        Coin::new(50u128, lp_denom),
+    )
+    .unwrap();
+
+    // LP in incentives = 100
+    // User a = 50
+    // User b = 50
+    assert_eq!(
+        ASTRO_TOTAL_LP_DEPOSITS.load(&deps.storage, lp_denom).unwrap(),
+        Uint128::new(100u128)
+    );
+    assert_eq!(
+        query::query_staked_astro_lp_position(
+            deps.as_ref(),
+            env.clone(),
+            user_a_id.to_string(),
+            lp_denom.to_string()
+        )
+        .unwrap()
+        .lp_coin
+        .amount,
+        Uint128::new(50u128)
+    );
+    assert_eq!(
+        query::query_staked_astro_lp_position(
+            deps.as_ref(),
+            env.clone(),
+            user_b_id.to_string(),
+            lp_denom.to_string()
+        )
+        .unwrap()
+        .lp_coin
+        .amount,
+        Uint128::new(50u128)
+    );
 }
