@@ -28,7 +28,7 @@ pub fn unstake_lp(
         increment_coin_balance(deps.storage, account_id, reward)?;
     }
 
-    let new_amount = match lp_coin.amount {
+    let amount_to_unstake = match lp_coin.amount {
         ActionAmount::Exact(amt) => {
             if lp_position.lp_coin.amount.lt(&amt) {
                 return Err(ContractError::InsufficientFunds {
@@ -36,13 +36,13 @@ pub fn unstake_lp(
                     available: lp_position.lp_coin.amount,
                 });
             } else {
-                lp_position.lp_coin.amount.checked_sub(amt)?
+                amt
             }
         }
         ActionAmount::AccountBalance => lp_position.lp_coin.amount,
     };
 
-    let updated_coin = coin(new_amount.u128(), lp_coin.denom.as_str());
+    let updated_coin = coin(amount_to_unstake.u128(), lp_coin.denom.as_str());
 
     increment_coin_balance(deps.storage, account_id, &updated_coin)?;
 
