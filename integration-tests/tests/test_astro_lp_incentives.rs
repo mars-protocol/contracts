@@ -8,6 +8,35 @@ use mars_testing::integration::mock_env::MockEnvBuilder;
 use crate::helpers::default_asset_params;
 mod helpers;
 
+#[test]
+fn can_be_first_staker() {
+    let owner = Addr::unchecked("owner");
+    let mut mock_env = MockEnvBuilder::new(None, owner).build();
+
+    // Contracts
+    let params = mock_env.params.clone();
+    let incentives = mock_env.incentives.clone();
+    let credit_manager = mock_env.credit_manager.clone();
+
+    // Params
+    let lp_denom = "factory12345";
+    let lp_coin = coin(1_000_000_000, lp_denom.to_string());
+
+    // Set asset params for lp token
+    let (_, asset_params) = default_asset_params(lp_denom);
+    params.init_params(&mut mock_env, asset_params);
+
+    // Fund accounts
+    let funded_amt = 10_000_000_000u128;
+    mock_env.fund_account(&credit_manager, &[coin(funded_amt, lp_denom)]);
+
+    incentives.stake_astro_lp(&mut mock_env, &credit_manager, "1".to_string(), lp_coin.clone());
+
+    let astro_lp_balance =
+        mock_env.query_balance(&mock_env.astro_incentives.contract_addr, lp_denom).unwrap();
+    assert_eq!(astro_lp_balance, lp_coin)
+}
+
 // User A stakes lp in astro and claims rewards
 #[test]
 fn claim_rewards() {

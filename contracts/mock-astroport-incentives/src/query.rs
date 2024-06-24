@@ -34,6 +34,8 @@ pub fn query_rewards(
             )
             .collect()),
 
-        None => Ok(vec![]),
+        None => Err(cosmwasm_std::StdError::NotFound {
+            kind: "position not found".to_string(),
+        }),
     }
 }
