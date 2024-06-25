@@ -166,17 +166,10 @@ fn cannot_borrow_when_unhealthy() {
 #[test]
 fn hls_influences_max_borrow() {
     let ustars = ustars_info();
-    let udai = udai_info();
 
     let denoms_data = DenomsData {
-        prices: HashMap::from([
-            (ustars.denom.clone(), ustars.price),
-            (udai.denom.clone(), udai.price),
-        ]),
-        params: HashMap::from([
-            (ustars.denom.clone(), ustars.params.clone()),
-            (udai.denom.clone(), udai.params.clone()),
-        ]),
+        prices: HashMap::from([(ustars.denom.clone(), ustars.price)]),
+        params: HashMap::from([(ustars.denom.clone(), ustars.params.clone())]),
     };
 
     let vault = Vault::new(Addr::unchecked("vault_addr_123".to_string()));
@@ -221,18 +214,11 @@ fn hls_influences_max_borrow() {
             account_kind: AccountKind::Default,
 
             deposits: vec![coin(1200, &ustars.denom)],
-            debts: vec![
-                DebtAmount {
-                    denom: udai.denom,
-                    shares: Default::default(),
-                    amount: Uint128::new(3100),
-                },
-                DebtAmount {
-                    denom: ustars.denom.clone(),
-                    shares: Default::default(),
-                    amount: Uint128::new(800),
-                },
-            ],
+            debts: vec![DebtAmount {
+                denom: ustars.denom.clone(),
+                shares: Default::default(),
+                amount: Uint128::new(800),
+            }],
             lends: vec![],
             vaults: vec![VaultPosition {
                 vault,

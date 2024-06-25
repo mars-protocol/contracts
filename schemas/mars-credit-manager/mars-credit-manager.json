@@ -1118,7 +1118,7 @@
             "additionalProperties": false
           },
           {
-            "description": "Calls incentive contract to claim all rewards and: - for Default account increments account balance - for HLS account withdraws claimed rewards. HLS accounts have special rules - some assets can't be in the account. For simplicity we withdraw all claimed rewards.",
+            "description": "Calls incentive contract to claim all rewards and increment account balance",
             "type": "object",
             "required": [
               "claim_rewards"
@@ -1127,15 +1127,11 @@
               "claim_rewards": {
                 "type": "object",
                 "required": [
-                  "account_id",
-                  "recipient"
+                  "account_id"
                 ],
                 "properties": {
                   "account_id": {
                     "type": "string"
-                  },
-                  "recipient": {
-                    "$ref": "#/definitions/Addr"
                   }
                 },
                 "additionalProperties": false
@@ -1711,39 +1707,6 @@
             "properties": {
               "remove_reentrancy_guard": {
                 "type": "object",
-                "additionalProperties": false
-              }
-            },
-            "additionalProperties": false
-          },
-          {
-            "description": "Send reward amounts of coin from credit manager to recipient by querying balance, claiming rewards, and comparing previous balance to new balance after reward claim - send the diff to the recipient.",
-            "type": "object",
-            "required": [
-              "send_rewards_to_addr"
-            ],
-            "properties": {
-              "send_rewards_to_addr": {
-                "type": "object",
-                "required": [
-                  "account_id",
-                  "previous_balances",
-                  "recipient"
-                ],
-                "properties": {
-                  "account_id": {
-                    "type": "string"
-                  },
-                  "previous_balances": {
-                    "type": "array",
-                    "items": {
-                      "$ref": "#/definitions/Coin"
-                    }
-                  },
-                  "recipient": {
-                    "$ref": "#/definitions/Addr"
-                  }
-                },
                 "additionalProperties": false
               }
             },

@@ -12,7 +12,7 @@ use mars_types::{
         },
         HealthResult, LiquidationPriceKind, SwapKind,
     },
-    params::{AssetParams, CmSettings, VaultConfig},
+    params::{AssetParams, CmSettings, HlsAssetType, VaultConfig},
 };
 #[cfg(feature = "javascript")]
 use tsify::Tsify;
@@ -529,9 +529,8 @@ impl HealthComputer {
                     },
                 liquidation_threshold,
                 ..
-            }) = self.denoms_data.params.get(&c.denom)
+            }) = self.coin_contribution_to_collateral(c)?
             else {
-                // If the coin is not found (whitelisted), it is not considered for collateral
                 continue;
             };
 
@@ -564,6 +563,55 @@ impl HealthComputer {
             max_ltv_adjusted_collateral,
             liquidation_threshold_adjusted_collateral,
         })
+    }
+
+    fn coin_contribution_to_collateral(&self, coin: &Coin) -> HealthResult<Option<&AssetParams>> {
+        let Some(asset_params) = self.denoms_data.params.get(&coin.denom) else {
+            // If the coin is not found (whitelisted), it is not considered for collateral
+            return Ok(None);
+        };
+
+        match self.kind {
+            AccountKind::HighLeveredStrategy => {
+                // HLS should have 0 or 1 debt denom in the account. If there are more than 1 we can safely calculate the collateral value
+                // because the rule will be checked in the Credit Manager contract and won't allow more than 1 debt denom in the account.
+                if !self.positions.debts.is_empty() {
+                    let mut correlations = vec![];
+                    for debt in self.positions.debts.iter() {
+                        let debt_params = self
+                            .denoms_data
+                            .params
+                            .get(&debt.denom)
+                            .ok_or(MissingParams(debt.denom.clone()))?;
+                        let debt_hls = debt_params
+                            .credit_manager
+                            .hls
+                            .as_ref()
+                            .ok_or(MissingHLSParams(debt.denom.clone()))?;
+
+                        // collect all the correlations of the debts
+                        correlations.extend(&debt_hls.correlations);
+                    }
+
+                    // If the collateral is not correlated with any of the debts, skip it.
+                    // It doesn't contribute to the collateral value.
+                    if !correlations.contains(&&HlsAssetType::Coin {
+                        denom: coin.denom.clone(),
+                    }) {
+                        return Ok(None);
+                    }
+                } else if asset_params.credit_manager.hls.is_none() {
+                    // Only collateral with hls params can be used in an HLS account and can contribute to the collateral value
+                    return Ok(None);
+                }
+            }
+            AccountKind::Default => {}
+            AccountKind::FundManager {
+                ..
+            } => {}
+        }
+
+        Ok(Some(asset_params))
     }
 
     fn vaults_value(&self) -> HealthResult<CollateralValue> {

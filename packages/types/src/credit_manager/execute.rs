@@ -259,13 +259,9 @@ pub enum CallbackMsg {
         account_id: String,
         coin: ActionCoin,
     },
-    /// Calls incentive contract to claim all rewards and:
-    /// - for Default account increments account balance
-    /// - for HLS account withdraws claimed rewards. HLS accounts have special rules - some assets can't be in the account.
-    /// For simplicity we withdraw all claimed rewards.
+    /// Calls incentive contract to claim all rewards and increment account balance
     ClaimRewards {
         account_id: String,
-        recipient: Addr,
     },
     /// Assert MaxLTV is either:
     /// - Healthy, if prior to actions MaxLTV health factor >= 1 or None
@@ -392,13 +388,6 @@ pub enum CallbackMsg {
     /// At the end of the execution of dispatched actions, this callback removes the guard
     /// and allows subsequent dispatches.
     RemoveReentrancyGuard {},
-    /// Send reward amounts of coin from credit manager to recipient by querying balance, claiming rewards,
-    /// and comparing previous balance to new balance after reward claim - send the diff to the recipient.
-    SendRewardsToAddr {
-        account_id: String,
-        previous_balances: Vec<Coin>,
-        recipient: Addr,
-    },
 }
 
 impl CallbackMsg {
