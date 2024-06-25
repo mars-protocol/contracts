@@ -108,6 +108,12 @@ impl MarsMockQuerier {
         );
     }
 
+    pub fn set_astroport_deposit(&mut self, user: &str, lp_denom: &str, deposit: Uint128) {
+        self.astroport_incentives_querier
+            .deposits
+            .insert((user.to_string(), lp_denom.to_string()), deposit);
+    }
+
     pub fn set_unclaimed_astroport_lp_rewards(
         &mut self,
         lp_denom: &str,

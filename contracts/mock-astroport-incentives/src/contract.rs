@@ -7,7 +7,7 @@ use cosmwasm_std::{
 
 use crate::{
     execute::{claim_rewards, deposit, incentivise, withdraw},
-    query::query_rewards,
+    query::{query_deposit, query_rewards},
 };
 #[entry_point]
 pub fn instantiate(
@@ -47,6 +47,10 @@ pub fn query(deps: Deps, env: Env, msg: QueryMsg) -> StdResult<Binary> {
             lp_token,
             user,
         } => to_json_binary(&query_rewards(deps, env, user, lp_token)?),
+        QueryMsg::Deposit {
+            lp_token,
+            user,
+        } => to_json_binary(&query_deposit(deps, user, lp_token)?),
         _ => panic!("Unsupported query!"),
     }
 }

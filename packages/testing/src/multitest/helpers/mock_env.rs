@@ -79,7 +79,7 @@ use super::{
     mock_astro_incentives_contract, mock_health_contract, mock_incentives_contract,
     mock_managed_vault_contract, mock_oracle_contract, mock_params_contract,
     mock_red_bank_contract, mock_rover_contract, mock_swapper_contract, mock_v2_zapper_contract,
-    mock_vault_contract, AccountToFund, CoinInfo, VaultTestInfo,
+    mock_vault_contract, AccountToFund, CoinInfo, VaultTestInfo, ASTRO_LP_DENOM,
 };
 use crate::multitest::modules::token_factory::{CustomApp, TokenFactory};
 
@@ -1090,6 +1090,8 @@ impl MockEnvBuilder {
         let health_contract = self.get_health_contract().into();
         let params = self.get_params_contract().into();
 
+        self.deploy_astroport_incentives();
+
         let addr = self
             .app
             .instantiate_contract(
@@ -1345,12 +1347,15 @@ impl MockEnvBuilder {
             )
             .unwrap();
 
+        self.set_address(MarsAddressType::Incentives, addr.clone());
+
         IncentivesUnchecked::new(addr.to_string())
     }
 
     pub fn deploy_astroport_incentives(&mut self) -> Addr {
         let code_id = self.app.store_code(mock_astro_incentives_contract());
-        self.app
+        let addr = self
+            .app
             .instantiate_contract(
                 code_id,
                 Addr::unchecked("astroport_incentives_owner"),
@@ -1359,7 +1364,11 @@ impl MockEnvBuilder {
                 "mock-astroport-incentives",
                 None,
             )
-            .unwrap()
+            .unwrap();
+
+        self.set_address(MarsAddressType::AstroportIncentives, addr.clone());
+
+        addr
     }
 
     fn deploy_vault(&mut self, vault: &VaultTestInfo) -> Addr {
@@ -1440,10 +1449,16 @@ impl MockEnvBuilder {
             Addr::unchecked("zapper-instantiator"),
             &ZapperInstantiateMsg {
                 oracle: oracle.clone(),
-                lp_configs: vec![LpConfig {
-                    lp_token_denom: lp_token.denom.to_string(),
-                    lp_pair_denoms: ("uatom".to_string(), "uosmo".to_string()),
-                }],
+                lp_configs: vec![
+                    LpConfig {
+                        lp_token_denom: lp_token.denom.to_string(),
+                        lp_pair_denoms: ("uatom".to_string(), "uosmo".to_string()),
+                    },
+                    LpConfig {
+                        lp_token_denom: ASTRO_LP_DENOM.to_string(),
+                        lp_pair_denoms: ("ujake".to_string(), "uosmo".to_string()),
+                    },
+                ],
             },
             &[],
             "mock-vault",
@@ -1453,7 +1468,7 @@ impl MockEnvBuilder {
         self.app
             .sudo(SudoMsg::Bank(BankSudo::Mint {
                 to_address: addr.to_string(),
-                amount: coins(10_000_000, lp_token.denom),
+                amount: vec![coin(10_000_000, lp_token.denom), coin(10_000_000, ASTRO_LP_DENOM)],
             }))
             .unwrap();
         Ok(ZapperBase::new(addr))

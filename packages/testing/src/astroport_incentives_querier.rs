@@ -13,7 +13,7 @@ pub struct AstroportIncentivesQuerier {
 impl Default for AstroportIncentivesQuerier {
     fn default() -> Self {
         AstroportIncentivesQuerier {
-            incentives_addr: Addr::unchecked(""),
+            incentives_addr: Addr::unchecked("astroport_incentives"),
             unclaimed_rewards: HashMap::new(),
             deposits: HashMap::new(),
         }
