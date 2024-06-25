@@ -2814,6 +2814,7 @@ dependencies = [
  "mars-owner 2.0.0",
  "mars-testing",
  "mars-types",
+ "mars-utils 2.0.0",
  "osmosis-std 0.22.0",
  "test-case",
  "thiserror",

@@ -124,7 +124,7 @@ fn cannot_withdraw_zero_performance_fee() {
         &mut mock.app,
         &fund_manager,
         &credit_manager,
-        0,
+        1,
         PerformanceFeeConfig {
             fee_rate: Decimal::from_str("0.0000208").unwrap(),
             withdrawal_interval: 60,
@@ -171,7 +171,7 @@ fn cannot_withdraw_if_withdrawal_interval_not_passed() {
         &mut mock.app,
         &fund_manager,
         &credit_manager,
-        0,
+        1,
         PerformanceFeeConfig {
             fee_rate: Decimal::from_str("0.0000208").unwrap(),
             withdrawal_interval: performance_fee_interval,
@@ -277,7 +277,7 @@ fn performance_fee_correctly_accumulated() {
         &mut mock.app,
         &fund_manager,
         &credit_manager,
-        0,
+        1,
         PerformanceFeeConfig {
             fee_rate: Decimal::from_str("0.0000208").unwrap(),
             withdrawal_interval: 60,
@@ -399,6 +399,9 @@ fn performance_fee_correctly_accumulated() {
 
     // -- FOURTH ACTION --
 
+    let unlock_vault_tokens = Uint128::new(10_000_000_000_000);
+    execute_unlock(&mut mock, &user, &managed_vault_addr, unlock_vault_tokens, &[]).unwrap();
+
     // move by 144 hours
     mock.increment_by_time(144 * 60 * 60);
 
@@ -408,8 +411,6 @@ fn performance_fee_correctly_accumulated() {
     let pnl = calculate_pnl(&mut mock, &fund_acc_id, Decimal::from_str("4.9375").unwrap());
     assert_eq!(pnl, Uint128::new(450_000_000));
 
-    let unlock_vault_tokens = Uint128::new(10_000_000_000_000);
-    execute_unlock(&mut mock, &user, &managed_vault_addr, unlock_vault_tokens, &[]).unwrap();
     execute_redeem(
         &mut mock,
         &user,

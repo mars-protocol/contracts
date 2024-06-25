@@ -5,7 +5,7 @@ use mars_types::{
 };
 
 use crate::{
-    error::ContractResult,
+    error::{ContractError, ContractResult},
     state::{COIN_BALANCES, INCENTIVES},
     utils::{decrement_coin_balance, increment_coin_balance},
 };
@@ -25,6 +25,10 @@ pub fn stake_lp(deps: DepsMut, account_id: &str, lp_coin: ActionCoin) -> Contrac
     let new_amount = match lp_coin.amount {
         ActionAmount::Exact(amt) => amt,
         ActionAmount::AccountBalance => coin_balance,
+    };
+
+    if new_amount.is_zero() {
+        return Err(ContractError::NoAmount);
     };
 
     let updated_coin = coin(new_amount.u128(), lp_coin.denom.as_str());

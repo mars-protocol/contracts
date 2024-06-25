@@ -4,6 +4,7 @@ use cosmwasm_std::{
 };
 use cw_utils::PaymentError;
 use mars_owner::OwnerError;
+use mars_utils::error::ValidationError;
 
 #[derive(Debug, PartialEq, thiserror::Error)]
 pub enum ContractError {
@@ -33,6 +34,9 @@ pub enum ContractError {
 
     #[error(transparent)]
     Payment(#[from] PaymentError),
+
+    #[error(transparent)]
+    Validation(#[from] ValidationError),
 
     #[error("{0}")]
     Generic(String),
@@ -71,6 +75,9 @@ pub enum ContractError {
 
     #[error("Withdrawal interval not passed")]
     WithdrawalIntervalNotPassed {},
+
+    #[error("Invalid cooldown period, expected value greater than 0")]
+    ZeroCooldownPeriod,
 }
 
 pub type ContractResult<T> = Result<T, ContractError>;
