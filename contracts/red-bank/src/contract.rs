@@ -1,7 +1,7 @@
 use cosmwasm_std::{
-    entry_point, to_json_binary, Binary, Deps, DepsMut, Empty, Env, MessageInfo, Response,
+    entry_point, to_json_binary, Binary, Deps, DepsMut, Env, MessageInfo, Response,
 };
-use mars_types::red_bank::{ExecuteMsg, InstantiateMsg, QueryMsg};
+use mars_types::red_bank::{ExecuteMsg, InstantiateMsg, MigrateMsg, QueryMsg};
 
 use crate::{
     asset, borrow, collateral, config, deposit, error::ContractError, instantiate, liquidate,
@@ -84,14 +84,40 @@ pub fn execute(
         } => {
             MIGRATION_GUARD.assert_unlocked(deps.storage)?;
             cw_utils::nonpayable(&info)?;
-            borrow::borrow(deps, env, info, denom, amount, recipient)
+            borrow::borrow(deps, env, info, denom, amount, recipient, None)
+        }
+        ExecuteMsg::BorrowV2 {
+            account_id,
+            denom,
+            amount,
+            recipient,
+        } => {
+            MIGRATION_GUARD.assert_unlocked(deps.storage)?;
+            cw_utils::nonpayable(&info)?;
+            borrow::borrow(deps, env, info, denom, amount, recipient, account_id)
         }
         ExecuteMsg::Repay {
             on_behalf_of,
         } => {
             MIGRATION_GUARD.assert_unlocked(deps.storage)?;
             let sent_coin = cw_utils::one_coin(&info)?;
-            repay::repay(deps, env, info, on_behalf_of, sent_coin.denom, sent_coin.amount)
+            repay::repay(deps, env, info, on_behalf_of, sent_coin.denom, sent_coin.amount, None)
+        }
+        ExecuteMsg::RepayV2 {
+            account_id,
+            on_behalf_of,
+        } => {
+            MIGRATION_GUARD.assert_unlocked(deps.storage)?;
+            let sent_coin = cw_utils::one_coin(&info)?;
+            repay::repay(
+                deps,
+                env,
+                info,
+                on_behalf_of,
+                sent_coin.denom,
+                sent_coin.amount,
+                account_id,
+            )
         }
         ExecuteMsg::Liquidate {
             user,
@@ -152,6 +178,16 @@ pub fn query(deps: Deps, env: Env, msg: QueryMsg) -> Result<Binary, ContractErro
             let user_addr = deps.api.addr_validate(&user)?;
             to_json_binary(&query::query_user_debt(deps, &env.block, user_addr, denom)?)
         }
+        QueryMsg::UserDebtV2 {
+            user,
+            account_id,
+            denom,
+        } => {
+            let user_addr = deps.api.addr_validate(&user)?;
+            to_json_binary(&query::query_user_debt_v2(
+                deps, &env.block, user_addr, account_id, denom,
+            )?)
+        }
         QueryMsg::UserDebts {
             user,
             start_after,
@@ -162,6 +198,22 @@ pub fn query(deps: Deps, env: Env, msg: QueryMsg) -> Result<Binary, ContractErro
                 deps,
                 &env.block,
                 user_addr,
+                start_after,
+                limit,
+            )?)
+        }
+        QueryMsg::UserDebtsV2 {
+            user,
+            account_id,
+            start_after,
+            limit,
+        } => {
+            let user_addr = deps.api.addr_validate(&user)?;
+            to_json_binary(&query::query_user_debts_v2(
+                deps,
+                &env.block,
+                user_addr,
+                account_id,
                 start_after,
                 limit,
             )?)
@@ -248,6 +300,9 @@ pub fn query(deps: Deps, env: Env, msg: QueryMsg) -> Result<Binary, ContractErro
 }
 
 #[cfg_attr(not(feature = "library"), entry_point)]
-pub fn migrate(deps: DepsMut, _env: Env, _msg: Empty) -> Result<Response, ContractError> {
-    migrations::v2_0_0::migrate(deps)
+pub fn migrate(deps: DepsMut, _env: Env, msg: MigrateMsg) -> Result<Response, ContractError> {
+    match msg {
+        MigrateMsg::V1_0_0ToV2_0_0 {} => migrations::v2_0_0::migrate(deps),
+        MigrateMsg::V2_0_0ToV2_0_1 {} => migrations::v2_0_1::migrate(deps),
+    }
 }

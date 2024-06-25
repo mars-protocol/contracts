@@ -1,12 +1,12 @@
 use std::{collections::HashMap, str::FromStr};
 
-use cosmwasm_std::{coin, Addr, Decimal, Uint128};
+use cosmwasm_std::{coin, Addr, Coin, Decimal, Uint128};
 use mars_rover_health_computer::{DenomsData, HealthComputer, VaultsData};
 use mars_types::{
     adapters::vault::{
         CoinValue, Vault, VaultAmount, VaultPosition, VaultPositionAmount, VaultPositionValue,
     },
-    credit_manager::{DebtAmount, Positions},
+    credit_manager::Positions,
     health::{AccountKind, HealthError, SwapKind},
     params::{HlsParams, VaultConfig},
 };
@@ -39,14 +39,12 @@ fn missing_price_data() {
 
             deposits: vec![coin(1200, &umars.denom), coin(33, &udai.denom)],
             debts: vec![
-                DebtAmount {
+                Coin {
                     denom: udai.denom.clone(),
-                    shares: Default::default(),
                     amount: Uint128::new(3100),
                 },
-                DebtAmount {
+                Coin {
                     denom: umars.denom.clone(),
-                    shares: Default::default(),
                     amount: Uint128::new(200),
                 },
             ],
@@ -90,14 +88,12 @@ fn missing_params() {
 
             deposits: vec![coin(1200, &umars.denom), coin(33, &udai.denom)],
             debts: vec![
-                DebtAmount {
+                Coin {
                     denom: udai.denom.clone(),
-                    shares: Default::default(),
                     amount: Uint128::new(3100),
                 },
-                DebtAmount {
+                Coin {
                     denom: umars.denom.clone(),
-                    shares: Default::default(),
                     amount: Uint128::new(200),
                 },
             ],
@@ -180,14 +176,12 @@ fn zero_when_unhealthy() {
 
             deposits: vec![coin(1200, &umars.denom), coin(33, &udai.denom)],
             debts: vec![
-                DebtAmount {
+                Coin {
                     denom: udai.denom.clone(),
-                    shares: Default::default(),
                     amount: Uint128::new(2500),
                 },
-                DebtAmount {
+                Coin {
                     denom: umars.denom.clone(),
-                    shares: Default::default(),
                     amount: Uint128::new(200),
                 },
             ],
@@ -280,9 +274,8 @@ fn should_allow_max_swap() {
             account_kind: AccountKind::Default,
 
             deposits: vec![coin(1200, &umars.denom), coin(deposit_amount.u128(), &udai.denom)],
-            debts: vec![DebtAmount {
+            debts: vec![Coin {
                 denom: udai.denom.clone(),
-                shares: Default::default(),
                 amount: Uint128::new(5),
             }],
             lends: vec![],
@@ -359,14 +352,12 @@ fn hls_with_max_withdraw() {
 
             deposits: vec![coin(1200, &ustars.denom)],
             debts: vec![
-                DebtAmount {
+                Coin {
                     denom: uatom.denom.clone(),
-                    shares: Default::default(),
                     amount: Uint128::new(3100),
                 },
-                DebtAmount {
+                Coin {
                     denom: ustars.denom.clone(),
-                    shares: Default::default(),
                     amount: Uint128::new(800),
                 },
             ],

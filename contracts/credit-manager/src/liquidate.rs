@@ -5,8 +5,7 @@ use mars_types::{adapters::oracle::Oracle, oracle::ActionKind, traits::Stringify
 use crate::{
     error::{ContractError, ContractResult},
     health::query_health_values,
-    repay::current_debt_for_denom,
-    state::{ORACLE, PARAMS},
+    state::{ORACLE, PARAMS, RED_BANK},
 };
 
 /// Calculates precise debt, request coin amounts to liquidate, request coin transfered to liquidator and rewards-collector.
@@ -34,8 +33,13 @@ pub fn calculate_liquidation(
     }
 
     // Ensure debt repaid does not exceed liquidatee's total debt for denom
-    let (total_debt_amount, _) =
-        current_debt_for_denom(deps.as_ref(), liquidatee_account_id, &debt_coin.denom)?;
+    let red_bank = RED_BANK.load(deps.storage)?;
+    let total_debt_amount =
+        red_bank.query_debt(&deps.querier, &debt_coin.denom, liquidatee_account_id)?;
+
+    if total_debt_amount.is_zero() {
+        return Err(ContractError::NoDebt);
+    }
 
     let params = PARAMS.load(deps.storage)?;
     let target_health_factor = params.query_target_health_factor(&deps.querier)?;

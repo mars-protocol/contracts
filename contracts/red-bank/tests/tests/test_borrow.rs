@@ -14,6 +14,7 @@ use mars_red_bank::{
 use mars_testing::{mock_env, mock_env_at_block_time, MockEnvParams};
 use mars_types::{
     address_provider::MarsAddressType,
+    keys::{UserId, UserIdKey},
     params::{AssetParams, CmSettings, RedBankSettings},
     red_bank::{ExecuteMsg, Market},
 };
@@ -155,7 +156,10 @@ fn borrow_and_repay() {
     assert!(has_debt_position(deps.as_ref(), &borrower_addr, "uosmo"));
     assert!(!has_debt_position(deps.as_ref(), &borrower_addr, "uusd"));
 
-    let debt = DEBTS.load(&deps.storage, (&borrower_addr, "uosmo")).unwrap();
+    let user_id = UserId::credit_manager(borrower_addr.clone(), "".to_string());
+    let user_id_key: UserIdKey = user_id.try_into().unwrap();
+
+    let debt = DEBTS.load(&deps.storage, (&user_id_key, "uosmo")).unwrap();
     assert_eq!(expected_debt_scaled_1_after_borrow, debt.amount_scaled);
 
     let market_1_after_borrow = MARKETS.load(&deps.storage, "uosmo").unwrap();
@@ -193,7 +197,7 @@ fn borrow_and_repay() {
             ..Default::default()
         },
     );
-    let debt = DEBTS.load(&deps.storage, (&borrower_addr, "uosmo")).unwrap();
+    let debt = DEBTS.load(&deps.storage, (&user_id_key, "uosmo")).unwrap();
     let market_1_after_borrow_again = MARKETS.load(&deps.storage, "uosmo").unwrap();
 
     let expected_debt_scaled_1_after_borrow_again = expected_debt_scaled_1_after_borrow
@@ -268,7 +272,7 @@ fn borrow_and_repay() {
     );
     assert_eq!(res.events, vec![th_build_interests_updated_event("uusd", &expected_params_uusd)]);
 
-    let debt2 = DEBTS.load(&deps.storage, (&borrower_addr, "uusd")).unwrap();
+    let debt2 = DEBTS.load(&deps.storage, (&user_id_key, "uusd")).unwrap();
     assert_eq!(expected_debt_scaled_2_after_borrow_2, debt2.amount_scaled);
 
     let market_2_after_borrow_2 = MARKETS.load(&deps.storage, "uusd").unwrap();
@@ -347,7 +351,7 @@ fn borrow_and_repay() {
     assert!(has_debt_position(deps.as_ref(), &borrower_addr, "uosmo"));
     assert!(has_debt_position(deps.as_ref(), &borrower_addr, "uusd"));
 
-    let debt2 = DEBTS.load(&deps.storage, (&borrower_addr, "uusd")).unwrap();
+    let debt2 = DEBTS.load(&deps.storage, (&user_id_key, "uusd")).unwrap();
     let market_2_after_repay_some_2 = MARKETS.load(&deps.storage, "uusd").unwrap();
 
     let expected_debt_scaled_2_after_repay_some_2 =
@@ -770,7 +774,10 @@ fn borrow_uusd() {
 
     assert!(has_debt_position(deps.as_ref(), &borrower_addr, "uusd"));
 
-    let debt = DEBTS.load(&deps.storage, (&borrower_addr, "uusd")).unwrap();
+    let user_id = UserId::credit_manager(borrower_addr.clone(), "".to_string());
+    let user_id_key: UserIdKey = user_id.try_into().unwrap();
+
+    let debt = DEBTS.load(&deps.storage, (&user_id_key, "uusd")).unwrap();
 
     assert_eq!(
         valid_amount,
@@ -1070,8 +1077,11 @@ fn borrow_and_send_funds_to_another_user() {
     // 'borrower' has bit set for the borrowed asset of the market
     assert!(has_debt_position(deps.as_ref(), &borrower_addr, &market.denom));
 
+    let borrower_user_id = UserId::credit_manager(borrower_addr.clone(), "".to_string());
+    let borrower_user_id_key: UserIdKey = borrower_user_id.try_into().unwrap();
+
     // Debt for 'borrower' should exist
-    let debt = DEBTS.load(&deps.storage, (&borrower_addr, "uusd")).unwrap();
+    let debt = DEBTS.load(&deps.storage, (&borrower_user_id_key, "uusd")).unwrap();
     assert_eq!(
         borrow_amount,
         compute_underlying_amount(
@@ -1082,8 +1092,11 @@ fn borrow_and_send_funds_to_another_user() {
         .unwrap()
     );
 
+    let another_user_id = UserId::credit_manager(another_user_addr.clone(), "".to_string());
+    let another_user_id_key: UserIdKey = another_user_id.try_into().unwrap();
+
     // Debt for 'another_user' should not exist
-    let debt = DEBTS.may_load(&deps.storage, (&another_user_addr, "uusd")).unwrap();
+    let debt = DEBTS.may_load(&deps.storage, (&another_user_id_key, "uusd")).unwrap();
     assert!(debt.is_none());
 
     // Check msgs and attributes (funds should be sent to 'another_user')

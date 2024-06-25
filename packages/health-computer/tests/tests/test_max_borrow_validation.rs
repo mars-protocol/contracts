@@ -1,12 +1,12 @@
 use std::{collections::HashMap, str::FromStr};
 
-use cosmwasm_std::{coin, Addr, Decimal, Uint128};
+use cosmwasm_std::{coin, Addr, Coin, Decimal, Uint128};
 use mars_rover_health_computer::{DenomsData, HealthComputer, VaultsData};
 use mars_types::{
     adapters::vault::{
         CoinValue, Vault, VaultAmount, VaultPosition, VaultPositionAmount, VaultPositionValue,
     },
-    credit_manager::{DebtAmount, Positions},
+    credit_manager::Positions,
     health::{AccountKind, BorrowTarget, HealthError},
     params::{HlsParams, VaultConfig},
 };
@@ -38,14 +38,12 @@ fn missing_borrow_denom_price_data() {
             account_kind: AccountKind::Default,
             deposits: vec![coin(1200, &umars.denom), coin(33, &udai.denom)],
             debts: vec![
-                DebtAmount {
+                Coin {
                     denom: udai.denom.clone(),
-                    shares: Default::default(),
                     amount: Uint128::new(3100),
                 },
-                DebtAmount {
+                Coin {
                     denom: umars.denom,
-                    shares: Default::default(),
                     amount: Uint128::new(200),
                 },
             ],
@@ -87,14 +85,12 @@ fn missing_borrow_denom_params() {
             account_kind: AccountKind::Default,
             deposits: vec![coin(1200, &umars.denom), coin(33, &udai.denom)],
             debts: vec![
-                DebtAmount {
+                Coin {
                     denom: udai.denom,
-                    shares: Default::default(),
                     amount: Uint128::new(3100),
                 },
-                DebtAmount {
+                Coin {
                     denom: umars.denom.clone(),
-                    shares: Default::default(),
                     amount: Uint128::new(200),
                 },
             ],
@@ -139,14 +135,12 @@ fn cannot_borrow_when_unhealthy() {
             account_kind: AccountKind::Default,
             deposits: vec![coin(1200, &umars.denom), coin(33, &udai.denom)],
             debts: vec![
-                DebtAmount {
+                Coin {
                     denom: udai.denom.clone(),
-                    shares: Default::default(),
                     amount: Uint128::new(2500),
                 },
-                DebtAmount {
+                Coin {
                     denom: umars.denom,
-                    shares: Default::default(),
                     amount: Uint128::new(200),
                 },
             ],
@@ -222,14 +216,12 @@ fn hls_influences_max_borrow() {
 
             deposits: vec![coin(1200, &ustars.denom)],
             debts: vec![
-                DebtAmount {
+                Coin {
                     denom: udai.denom,
-                    shares: Default::default(),
                     amount: Uint128::new(3100),
                 },
-                DebtAmount {
+                Coin {
                     denom: ustars.denom.clone(),
-                    shares: Default::default(),
                     amount: Uint128::new(800),
                 },
             ],

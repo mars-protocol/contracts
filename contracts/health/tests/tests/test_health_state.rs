@@ -1,6 +1,6 @@
 use cosmwasm_std::{Coin, Decimal, Uint128};
 use mars_types::{
-    credit_manager::{DebtAmount, Positions},
+    credit_manager::Positions,
     health::{AccountKind, HealthState},
     oracle::ActionKind,
     params::AssetParamsUpdate::AddOrUpdate,
@@ -55,9 +55,8 @@ fn computing_health_when_healthy() {
                 denom: umars.to_string(),
                 amount: Uint128::new(100),
             }],
-            debts: vec![DebtAmount {
+            debts: vec![Coin {
                 denom: umars.to_string(),
-                shares: Default::default(),
                 amount: Uint128::new(30),
             }],
             lends: vec![],
@@ -91,9 +90,8 @@ fn computing_health_when_unhealthy() {
                 denom: umars.to_string(),
                 amount: Uint128::new(100),
             }],
-            debts: vec![DebtAmount {
+            debts: vec![Coin {
                 denom: umars.to_string(),
-                shares: Default::default(),
                 amount: Uint128::new(250),
             }],
             lends: vec![],

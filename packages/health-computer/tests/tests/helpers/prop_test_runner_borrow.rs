@@ -2,7 +2,6 @@ use cosmwasm_std::{Coin, Decimal, StdResult, Uint128};
 use mars_rover_health_computer::HealthComputer;
 use mars_types::{
     adapters::vault::{CoinValue, VaultPositionValue},
-    credit_manager::DebtAmount,
     health::BorrowTarget,
 };
 use proptest::{
@@ -78,9 +77,8 @@ fn add_borrow(
 ) -> StdResult<HealthComputer> {
     let mut new_h = h.clone();
 
-    new_h.positions.debts.push(DebtAmount {
+    new_h.positions.debts.push(Coin {
         denom: denom.to_string(),
-        shares: amount * Uint128::new(1000),
         amount,
     });
 

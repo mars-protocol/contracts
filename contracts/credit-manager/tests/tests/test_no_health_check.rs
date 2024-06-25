@@ -8,7 +8,7 @@ use mars_types::{
     oracle::ActionKind,
 };
 
-use super::helpers::{assert_err, get_coin, get_debt, uosmo_info, AccountToFund, MockEnv};
+use super::helpers::{assert_err, get_coin, uosmo_info, AccountToFund, MockEnv};
 
 #[test]
 fn deposit_and_repay_works_without_hf_check() {
@@ -44,7 +44,7 @@ fn deposit_and_repay_works_without_hf_check() {
     assert_eq!(position.deposits.len(), 1);
     assert_eq!(get_coin(&coin_info.denom, &position.deposits).amount, Uint128::new(350));
     assert_eq!(position.debts.len(), 1);
-    assert_eq!(get_debt(&coin_info.denom, &position.debts).amount, Uint128::new(51)); // +1 simulated interest
+    assert_eq!(get_coin(&coin_info.denom, &position.debts).amount, Uint128::new(51)); // +1 simulated interest
 
     let coin_balance = mock.query_balance(&mock.rover, &coin_info.denom);
     assert_eq!(coin_balance.amount, Uint128::new(350));
@@ -128,7 +128,7 @@ fn deposit_and_repay_works_without_hf_check() {
     assert_eq!(position.deposits.len(), 1);
     assert_eq!(get_coin(&coin_info.denom, &position.deposits).amount, Uint128::new(364));
     assert_eq!(position.debts.len(), 1);
-    assert_eq!(get_debt(&coin_info.denom, &position.debts).amount, Uint128::new(19));
+    assert_eq!(get_coin(&coin_info.denom, &position.debts).amount, Uint128::new(19));
 
     let coin_balance = mock.query_balance(&mock.rover, &coin_info.denom);
     assert_eq!(coin_balance.amount, Uint128::new(364));
@@ -168,7 +168,7 @@ fn withdraw_works_without_hf_check_if_no_debt() {
     assert_eq!(position.deposits.len(), 1);
     assert_eq!(get_coin(&coin_info.denom, &position.deposits).amount, Uint128::new(350));
     assert_eq!(position.debts.len(), 1);
-    assert_eq!(get_debt(&coin_info.denom, &position.debts).amount, Uint128::new(51)); // +1 simulated interest
+    assert_eq!(get_coin(&coin_info.denom, &position.debts).amount, Uint128::new(51)); // +1 simulated interest
 
     let coin_balance = mock.query_balance(&mock.rover, &coin_info.denom);
     assert_eq!(coin_balance.amount, Uint128::new(350));

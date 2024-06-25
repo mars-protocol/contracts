@@ -1,82 +1,43 @@
 use std::cmp::min;
 
 use cosmwasm_std::{
-    to_json_binary, BankMsg, Coin, CosmosMsg, Deps, DepsMut, Env, MessageInfo, Response, Uint128,
-    WasmMsg,
+    to_json_binary, BankMsg, Coin, CosmosMsg, DepsMut, Env, MessageInfo, Response, Uint128, WasmMsg,
 };
 use cw_utils::one_coin;
 use mars_types::credit_manager::{ActionCoin, CallbackMsg::Repay, ExecuteMsg};
 
 use crate::{
     error::{ContractError, ContractResult},
-    state::{COIN_BALANCES, DEBT_SHARES, RED_BANK, TOTAL_DEBT_SHARES},
-    utils::{debt_shares_to_amount, decrement_coin_balance, increment_coin_balance},
+    state::{COIN_BALANCES, RED_BANK},
+    utils::{decrement_coin_balance, increment_coin_balance},
 };
 
 pub fn repay(deps: DepsMut, account_id: &str, coin: &ActionCoin) -> ContractResult<Response> {
-    // Ensure repayment does not exceed max debt on account
-    let (debt_amount, debt_shares) =
-        current_debt_for_denom(deps.as_ref(), account_id, &coin.denom)?;
+    let red_bank = RED_BANK.load(deps.storage)?;
+    let debt_amount = red_bank.query_debt(&deps.querier, &coin.denom, account_id)?;
+
+    if debt_amount.is_zero() {
+        return Err(ContractError::NoDebt);
+    }
+
     let coin_balance =
         COIN_BALANCES.may_load(deps.storage, (account_id, &coin.denom))?.unwrap_or_default();
+
     let amount_to_repay = min(debt_amount, coin.amount.value().unwrap_or(coin_balance));
     let coin_to_repay = Coin {
         denom: coin.denom.to_string(),
         amount: amount_to_repay,
     };
-    let shares_to_repay = debt_amount_to_shares(deps.as_ref(), &coin_to_repay)?;
-
-    // Decrement token's debt position
-    if amount_to_repay == debt_amount {
-        DEBT_SHARES.remove(deps.storage, (account_id, &coin.denom));
-    } else {
-        DEBT_SHARES.save(
-            deps.storage,
-            (account_id, &coin.denom),
-            &debt_shares.checked_sub(shares_to_repay)?,
-        )?;
-    }
-
-    // Decrement total debt shares for coin
-    let total_debt_shares = TOTAL_DEBT_SHARES.load(deps.storage, &coin.denom)?;
-    TOTAL_DEBT_SHARES.save(
-        deps.storage,
-        &coin.denom,
-        &total_debt_shares.checked_sub(shares_to_repay)?,
-    )?;
 
     decrement_coin_balance(deps.storage, account_id, &coin_to_repay)?;
 
-    let red_bank = RED_BANK.load(deps.storage)?;
-    let red_bank_repay_msg = red_bank.repay_msg(&coin_to_repay)?;
+    let red_bank_repay_msg = red_bank.repay_msg(&coin_to_repay, account_id)?;
 
     Ok(Response::new()
         .add_message(red_bank_repay_msg)
         .add_attribute("action", "repay")
         .add_attribute("account_id", account_id)
-        .add_attribute("debt_shares_repaid", shares_to_repay)
         .add_attribute("coin_repaid", coin_to_repay.to_string()))
-}
-
-fn debt_amount_to_shares(deps: Deps, coin: &Coin) -> ContractResult<Uint128> {
-    let red_bank = RED_BANK.load(deps.storage)?;
-    let total_debt_shares = TOTAL_DEBT_SHARES.load(deps.storage, &coin.denom)?;
-    let total_debt_amount = red_bank.query_debt(&deps.querier, &coin.denom)?;
-    let shares = total_debt_shares.checked_multiply_ratio(coin.amount, total_debt_amount)?;
-    Ok(shares)
-}
-
-/// Get token's current total debt for denom
-/// Returns -> (debt amount, debt shares)
-pub fn current_debt_for_denom(
-    deps: Deps,
-    account_id: &str,
-    denom: &str,
-) -> ContractResult<(Uint128, Uint128)> {
-    let debt_shares =
-        DEBT_SHARES.load(deps.storage, (account_id, denom)).map_err(|_| ContractError::NoDebt)?;
-    let coin = debt_shares_to_amount(deps, denom, debt_shares)?;
-    Ok((coin.amount, debt_shares))
 }
 
 pub fn repay_for_recipient(
@@ -86,8 +47,8 @@ pub fn repay_for_recipient(
     recipient_account_id: &str,
     coin: ActionCoin,
 ) -> ContractResult<Response> {
-    let (debt_amount, _) =
-        current_debt_for_denom(deps.as_ref(), recipient_account_id, &coin.denom)?;
+    let red_bank = RED_BANK.load(deps.storage)?;
+    let debt_amount = red_bank.query_debt(&deps.querier, &coin.denom, recipient_account_id)?;
     let coin_balance = COIN_BALANCES
         .may_load(deps.storage, (benefactor_account_id, &coin.denom))?
         .unwrap_or_default();
@@ -125,7 +86,9 @@ pub fn repay_from_wallet(
 ) -> ContractResult<Response> {
     let coin_sent = one_coin(&info)?;
 
-    let (debt_amount, _) = current_debt_for_denom(deps.as_ref(), &account_id, &coin_sent.denom)?;
+    let red_bank = RED_BANK.load(deps.storage)?;
+    let debt_amount = red_bank.query_debt(&deps.querier, &coin_sent.denom, &account_id)?;
+
     let amount_to_repay = min(debt_amount, coin_sent.amount);
     let coin_to_repay = Coin {
         denom: coin_sent.denom.clone(),

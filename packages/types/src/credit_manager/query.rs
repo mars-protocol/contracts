@@ -8,7 +8,6 @@ use crate::{
         vault::{Vault, VaultPosition, VaultUnchecked},
     },
     health::AccountKind,
-    traits::Coins,
 };
 
 #[cw_serde]
@@ -49,21 +48,6 @@ pub enum QueryMsg {
     #[returns(Vec<CoinBalanceResponseItem>)]
     AllCoinBalances {
         start_after: Option<(String, String)>,
-        limit: Option<u32>,
-    },
-    /// Enumerate debt shares for all token positions; start_after accepts (account_id, denom)
-    #[returns(Vec<SharesResponseItem>)]
-    AllDebtShares {
-        start_after: Option<(String, String)>,
-        limit: Option<u32>,
-    },
-    /// Total debt shares issued for Coin
-    #[returns(DebtShares)]
-    TotalDebtShares(String),
-    /// Enumerate total debt shares for all supported coins; start_after accepts denom string
-    #[returns(Vec<DebtShares>)]
-    AllTotalDebtShares {
-        start_after: Option<String>,
         limit: Option<u32>,
     },
     /// Enumerate all vault positions; start_after accepts (account_id, addr)
@@ -112,50 +96,11 @@ pub struct CoinBalanceResponseItem {
 }
 
 #[cw_serde]
-pub struct SharesResponseItem {
-    pub account_id: String,
-    pub denom: String,
-    pub shares: Uint128,
-}
-
-#[cw_serde]
-pub struct DebtShares {
-    pub denom: String,
-    pub shares: Uint128,
-}
-
-#[cw_serde]
-pub struct LentShares {
-    pub denom: String,
-    pub shares: Uint128,
-}
-
-#[cw_serde]
-pub struct DebtAmount {
-    pub denom: String,
-    /// number of shares in debt pool
-    pub shares: Uint128,
-    /// amount of coins
-    pub amount: Uint128,
-}
-
-impl Coins for Vec<DebtAmount> {
-    fn to_coins(&self) -> Vec<Coin> {
-        self.iter()
-            .map(|d| Coin {
-                denom: d.denom.to_string(),
-                amount: d.amount,
-            })
-            .collect()
-    }
-}
-
-#[cw_serde]
 pub struct Positions {
     pub account_id: String,
     pub account_kind: AccountKind,
     pub deposits: Vec<Coin>,
-    pub debts: Vec<DebtAmount>,
+    pub debts: Vec<Coin>,
     pub lends: Vec<Coin>,
     pub vaults: Vec<VaultPosition>,
     pub staked_astro_lps: Vec<Coin>,

@@ -1,12 +1,12 @@
 use std::collections::HashMap;
 
-use cosmwasm_std::{coin, Addr, Uint128};
+use cosmwasm_std::{coin, Addr, Coin, Uint128};
 use mars_rover_health_computer::{DenomsData, HealthComputer, VaultsData};
 use mars_types::{
     adapters::vault::{
         CoinValue, Vault, VaultAmount, VaultPosition, VaultPositionAmount, VaultPositionValue,
     },
-    credit_manager::{DebtAmount, Positions},
+    credit_manager::Positions,
     health::{AccountKind, HealthError},
     params::VaultConfig,
 };
@@ -39,14 +39,12 @@ fn missing_price_data() {
 
             deposits: vec![coin(1200, &umars.denom), coin(33, &udai.denom)],
             debts: vec![
-                DebtAmount {
+                Coin {
                     denom: udai.denom.clone(),
-                    shares: Default::default(),
                     amount: Uint128::new(3100),
                 },
-                DebtAmount {
+                Coin {
                     denom: umars.denom,
-                    shares: Default::default(),
                     amount: Uint128::new(200),
                 },
             ],
@@ -88,14 +86,12 @@ fn missing_params() {
 
             deposits: vec![coin(1200, &umars.denom), coin(33, &udai.denom)],
             debts: vec![
-                DebtAmount {
+                Coin {
                     denom: udai.denom,
-                    shares: Default::default(),
                     amount: Uint128::new(3100),
                 },
-                DebtAmount {
+                Coin {
                     denom: umars.denom.clone(),
-                    shares: Default::default(),
                     amount: Uint128::new(200),
                 },
             ],
@@ -310,9 +306,8 @@ fn missing_hls_params() {
             account_kind: AccountKind::HighLeveredStrategy,
 
             deposits: vec![coin(1200, &umars.denom)],
-            debts: vec![DebtAmount {
+            debts: vec![Coin {
                 denom: umars.denom.clone(),
-                shares: Default::default(),
                 amount: Uint128::new(200),
             }],
             lends: vec![],

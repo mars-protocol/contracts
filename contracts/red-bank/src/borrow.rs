@@ -2,7 +2,7 @@ use cosmwasm_std::{DepsMut, Env, MessageInfo, Response, Uint128};
 use mars_interest_rate::{
     get_scaled_debt_amount, get_underlying_debt_amount, get_underlying_liquidity_amount,
 };
-use mars_types::{address_provider, address_provider::MarsAddressType};
+use mars_types::{address_provider, address_provider::MarsAddressType, error::MarsError};
 use mars_utils::helpers::build_send_asset_msg;
 
 use crate::{
@@ -22,6 +22,7 @@ pub fn borrow(
     denom: String,
     borrow_amount: Uint128,
     recipient: Option<String>,
+    account_id: Option<String>,
 ) -> Result<Response, ContractError> {
     let borrower = User(&info.sender);
 
@@ -43,6 +44,13 @@ pub fn borrow(
     let oracle_addr = &addresses[&MarsAddressType::Oracle];
     let params_addr = &addresses[&MarsAddressType::Params];
     let credit_manager_addr = &addresses[&MarsAddressType::CreditManager];
+
+    // Don't allow red-bank users to create alternative account ids.
+    // Only allow credit-manager contract to create them.
+    // Even if account_id contains empty string we won't allow it.
+    if account_id.is_some() && info.sender != credit_manager_addr {
+        return Err(ContractError::Mars(MarsError::Unauthorized {}));
+    }
 
     let asset_params = query_asset_params(&deps.querier, params_addr, &denom)?;
 
@@ -109,7 +117,13 @@ pub fn borrow(
         get_scaled_debt_amount(borrow_amount, &borrow_market, env.block.time.seconds())?;
 
     borrow_market.increase_debt(borrow_amount_scaled)?;
-    borrower.increase_debt(deps.storage, &denom, borrow_amount_scaled, uncollateralized_debt)?;
+    borrower.increase_debt(
+        deps.storage,
+        &denom,
+        borrow_amount_scaled,
+        uncollateralized_debt,
+        &account_id.clone().unwrap_or("".to_string()),
+    )?;
 
     response = update_interest_rates(&env, &mut borrow_market, response)?;
     MARKETS.save(deps.storage, &denom, &borrow_market)?;

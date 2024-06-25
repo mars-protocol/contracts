@@ -13,9 +13,8 @@ use crate::{
     instantiate::store_config,
     migrations,
     query::{
-        query_accounts, query_all_coin_balances, query_all_debt_shares,
-        query_all_total_debt_shares, query_all_vault_positions, query_all_vault_utilizations,
-        query_config, query_positions, query_total_debt_shares, query_vault_bindings,
+        query_accounts, query_all_coin_balances, query_all_vault_positions,
+        query_all_vault_utilizations, query_config, query_positions, query_vault_bindings,
         query_vault_position_value, query_vault_utilization,
     },
     repay::repay_from_wallet,
@@ -109,15 +108,6 @@ pub fn query(deps: Deps, env: Env, msg: QueryMsg) -> ContractResult<Binary> {
             start_after,
             limit,
         } => to_json_binary(&query_all_coin_balances(deps, start_after, limit)?),
-        QueryMsg::AllDebtShares {
-            start_after,
-            limit,
-        } => to_json_binary(&query_all_debt_shares(deps, start_after, limit)?),
-        QueryMsg::TotalDebtShares(denom) => to_json_binary(&query_total_debt_shares(deps, &denom)?),
-        QueryMsg::AllTotalDebtShares {
-            start_after,
-            limit,
-        } => to_json_binary(&query_all_total_debt_shares(deps, start_after, limit)?),
         QueryMsg::AllVaultPositions {
             start_after,
             limit,
@@ -145,5 +135,6 @@ pub fn migrate(deps: DepsMut, env: Env, msg: MigrateMsg) -> ContractResult<Respo
     match msg {
         MigrateMsg::V1_0_0ToV2_0_0(updates) => migrations::v2_0_0::migrate(deps, env, updates),
         MigrateMsg::V2_0_2ToV2_0_3 {} => migrations::v2_0_3::migrate(deps),
+        MigrateMsg::V2_0_3ToV2_0_4 {} => migrations::v2_0_4::migrate(deps),
     }
 }

@@ -151,7 +151,7 @@ pub fn get_user_positions_map(
         .keys(deps.storage, None, None, Order::Ascending)
         .collect::<StdResult<Vec<_>>>()?;
     let debt_denoms = DEBTS
-        .prefix(user_addr)
+        .prefix(&user_id_key)
         .keys(deps.storage, None, None, Order::Ascending)
         .collect::<StdResult<Vec<_>>>()?;
 
@@ -178,7 +178,7 @@ pub fn get_user_positions_map(
                 };
 
             let (debt_amount, uncollateralized_debt) =
-                match DEBTS.may_load(deps.storage, (user_addr, &denom))? {
+                match DEBTS.may_load(deps.storage, (&user_id_key, &denom))? {
                     Some(debt) => {
                         let debt_amount =
                             get_underlying_debt_amount(debt.amount_scaled, &market, block_time)?;

@@ -7,7 +7,7 @@ use mars_types::{
         CoinValue, LockingVaultAmount, UnlockingPositions, Vault, VaultAmount, VaultPosition,
         VaultPositionAmount, VaultPositionValue,
     },
-    credit_manager::{DebtAmount, Positions},
+    credit_manager::Positions,
     health::AccountKind,
     params::{AssetParams, CmSettings, HlsParams, LiquidationBonus, RedBankSettings, VaultConfig},
 };
@@ -212,7 +212,7 @@ fn random_coins(denoms_data: DenomsData) -> impl Strategy<Value = Vec<Coin>> {
     )
 }
 
-fn random_debts(denoms_data: DenomsData) -> impl Strategy<Value = Vec<DebtAmount>> {
+fn random_debts(denoms_data: DenomsData) -> impl Strategy<Value = Vec<Coin>> {
     let denoms = denoms_data.params.keys().cloned().collect::<Vec<String>>();
     let denoms_len = denoms.len();
     vec(
@@ -220,9 +220,8 @@ fn random_debts(denoms_data: DenomsData) -> impl Strategy<Value = Vec<DebtAmount
             let denom = denoms.get(index).unwrap().clone();
             let amount = Uint128::new(amount as u128);
 
-            DebtAmount {
+            Coin {
                 denom,
-                shares: amount * Uint128::new(10),
                 amount,
             }
         }),

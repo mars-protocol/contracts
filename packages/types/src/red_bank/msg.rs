@@ -74,9 +74,31 @@ pub enum ExecuteMsg {
         recipient: Option<String>,
     },
 
+    /// Borrow native coins. If borrow allowed, amount is added to caller's debt
+    /// and sent to the address.
+    BorrowV2 {
+        /// Credit account id (Rover)
+        account_id: Option<String>,
+        /// Asset to borrow
+        denom: String,
+        /// Amount to borrow
+        amount: Uint128,
+        /// The address where the borrowed amount is sent
+        recipient: Option<String>,
+    },
+
     /// Repay native coins loan. Coins used to repay must be sent in the
     /// transaction this call is made.
     Repay {
+        /// Repay the funds for the user
+        on_behalf_of: Option<String>,
+    },
+
+    /// Repay native coins loan. Coins used to repay must be sent in the
+    /// transaction this call is made.
+    RepayV2 {
+        /// Credit account id (Rover)
+        account_id: Option<String>,
         /// Repay the funds for the user
         on_behalf_of: Option<String>,
     },
@@ -120,6 +142,12 @@ pub struct InitOrUpdateAssetParams {
     pub interest_rate_model: Option<InterestRateModel>,
 }
 
+#[cw_serde]
+pub enum MigrateMsg {
+    V1_0_0ToV2_0_0 {},
+    V2_0_0ToV2_0_1 {},
+}
+
 /// Migrate from V1 to V2, only owner can call
 #[cw_serde]
 pub enum MigrateV1ToV2 {
@@ -129,6 +157,20 @@ pub enum MigrateV1ToV2 {
     },
     /// Clears old V1 state once all batches are migrated or after a certain time
     ClearV1State {},
+}
+
+/// Migrate from V2 to V2.0.1, only owner can call
+#[cw_serde]
+pub enum MigrateV2ToV2_0_1 {
+    /// Migrate debts in batches
+    Debts {
+        limit: u32,
+    },
+    CreditManagerDebts {
+        limit: u32,
+    },
+    /// Clears old V2 state once all batches are migrated or after a certain time
+    ClearV2State {},
 }
 
 #[cw_serde]
@@ -171,10 +213,27 @@ pub enum QueryMsg {
         denom: String,
     },
 
+    /// Get user debt position for a specific asset
+    #[returns(crate::red_bank::UserDebtResponse)]
+    UserDebtV2 {
+        user: String,
+        account_id: Option<String>,
+        denom: String,
+    },
+
     /// Get all debt positions for a user
     #[returns(Vec<crate::red_bank::UserDebtResponse>)]
     UserDebts {
         user: String,
+        start_after: Option<String>,
+        limit: Option<u32>,
+    },
+
+    /// Get all debt positions for a user with pagination
+    #[returns(cw_paginate::PaginationResponse<crate::red_bank::UserDebtResponse>)]
+    UserDebtsV2 {
+        user: String,
+        account_id: Option<String>,
         start_after: Option<String>,
         limit: Option<u32>,
     },

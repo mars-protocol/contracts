@@ -1,7 +1,7 @@
-use std::ops::{Mul, Sub};
+use std::ops::Sub;
 
 use cosmwasm_std::{coin, coins, Addr, Uint128};
-use mars_credit_manager::{borrow::DEFAULT_DEBT_SHARES_PER_COIN_BORROWED, error::ContractError};
+use mars_credit_manager::error::ContractError;
 use mars_types::credit_manager::Action::{Borrow, Deposit};
 
 use super::helpers::{
@@ -141,12 +141,11 @@ fn success_when_new_debt_asset() {
     );
     assert_eq!(asset_res.denom, coin_info.denom);
 
-    let debt_shares_res = position.debts.first().unwrap();
+    let debts_res = position.debts.first().unwrap();
     assert_eq!(position.debts.len(), 1);
-    assert_eq!(debt_shares_res.shares, Uint128::new(42).mul(DEFAULT_DEBT_SHARES_PER_COIN_BORROWED));
-    assert_eq!(debt_shares_res.denom, coin_info.denom);
+    assert_eq!(debts_res.denom, coin_info.denom);
     let debt_amount = Uint128::new(42) + Uint128::new(1); // simulated interest
-    assert_eq!(debt_shares_res.amount, debt_amount);
+    assert_eq!(debts_res.amount, debt_amount);
 
     let coin = mock.query_balance(&mock.rover, &coin_info.denom);
     assert_eq!(coin.amount, Uint128::new(342));
@@ -154,13 +153,10 @@ fn success_when_new_debt_asset() {
     let config = mock.query_config();
     let coin = mock.query_balance(&Addr::unchecked(config.red_bank), &coin_info.denom);
     assert_eq!(coin.amount, DEFAULT_RED_BANK_COIN_BALANCE.sub(Uint128::new(42)));
-
-    let res = mock.query_total_debt_shares(&coin_info.denom);
-    assert_eq!(res.shares, Uint128::new(42).mul(DEFAULT_DEBT_SHARES_PER_COIN_BORROWED));
 }
 
 #[test]
-fn debt_shares_with_debt_amount() {
+fn debt_with_debt_amount() {
     let coin_info = uosmo_info();
     let user_a = Addr::unchecked("user_a");
     let user_b = Addr::unchecked("user_b");
@@ -187,8 +183,6 @@ fn debt_shares_with_debt_amount() {
     )
     .unwrap();
 
-    let interim_red_bank_debt = mock.query_red_bank_debt(&coin_info.denom);
-
     mock.update_credit_account(
         &account_id_b,
         &user_b,
@@ -197,21 +191,13 @@ fn debt_shares_with_debt_amount() {
     )
     .unwrap();
 
-    let token_a_shares = Uint128::new(50).mul(DEFAULT_DEBT_SHARES_PER_COIN_BORROWED);
     let position = mock.query_positions(&account_id_a);
     let debt_position_a = position.debts.first().unwrap();
-    assert_eq!(debt_position_a.shares, token_a_shares.clone());
+    assert_eq!(debt_position_a.amount, Uint128::new(50) + Uint128::one()); // simulated interest
     assert_eq!(debt_position_a.denom, coin_info.denom);
 
-    let token_b_shares = Uint128::new(50)
-        .mul(DEFAULT_DEBT_SHARES_PER_COIN_BORROWED)
-        .multiply_ratio(Uint128::new(50), interim_red_bank_debt.amount);
     let position = mock.query_positions(&account_id_b);
     let debt_position_b = position.debts.first().unwrap();
-    assert_eq!(debt_position_b.shares, token_b_shares.clone());
+    assert_eq!(debt_position_b.amount, Uint128::new(50) + Uint128::one()); // simulated interest
     assert_eq!(debt_position_b.denom, coin_info.denom);
-
-    let total = mock.query_total_debt_shares(&coin_info.denom);
-
-    assert_eq!(total.shares, debt_position_a.shares + debt_position_b.shares);
 }

@@ -2,7 +2,7 @@ use std::str::FromStr;
 
 use cosmwasm_std::{Coin, Decimal, StdError, Uint128};
 use mars_types::{
-    credit_manager::{DebtAmount, Positions},
+    credit_manager::Positions,
     health::AccountKind,
     oracle::ActionKind,
     params::{
@@ -60,9 +60,8 @@ fn uses_liquidation_pricing() {
                 denom: umars.to_string(),
                 amount: Uint128::new(30),
             }],
-            debts: vec![DebtAmount {
+            debts: vec![Coin {
                 denom: umars.to_string(),
-                shares: Default::default(),
                 amount: Uint128::new(2),
             }],
             lends: vec![],

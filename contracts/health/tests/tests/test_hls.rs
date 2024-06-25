@@ -1,9 +1,9 @@
 use std::str::FromStr;
 
-use cosmwasm_std::{Decimal, Uint128};
+use cosmwasm_std::{Coin, Decimal, Uint128};
 use mars_types::{
     adapters::vault::{Vault, VaultAmount, VaultPosition, VaultPositionAmount},
-    credit_manager::{DebtAmount, Positions},
+    credit_manager::Positions,
     health::AccountKind,
     oracle::ActionKind,
     params::AssetParamsUpdate::AddOrUpdate,
@@ -30,9 +30,8 @@ fn hls_account_kind_passed_along() {
         account_id: account_id.to_string(),
         account_kind: AccountKind::Default,
         deposits: vec![],
-        debts: vec![DebtAmount {
+        debts: vec![Coin {
             denom: debt_token.to_string(),
-            shares: Uint128::new(10_000_000),
             amount: Uint128::new(50),
         }],
         lends: vec![],
