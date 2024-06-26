@@ -215,6 +215,23 @@ fn random_coins(denoms_data: DenomsData) -> impl Strategy<Value = Vec<Coin>> {
     )
 }
 
+fn random_astro_lp_coins(denoms_data: DenomsData) -> impl Strategy<Value = Vec<Coin>> {
+    let denoms = denoms_data.params.keys().cloned().collect::<Vec<String>>();
+    let denoms_len = denoms.len();
+    vec(
+        (0..denoms_len, 1..=10000000).prop_map(move |(index, amount)| {
+            let denom = denoms.get(index).unwrap().clone();
+            let amount = Uint128::new(amount as u128);
+
+            Coin {
+                denom: format!("factory/{}/astroport/share", denom),
+                amount,
+            }
+        }),
+        0..denoms_len,
+    )
+}
+
 fn random_debts(denoms_data: DenomsData) -> impl Strategy<Value = Vec<DebtAmount>> {
     let denoms = denoms_data.params.keys().cloned().collect::<Vec<String>>();
     let denoms_len = denoms.len();
@@ -278,20 +295,23 @@ pub fn random_health_computer() -> impl Strategy<Value = HealthComputer> {
             random_debts(denoms_data.clone()),
             random_coins(denoms_data.clone()),
             random_vault_positions(vaults_data.clone()),
+            random_astro_lp_coins(denoms_data.clone()),
         )
-            .prop_map(move |(kind, deposits, debts, lends, vaults)| HealthComputer {
-                kind: kind.clone(),
-                positions: Positions {
-                    account_id: "123".to_string(),
-                    account_kind: kind,
-                    deposits,
-                    debts,
-                    lends,
-                    vaults,
-                    staked_astro_lps: vec![],
-                },
-                denoms_data: denoms_data.clone(),
-                vaults_data: vaults_data.clone(),
+            .prop_map(move |(kind, deposits, debts, lends, vaults, staked_astro_lps)| {
+                HealthComputer {
+                    kind: kind.clone(),
+                    positions: Positions {
+                        account_id: "123".to_string(),
+                        account_kind: kind,
+                        deposits,
+                        debts,
+                        lends,
+                        vaults,
+                        staked_astro_lps,
+                    },
+                    denoms_data: denoms_data.clone(),
+                    vaults_data: vaults_data.clone(),
+                }
             })
     })
 }
