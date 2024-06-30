@@ -13,7 +13,7 @@ Neutrond is the daemon for the neutron blockchain. To install, follow [this docu
 The benefit is that you will be more secure of a signer
 The downsides are that:
 a. Some Ledgers are not able to sign large messages such as contract uploads
-b. If you are travelling a lot it's best to leave your hardware wallet at home in a secure place, and so if this is the case it might actually be more secure to have a hot wallet as hardware wallets are easily recognisable in airport security etc.
+b. If you are traveling a lot it's best to leave your hardware wallet at home in a secure place, and so if this is the case it might actually be more secure to have a hot wallet as hardware wallets are easily recognisable in airport security etc.
 
 ```bash
 neutrond keys add [name]_ntrn
@@ -21,7 +21,7 @@ neutrond keys add [name]_ntrn
 
 2. Note down the mnemonic - it is important that you are able to recover this account as a multisig signer.
 
-3. Send a small amount of funds to the address to register it. In testnet you can do this by visiting the facuet [here](https://t.me/+SyhWrlnwfCw2NGM6)
+3. Send a small amount of funds to the address to register it. In testnet you can do this by visiting the faucet [here](https://t.me/+SyhWrlnwfCw2NGM6)
 
 ## Set up the multisig on your local network
 
@@ -29,7 +29,7 @@ _Steps 2-4 must be completed by ALL multisig holders to properly set up their lo
 
 1. Generate the public keys of each of the 5 multisig holder's wallets. In order to generate a public key, the wallet must be active and have made at least one transaction on the specified network to return a public key.
 
-To do a send transaction of 1 NTRN to anoter account you can use the command:
+To do a send transaction of 1 NTRN to another account you can use the command:
 
 ```bash
 neutrond tx bank send [name]_ntrn [to_address] 1000000untrn --node=[rpc node] --chain-id=[chain id]
@@ -65,7 +65,7 @@ neutrond query account [address] --node=[node_URL]
    neutrond keys show neutron_multisig
    ```
 
-5. Update the config with the new mutlisig address in `red-bank/scripts/deploy/neutron/config`, which will set the owner and admin of the smart contracts to the multisig upon deployment.
+5. Update the config with the new multisig address in `red-bank/scripts/deploy/neutron/config`, which will set the owner and admin of the smart contracts to the multisig upon deployment.
 
 ## Set up environment variables
 

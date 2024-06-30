@@ -38,7 +38,7 @@ _Steps 2-4 must be completed by ALL multisig holders to properly set up their lo
    osmosisd keys show osmosis_multisig
    ```
 
-5. Update the config with the new mutlisig address in `red-bank/scripts/deploy/osmosis/config`, which will set the owner and admin of the smart contracts to the multisig upon deployment.
+5. Update the config with the new multisig address in `red-bank/scripts/deploy/osmosis/config`, which will set the owner and admin of the smart contracts to the multisig upon deployment.
 
 ## Set up environment variables
 
