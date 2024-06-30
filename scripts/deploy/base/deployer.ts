@@ -837,7 +837,7 @@ export class Deployer {
       },
     }
     await this.cwClient.execute(this.deployerAddr, this.storage.addresses.incentives!, msg, 'auto')
-    printYellow('Owner updated to Mutlisig for Incentives')
+    printYellow('Owner updated to Multisig for Incentives')
     const incentivesConfig = (await this.cwClient.queryContractSmart(
       this.storage.addresses.incentives!,
       {
@@ -860,7 +860,7 @@ export class Deployer {
       },
     }
     await this.cwClient.execute(this.deployerAddr, this.storage.addresses['redBank']!, msg, 'auto')
-    printYellow('Owner updated to Mutlisig for Red Bank')
+    printYellow('Owner updated to Multisig for Red Bank')
     const redbankConfig = (await this.cwClient.queryContractSmart(
       this.storage.addresses['redBank']!,
       {
@@ -882,7 +882,7 @@ export class Deployer {
       },
     }
     await this.cwClient.execute(this.deployerAddr, this.storage.addresses.oracle!, msg, 'auto')
-    printYellow('Owner updated to Mutlisig for Oracle')
+    printYellow('Owner updated to Multisig for Oracle')
     const oracleConfig = (await this.cwClient.queryContractSmart(this.storage.addresses.oracle!, {
       config: {},
     })) as { proposed_new_owner: string }
@@ -906,7 +906,7 @@ export class Deployer {
       msg,
       'auto',
     )
-    printYellow('Owner updated to Mutlisig for Rewards Collector')
+    printYellow('Owner updated to Multisig for Rewards Collector')
     const rewardsConfig = (await this.cwClient.queryContractSmart(
       this.storage.addresses['rewardsCollector']!,
       {
@@ -928,7 +928,7 @@ export class Deployer {
       },
     }
     await this.cwClient.execute(this.deployerAddr, this.storage.addresses.swapper!, msg, 'auto')
-    printYellow('Owner updated to Mutlisig for Swapper')
+    printYellow('Owner updated to Multisig for Swapper')
     const swapperConfig = (await this.cwClient.queryContractSmart(this.storage.addresses.swapper!, {
       owner: {},
     })) as { proposed: string }
@@ -947,7 +947,7 @@ export class Deployer {
       },
     }
     await this.cwClient.execute(this.deployerAddr, this.storage.addresses.params!, msg, 'auto')
-    printYellow('Owner updated to Mutlisig for Params')
+    printYellow('Owner updated to Multisig for Params')
     const paramsConfig = (await this.cwClient.queryContractSmart(this.storage.addresses.params!, {
       owner: {},
     })) as { proposed: string }
@@ -971,7 +971,7 @@ export class Deployer {
       msg,
       'auto',
     )
-    printYellow('Owner updated to Mutlisig for Rewards Collector')
+    printYellow('Owner updated to Multisig for Rewards Collector')
     const addressProviderConfig = (await this.cwClient.queryContractSmart(
       this.storage.addresses['addressProvider']!,
       {
