@@ -7,13 +7,11 @@ use mars_types::{
 use crate::{
     error::{ContractError, ContractResult},
     state::{COIN_BALANCES, SWAPPER},
-    utils::{
-        assert_coin_is_whitelisted, assert_slippage, decrement_coin_balance, update_balance_msg,
-    },
+    utils::{assert_slippage, decrement_coin_balance, update_balance_msg},
 };
 
 pub fn swap_exact_in(
-    mut deps: DepsMut,
+    deps: DepsMut,
     env: Env,
     account_id: &str,
     coin_in: &ActionCoin,
@@ -22,8 +20,6 @@ pub fn swap_exact_in(
     route: Option<SwapperRoute>,
 ) -> ContractResult<Response> {
     assert_slippage(deps.storage, slippage)?;
-
-    assert_coin_is_whitelisted(&mut deps, denom_out)?;
 
     let coin_in_to_trade = Coin {
         denom: coin_in.denom.clone(),

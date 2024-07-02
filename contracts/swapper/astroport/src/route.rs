@@ -1,6 +1,6 @@
 use std::{fmt, str::FromStr};
 
-use astroport::{asset::AssetInfo, pair::MAX_ALLOWED_SLIPPAGE, router::SwapOperation};
+use astroport_v5::{asset::AssetInfo, pair::MAX_ALLOWED_SLIPPAGE, router::SwapOperation};
 use cosmwasm_schema::cw_serde;
 use cosmwasm_std::{
     to_json_binary, Coin, CosmosMsg, Decimal, Empty, Env, QuerierWrapper, QueryRequest, StdError,
@@ -213,7 +213,7 @@ impl Route<Empty, Empty, AstroportConfig> for AstroportRoute {
 
         let swap_msg: CosmosMsg = WasmMsg::Execute {
             contract_addr: self.router.clone(),
-            msg: to_json_binary(&astroport::router::ExecuteMsg::ExecuteSwapOperations {
+            msg: to_json_binary(&astroport_v5::router::ExecuteMsg::ExecuteSwapOperations {
                 operations: self.operations.clone(),
                 minimum_receive,
                 to: None,

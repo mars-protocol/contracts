@@ -35,12 +35,14 @@ pub fn borrow(
             MarsAddressType::Incentives,
             MarsAddressType::RewardsCollector,
             MarsAddressType::Params,
+            MarsAddressType::CreditManager,
         ],
     )?;
     let rewards_collector_addr = &addresses[&MarsAddressType::RewardsCollector];
     let incentives_addr = &addresses[&MarsAddressType::Incentives];
     let oracle_addr = &addresses[&MarsAddressType::Oracle];
     let params_addr = &addresses[&MarsAddressType::Params];
+    let credit_manager_addr = &addresses[&MarsAddressType::CreditManager];
 
     let asset_params = query_asset_params(&deps.querier, params_addr, &denom)?;
 
@@ -72,11 +74,9 @@ pub fn borrow(
         });
     }
 
-    let uncollateralized_loan_limit = borrower.uncollateralized_loan_limit(deps.storage, &denom)?;
-
     // Check if user can borrow specified amount
     let mut uncollateralized_debt = false;
-    if uncollateralized_loan_limit.is_zero() {
+    if info.sender != credit_manager_addr {
         if !assert_below_max_ltv_after_borrow(
             &deps.as_ref(),
             &env,
@@ -90,22 +90,7 @@ pub fn borrow(
             return Err(ContractError::BorrowAmountExceedsGivenCollateral {});
         }
     } else {
-        // Uncollateralized loan: check borrow amount plus debt does not exceed uncollateralized loan limit
         uncollateralized_debt = true;
-
-        let debt_amount_scaled = borrower.debt_amount_scaled(deps.storage, &denom)?;
-
-        let asset_market = MARKETS.load(deps.storage, &denom)?;
-        let debt_amount = get_underlying_debt_amount(
-            debt_amount_scaled,
-            &asset_market,
-            env.block.time.seconds(),
-        )?;
-
-        let debt_after_borrow = debt_amount.checked_add(borrow_amount)?;
-        if debt_after_borrow > uncollateralized_loan_limit {
-            return Err(ContractError::BorrowAmountExceedsUncollateralizedLoanLimit {});
-        }
     }
 
     let mut response = Response::new();

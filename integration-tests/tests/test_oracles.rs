@@ -1268,7 +1268,6 @@ fn setup_redbank(wasm: &Wasm<OsmosisTestApp>, signer: &SigningAccount) -> (Strin
             address_provider: addr_provider_addr.clone(),
             epoch_duration: 604800, // 1 week in seconds
             max_whitelisted_denoms: 10,
-            mars_denom: "umars".to_string(),
         },
     );
 
@@ -1360,6 +1359,18 @@ fn setup_redbank(wasm: &Wasm<OsmosisTestApp>, signer: &SigningAccount) -> (Strin
         &addr_provider_addr,
         &SetAddress {
             address_type: MarsAddressType::CreditManager,
+            address: params_addr.clone(),
+        },
+        &[],
+        signer,
+    )
+    .unwrap();
+
+    // We can simulate Astroport incentives contract deposits with own params address (we don't check deposit caps for Astroport incentives contract so it's safe to use params address here)
+    wasm.execute(
+        &addr_provider_addr,
+        &SetAddress {
+            address_type: MarsAddressType::AstroportIncentives,
             address: params_addr.clone(),
         },
         &[],

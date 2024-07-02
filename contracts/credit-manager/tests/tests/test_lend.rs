@@ -8,7 +8,7 @@ use mars_types::credit_manager::{
 };
 
 use super::helpers::{
-    assert_err, blacklisted_coin, coin_info, uosmo_info, AccountToFund, MockEnv,
+    assert_err, blacklisted_coin_info, coin_info, uosmo_info, AccountToFund, MockEnv,
     DEFAULT_RED_BANK_COIN_BALANCE,
 };
 
@@ -38,7 +38,7 @@ fn only_token_owner_can_lend() {
 
 #[test]
 fn can_only_lend_what_is_whitelisted() {
-    let coin_info = blacklisted_coin();
+    let coin_info = blacklisted_coin_info();
     let user = Addr::unchecked("user");
     let mut mock = MockEnv::new().set_params(&[coin_info.clone()]).build().unwrap();
     let account_id = mock.create_credit_account(&user).unwrap();

@@ -75,8 +75,8 @@ export const atomOracle: OracleConfig = {
       price_feed_id: pythAtomID,
       denom_decimals: 6,
       max_staleness: 60,
-      max_confidence: '0.1', // FIXME: provide correct values
-      max_deviation: '0.1', // FIXME: provide correct values
+      max_confidence: '0.1',
+      max_deviation: '0.15',
     },
   },
 }
@@ -89,8 +89,8 @@ export const axlUSDCOracle: OracleConfig = {
       price_feed_id: pythUsdcID,
       denom_decimals: 6,
       max_staleness: 60,
-      max_confidence: '0.1', // FIXME: provide correct values
-      max_deviation: '0.1', // FIXME: provide correct values
+      max_confidence: '0.1',
+      max_deviation: '0.15',
     },
   },
 }

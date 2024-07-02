@@ -38,19 +38,6 @@ pub enum ExecuteMsg {
         params: InitOrUpdateAssetParams,
     },
 
-    /// Update uncollateralized loan limit for a given user and asset.
-    /// Overrides previous value if any. A limit of zero means no
-    /// uncollateralized limit and the debt in that asset needs to be
-    /// collateralized (only owner can call)
-    UpdateUncollateralizedLoanLimit {
-        /// Address that receives the credit
-        user: String,
-        /// Asset the user receives the credit in
-        denom: String,
-        /// Limit for the uncolateralize loan.
-        new_limit: Uint128,
-    },
-
     /// Deposit native coins. Deposited coins must be sent in the transaction
     /// this call is made
     Deposit {
@@ -157,6 +144,12 @@ pub enum QueryMsg {
         denom: String,
     },
 
+    /// Get asset market with underlying collateral and debt amount
+    #[returns(crate::red_bank::MarketV2Response)]
+    MarketV2 {
+        denom: String,
+    },
+
     /// Enumerate markets with pagination
     #[returns(Vec<crate::red_bank::Market>)]
     Markets {
@@ -164,17 +157,9 @@ pub enum QueryMsg {
         limit: Option<u32>,
     },
 
-    /// Get uncollateralized limit for given user and asset
-    #[returns(crate::red_bank::UncollateralizedLoanLimitResponse)]
-    UncollateralizedLoanLimit {
-        user: String,
-        denom: String,
-    },
-
-    /// Get all uncollateralized limits for a given user
-    #[returns(Vec<crate::red_bank::UncollateralizedLoanLimitResponse>)]
-    UncollateralizedLoanLimits {
-        user: String,
+    /// Enumerate marketsV2 with pagination
+    #[returns(cw_paginate::PaginationResponse<crate::red_bank::MarketV2Response>)]
+    MarketsV2 {
         start_after: Option<String>,
         limit: Option<u32>,
     },
@@ -267,10 +252,4 @@ pub enum QueryMsg {
         denom: String,
         amount_scaled: Uint128,
     },
-}
-
-#[cw_serde]
-pub enum MigrateMsg {
-    V1_0_0ToV2_0_0 {},
-    V2_0_0ToV2_0_1 {},
 }

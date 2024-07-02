@@ -1,8 +1,13 @@
-use cosmwasm_std::{Decimal, Timestamp, Uint128};
-use mars_incentives::state::{EMISSIONS, INCENTIVE_STATES};
+use astroport_v5::asset::Asset;
+use cosmwasm_std::{Addr, Coin, Decimal, Timestamp, Uint128};
+use mars_incentives::state::{
+    ASTRO_INCENTIVE_STATES, ASTRO_TOTAL_LP_DEPOSITS, ASTRO_USER_LP_DEPOSITS, EMISSIONS,
+    INCENTIVE_STATES,
+};
 use mars_testing::{mock_env, MockEnvParams};
 use mars_types::incentives::{
-    ActiveEmission, EmissionResponse, IncentiveState, IncentiveStateResponse, QueryMsg,
+    ActiveEmission, EmissionResponse, IncentiveState, IncentiveStateResponse,
+    PaginatedStakedLpResponse, QueryMsg, StakedLpPositionResponse,
 };
 use test_case::test_case;
 
@@ -308,4 +313,96 @@ fn query_active_emissions(query_at_time: u64) -> Vec<(String, Uint128)> {
     .into_iter()
     .map(|x| (x.denom, x.emission_rate))
     .collect()
+}
+
+#[test]
+fn query_staked_lp_positions_with_pagination() {
+    let mut deps = th_setup();
+
+    let astroport_incentives_addr = Addr::unchecked("astroport_incentives");
+    deps.querier.set_astroport_incentives_address(astroport_incentives_addr.clone());
+
+    let mut count = 0;
+    let account_id = "1".to_string();
+
+    // save 50 different deposits
+    while count < 50 {
+        count += 1;
+        ASTRO_USER_LP_DEPOSITS
+            .save(deps.as_mut().storage, (&account_id, &count.to_string()), &Uint128::new(count))
+            .unwrap();
+    }
+
+    let page_1: PaginatedStakedLpResponse = th_query(
+        deps.as_ref(),
+        QueryMsg::StakedAstroLpPositions {
+            account_id: account_id.clone(),
+            start_after: None,
+            limit: Some(51),
+        },
+    );
+
+    // ensure we cap to 10
+    assert_eq!(page_1.data.len(), 10);
+
+    let page_2: PaginatedStakedLpResponse = th_query(
+        deps.as_ref(),
+        QueryMsg::StakedAstroLpPositions {
+            account_id: account_id.clone(),
+            start_after: page_1.data.last().map(|x| x.lp_coin.denom.clone()),
+            limit: None,
+        },
+    );
+
+    // Default length should be 5.
+    assert_eq!(page_2.data.len(), 5);
+
+    // Pages are sorted alphabetically (1, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 2, 20)
+    assert_eq!(page_2.data.first().map(|x| x.lp_coin.denom.clone()), Some("19".to_string()));
+}
+
+#[test]
+fn query_staked_astro_lp_position() {
+    let env = mock_env(MockEnvParams {
+        block_time: Timestamp::from_seconds(1),
+        ..Default::default()
+    });
+    let mut deps = th_setup();
+    let account_id = "1".to_string();
+    let lp_denom = "uastro".to_string();
+    let reward_denom = "uusdc".to_string();
+    let reward_amount = Uint128::new(100u128);
+    let reward_coin = Coin {
+        denom: reward_denom.clone(),
+        amount: reward_amount,
+    };
+
+    let astroport_incentives_addr = Addr::unchecked("astroport_incentives");
+    deps.querier.set_astroport_incentives_address(astroport_incentives_addr.clone());
+    deps.querier.set_unclaimed_astroport_lp_rewards(
+        &lp_denom,
+        env.contract.address.as_ref(),
+        vec![Asset::from(reward_coin.clone())],
+    );
+    ASTRO_TOTAL_LP_DEPOSITS.save(deps.as_mut().storage, &lp_denom, &Uint128::new(100u128)).unwrap();
+    ASTRO_USER_LP_DEPOSITS
+        .save(deps.as_mut().storage, (&account_id, &lp_denom), &Uint128::new(100u128))
+        .unwrap();
+    ASTRO_INCENTIVE_STATES
+        .save(deps.as_mut().storage, (&lp_denom, &reward_denom), &Decimal::zero())
+        .unwrap();
+
+    let res: StakedLpPositionResponse = th_query(
+        deps.as_ref(),
+        QueryMsg::StakedAstroLpPosition {
+            account_id: account_id.clone(),
+            lp_denom: lp_denom.clone(),
+        },
+    );
+
+    assert_eq!(res.lp_coin.denom, "uastro".to_string());
+    assert_eq!(res.lp_coin.amount, Uint128::new(100u128));
+    assert_eq!(res.rewards[0].amount, reward_coin.amount);
+    assert_eq!(res.rewards[0].denom, reward_coin.denom);
+    assert_eq!(res.rewards.len(), 1);
 }

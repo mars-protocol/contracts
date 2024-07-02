@@ -3,7 +3,7 @@ use std::{collections::HashMap, str::FromStr};
 use cosmwasm_std::{
     attr, coin,
     testing::{mock_dependencies, mock_env, mock_info},
-    to_binary, Addr, Decimal, SubMsg, Uint128, WasmMsg,
+    to_json_binary, Addr, Decimal, SubMsg, Uint128, WasmMsg,
 };
 use cw_utils::PaymentError;
 use mars_red_bank::{contract::execute, error::ContractError};
@@ -32,16 +32,39 @@ use super::helpers::{
 
 #[test]
 fn cannot_self_liquidate() {
-    let mut deps = mock_dependencies();
-    let env = mock_env();
-    let info = mock_info("liquidator", &[coin(100, "somecoin")]);
-    let msg = ExecuteMsg::Liquidate {
-        user: "liquidator".to_string(),
-        collateral_denom: "collateral".to_string(),
-        recipient: None,
-    };
-    let error_res = execute(deps.as_mut(), env, info, msg).unwrap_err();
-    assert_eq!(error_res, ContractError::CannotLiquidateSelf {});
+    let mut mock_env = MockEnvBuilder::new(None, Addr::unchecked("owner")).build();
+
+    let red_bank = mock_env.red_bank.clone();
+
+    let (_, _, _, liquidator) = setup_env(&mut mock_env);
+
+    let error_res = red_bank.liquidate(
+        &mut mock_env,
+        &liquidator,
+        &liquidator,
+        "ujake",
+        &[coin(1000, "uusdc")],
+    );
+    assert_err(error_res, ContractError::CannotLiquidateSelf {});
+}
+
+#[test]
+fn cannot_liquidate_credit_manager() {
+    let mut mock_env = MockEnvBuilder::new(None, Addr::unchecked("owner")).build();
+
+    let red_bank = mock_env.red_bank.clone();
+    let credit_manager = mock_env.credit_manager.clone();
+
+    let (_, _, _, liquidator) = setup_env(&mut mock_env);
+
+    let error_res = red_bank.liquidate(
+        &mut mock_env,
+        &liquidator,
+        &credit_manager,
+        "ujake",
+        &[coin(1000, "uusdc")],
+    );
+    assert_err(error_res, ContractError::CannotLiquidateCreditManager {});
 }
 
 #[test]
@@ -805,68 +828,6 @@ fn mdr_negative() {
 }
 
 #[test]
-fn liquidate_uncollateralized_loan() {
-    let owner = Addr::unchecked("owner");
-    let mut mock_env = MockEnvBuilder::new(None, owner.clone()).build();
-
-    // setup oracle and red-bank
-    let oracle = mock_env.oracle.clone();
-    oracle.set_price_source_fixed(&mut mock_env, "uatom", Decimal::from_ratio(14u128, 1u128));
-    oracle.set_price_source_fixed(&mut mock_env, "uusdc", Decimal::one());
-    let red_bank = mock_env.red_bank.clone();
-    let params = mock_env.params.clone();
-    let (market_params, asset_params) =
-        default_asset_params_with("uusdc", Decimal::percent(70), Decimal::percent(78));
-    red_bank.init_asset(&mut mock_env, "uusdc", market_params);
-    params.init_params(&mut mock_env, asset_params);
-    let (market_params, asset_params) =
-        default_asset_params_with("uatom", Decimal::percent(70), Decimal::percent(78));
-    red_bank.init_asset(&mut mock_env, "uatom", market_params);
-    params.init_params(&mut mock_env, asset_params);
-
-    // fund provider account with usdc
-    let provider = Addr::unchecked("provider");
-    let funded_usdc = 1_000_000_000_000u128;
-    mock_env.fund_account(&provider, &[coin(1_000_000_000_000u128, "uusdc")]);
-
-    // fund provider account with usdc
-    let liquidator = Addr::unchecked("liquidator");
-    mock_env.fund_account(&liquidator, &[coin(1_000_000_000_000u128, "uusdc")]);
-
-    // deposits usdc to redbank
-    red_bank.deposit(&mut mock_env, &provider, coin(funded_usdc, "uusdc")).unwrap();
-
-    let borrower = Addr::unchecked("borrower");
-
-    // set uncollateralized loan limit for borrower
-    red_bank
-        .update_uncollateralized_loan_limit(
-            &mut mock_env,
-            &owner,
-            &borrower,
-            "uusdc",
-            Uint128::from(10_000_000_000u128),
-        )
-        .unwrap();
-
-    // borrower borrows usdc
-    let borrow_amount = 98_000_000u128;
-    red_bank.borrow(&mut mock_env, &borrower, "uusdc", borrow_amount).unwrap();
-    let balance = mock_env.query_balance(&borrower, "uusdc").unwrap();
-    assert_eq!(balance.amount.u128(), borrow_amount);
-
-    // try to liquidate, should fail because there are no collateralized loans
-    let error_res = red_bank.liquidate(
-        &mut mock_env,
-        &liquidator,
-        &borrower,
-        "uatom",
-        &[coin(borrow_amount, "uusdc")],
-    );
-    assert_err(error_res, ContractError::CannotLiquidateWhenPositiveUncollateralizedLoanLimit {});
-}
-
-#[test]
 fn response_verification() {
     let provider = Addr::unchecked("provider"); // provides collateral to be borrowed by others
     let liquidatee = Addr::unchecked("liquidatee");
@@ -1167,7 +1128,7 @@ fn expected_messages(
     vec![
         SubMsg::new(WasmMsg::Execute {
             contract_addr: MarsAddressType::Incentives.to_string(),
-            msg: to_binary(&incentives::ExecuteMsg::BalanceChange {
+            msg: to_json_binary(&incentives::ExecuteMsg::BalanceChange {
                 user_addr: user_addr.clone(),
                 account_id: None,
                 denom: collateral_market.denom.clone(),
@@ -1179,7 +1140,7 @@ fn expected_messages(
         }),
         SubMsg::new(WasmMsg::Execute {
             contract_addr: MarsAddressType::Incentives.to_string(),
-            msg: to_binary(&incentives::ExecuteMsg::BalanceChange {
+            msg: to_json_binary(&incentives::ExecuteMsg::BalanceChange {
                 user_addr: recipient_addr.clone(),
                 account_id: None,
                 denom: collateral_market.denom.clone(),
@@ -1191,7 +1152,7 @@ fn expected_messages(
         }),
         SubMsg::new(WasmMsg::Execute {
             contract_addr: MarsAddressType::Incentives.to_string(),
-            msg: to_binary(&incentives::ExecuteMsg::BalanceChange {
+            msg: to_json_binary(&incentives::ExecuteMsg::BalanceChange {
                 user_addr: Addr::unchecked(MarsAddressType::RewardsCollector.to_string()),
                 account_id: None,
                 denom: collateral_market.denom.clone(),
@@ -1203,7 +1164,7 @@ fn expected_messages(
         }),
         SubMsg::new(WasmMsg::Execute {
             contract_addr: MarsAddressType::Incentives.to_string(),
-            msg: to_binary(&incentives::ExecuteMsg::BalanceChange {
+            msg: to_json_binary(&incentives::ExecuteMsg::BalanceChange {
                 user_addr: Addr::unchecked(MarsAddressType::RewardsCollector.to_string()),
                 account_id: None,
                 denom: debt_market.denom.clone(),

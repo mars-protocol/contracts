@@ -9,23 +9,28 @@ use mars_types::{
     health::AccountKind,
     oracle::ActionKind,
 };
+use mars_vault::msg::{ExecuteMsg, ExtensionExecuteMsg};
 
 use crate::{
     borrow::borrow,
-    claim_rewards::{claim_rewards, send_rewards},
+    claim_astro_lp_rewards::claim_lp_rewards,
+    claim_rewards::claim_rewards,
     deposit::{assert_deposit_caps, deposit},
     error::{ContractError, ContractResult},
     health::{assert_max_ltv, query_health_state},
     hls::assert_hls_rules,
     lend::lend,
     liquidate::assert_not_self_liquidation,
+    liquidate_astro_lp::liquidate_astro_lp,
     liquidate_deposit::liquidate_deposit,
     liquidate_lend::liquidate_lend,
     reclaim::reclaim,
     refund::refund_coin_balances,
     repay::{repay, repay_for_recipient},
-    state::{ACCOUNT_KINDS, ACCOUNT_NFT, REENTRANCY_GUARD},
+    stake_astro_lp::stake_lp,
+    state::{ACCOUNT_KINDS, ACCOUNT_NFT, REENTRANCY_GUARD, VAULTS},
     swap::swap_exact_in,
+    unstake_astro_lp::unstake_lp,
     update_coin_balances::{update_coin_balance, update_coin_balance_after_vault_liquidation},
     utils::{assert_is_token_owner, get_account_kind},
     vault::{
@@ -37,40 +42,91 @@ use crate::{
 };
 
 pub fn create_credit_account(
-    deps: DepsMut,
+    deps: &mut DepsMut,
     user: Addr,
     kind: AccountKind,
-) -> ContractResult<Response> {
+    account_id: Option<String>,
+) -> ContractResult<(String, Response)> {
     let account_nft = ACCOUNT_NFT.load(deps.storage)?;
 
-    let next_id = account_nft.query_next_id(&deps.querier)?;
-    ACCOUNT_KINDS.save(deps.storage, &next_id, &kind)?;
+    let next_id = if let Some(ai) = account_id.clone() {
+        ai
+    } else {
+        account_nft.query_next_id(&deps.querier)?
+    };
 
+    let mut msgs = vec![];
     let nft_mint_msg = CosmosMsg::Wasm(WasmMsg::Execute {
         contract_addr: account_nft.address().into(),
         funds: vec![],
         msg: to_json_binary(&NftExecuteMsg::Mint {
             user: user.to_string(),
+            token_id: account_id,
         })?,
     });
+    msgs.push(nft_mint_msg);
 
-    Ok(Response::new()
-        .add_message(nft_mint_msg)
+    if let AccountKind::FundManager {
+        vault_addr,
+    } = &kind
+    {
+        let vault = deps.api.addr_validate(vault_addr)?;
+
+        VAULTS.save(deps.storage, &next_id, &vault)?;
+
+        let bind_msg = CosmosMsg::Wasm(WasmMsg::Execute {
+            contract_addr: vault.into(),
+            funds: vec![],
+            msg: to_json_binary(&ExecuteMsg::VaultExtension(
+                ExtensionExecuteMsg::BindCreditManagerAccount {
+                    account_id: next_id.clone(),
+                },
+            ))?,
+        });
+        msgs.push(bind_msg);
+    }
+
+    ACCOUNT_KINDS.save(deps.storage, &next_id, &kind)?;
+
+    let response = Response::new()
+        .add_messages(msgs)
         .add_attribute("action", "create_credit_account")
-        .add_attribute("kind", kind.to_string()))
+        .add_attribute("kind", kind.to_string())
+        .add_attribute("account_id", next_id.clone());
+
+    Ok((next_id, response))
 }
 
 pub fn dispatch_actions(
     mut deps: DepsMut,
     env: Env,
     info: MessageInfo,
-    account_id: &str,
+    account_id: Option<String>,
+    account_kind: Option<AccountKind>,
     actions: Vec<Action>,
 ) -> ContractResult<Response> {
-    assert_is_token_owner(&deps, &info.sender, account_id)?;
+    let mut response = Response::new();
+
+    let account_id = match account_id {
+        Some(acc_id) => {
+            validate_account(&deps, &info, &acc_id, &actions)?;
+            acc_id
+        }
+        None => {
+            let (acc_id, res) = create_credit_account(
+                &mut deps,
+                info.sender.clone(),
+                account_kind.unwrap_or(AccountKind::Default),
+                None,
+            )?;
+            response = res;
+            acc_id
+        }
+    };
+    let account_id = &account_id;
+
     REENTRANCY_GUARD.try_lock(deps.storage)?;
 
-    let mut response = Response::new();
     let mut callbacks: Vec<CallbackMsg> = vec![];
     let mut received_coins = Coins::try_from(info.funds)?;
 
@@ -106,6 +162,7 @@ pub fn dispatch_actions(
     // going up:
     // - Deposit: we check the deposited denom
     // - SwapExactIn: we check the output denom
+    // - ProvideLiquidity: we check the LP token denom
     // - ClaimRewards: we don't check here; the reward amount is likely small so
     //   won't have much impact; this is also difficult to handle given that now
     //   we have multi-rewards
@@ -128,6 +185,14 @@ pub fn dispatch_actions(
                 account_id: account_id.to_string(),
                 coin,
                 recipient: info.sender.clone(),
+            }),
+            Action::WithdrawToWallet {
+                coin,
+                recipient,
+            } => callbacks.push(CallbackMsg::Withdraw {
+                account_id: account_id.to_string(),
+                coin,
+                recipient: deps.api.addr_validate(&recipient)?,
             }),
             Action::Borrow(coin) => callbacks.push(CallbackMsg::Borrow {
                 account_id: account_id.to_string(),
@@ -160,7 +225,6 @@ pub fn dispatch_actions(
             }),
             Action::ClaimRewards {} => callbacks.push(CallbackMsg::ClaimRewards {
                 account_id: account_id.to_string(),
-                recipient: info.sender.clone(),
             }),
             Action::EnterVault {
                 vault,
@@ -199,6 +263,14 @@ pub fn dispatch_actions(
                         position_type,
                     },
                 }),
+                LiquidateRequest::StakedAstroLp(lp_denom) => {
+                    callbacks.push(CallbackMsg::Liquidate {
+                        liquidator_account_id: account_id.to_string(),
+                        liquidatee_account_id: liquidatee_account_id.to_string(),
+                        debt_coin,
+                        request: LiquidateRequest::StakedAstroLp(lp_denom),
+                    })
+                }
             },
             Action::SwapExactIn {
                 coin_in,
@@ -244,12 +316,17 @@ pub fn dispatch_actions(
                 coins_in,
                 lp_token_out,
                 slippage,
-            } => callbacks.push(CallbackMsg::ProvideLiquidity {
-                account_id: account_id.to_string(),
-                lp_token_out,
-                coins_in,
-                slippage,
-            }),
+            } => {
+                callbacks.push(CallbackMsg::ProvideLiquidity {
+                    account_id: account_id.to_string(),
+                    lp_token_out: lp_token_out.clone(),
+                    coins_in,
+                    slippage,
+                });
+
+                // check the deposit cap of the LP output denom
+                denoms_for_cap_check.insert(lp_token_out);
+            }
             Action::WithdrawLiquidity {
                 lp_token,
                 slippage,
@@ -257,6 +334,24 @@ pub fn dispatch_actions(
                 account_id: account_id.to_string(),
                 lp_token,
                 slippage,
+            }),
+            Action::StakeAstroLp {
+                lp_token,
+            } => callbacks.push(CallbackMsg::StakeAstroLp {
+                account_id: account_id.to_string(),
+                lp_token,
+            }),
+            Action::UnstakeAstroLp {
+                lp_token,
+            } => callbacks.push(CallbackMsg::UnstakeAstroLp {
+                account_id: account_id.to_string(),
+                lp_token,
+            }),
+            Action::ClaimAstroLpRewards {
+                lp_denom,
+            } => callbacks.push(CallbackMsg::ClaimAstroLpRewards {
+                account_id: account_id.to_string(),
+                lp_denom,
             }),
             Action::RefundAllCoinBalances {} => {
                 callbacks.push(CallbackMsg::RefundAllCoinBalances {
@@ -312,6 +407,51 @@ pub fn dispatch_actions(
         .add_attribute("account_id", account_id.to_string()))
 }
 
+fn validate_account(
+    deps: &DepsMut,
+    info: &MessageInfo,
+    acc_id: &String,
+    actions: &[Action],
+) -> Result<(), ContractError> {
+    let kind = get_account_kind(deps.storage, acc_id)?;
+    match kind {
+        // Fund manager wallet can interact with the account managing the vault funds.
+        // This wallet can't deposit/withdraw from the account directly.
+        AccountKind::FundManager {
+            vault_addr,
+        } if info.sender != vault_addr => {
+            assert_is_token_owner(deps, &info.sender, acc_id)?;
+
+            let actions_not_allowed = actions.iter().any(|action| {
+                matches!(
+                    action,
+                    Action::Deposit(..)
+                        | Action::Withdraw(..)
+                        | Action::RefundAllCoinBalances {}
+                        | Action::WithdrawToWallet { .. }
+                )
+            });
+            if actions_not_allowed {
+                return Err(ContractError::Unauthorized {
+                    user: acc_id.to_string(),
+                    action: "deposit, withdraw, refund_all_coin_balances, withdraw_to_wallet"
+                        .to_string(),
+                });
+            }
+        }
+        // Fund manager vault can interact with the account managed by the fund manager wallet.
+        // This vault can use the account without any restrictions.
+        AccountKind::FundManager {
+            ..
+        } => {}
+        AccountKind::Default | AccountKind::HighLeveredStrategy => {
+            assert_is_token_owner(deps, &info.sender, acc_id)?
+        }
+    }
+
+    Ok(())
+}
+
 pub fn execute_callback(
     deps: DepsMut,
     info: MessageInfo,
@@ -350,8 +490,7 @@ pub fn execute_callback(
         } => reclaim(deps, &account_id, &coin),
         CallbackMsg::ClaimRewards {
             account_id,
-            recipient,
-        } => claim_rewards(deps, env, &account_id, recipient),
+        } => claim_rewards(deps, &account_id),
         CallbackMsg::AssertMaxLTV {
             account_id,
             prev_health_state,
@@ -410,6 +549,14 @@ pub fn execute_callback(
                     debt_coin,
                     request_vault,
                     position_type,
+                ),
+                LiquidateRequest::StakedAstroLp(request_coin_denom) => liquidate_astro_lp(
+                    deps,
+                    env,
+                    &liquidator_account_id,
+                    &liquidatee_account_id,
+                    debt_coin,
+                    &request_coin_denom,
                 ),
             }
         }
@@ -472,10 +619,17 @@ pub fn execute_callback(
             REENTRANCY_GUARD.try_unlock(deps.storage)?;
             Ok(Response::new().add_attribute("action", "remove_reentrancy_guard"))
         }
-        CallbackMsg::SendRewardsToAddr {
+        CallbackMsg::StakeAstroLp {
             account_id,
-            previous_balances,
-            recipient,
-        } => send_rewards(deps, &env.contract.address, &account_id, recipient, previous_balances),
+            lp_token,
+        } => stake_lp(deps, &account_id, lp_token),
+        CallbackMsg::UnstakeAstroLp {
+            account_id,
+            lp_token,
+        } => unstake_lp(deps, &account_id, lp_token),
+        CallbackMsg::ClaimAstroLpRewards {
+            account_id,
+            lp_denom,
+        } => claim_lp_rewards(deps, &account_id, &lp_denom),
     }
 }

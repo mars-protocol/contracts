@@ -1,0 +1,36 @@
+[package]
+name          = "mars-zapper-astroport"
+version       = { workspace = true }
+authors       = { workspace = true }
+license       = { workspace = true }
+edition       = { workspace = true }
+repository    = { workspace = true }
+homepage      = { workspace = true }
+documentation = { workspace = true }
+keywords      = { workspace = true }
+
+[lib]
+crate-type = ["cdylib", "rlib"]
+
+[features]
+# for quicker tests, cargo test --lib
+# for more explicit tests, cargo test --features=backtraces
+backtraces = ["cosmwasm-std/backtraces"]
+library    = []
+
+[dependencies]
+apollo-cw-asset  = { workspace = true }
+apollo-utils     = { workspace = true }
+astroport-v5     = { workspace = true }
+cosmwasm-std     = { workspace = true }
+cw2              = { workspace = true }
+cw-dex           = { workspace = true }
+mars-types       = { workspace = true }
+mars-zapper-base = { workspace = true }
+
+[dev-dependencies]
+anyhow           = { workspace = true }
+cw-it            = { workspace = true, features = ["astroport", "astroport-multi-test"] }
+mars-oracle-wasm = { workspace = true }
+mars-testing     = { workspace = true, features = ["astroport"] }
+test-case        = { workspace = true }

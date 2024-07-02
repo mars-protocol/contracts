@@ -1,11 +1,11 @@
 use cosmwasm_std::{
-    entry_point, to_json_binary, Binary, Deps, DepsMut, Env, MessageInfo, Response,
+    entry_point, to_json_binary, Binary, Deps, DepsMut, Empty, Env, MessageInfo, Response,
 };
-use mars_types::red_bank::{ExecuteMsg, InstantiateMsg, MigrateMsg, QueryMsg};
+use mars_types::red_bank::{ExecuteMsg, InstantiateMsg, QueryMsg};
 
 use crate::{
     asset, borrow, collateral, config, deposit, error::ContractError, instantiate, liquidate,
-    migrations, query, repay, state::MIGRATION_GUARD, uncollateralized_loan, withdraw,
+    migrations, query, repay, state::MIGRATION_GUARD, withdraw,
 };
 
 pub const CONTRACT_NAME: &str = env!("CARGO_PKG_NAME");
@@ -41,16 +41,6 @@ pub fn execute(
             denom,
             params,
         } => asset::update_asset(deps, env, info, denom, params),
-        ExecuteMsg::UpdateUncollateralizedLoanLimit {
-            user,
-            denom,
-            new_limit,
-        } => {
-            let user_addr = deps.api.addr_validate(&user)?;
-            uncollateralized_loan::update_uncollateralized_loan_limit(
-                deps, info, user_addr, denom, new_limit,
-            )
-        }
         ExecuteMsg::Deposit {
             account_id,
             on_behalf_of,
@@ -144,30 +134,17 @@ pub fn query(deps: Deps, env: Env, msg: QueryMsg) -> Result<Binary, ContractErro
         QueryMsg::Market {
             denom,
         } => to_json_binary(&query::query_market(deps, denom)?),
+        QueryMsg::MarketV2 {
+            denom,
+        } => to_json_binary(&query::query_market_v2(deps, env, denom)?),
         QueryMsg::Markets {
             start_after,
             limit,
         } => to_json_binary(&query::query_markets(deps, start_after, limit)?),
-        QueryMsg::UncollateralizedLoanLimit {
-            user,
-            denom,
-        } => {
-            let user_addr = deps.api.addr_validate(&user)?;
-            to_json_binary(&query::query_uncollateralized_loan_limit(deps, user_addr, denom)?)
-        }
-        QueryMsg::UncollateralizedLoanLimits {
-            user,
+        QueryMsg::MarketsV2 {
             start_after,
             limit,
-        } => {
-            let user_addr = deps.api.addr_validate(&user)?;
-            to_json_binary(&query::query_uncollateralized_loan_limits(
-                deps,
-                user_addr,
-                start_after,
-                limit,
-            )?)
-        }
+        } => to_json_binary(&query::query_markets_v2(deps, env, start_after, limit)?),
         QueryMsg::UserDebt {
             user,
             denom,
@@ -271,9 +248,6 @@ pub fn query(deps: Deps, env: Env, msg: QueryMsg) -> Result<Binary, ContractErro
 }
 
 #[cfg_attr(not(feature = "library"), entry_point)]
-pub fn migrate(deps: DepsMut, _env: Env, msg: MigrateMsg) -> Result<Response, ContractError> {
-    match msg {
-        MigrateMsg::V1_0_0ToV2_0_0 {} => migrations::v2_0_0::migrate(deps),
-        MigrateMsg::V2_0_0ToV2_0_1 {} => migrations::v2_0_1::migrate(deps),
-    }
+pub fn migrate(deps: DepsMut, _env: Env, _msg: Empty) -> Result<Response, ContractError> {
+    migrations::v2_0_0::migrate(deps)
 }

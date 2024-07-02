@@ -9,7 +9,10 @@ use mars_types::{
     },
     credit_manager::{DebtAmount, Positions},
     health::AccountKind,
-    params::{AssetParams, CmSettings, HlsParams, LiquidationBonus, RedBankSettings, VaultConfig},
+    params::{
+        AssetParams, CmSettings, HlsAssetType, HlsParams, LiquidationBonus, RedBankSettings,
+        VaultConfig,
+    },
 };
 use proptest::{
     collection::vec,
@@ -18,7 +21,13 @@ use proptest::{
 };
 
 fn random_account_kind() -> impl Strategy<Value = AccountKind> {
-    prop_oneof![Just(AccountKind::Default), Just(AccountKind::HighLeveredStrategy)]
+    prop_oneof![
+        Just(AccountKind::Default),
+        Just(AccountKind::HighLeveredStrategy),
+        Just(AccountKind::FundManager {
+            vault_addr: "vault_addr".to_string()
+        })
+    ]
 }
 
 fn random_denom() -> impl Strategy<Value = String> {
@@ -206,6 +215,23 @@ fn random_coins(denoms_data: DenomsData) -> impl Strategy<Value = Vec<Coin>> {
     )
 }
 
+fn random_astro_lp_coins(denoms_data: DenomsData) -> impl Strategy<Value = Vec<Coin>> {
+    let denoms = denoms_data.params.keys().cloned().collect::<Vec<String>>();
+    let denoms_len = denoms.len();
+    vec(
+        (0..denoms_len, 1..=10000000).prop_map(move |(index, amount)| {
+            let denom = denoms.get(index).unwrap().clone();
+            let amount = Uint128::new(amount as u128);
+
+            Coin {
+                denom: format!("factory/{}/astroport/share", denom),
+                amount,
+            }
+        }),
+        0..denoms_len,
+    )
+}
+
 fn random_debts(denoms_data: DenomsData) -> impl Strategy<Value = Vec<DebtAmount>> {
     let denoms = denoms_data.params.keys().cloned().collect::<Vec<String>>();
     let denoms_len = denoms.len();
@@ -260,25 +286,59 @@ fn random_vault_positions(vd: VaultsData) -> impl Strategy<Value = Vec<VaultPosi
 }
 
 pub fn random_health_computer() -> impl Strategy<Value = HealthComputer> {
-    (random_param_maps()).prop_flat_map(|(denoms_data, vaults_data)| {
+    (random_param_maps()).prop_flat_map(|(mut denoms_data, mut vaults_data)| {
+        update_hls_correlations(&mut denoms_data, &mut vaults_data);
+
         (
             random_account_kind(),
             random_coins(denoms_data.clone()),
             random_debts(denoms_data.clone()),
             random_coins(denoms_data.clone()),
             random_vault_positions(vaults_data.clone()),
+            random_astro_lp_coins(denoms_data.clone()),
         )
-            .prop_map(move |(kind, deposits, debts, lends, vaults)| HealthComputer {
-                kind,
-                positions: Positions {
-                    account_id: "123".to_string(),
-                    deposits,
-                    debts,
-                    lends,
-                    vaults,
-                },
-                denoms_data: denoms_data.clone(),
-                vaults_data: vaults_data.clone(),
+            .prop_map(move |(kind, deposits, debts, lends, vaults, staked_astro_lps)| {
+                HealthComputer {
+                    kind: kind.clone(),
+                    positions: Positions {
+                        account_id: "123".to_string(),
+                        account_kind: kind,
+                        deposits,
+                        debts,
+                        lends,
+                        vaults,
+                        staked_astro_lps,
+                    },
+                    denoms_data: denoms_data.clone(),
+                    vaults_data: vaults_data.clone(),
+                }
             })
     })
+}
+
+fn update_hls_correlations(denoms_data: &mut DenomsData, vaults_data: &mut VaultsData) {
+    // Add correlations to the denoms and vaults. This is necessary for the HealthComputer to be able to compute the health for HLS accounts.
+    let denoms = denoms_data
+        .params
+        .keys()
+        .map(|denom| HlsAssetType::Coin {
+            denom: denom.clone(),
+        })
+        .collect::<Vec<HlsAssetType<Addr>>>();
+    let vaults = vaults_data
+        .vault_configs
+        .keys()
+        .map(|addr| HlsAssetType::Vault {
+            addr: addr.clone(),
+        })
+        .collect::<Vec<HlsAssetType<Addr>>>();
+    let correlations = denoms.into_iter().chain(vaults).collect::<Vec<HlsAssetType<Addr>>>();
+
+    for (_, params) in denoms_data.params.iter_mut() {
+        params.credit_manager.hls.as_mut().unwrap().correlations = correlations.clone();
+    }
+
+    for (_, config) in vaults_data.vault_configs.iter_mut() {
+        config.hls.as_mut().unwrap().correlations = correlations.clone();
+    }
 }

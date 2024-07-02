@@ -22,7 +22,6 @@ fn proper_initialization() {
         address_provider: String::from("address_provider"),
         epoch_duration: 604800, // 1 week in seconds
         max_whitelisted_denoms: 10,
-        mars_denom: "umars".to_string(),
     };
 
     let res = instantiate(deps.as_mut(), mock_env(), info, msg).unwrap();
@@ -48,7 +47,6 @@ fn cant_instantiate_with_too_short_epoch_duration() {
         address_provider: String::from("address_provider"),
         epoch_duration: 604800 - 1,
         max_whitelisted_denoms: 10,
-        mars_denom: "umars".to_string(),
     };
 
     let res = instantiate(deps.as_mut(), mock_env(), info, msg);

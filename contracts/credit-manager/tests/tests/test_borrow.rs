@@ -5,7 +5,8 @@ use mars_credit_manager::{borrow::DEFAULT_DEBT_SHARES_PER_COIN_BORROWED, error::
 use mars_types::credit_manager::Action::{Borrow, Deposit};
 
 use super::helpers::{
-    assert_err, blacklisted_coin, uosmo_info, AccountToFund, MockEnv, DEFAULT_RED_BANK_COIN_BALANCE,
+    assert_err, blacklisted_coin_info, uosmo_info, AccountToFund, MockEnv,
+    DEFAULT_RED_BANK_COIN_BALANCE,
 };
 
 #[test]
@@ -35,7 +36,7 @@ fn only_token_owner_can_borrow() {
 
 #[test]
 fn can_only_borrow_what_is_whitelisted() {
-    let blacklisted_coin = blacklisted_coin();
+    let blacklisted_coin = blacklisted_coin_info();
 
     let user = Addr::unchecked("user");
     let mut mock = MockEnv::new().set_params(&[blacklisted_coin.clone()]).build().unwrap();

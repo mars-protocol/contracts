@@ -1,4 +1,4 @@
-use astroport::router::SwapOperation;
+use astroport_v5::router::SwapOperation;
 use cosmwasm_std::{Coin, Decimal, Uint128};
 #[cfg(feature = "osmosis-test-tube")]
 use cw_it::Artifact;

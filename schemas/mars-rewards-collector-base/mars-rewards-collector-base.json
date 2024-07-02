@@ -379,6 +379,32 @@
             "additionalProperties": false
           },
           {
+            "description": "Withdraw coin of specified denom and amount to a wallet address",
+            "type": "object",
+            "required": [
+              "withdraw_to_wallet"
+            ],
+            "properties": {
+              "withdraw_to_wallet": {
+                "type": "object",
+                "required": [
+                  "coin",
+                  "recipient"
+                ],
+                "properties": {
+                  "coin": {
+                    "$ref": "#/definitions/ActionCoin"
+                  },
+                  "recipient": {
+                    "type": "string"
+                  }
+                },
+                "additionalProperties": false
+              }
+            },
+            "additionalProperties": false
+          },
+          {
             "description": "Borrow coin of specified amount from Red Bank",
             "type": "object",
             "required": [
@@ -706,6 +732,72 @@
             "additionalProperties": false
           },
           {
+            "description": "Stake lp token in astroport incentives contract via mars incentives",
+            "type": "object",
+            "required": [
+              "stake_astro_lp"
+            ],
+            "properties": {
+              "stake_astro_lp": {
+                "type": "object",
+                "required": [
+                  "lp_token"
+                ],
+                "properties": {
+                  "lp_token": {
+                    "$ref": "#/definitions/ActionCoin"
+                  }
+                },
+                "additionalProperties": false
+              }
+            },
+            "additionalProperties": false
+          },
+          {
+            "description": "Unstake lp token from astroport incentives contract via mars incentives",
+            "type": "object",
+            "required": [
+              "unstake_astro_lp"
+            ],
+            "properties": {
+              "unstake_astro_lp": {
+                "type": "object",
+                "required": [
+                  "lp_token"
+                ],
+                "properties": {
+                  "lp_token": {
+                    "$ref": "#/definitions/ActionCoin"
+                  }
+                },
+                "additionalProperties": false
+              }
+            },
+            "additionalProperties": false
+          },
+          {
+            "description": "Claim accrued LP incentive rewards from astroport incentives contract via mars incentives",
+            "type": "object",
+            "required": [
+              "claim_astro_lp_rewards"
+            ],
+            "properties": {
+              "claim_astro_lp_rewards": {
+                "type": "object",
+                "required": [
+                  "lp_denom"
+                ],
+                "properties": {
+                  "lp_denom": {
+                    "type": "string"
+                  }
+                },
+                "additionalProperties": false
+              }
+            },
+            "additionalProperties": false
+          },
+          {
             "description": "Refunds all coin balances back to user wallet",
             "type": "object",
             "required": [
@@ -862,6 +954,19 @@
                   }
                 },
                 "additionalProperties": false
+              }
+            },
+            "additionalProperties": false
+          },
+          {
+            "description": "Pay back debt of a liquidatable credit manager account for a via liquidating an Astro LP position. LP shares are transfered from the liquidatable to the liquidator.",
+            "type": "object",
+            "required": [
+              "staked_astro_lp"
+            ],
+            "properties": {
+              "staked_astro_lp": {
+                "type": "string"
               }
             },
             "additionalProperties": false
