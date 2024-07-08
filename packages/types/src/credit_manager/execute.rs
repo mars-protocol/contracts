@@ -185,7 +185,7 @@ pub enum Action {
     SwapExactIn {
         coin_in: ActionCoin,
         denom_out: String,
-        slippage: Decimal,
+        min_receive: Uint128,
         route: Option<SwapperRoute>,
     },
     /// Add Vec<Coin> to liquidity pool in exchange for LP tokens.
@@ -322,7 +322,7 @@ pub enum CallbackMsg {
         account_id: String,
         coin_in: ActionCoin,
         denom_out: String,
-        slippage: Decimal,
+        min_receive: Uint128,
         route: Option<SwapperRoute>,
     },
     /// Used to update the coin balance of account after an async action

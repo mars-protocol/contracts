@@ -1,5 +1,5 @@
 use cosmwasm_std::{
-    coins, to_json_binary, BankMsg, Binary, Coin, CosmosMsg, Decimal, Deps, DepsMut, Empty, Env,
+    coins, to_json_binary, BankMsg, Binary, Coin, CosmosMsg, Deps, DepsMut, Empty, Env,
     MessageInfo, Response, StdError, StdResult, Uint128,
 };
 use mars_types::swapper::{
@@ -36,9 +36,9 @@ pub fn execute(
         ExecuteMsg::SwapExactIn {
             coin_in,
             denom_out,
-            slippage,
+            min_receive,
             route,
-        } => swap_exact_in(deps, env, info, coin_in, denom_out, slippage, route),
+        } => swap_exact_in(deps, env, info, coin_in, denom_out, min_receive, route),
         ExecuteMsg::UpdateConfig {
             ..
         } => unimplemented!("not implemented"),
@@ -78,7 +78,7 @@ pub fn swap_exact_in(
     info: MessageInfo,
     coin_in: Coin,
     denom_out: String,
-    _slippage: Decimal,
+    _min_receive: Uint128,
     _route: Option<SwapperRoute>,
 ) -> StdResult<Response> {
     let denom_in_balance = deps.querier.query_balance(env.contract.address, coin_in.denom)?;

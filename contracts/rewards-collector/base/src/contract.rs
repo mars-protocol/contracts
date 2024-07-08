@@ -100,7 +100,18 @@ where
                 amount,
                 safety_fund_route,
                 fee_collector_route,
-            } => self.swap_asset(deps, env, denom, amount, safety_fund_route, fee_collector_route),
+                safety_fund_min_receive,
+                fee_collector_min_receive,
+            } => self.swap_asset(
+                deps,
+                env,
+                denom,
+                amount,
+                safety_fund_route,
+                fee_collector_route,
+                safety_fund_min_receive,
+                fee_collector_min_receive,
+            ),
             ExecuteMsg::ClaimIncentiveRewards {
                 start_after_collateral_denom,
                 start_after_incentive_denom,
@@ -279,6 +290,8 @@ where
         amount: Option<Uint128>,
         safety_fund_route: Option<SwapperRoute>,
         fee_collector_route: Option<SwapperRoute>,
+        safety_fund_min_receive: Option<Uint128>,
+        fee_collector_min_receive: Option<Uint128>,
     ) -> ContractResult<Response<M>> {
         let cfg = self.config.load(deps.storage)?;
 
@@ -309,7 +322,7 @@ where
                     &mars_types::swapper::ExecuteMsg::<Empty, Empty>::SwapExactIn {
                         coin_in: coin_in_safety_fund.clone(),
                         denom_out: cfg.safety_fund_denom,
-                        slippage: cfg.slippage_tolerance,
+                        min_receive: safety_fund_min_receive.ok_or(ContractError::InvalidMinReceive {reason: "required to pass 'safety_fund_min_receive' when swapped to safety fund denom".to_string()})?,
                         route: safety_fund_route,
                     },
                 )?,
@@ -327,7 +340,7 @@ where
                     &mars_types::swapper::ExecuteMsg::<Empty, Empty>::SwapExactIn {
                         coin_in: coin_in_fee_collector.clone(),
                         denom_out: cfg.fee_collector_denom,
-                        slippage: cfg.slippage_tolerance,
+                        min_receive: fee_collector_min_receive.ok_or(ContractError::InvalidMinReceive {reason: "required to pass 'fee_collector_min_receive' when swapped to fee collector denom".to_string()})?,
                         route: fee_collector_route,
                     },
                 )?,
@@ -340,8 +353,7 @@ where
             .add_attribute("action", "swap_asset")
             .add_attribute("denom", denom)
             .add_attribute("amount_safety_fund", amount_safety_fund)
-            .add_attribute("amount_fee_collector", amount_fee_collector)
-            .add_attribute("slippage_tolerance", cfg.slippage_tolerance.to_string()))
+            .add_attribute("amount_fee_collector", amount_fee_collector))
     }
 
     pub fn distribute_rewards(

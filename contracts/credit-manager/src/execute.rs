@@ -275,14 +275,14 @@ pub fn dispatch_actions(
             Action::SwapExactIn {
                 coin_in,
                 denom_out,
-                slippage,
+                min_receive,
                 route,
             } => {
                 callbacks.push(CallbackMsg::SwapExactIn {
                     account_id: account_id.to_string(),
                     coin_in,
                     denom_out: denom_out.clone(),
-                    slippage,
+                    min_receive,
                     route,
                 });
                 // check the deposit cap of the swap output denom
@@ -564,9 +564,9 @@ pub fn execute_callback(
             account_id,
             coin_in,
             denom_out,
-            slippage,
+            min_receive,
             route,
-        } => swap_exact_in(deps, env, &account_id, &coin_in, &denom_out, slippage, route),
+        } => swap_exact_in(deps, env, &account_id, &coin_in, &denom_out, min_receive, route),
         CallbackMsg::UpdateCoinBalance {
             account_id,
             previous_balance,
