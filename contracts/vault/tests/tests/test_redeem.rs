@@ -401,10 +401,17 @@ fn redeem_succeded(
         actions.push(Action::Lend(uusdc_info.to_action_coin(lend_amt)));
         fund_acc_amt += lend_amt;
     }
+    let estimate_res = mock.query_swap_estimate_with_optional_route(
+        &uusdc_info.to_coin(swap_amt),
+        &uosmo_info.denom,
+        None,
+    );
+    let min_receive =
+        estimate_res.amount * (Decimal::one() - Decimal::from_atomics(6u128, 1).unwrap());
     actions.push(Action::SwapExactIn {
         coin_in: uusdc_info.to_action_coin(swap_amt),
         denom_out: uosmo_info.denom.clone(),
-        slippage: Decimal::from_atomics(6u128, 1).unwrap(),
+        min_receive,
         route: None,
     });
     fund_acc_amt += swap_amt;

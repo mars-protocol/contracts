@@ -8,7 +8,9 @@ use mars_swapper_osmosis::{
     config::OsmosisConfig,
     route::{OsmosisRoute, SwapAmountInRoute},
 };
-use mars_types::swapper::{ExecuteMsg, OsmoRoute, OsmoSwap, SwapperRoute};
+use mars_types::swapper::{
+    EstimateExactInSwapResponse, ExecuteMsg, OsmoRoute, OsmoSwap, QueryMsg, SwapperRoute,
+};
 
 use super::helpers::{
     assert_err, instantiate_contract, query_balance, swap_to_create_twap_records,
@@ -48,47 +50,6 @@ fn transfer_callback_only_internal() {
 }
 
 #[test]
-fn max_slippage_exeeded() {
-    let app = OsmosisTestApp::new();
-    let wasm = Wasm::new(&app);
-
-    let accs = app
-        .init_accounts(&[coin(1_000_000_000_000, "uosmo"), coin(1_000_000_000_000, "umars")], 2)
-        .unwrap();
-    let owner = &accs[0];
-    let other_guy = &accs[1];
-
-    let contract_addr = instantiate_contract(&wasm, owner);
-
-    let res_err = wasm
-        .execute(
-            &contract_addr,
-            &ExecuteMsg::<OsmosisRoute, OsmosisConfig>::SwapExactIn {
-                coin_in: coin(1_000_000, "umars"),
-                denom_out: "uosmo".to_string(),
-                slippage: Decimal::percent(11),
-                route: Some(SwapperRoute::Osmo(OsmoRoute {
-                    swaps: vec![OsmoSwap {
-                        pool_id: 1,
-                        to: "uosmo".to_string(),
-                    }],
-                })),
-            },
-            &[coin(1_000_000, "umars")],
-            other_guy,
-        )
-        .unwrap_err();
-
-    assert_err(
-        res_err,
-        ContractError::MaxSlippageExceeded {
-            max_slippage: Decimal::percent(10),
-            slippage: Decimal::percent(11),
-        },
-    );
-}
-
-#[test]
 fn swap_exact_in_slippage_too_high() {
     let app = OsmosisTestApp::new();
     let wasm = Wasm::new(&app);
@@ -116,6 +77,25 @@ fn swap_exact_in_slippage_too_high() {
 
     swap_to_create_twap_records(&app, &signer, pool_mars_osmo, coin(10u128, "umars"), "uosmo");
 
+    let route = Some(SwapperRoute::Osmo(OsmoRoute {
+        swaps: vec![OsmoSwap {
+            pool_id: pool_mars_osmo,
+            to: "uosmo".to_string(),
+        }],
+    }));
+
+    let res: EstimateExactInSwapResponse = wasm
+        .query(
+            &contract_addr,
+            &QueryMsg::EstimateExactInSwap {
+                coin_in: coin(1_000_000, "umars"),
+                denom_out: "uosmo".to_string(),
+                route: route.clone(),
+            },
+        )
+        .unwrap();
+    let min_receive = res.amount * (Decimal::one() - Decimal::percent(5));
+
     // whale does a huge trade
     let res_err = wasm
         .execute(
@@ -123,13 +103,8 @@ fn swap_exact_in_slippage_too_high() {
             &ExecuteMsg::<OsmosisRoute, OsmosisConfig>::SwapExactIn {
                 coin_in: coin(1_000_000, "umars"),
                 denom_out: "uosmo".to_string(),
-                slippage: Decimal::percent(5),
-                route: Some(SwapperRoute::Osmo(OsmoRoute {
-                    swaps: vec![OsmoSwap {
-                        pool_id: pool_mars_osmo,
-                        to: "uosmo".to_string(),
-                    }],
-                })),
+                min_receive,
+                route,
             },
             &[coin(1_000_000, "umars")],
             &whale,
@@ -195,12 +170,24 @@ fn swap_exact_in_success_with_saved_route() {
     assert_eq!(osmo_balance, user_osmo_starting_amount);
     assert_eq!(mars_balance, 10_000);
 
+    let res: EstimateExactInSwapResponse = wasm
+        .query(
+            &contract_addr,
+            &QueryMsg::EstimateExactInSwap {
+                coin_in: coin(10_000, "umars"),
+                denom_out: "uosmo".to_string(),
+                route: None,
+            },
+        )
+        .unwrap();
+    let min_receive = res.amount * (Decimal::one() - Decimal::percent(6));
+
     wasm.execute(
         &contract_addr,
         &ExecuteMsg::<OsmosisRoute, OsmosisConfig>::SwapExactIn {
             coin_in: coin(10_000, "umars"),
             denom_out: "uosmo".to_string(),
-            slippage: Decimal::percent(6),
+            min_receive,
             route: None,
         },
         &[coin(10_000, "umars")],
@@ -257,18 +244,32 @@ fn swap_exact_in_success_with_provided_route() {
     assert_eq!(osmo_balance, user_osmo_starting_amount);
     assert_eq!(mars_balance, 10_000);
 
+    let route = Some(SwapperRoute::Osmo(OsmoRoute {
+        swaps: vec![OsmoSwap {
+            pool_id: pool_mars_osmo,
+            to: "uosmo".to_string(),
+        }],
+    }));
+
+    let res: EstimateExactInSwapResponse = wasm
+        .query(
+            &contract_addr,
+            &QueryMsg::EstimateExactInSwap {
+                coin_in: coin(10_000, "umars"),
+                denom_out: "uosmo".to_string(),
+                route: route.clone(),
+            },
+        )
+        .unwrap();
+    let min_receive = res.amount * (Decimal::one() - Decimal::percent(6));
+
     wasm.execute(
         &contract_addr,
         &ExecuteMsg::<OsmosisRoute, OsmosisConfig>::SwapExactIn {
             coin_in: coin(10_000, "umars"),
             denom_out: "uosmo".to_string(),
-            slippage: Decimal::percent(6),
-            route: Some(SwapperRoute::Osmo(OsmoRoute {
-                swaps: vec![OsmoSwap {
-                    pool_id: pool_mars_osmo,
-                    to: "uosmo".to_string(),
-                }],
-            })),
+            min_receive,
+            route,
         },
         &[coin(10_000, "umars")],
         &user,
@@ -350,18 +351,32 @@ fn swap_exact_in_success_with_provided_route_when_saved_route_exists() {
     assert_eq!(osmo_balance, user_osmo_starting_amount);
     assert_eq!(mars_balance, 20_000);
 
+    let route = Some(SwapperRoute::Osmo(OsmoRoute {
+        swaps: vec![OsmoSwap {
+            pool_id: pool_mars_osmo_provided,
+            to: "uosmo".to_string(),
+        }],
+    }));
+
+    let res: EstimateExactInSwapResponse = wasm
+        .query(
+            &contract_addr,
+            &QueryMsg::EstimateExactInSwap {
+                coin_in: coin(10_000, "umars"),
+                denom_out: "uosmo".to_string(),
+                route: route.clone(),
+            },
+        )
+        .unwrap();
+    let min_receive = res.amount * (Decimal::one() - Decimal::percent(6));
+
     wasm.execute(
         &contract_addr,
         &ExecuteMsg::<OsmosisRoute, OsmosisConfig>::SwapExactIn {
             coin_in: coin(10_000, "umars"),
             denom_out: "uosmo".to_string(),
-            slippage: Decimal::percent(6),
-            route: Some(SwapperRoute::Osmo(OsmoRoute {
-                swaps: vec![OsmoSwap {
-                    pool_id: pool_mars_osmo_provided,
-                    to: "uosmo".to_string(),
-                }],
-            })),
+            min_receive,
+            route,
         },
         &[coin(10_000, "umars")],
         &user,
@@ -380,6 +395,18 @@ fn swap_exact_in_success_with_provided_route_when_saved_route_exists() {
     assert_eq!(osmo_balance, 0);
     assert_eq!(mars_balance, 0);
 
+    let res: EstimateExactInSwapResponse = wasm
+        .query(
+            &contract_addr,
+            &QueryMsg::EstimateExactInSwap {
+                coin_in: coin(10_000, "umars"),
+                denom_out: "uosmo".to_string(),
+                route: None,
+            },
+        )
+        .unwrap();
+    let min_receive = res.amount * (Decimal::one() - Decimal::percent(6));
+
     // Confirm that previous swap with provided routes uses correct route (pools).
     // Check if we swap with saved route we get different amount of tokens.
     wasm.execute(
@@ -387,7 +414,7 @@ fn swap_exact_in_success_with_provided_route_when_saved_route_exists() {
         &ExecuteMsg::<OsmosisRoute, OsmosisConfig>::SwapExactIn {
             coin_in: coin(10_000, "umars"),
             denom_out: "uosmo".to_string(),
-            slippage: Decimal::percent(6),
+            min_receive,
             route: None,
         },
         &[coin(10_000, "umars")],

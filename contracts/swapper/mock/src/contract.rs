@@ -78,7 +78,7 @@ pub fn swap_exact_in(
     info: MessageInfo,
     coin_in: Coin,
     denom_out: String,
-    _min_receive: Uint128,
+    min_receive: Uint128,
     _route: Option<SwapperRoute>,
 ) -> StdResult<Response> {
     let denom_in_balance = deps.querier.query_balance(env.contract.address, coin_in.denom)?;
@@ -91,6 +91,10 @@ pub fn swap_exact_in(
     } else {
         coin_in.amount
     };
+
+    if transfer_amt < min_receive {
+        return Err(StdError::generic_err("Min amount not reached"));
+    }
 
     // This is dependent on the mock env to pre-fund this contract with uosmo coins
     // simulating a swap has taken place

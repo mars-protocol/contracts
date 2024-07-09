@@ -58,7 +58,7 @@ use super::helpers::{AccountToFund, MockEnv};
                 amount: ActionAmount::AccountBalance,
             },
             denom_out: "uosmo".into(),
-            slippage: Decimal::percent(5),
+            min_receive: Uint128::zero(),
             route: Some(SwapperRoute::Osmo(OsmoRoute{swaps: vec![
                 OsmoSwap {
                     pool_id: 101,
@@ -85,7 +85,7 @@ use super::helpers::{AccountToFund, MockEnv};
                 amount: ActionAmount::AccountBalance,
             },
             denom_out: "uosmo".into(),
-            slippage: Decimal::percent(5),
+            min_receive: Uint128::zero(),
             route: Some(SwapperRoute::Osmo(OsmoRoute{swaps: vec![
                 OsmoSwap {
                     pool_id: 101,
