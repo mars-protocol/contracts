@@ -171,6 +171,45 @@ fn user_has_zero_balance_for_swap_req() {
 }
 
 #[test]
+fn min_receive_not_reached() {
+    let osmo_info = uosmo_info();
+    let atom_info = uatom_info();
+
+    let user = Addr::unchecked("user");
+    let mut mock = MockEnv::new()
+        .set_params(&[osmo_info.clone(), atom_info.clone()])
+        .fund_account(AccountToFund {
+            addr: user.clone(),
+            funds: vec![Coin::new(10_000u128, osmo_info.denom.clone())],
+        })
+        .build()
+        .unwrap();
+    let account_id = mock.create_credit_account(&user).unwrap();
+
+    let swap_amt = Uint128::new(10_000);
+    mock.update_credit_account(
+        &account_id,
+        &user,
+        vec![
+            Deposit(osmo_info.to_coin(swap_amt.u128())),
+            SwapExactIn {
+                coin_in: osmo_info.to_action_coin(swap_amt.u128()),
+                denom_out: atom_info.denom.clone(),
+                min_receive: swap_amt + Uint128::one(), // min receive is 1 more than actual
+                route: Some(SwapperRoute::Osmo(OsmoRoute {
+                    swaps: vec![OsmoSwap {
+                        pool_id: 101,
+                        to: atom_info.denom.clone(),
+                    }],
+                })),
+            },
+        ],
+        &[osmo_info.to_coin(swap_amt.u128())],
+    )
+    .unwrap_err();
+}
+
+#[test]
 fn user_does_not_have_enough_balance_for_swap_req() {
     let osmo_info = uosmo_info();
     let atom_info = uatom_info();
