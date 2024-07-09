@@ -13,10 +13,7 @@ use test_case::test_case;
 
 use super::{
     helpers::{AccountToFund, MockEnv},
-    vault_helpers::{
-        assert_vault_err, execute_bind_credit_manager_account, execute_deposit, execute_redeem,
-        execute_unlock,
-    },
+    vault_helpers::{assert_vault_err, execute_deposit, execute_redeem, execute_unlock},
 };
 use crate::tests::{
     helpers::deploy_managed_vault,
@@ -41,8 +38,15 @@ fn redeem_invalid_funds() {
     let credit_manager = mock.rover.clone();
 
     let managed_vault_addr = deploy_managed_vault(&mut mock.app, &fund_manager, &credit_manager);
-    execute_bind_credit_manager_account(&mut mock, &credit_manager, &managed_vault_addr, "2024")
-        .unwrap();
+
+    mock.create_credit_account_v2(
+        &fund_manager,
+        AccountKind::FundManager {
+            vault_addr: managed_vault_addr.to_string(),
+        },
+        None,
+    )
+    .unwrap();
 
     let res = execute_redeem(
         &mut mock,

@@ -78,6 +78,9 @@ pub enum ContractError {
 
     #[error("Invalid cooldown period, expected value greater than 0")]
     ZeroCooldownPeriod,
+
+    #[error("Contract owner not set")]
+    NoOwner {},
 }
 
 pub type ContractResult<T> = Result<T, ContractError>;

@@ -170,16 +170,18 @@ fn addr_not_connected_to_fund_manager_acc_does_not_work() {
         .set_params(&[coin_info.clone()])
         .fund_account(AccountToFund {
             addr: random_addr.clone(),
-            funds: vec![
-                coin(1_000_000_000, "untrn"),
-                coin(funded_amt.u128(), coin_info.denom.clone()),
-            ],
+            funds: vec![coin(funded_amt.u128(), coin_info.denom.clone())],
+        })
+        .fund_account(AccountToFund {
+            addr: fund_manager_wallet.clone(),
+            funds: vec![coin(1_000_000_000, "untrn")],
         })
         .build()
         .unwrap();
 
     let credit_manager = mock.rover.clone();
-    let managed_vault_addr = deploy_managed_vault(&mut mock.app, &random_addr, &credit_manager);
+    let managed_vault_addr =
+        deploy_managed_vault(&mut mock.app, &fund_manager_wallet, &credit_manager);
 
     let account_id = mock
         .create_credit_account_v2(
