@@ -17,7 +17,6 @@ import {
   Addr,
   Uint128,
   SwapperRoute,
-  Decimal,
   AstroportRoute,
   Coin,
   AstroRoute,
@@ -263,8 +262,8 @@ export interface MarsSwapperAstroportSwapExactInMutation {
   msg: {
     coinIn: Coin
     denomOut: string
+    minReceive: Uint128
     route?: SwapperRoute
-    slippage: Decimal
   }
   args?: {
     fee?: number | StdFee | 'auto'

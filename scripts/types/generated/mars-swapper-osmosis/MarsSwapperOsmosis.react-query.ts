@@ -15,7 +15,6 @@ import {
   OsmosisRoute,
   Uint128,
   SwapperRoute,
-  Decimal,
   Addr,
   SwapAmountInRoute,
   Coin,
@@ -264,8 +263,8 @@ export interface MarsSwapperOsmosisSwapExactInMutation {
   msg: {
     coinIn: Coin
     denomOut: string
+    minReceive: Uint128
     route?: SwapperRoute
-    slippage: Decimal
   }
   args?: {
     fee?: number | StdFee | 'auto'
