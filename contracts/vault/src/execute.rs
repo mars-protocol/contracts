@@ -16,8 +16,8 @@ use crate::{
     msg::UnlockState,
     performance_fee::PerformanceFeeConfig,
     state::{
-        BASE_TOKEN, COOLDOWN_PERIOD, CREDIT_MANAGER, PERFORMANCE_FEE_CONFIG, PERFORMANCE_FEE_STATE,
-        UNLOCKS, VAULT_ACC_ID, VAULT_TOKEN,
+        BASE_TOKEN, COOLDOWN_PERIOD, CREDIT_MANAGER, OWNER, PERFORMANCE_FEE_CONFIG,
+        PERFORMANCE_FEE_STATE, UNLOCKS, VAULT_ACC_ID, VAULT_TOKEN,
     },
     vault_token::{calculate_base_tokens, calculate_vault_tokens},
 };
@@ -35,6 +35,10 @@ pub fn bind_credit_manager_account(
     if vault_acc_id.is_some() {
         return Err(ContractError::VaultAccountExists {});
     }
+
+    // check if contract owner is the owner of account id
+    let owner = OWNER.current(deps.storage)?.ok_or(ContractError::NoOwner {})?;
+    assert_account_ownership(deps.as_ref(), &credit_manager, &account_id, owner.as_str())?;
 
     VAULT_ACC_ID.save(deps.storage, &account_id)?;
 
@@ -417,20 +421,8 @@ pub fn withdraw_performance_fee(
     };
 
     let cm_addr = CREDIT_MANAGER.load(deps.storage)?;
-    let config: ConfigResponse = deps.querier.query_wasm_smart(cm_addr, &QueryMsg::Config {})?;
-    let Some(acc_nft) = config.account_nft else {
-        return Err(ContractError::Std(StdError::generic_err(
-            "Account NFT contract address is not set in Credit Manager".to_string(),
-        )));
-    };
-    let acc_nft = AccountNftBase::new(deps.api.addr_validate(&acc_nft)?);
-    let vault_acc_owner_addr = acc_nft.query_nft_token_owner(&deps.querier, &vault_acc_id)?;
-    if vault_acc_owner_addr != info.sender {
-        return Err(ContractError::NotTokenOwner {
-            user: info.sender.to_string(),
-            account_id: vault_acc_id,
-        });
-    }
+    assert_account_ownership(deps.as_ref(), &cm_addr, &vault_acc_id, info.sender.as_str())?;
+    let vault_acc_owner_addr = info.sender.to_string();
 
     let total_base_tokens = total_base_tokens_in_account(deps.as_ref())?;
 
@@ -472,4 +464,27 @@ pub fn withdraw_performance_fee(
     )?;
 
     Ok(Response::new().add_message(withdraw_from_cm).add_event(event))
+}
+
+fn assert_account_ownership(
+    deps: Deps,
+    cm_addr: &str,
+    acc_id: &str,
+    user_addr: &str,
+) -> Result<(), ContractError> {
+    let config: ConfigResponse = deps.querier.query_wasm_smart(cm_addr, &QueryMsg::Config {})?;
+    let Some(acc_nft) = config.account_nft else {
+        return Err(ContractError::Std(StdError::generic_err(
+            "Account NFT contract address is not set in Credit Manager".to_string(),
+        )));
+    };
+    let acc_nft = AccountNftBase::new(deps.api.addr_validate(&acc_nft)?);
+    let acc_owner_addr = acc_nft.query_nft_token_owner(&deps.querier, acc_id)?;
+    if acc_owner_addr != user_addr {
+        return Err(ContractError::NotTokenOwner {
+            user: user_addr.to_string(),
+            account_id: acc_id.to_string(),
+        });
+    }
+    Ok(())
 }
