@@ -46,12 +46,10 @@ pub fn query_pcl_lp_price<P: PriceSourceChecked<Empty>>(
     let coin1_decimals = query_token_precision(&deps.querier, &astroport_factory, &coin1.denom)?;
 
     compute_pcl_lp_price(
-        coin0_decimals,
-        coin1_decimals,
         coin0_price,
         coin1_price,
-        coin0.amount,
-        coin1.amount,
+        coin0_decimals,
+        coin1_decimals,
         total_shares,
         price_scale,
         curve_invariant,
@@ -59,40 +57,6 @@ pub fn query_pcl_lp_price<P: PriceSourceChecked<Empty>>(
 }
 
 pub fn compute_pcl_lp_price(
-    coin0_decimals: u8,
-    coin1_decimals: u8,
-    coin0_price: Decimal,
-    coin1_price: Decimal,
-    coin0_amount: Uint128,
-    coin1_amount: Uint128,
-    total_shares: Uint128,
-    price_scale: Decimal,
-    curve_invariant: Decimal256,
-) -> ContractResult<Decimal> {
-    let lp_price_model = compute_pcl_lp_price_model(
-        coin0_price,
-        coin1_price,
-        coin0_decimals,
-        coin1_decimals,
-        total_shares,
-        price_scale,
-        curve_invariant,
-    )?;
-
-    let lp_price_real = compute_pcl_lp_price_real(
-        coin0_amount,
-        coin1_amount,
-        coin0_price,
-        coin1_price,
-        total_shares,
-    )?;
-
-    let pcl_lp_price = min(lp_price_model, lp_price_real);
-
-    Ok(pcl_lp_price)
-}
-
-pub fn compute_pcl_lp_price_model(
     coin0_price: Decimal,
     coin1_price: Decimal,
     coin0_decimals: u8,
@@ -127,19 +91,6 @@ pub fn compute_pcl_lp_price_model(
     let lp_price_model = Decimal::try_from(lp_price_model_256)?;
 
     Ok(lp_price_model)
-}
-
-pub fn compute_pcl_lp_price_real(
-    coin0_amount: Uint128,
-    coin1_amount: Uint128,
-    coin0_price: Decimal,
-    coin1_price: Decimal,
-    total_shares: Uint128,
-) -> ContractResult<Decimal> {
-    let tvl_real = coin0_amount.checked_mul_floor(coin0_price)?
-        + coin1_amount.checked_mul_floor(coin1_price)?;
-    let lp_price_real = Decimal::checked_from_ratio(tvl_real, total_shares)?;
-    Ok(lp_price_real)
 }
 
 #[allow(clippy::too_many_arguments)]
