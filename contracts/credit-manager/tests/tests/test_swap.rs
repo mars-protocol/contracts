@@ -1,6 +1,4 @@
-use std::str::FromStr;
-
-use cosmwasm_std::{coins, Addr, Coin, Decimal, OverflowError, OverflowOperation::Sub, Uint128};
+use cosmwasm_std::{coins, Addr, Coin, OverflowError, OverflowOperation::Sub, Uint128};
 use mars_credit_manager::error::ContractError;
 use mars_swapper_mock::contract::MOCK_SWAP_RESULT;
 use mars_types::{
@@ -29,7 +27,7 @@ fn only_token_owner_can_swap_for_account() {
                 amount: ActionAmount::Exact(Uint128::new(12)),
             },
             denom_out: "osmo".to_string(),
-            slippage: Decimal::from_atomics(6u128, 1).unwrap(),
+            min_receive: Uint128::zero(),
             route: Some(SwapperRoute::Osmo(OsmoRoute {
                 swaps: vec![OsmoSwap {
                     pool_id: 101,
@@ -83,7 +81,7 @@ fn denom_out_does_not_have_to_be_whitelisted() {
             SwapExactIn {
                 coin_in: atom_info.to_action_coin(10_000),
                 denom_out: another_coin.denom.clone(),
-                slippage: Decimal::from_atomics(6u128, 1).unwrap(),
+                min_receive: Uint128::zero(),
                 route: Some(route),
             },
         ],
@@ -121,7 +119,7 @@ fn no_amount_sent() {
         vec![SwapExactIn {
             coin_in: osmo_info.to_action_coin(0),
             denom_out: atom_info.denom.clone(),
-            slippage: Decimal::from_atomics(6u128, 1).unwrap(),
+            min_receive: Uint128::zero(),
             route: Some(SwapperRoute::Osmo(OsmoRoute {
                 swaps: vec![OsmoSwap {
                     pool_id: 101,
@@ -151,7 +149,7 @@ fn user_has_zero_balance_for_swap_req() {
         vec![SwapExactIn {
             coin_in: osmo_info.to_action_coin(10_000),
             denom_out: atom_info.denom.clone(),
-            slippage: Decimal::from_atomics(6u128, 1).unwrap(),
+            min_receive: Uint128::zero(),
             route: Some(SwapperRoute::Osmo(OsmoRoute {
                 swaps: vec![OsmoSwap {
                     pool_id: 101,
@@ -173,44 +171,42 @@ fn user_has_zero_balance_for_swap_req() {
 }
 
 #[test]
-fn slippage_too_high() {
+fn min_receive_not_reached() {
     let osmo_info = uosmo_info();
     let atom_info = uatom_info();
 
     let user = Addr::unchecked("user");
-    let max_slippage = Decimal::percent(50);
     let mut mock = MockEnv::new()
         .set_params(&[osmo_info.clone(), atom_info.clone()])
-        .max_slippage(max_slippage)
+        .fund_account(AccountToFund {
+            addr: user.clone(),
+            funds: vec![Coin::new(10_000u128, osmo_info.denom.clone())],
+        })
         .build()
         .unwrap();
     let account_id = mock.create_credit_account(&user).unwrap();
 
-    let slippage = max_slippage + Decimal::from_str("0.000001").unwrap();
-    let res = mock.update_credit_account(
+    let swap_amt = Uint128::new(10_000);
+    mock.update_credit_account(
         &account_id,
         &user,
-        vec![SwapExactIn {
-            coin_in: osmo_info.to_action_coin(10_000),
-            denom_out: atom_info.denom.clone(),
-            slippage,
-            route: Some(SwapperRoute::Osmo(OsmoRoute {
-                swaps: vec![OsmoSwap {
-                    pool_id: 101,
-                    to: atom_info.denom,
-                }],
-            })),
-        }],
-        &[],
-    );
-
-    assert_err(
-        res,
-        ContractError::SlippageExceeded {
-            slippage,
-            max_slippage,
-        },
+        vec![
+            Deposit(osmo_info.to_coin(swap_amt.u128())),
+            SwapExactIn {
+                coin_in: osmo_info.to_action_coin(swap_amt.u128()),
+                denom_out: atom_info.denom.clone(),
+                min_receive: swap_amt + Uint128::one(), // min receive is 1 more than actual
+                route: Some(SwapperRoute::Osmo(OsmoRoute {
+                    swaps: vec![OsmoSwap {
+                        pool_id: 101,
+                        to: atom_info.denom.clone(),
+                    }],
+                })),
+            },
+        ],
+        &[osmo_info.to_coin(swap_amt.u128())],
     )
+    .unwrap_err();
 }
 
 #[test]
@@ -237,7 +233,7 @@ fn user_does_not_have_enough_balance_for_swap_req() {
             SwapExactIn {
                 coin_in: osmo_info.to_action_coin(10_000),
                 denom_out: atom_info.denom.clone(),
-                slippage: Decimal::from_atomics(6u128, 1).unwrap(),
+                min_receive: Uint128::zero(),
                 route: Some(SwapperRoute::Osmo(OsmoRoute {
                     swaps: vec![OsmoSwap {
                         pool_id: 101,
@@ -292,7 +288,7 @@ fn swap_success_with_specified_amount() {
             SwapExactIn {
                 coin_in: atom_info.to_action_coin(10_000),
                 denom_out: osmo_info.denom.clone(),
-                slippage: Decimal::from_atomics(6u128, 1).unwrap(),
+                min_receive: MOCK_SWAP_RESULT - Uint128::one(),
                 route: Some(route),
             },
         ],
@@ -346,7 +342,7 @@ fn swap_success_with_amount_none() {
             SwapExactIn {
                 coin_in: atom_info.to_action_coin_full_balance(),
                 denom_out: osmo_info.denom.clone(),
-                slippage: Decimal::from_atomics(6u128, 1).unwrap(),
+                min_receive: MOCK_SWAP_RESULT - Uint128::one(),
                 route: Some(route),
             },
         ],

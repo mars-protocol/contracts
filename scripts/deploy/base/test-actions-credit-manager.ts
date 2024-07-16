@@ -146,7 +146,7 @@ export class Rover {
         swap_exact_in: {
           coin_in: { amount: { exact: amount }, denom: this.config.chain.baseDenom },
           denom_out: this.actions.secondaryDenom,
-          slippage: this.actions.swap.slippage,
+          min_receive: '0',
         },
       },
     ])

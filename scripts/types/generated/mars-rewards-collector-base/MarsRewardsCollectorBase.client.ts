@@ -110,12 +110,16 @@ export interface MarsRewardsCollectorBaseInterface
     {
       amount,
       denom,
+      feeCollectorMinReceive,
       feeCollectorRoute,
+      safetyFundMinReceive,
       safetyFundRoute,
     }: {
       amount?: Uint128
       denom: string
+      feeCollectorMinReceive?: Uint128
       feeCollectorRoute?: SwapperRoute
+      safetyFundMinReceive?: Uint128
       safetyFundRoute?: SwapperRoute
     },
     fee?: number | StdFee | 'auto',
@@ -279,12 +283,16 @@ export class MarsRewardsCollectorBaseClient
     {
       amount,
       denom,
+      feeCollectorMinReceive,
       feeCollectorRoute,
+      safetyFundMinReceive,
       safetyFundRoute,
     }: {
       amount?: Uint128
       denom: string
+      feeCollectorMinReceive?: Uint128
       feeCollectorRoute?: SwapperRoute
+      safetyFundMinReceive?: Uint128
       safetyFundRoute?: SwapperRoute
     },
     fee: number | StdFee | 'auto' = 'auto',
@@ -298,7 +306,9 @@ export class MarsRewardsCollectorBaseClient
         swap_asset: {
           amount,
           denom,
+          fee_collector_min_receive: feeCollectorMinReceive,
           fee_collector_route: feeCollectorRoute,
+          safety_fund_min_receive: safetyFundMinReceive,
           safety_fund_route: safetyFundRoute,
         },
       },

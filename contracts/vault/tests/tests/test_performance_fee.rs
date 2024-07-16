@@ -513,13 +513,20 @@ fn swap_usdc_to_atom(
             amount: vec![coin(swap_amt.u128(), uatom_info.denom.clone())],
         }))
         .unwrap();
+    let estimate_res = mock.query_swap_estimate_with_optional_route(
+        &uusdc_info.to_coin(swap_amt.u128()),
+        &uatom_info.denom,
+        None,
+    );
+    let min_receive =
+        estimate_res.amount * (Decimal::one() - Decimal::from_atomics(6u128, 1).unwrap());
     mock.update_credit_account(
         fund_acc_id,
         fund_manager,
         vec![Action::SwapExactIn {
             coin_in: uusdc_info.to_action_coin(swap_amt.u128()),
             denom_out: uatom_info.denom.clone(),
-            slippage: Decimal::from_atomics(6u128, 1).unwrap(),
+            min_receive,
             route: None,
         }],
         &[],

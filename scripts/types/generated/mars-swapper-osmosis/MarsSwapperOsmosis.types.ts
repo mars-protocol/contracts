@@ -23,8 +23,8 @@ export type ExecuteMsg =
       swap_exact_in: {
         coin_in: Coin
         denom_out: string
+        min_receive: Uint128
         route?: SwapperRoute | null
-        slippage: Decimal
       }
     }
   | {
@@ -63,7 +63,6 @@ export type SwapperRoute =
   | {
       osmo: OsmoRoute
     }
-export type Decimal = string
 export type Addr = string
 export interface SwapAmountInRoute {
   pool_id: number

@@ -1,6 +1,6 @@
 use std::fmt::{Debug, Display};
 
-use cosmwasm_std::{Api, Coin, CosmosMsg, CustomMsg, CustomQuery, Decimal, Env, QuerierWrapper};
+use cosmwasm_std::{Api, Coin, CosmosMsg, CustomMsg, CustomQuery, Env, QuerierWrapper, Uint128};
 use mars_types::swapper::{EstimateExactInSwapResponse, SwapperRoute};
 use schemars::JsonSchema;
 use serde::{de::DeserializeOwned, Serialize};
@@ -30,7 +30,7 @@ where
         querier: &QuerierWrapper<Q>,
         env: &Env,
         coin_in: &Coin,
-        slippage: Decimal,
+        min_receive: Uint128,
     ) -> ContractResult<CosmosMsg<M>>;
 
     /// Query to get the estimate result of a swap

@@ -1,5 +1,5 @@
 use cosmwasm_std::{
-    CheckedFromRatioError, CheckedMultiplyFractionError, CheckedMultiplyRatioError, Decimal,
+    CheckedFromRatioError, CheckedMultiplyFractionError, CheckedMultiplyRatioError,
     DecimalRangeExceeded, OverflowError, StdError,
 };
 use mars_owner::OwnerError;
@@ -49,12 +49,6 @@ pub enum ContractError {
     NoRoute {
         from: String,
         to: String,
-    },
-
-    #[error("Max slippage of {max_slippage} exceeded. Slippage is {slippage}")]
-    MaxSlippageExceeded {
-        max_slippage: Decimal,
-        slippage: Decimal,
     },
 
     #[error("{0}")]

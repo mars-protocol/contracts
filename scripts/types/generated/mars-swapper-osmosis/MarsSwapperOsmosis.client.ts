@@ -14,7 +14,6 @@ import {
   OsmosisRoute,
   Uint128,
   SwapperRoute,
-  Decimal,
   Addr,
   SwapAmountInRoute,
   Coin,
@@ -153,13 +152,13 @@ export interface MarsSwapperOsmosisInterface extends MarsSwapperOsmosisReadOnlyI
     {
       coinIn,
       denomOut,
+      minReceive,
       route,
-      slippage,
     }: {
       coinIn: Coin
       denomOut: string
+      minReceive: Uint128
       route?: SwapperRoute
-      slippage: Decimal
     },
     fee?: number | StdFee | 'auto',
     memo?: string,
@@ -258,13 +257,13 @@ export class MarsSwapperOsmosisClient
     {
       coinIn,
       denomOut,
+      minReceive,
       route,
-      slippage,
     }: {
       coinIn: Coin
       denomOut: string
+      minReceive: Uint128
       route?: SwapperRoute
-      slippage: Decimal
     },
     fee: number | StdFee | 'auto' = 'auto',
     memo?: string,
@@ -277,8 +276,8 @@ export class MarsSwapperOsmosisClient
         swap_exact_in: {
           coin_in: coinIn,
           denom_out: denomOut,
+          min_receive: minReceive,
           route,
-          slippage,
         },
       },
       fee,

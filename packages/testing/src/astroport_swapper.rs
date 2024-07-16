@@ -1,5 +1,5 @@
 use astroport_v5::router::SwapOperation;
-use cosmwasm_std::{Coin, Decimal, Uint128};
+use cosmwasm_std::{Coin, Uint128};
 #[cfg(feature = "osmosis-test-tube")]
 use cw_it::Artifact;
 use cw_it::{
@@ -181,12 +181,12 @@ impl<'a> AstroportSwapperRobot<'a> {
         &self,
         coin_in: Coin,
         denom_out: impl Into<String>,
-        slippage: Decimal,
+        min_receive: Uint128,
         signer: &SigningAccount,
         route: SwapperRoute,
     ) -> &Self {
         println!("swapping {}", coin_in);
-        self.swap_res(coin_in, denom_out, slippage, signer, route).unwrap();
+        self.swap_res(coin_in, denom_out, min_receive, signer, route).unwrap();
         self
     }
 
@@ -194,7 +194,7 @@ impl<'a> AstroportSwapperRobot<'a> {
         &self,
         coin_in: Coin,
         denom_out: impl Into<String>,
-        slippage: Decimal,
+        min_receive: Uint128,
         signer: &SigningAccount,
         route: SwapperRoute,
     ) -> RunnerExecuteResult<MsgExecuteContractResponse> {
@@ -204,7 +204,7 @@ impl<'a> AstroportSwapperRobot<'a> {
             &mars_types::swapper::ExecuteMsg::<AstroportRoute, AstroportConfig>::SwapExactIn {
                 coin_in: coin_in.clone(),
                 denom_out: denom_out.into(),
-                slippage,
+                min_receive,
                 route: Some(route),
             },
             &[coin_in],

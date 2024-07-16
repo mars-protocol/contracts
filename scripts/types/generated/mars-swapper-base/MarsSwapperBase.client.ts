@@ -13,7 +13,6 @@ import {
   OwnerUpdate,
   Uint128,
   SwapperRoute,
-  Decimal,
   Addr,
   Empty,
   Coin,
@@ -150,13 +149,13 @@ export interface MarsSwapperBaseInterface extends MarsSwapperBaseReadOnlyInterfa
     {
       coinIn,
       denomOut,
+      minReceive,
       route,
-      slippage,
     }: {
       coinIn: Coin
       denomOut: string
+      minReceive: Uint128
       route?: SwapperRoute
-      slippage: Decimal
     },
     fee?: number | StdFee | 'auto',
     memo?: string,
@@ -255,13 +254,13 @@ export class MarsSwapperBaseClient
     {
       coinIn,
       denomOut,
+      minReceive,
       route,
-      slippage,
     }: {
       coinIn: Coin
       denomOut: string
+      minReceive: Uint128
       route?: SwapperRoute
-      slippage: Decimal
     },
     fee: number | StdFee | 'auto' = 'auto',
     memo?: string,
@@ -274,8 +273,8 @@ export class MarsSwapperBaseClient
         swap_exact_in: {
           coin_in: coinIn,
           denom_out: denomOut,
+          min_receive: minReceive,
           route,
-          slippage,
         },
       },
       fee,

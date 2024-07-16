@@ -111,7 +111,9 @@ export interface MarsRewardsCollectorBaseSwapAssetMutation {
   msg: {
     amount?: Uint128
     denom: string
+    feeCollectorMinReceive?: Uint128
     feeCollectorRoute?: SwapperRoute
+    safetyFundMinReceive?: Uint128
     safetyFundRoute?: SwapperRoute
   }
   args?: {

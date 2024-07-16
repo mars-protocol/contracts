@@ -59,7 +59,9 @@ export type ExecuteMsg =
       swap_asset: {
         amount?: Uint128 | null
         denom: string
+        fee_collector_min_receive?: Uint128 | null
         fee_collector_route?: SwapperRoute | null
+        safety_fund_min_receive?: Uint128 | null
         safety_fund_route?: SwapperRoute | null
       }
     }
@@ -151,8 +153,8 @@ export type Action =
       swap_exact_in: {
         coin_in: ActionCoin
         denom_out: string
+        min_receive: Uint128
         route?: SwapperRoute | null
-        slippage: Decimal
       }
     }
   | {

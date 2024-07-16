@@ -152,6 +152,8 @@ pub enum ExecuteMsg {
         amount: Option<Uint128>,
         safety_fund_route: Option<SwapperRoute>,
         fee_collector_route: Option<SwapperRoute>,
+        safety_fund_min_receive: Option<Uint128>,
+        fee_collector_min_receive: Option<Uint128>,
     },
 
     /// Claim rewards in incentives contract.

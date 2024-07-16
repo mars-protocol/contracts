@@ -282,10 +282,30 @@
               "denom": {
                 "type": "string"
               },
+              "fee_collector_min_receive": {
+                "anyOf": [
+                  {
+                    "$ref": "#/definitions/Uint128"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
               "fee_collector_route": {
                 "anyOf": [
                   {
                     "$ref": "#/definitions/SwapperRoute"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "safety_fund_min_receive": {
+                "anyOf": [
+                  {
+                    "$ref": "#/definitions/Uint128"
                   },
                   {
                     "type": "null"
@@ -644,7 +664,7 @@
                 "required": [
                   "coin_in",
                   "denom_out",
-                  "slippage"
+                  "min_receive"
                 ],
                 "properties": {
                   "coin_in": {
@@ -652,6 +672,9 @@
                   },
                   "denom_out": {
                     "type": "string"
+                  },
+                  "min_receive": {
+                    "$ref": "#/definitions/Uint128"
                   },
                   "route": {
                     "anyOf": [
@@ -662,9 +685,6 @@
                         "type": "null"
                       }
                     ]
-                  },
-                  "slippage": {
-                    "$ref": "#/definitions/Decimal"
                   }
                 },
                 "additionalProperties": false

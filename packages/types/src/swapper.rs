@@ -1,5 +1,5 @@
 use cosmwasm_schema::{cw_serde, QueryResponses};
-use cosmwasm_std::{Addr, Coin, Decimal, Uint128};
+use cosmwasm_std::{Addr, Coin, Uint128};
 use mars_owner::OwnerUpdate;
 
 #[cw_serde]
@@ -56,11 +56,11 @@ pub enum ExecuteMsg<Route, C> {
         denom_out: String,
         route: Route,
     },
-    /// Perform a swapper with an exact-in amount. Requires slippage allowance %.
+    /// Perform a swapper with an exact-in amount
     SwapExactIn {
         coin_in: Coin,
         denom_out: String,
-        slippage: Decimal,
+        min_receive: Uint128,
         route: Option<SwapperRoute>,
     },
     /// Send swapper results back to swapper. Also refunds extra if sent more than needed. Internal use only.

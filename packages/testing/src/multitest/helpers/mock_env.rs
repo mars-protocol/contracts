@@ -852,6 +852,15 @@ impl MockEnv {
         denom_out: &str,
         route: SwapperRoute,
     ) -> EstimateExactInSwapResponse {
+        self.query_swap_estimate_with_optional_route(coin_in, denom_out, Some(route))
+    }
+
+    pub fn query_swap_estimate_with_optional_route(
+        &self,
+        coin_in: &Coin,
+        denom_out: &str,
+        route: Option<SwapperRoute>,
+    ) -> EstimateExactInSwapResponse {
         let config = self.query_config();
         self.app
             .wrap()
@@ -860,7 +869,7 @@ impl MockEnv {
                 &EstimateExactInSwap {
                     coin_in: coin_in.clone(),
                     denom_out: denom_out.to_string(),
-                    route: Some(route),
+                    route,
                 },
             )
             .unwrap()
