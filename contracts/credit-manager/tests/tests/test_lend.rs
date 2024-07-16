@@ -2,9 +2,12 @@ use std::ops::Add;
 
 use cosmwasm_std::{coin, coins, Addr, Coin, OverflowError, OverflowOperation, Uint128};
 use mars_credit_manager::error::ContractError;
-use mars_types::credit_manager::{
-    Action::{Deposit, Lend},
-    ActionAmount, ActionCoin,
+use mars_types::{
+    credit_manager::{
+        Action::{Deposit, Lend},
+        ActionAmount, ActionCoin, Positions,
+    },
+    health::AccountKind,
 };
 
 use super::helpers::{
@@ -54,20 +57,28 @@ fn can_only_lend_what_is_whitelisted() {
 }
 
 #[test]
-fn lending_zero_raises() {
+fn lending_zero_has_no_effect() {
     let coin_info = uosmo_info();
     let user = Addr::unchecked("user");
     let mut mock = MockEnv::new().set_params(&[coin_info.clone()]).build().unwrap();
     let account_id = mock.create_credit_account(&user).unwrap();
 
-    let res = mock.update_credit_account(
-        &account_id,
-        &user,
-        vec![Lend(coin_info.to_action_coin(0))],
-        &[],
-    );
+    mock.update_credit_account(&account_id, &user, vec![Lend(coin_info.to_action_coin(0))], &[])
+        .unwrap();
 
-    assert_err(res, ContractError::NoAmount)
+    let position = mock.query_positions(&account_id);
+    assert_eq!(
+        position,
+        Positions {
+            account_id,
+            account_kind: AccountKind::Default,
+            deposits: vec![],
+            debts: vec![],
+            lends: vec![],
+            vaults: vec![],
+            staked_astro_lps: vec![]
+        }
+    );
 }
 
 #[test]
@@ -104,7 +115,7 @@ fn raises_when_not_enough_assets_to_lend() {
 }
 
 #[test]
-fn raises_when_attempting_to_lend_account_balance_with_no_funds() {
+fn attempting_to_lend_account_balance_with_no_funds() {
     let coin_info = uosmo_info();
 
     let user_a = Addr::unchecked("user_a");
@@ -127,7 +138,7 @@ fn raises_when_attempting_to_lend_account_balance_with_no_funds() {
     let red_bank_collateral = mock.query_red_bank_collateral(&account_id_a, &coin_info.denom);
     assert_eq!(red_bank_collateral.amount, Uint128::zero());
 
-    let res = mock.update_credit_account(
+    mock.update_credit_account(
         &account_id_a,
         &user_a,
         vec![Lend(ActionCoin {
@@ -135,9 +146,22 @@ fn raises_when_attempting_to_lend_account_balance_with_no_funds() {
             amount: ActionAmount::AccountBalance,
         })],
         &[],
-    );
+    )
+    .unwrap();
 
-    assert_err(res, ContractError::NoAmount)
+    let position = mock.query_positions(&account_id_a);
+    assert_eq!(
+        position,
+        Positions {
+            account_id: account_id_a,
+            account_kind: AccountKind::Default,
+            deposits: vec![],
+            debts: vec![],
+            lends: vec![],
+            vaults: vec![],
+            staked_astro_lps: vec![]
+        }
+    );
 }
 
 #[test]

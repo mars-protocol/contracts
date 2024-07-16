@@ -173,7 +173,9 @@ impl Incentives {
             let response =
                 self.query_staked_astro_lp_positions(querier, account_id, start_after, None)?;
             for item in response.data {
-                all_coins.push(item.lp_coin);
+                if !item.lp_coin.amount.is_zero() {
+                    all_coins.push(item.lp_coin);
+                }
             }
             start_after = all_coins.last().map(|item| item.denom.clone());
             has_more = response.metadata.has_more;
