@@ -137,9 +137,9 @@ dependencies = [
 
 [[package]]
 name = "astroport"
-version = "5.0.0-rc.1-tokenfactory"
+version = "5.2.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "cdf6999cd2652543814f071f6e67c718ad4608607c90bc3bc89566b8a5985db3"
+checksum = "5c4af74ada17a13fe7b75d0d529367eb5dcb15e06fd7e744892191856eedc742"
 dependencies = [
  "astroport-circular-buffer 0.2.0",
  "cosmos-sdk-proto 0.19.0",
@@ -2220,7 +2220,7 @@ dependencies = [
 name = "mars-incentives"
 version = "2.0.0"
 dependencies = [
- "astroport 5.0.0-rc.1-tokenfactory",
+ "astroport 5.2.0",
  "cosmwasm-schema",
  "cosmwasm-std",
  "cw-it",
@@ -2243,7 +2243,7 @@ name = "mars-integration-tests"
 version = "2.0.0"
 dependencies = [
  "anyhow",
- "astroport 5.0.0-rc.1-tokenfactory",
+ "astroport 5.2.0",
  "cosmwasm-std",
  "cw-it",
  "cw-multi-test",
@@ -2286,7 +2286,7 @@ dependencies = [
 name = "mars-mock-astroport-incentives"
 version = "2.0.0"
 dependencies = [
- "astroport 5.0.0-rc.1-tokenfactory",
+ "astroport 5.2.0",
  "cosmwasm-schema",
  "cosmwasm-std",
  "cw-storage-plus 1.2.0",
@@ -2413,7 +2413,7 @@ name = "mars-oracle-wasm"
 version = "2.0.0"
 dependencies = [
  "astroport 2.9.0",
- "astroport 5.0.0-rc.1-tokenfactory",
+ "astroport 5.2.0",
  "cosmwasm-schema",
  "cosmwasm-std",
  "cw-it",
@@ -2471,7 +2471,7 @@ name = "mars-params"
 version = "2.0.1"
 dependencies = [
  "anyhow",
- "astroport 5.0.0-rc.1-tokenfactory",
+ "astroport 5.2.0",
  "cosmwasm-schema",
  "cosmwasm-std",
  "cw-multi-test",
@@ -2644,7 +2644,7 @@ version = "2.0.0"
 dependencies = [
  "anyhow",
  "astroport 2.9.0",
- "astroport 5.0.0-rc.1-tokenfactory",
+ "astroport 5.2.0",
  "cosmwasm-schema",
  "cosmwasm-std",
  "cw-it",
@@ -2707,7 +2707,7 @@ version = "2.0.0"
 dependencies = [
  "anyhow",
  "astroport 2.9.0",
- "astroport 5.0.0-rc.1-tokenfactory",
+ "astroport 5.2.0",
  "cosmwasm-schema",
  "cosmwasm-std",
  "cw-it",
@@ -2828,7 +2828,7 @@ dependencies = [
  "anyhow",
  "apollo-cw-asset",
  "apollo-utils",
- "astroport 5.0.0-rc.1-tokenfactory",
+ "astroport 5.2.0",
  "cosmwasm-std",
  "cw-dex",
  "cw-it",
