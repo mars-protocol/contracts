@@ -291,7 +291,9 @@ export type CallbackMsg =
     }
   | {
       assert_deposit_caps: {
-        denoms: string[]
+        denoms: {
+          [k: string]: Uint128 | null
+        }
       }
     }
   | {

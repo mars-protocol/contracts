@@ -1179,11 +1179,17 @@
                 ],
                 "properties": {
                   "denoms": {
-                    "type": "array",
-                    "items": {
-                      "type": "string"
-                    },
-                    "uniqueItems": true
+                    "type": "object",
+                    "additionalProperties": {
+                      "anyOf": [
+                        {
+                          "$ref": "#/definitions/Uint128"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    }
                   }
                 },
                 "additionalProperties": false
