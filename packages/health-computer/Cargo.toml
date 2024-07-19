@@ -11,7 +11,6 @@ crate-type = ["cdylib", "rlib"]
 doctest    = false
 
 [features]
-backtraces = ["cosmwasm-std/backtraces"]
 default    = ["console_error_panic_hook"]
 javascript = ["tsify", "wasm-bindgen", "mars-types/javascript"]
 

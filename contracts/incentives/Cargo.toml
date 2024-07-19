@@ -15,9 +15,7 @@ crate-type = ["cdylib", "rlib"]
 doctest    = false
 
 [features]
-# for more explicit tests, cargo test --features=backtraces
-backtraces = ["cosmwasm-std/backtraces", "mars-testing/backtraces", "mars-utils/backtraces", "mars-red-bank/backtraces"]
-library    = []
+library = []
 
 [dependencies]
 astroport-v5    = { workspace = true }

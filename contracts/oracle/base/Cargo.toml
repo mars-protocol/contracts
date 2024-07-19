@@ -13,8 +13,7 @@ keywords      = { workspace = true }
 doctest = false
 
 [features]
-# for more explicit tests, cargo test --features=backtraces
-backtraces  = ["cosmwasm-std/backtraces"]
+library = []
 
 [dependencies]
 cosmwasm-schema = { workspace = true }

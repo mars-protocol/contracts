@@ -10,10 +10,10 @@ pub enum GuardState {
     Locked,
 }
 
-pub struct Guard<'a>(Item<'a, GuardState>);
+pub struct Guard(Item<GuardState>);
 
-impl<'a> Guard<'a> {
-    pub const fn new(namespace: &'a str) -> Self {
+impl Guard {
+    pub const fn new(namespace: &'static str) -> Self {
         Self(Item::new(namespace))
     }
 

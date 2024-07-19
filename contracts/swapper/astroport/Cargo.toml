@@ -14,9 +14,6 @@ crate-type = ["cdylib", "rlib"]
 doctest    = false
 
 [features]
-# for quicker tests, cargo test --lib
-# for more explicit tests, cargo test --features=backtraces
-backtraces        = ["cosmwasm-std/backtraces"]
 default           = []
 library           = []
 osmosis-test-tube = ["cw-it/osmosis-test-tube", "mars-testing/osmosis-test-tube"]

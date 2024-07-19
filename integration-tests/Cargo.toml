@@ -12,10 +12,6 @@ keywords      = { workspace = true }
 [lib]
 doctest = false
 
-[features]
-# for more explicit tests, cargo test --features=backtraces
-backtraces = ["cosmwasm-std/backtraces"]
-
 [dev-dependencies]
 anyhow                         = { workspace = true }
 astroport-v5                   = { workspace = true }

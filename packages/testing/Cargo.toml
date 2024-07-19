@@ -15,7 +15,6 @@ doctest = false
 
 [features]
 astroport         = ["cw-it/astroport", "dep:astroport"]
-backtraces        = ["cosmwasm-std/backtraces", "osmosis-std/backtraces"]
 default           = []
 osmosis-test-tube = ["cw-it/osmosis-test-tube"]
 

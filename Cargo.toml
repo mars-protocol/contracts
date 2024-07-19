@@ -64,21 +64,21 @@ apollo-utils       = "0.1.2"
 astroport          = "2.8.0"
 astroport-v5       = { package = "astroport", version = "5.2.0" }
 bech32             = "0.11.0"
-cosmwasm-schema    = "1.5.5"
-cosmwasm-std       = "1.5.5"
+cosmwasm-schema    = "2.0.4"
+cosmwasm-std       = { version = "2.0.4", features = ["cosmwasm_1_1"] }
 cw2                = "1.1.2"
 cw721              = { git = "https://github.com/CosmWasm/cw-nfts/", branch = "main" }
 cw721-base         = { git = "https://github.com/CosmWasm/cw-nfts/", branch = "main", features = ["library"] }
 cw-dex             = { version = "0.3.1", features = ["osmosis"] }
 cw-paginate        = { git = "https://github.com/mars-protocol/cw-plus-plus", rev = "607be11" }
-cw-storage-plus    = "1.2.0"
-cw-utils           = "1.0.3"
-cw-vault-standard  = { version = "0.4.0", features = ["lockup", "force-unlock"] }
+cw-storage-plus    = "2.0.0"
+cw-utils           = "2.0.0"
+cw-vault-standard  = { version = "0.4.1-rc.1", features = ["lockup", "force-unlock"] }
 ica-oracle         = { git = "https://github.com/Stride-Labs/ica-oracle", rev = "2fdf76f", features = ["library"] }
 itertools          = "0.13.0"
 mars-owner         = { version = "2.0.0", features = ["emergency-owner"] }
 neutron-sdk        = "0.10.0"
-osmosis-std        = "0.22.0"
+osmosis-std        = "0.25.0"
 prost              = { version = "0.12.6", default-features = false }
 pyth-sdk-cw        = "1.2.0"
 regex              = "1.10.4"
@@ -95,7 +95,7 @@ wasm-bindgen       = "0.2.92"
 # dev-dependencies
 cw-multi-test     = { version = "0.20.0", features = ["cosmwasm_1_1"] }
 cw-it             = "0.3.0"
-osmosis-test-tube = "22.1.0"
+osmosis-test-tube = "25.0.0"
 proptest          = "1.4.0"
 test-case         = "3.3.1"
 
