@@ -1,7 +1,8 @@
-use std::collections::BTreeSet;
+use std::collections::BTreeMap;
 
 use cosmwasm_std::{
-    to_json_binary, Addr, Coins, CosmosMsg, DepsMut, Env, MessageInfo, Response, StdResult, WasmMsg,
+    to_json_binary, Addr, Coins, CosmosMsg, DepsMut, Env, MessageInfo, Response, StdResult,
+    Uint128, WasmMsg,
 };
 use mars_types::{
     account_nft::ExecuteMsg as NftExecuteMsg,
@@ -15,7 +16,7 @@ use crate::{
     borrow::borrow,
     claim_astro_lp_rewards::claim_lp_rewards,
     claim_rewards::claim_rewards,
-    deposit::{assert_deposit_caps, deposit},
+    deposit::{assert_deposit_caps, deposit, update_denom_deposits},
     error::{ContractError, ContractResult},
     health::{assert_max_ltv, query_health_state},
     hls::assert_hls_rules,
@@ -155,9 +156,6 @@ pub fn dispatch_actions(
     // result of any action. We invoke the AssertDepositCaps callback in the end
     // to make sure that none of the deposit cap is exceeded.
     //
-    // Additionally, we use a BTreeSet (instead of a Vec or HashSet) to ensure
-    // uniqueness and determininism.
-    //
     // There are a few actions that may result in an asset's deposit amount
     // going up:
     // - Deposit: we check the deposited denom
@@ -172,14 +170,20 @@ pub fn dispatch_actions(
     // Note that Borrow/Lend/Reclaim does not impact total deposit amount,
     // because they simply move assets between Red Bank and Rover. We don't
     // check these actions.
-    let mut denoms_for_cap_check = BTreeSet::new();
+    let mut denoms_for_cap_check: BTreeMap<String, Option<Uint128>> = BTreeMap::new();
 
     for action in actions {
         match action {
             Action::Deposit(coin) => {
                 response = deposit(&mut deps, response, account_id, &coin, &mut received_coins)?;
                 // check the deposit cap of the deposited denom
-                denoms_for_cap_check.insert(coin.denom);
+                update_denom_deposits(
+                    deps.as_ref(),
+                    &mut denoms_for_cap_check,
+                    &coin.denom,
+                    &received_coins,
+                    true,
+                )?;
             }
             Action::Withdraw(coin) => callbacks.push(CallbackMsg::Withdraw {
                 account_id: account_id.to_string(),
@@ -286,7 +290,13 @@ pub fn dispatch_actions(
                     route,
                 });
                 // check the deposit cap of the swap output denom
-                denoms_for_cap_check.insert(denom_out);
+                update_denom_deposits(
+                    deps.as_ref(),
+                    &mut denoms_for_cap_check,
+                    &denom_out,
+                    &received_coins,
+                    false,
+                )?;
             }
             Action::ExitVault {
                 vault,
@@ -325,7 +335,13 @@ pub fn dispatch_actions(
                 });
 
                 // check the deposit cap of the LP output denom
-                denoms_for_cap_check.insert(lp_token_out);
+                update_denom_deposits(
+                    deps.as_ref(),
+                    &mut denoms_for_cap_check,
+                    &lp_token_out,
+                    &received_coins,
+                    false,
+                )?;
             }
             Action::WithdrawLiquidity {
                 lp_token,
