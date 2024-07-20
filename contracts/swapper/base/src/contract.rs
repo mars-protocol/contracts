@@ -1,8 +1,8 @@
 use std::marker::PhantomData;
 
 use cosmwasm_std::{
-    to_json_binary, Addr, BankMsg, Binary, Coin, CosmosMsg, CustomMsg, CustomQuery, Decimal, Deps,
-    DepsMut, Env, MessageInfo, Response, WasmMsg,
+    to_json_binary, Addr, BankMsg, Binary, Coin, CosmosMsg, CustomMsg, CustomQuery, Deps, DepsMut,
+    Env, MessageInfo, Response, Uint128, WasmMsg,
 };
 use cw_paginate::paginate_map;
 use cw_storage_plus::{Bound, Item, Map};
@@ -13,9 +13,6 @@ use mars_types::swapper::{
 };
 
 use crate::{Config, ContractError, ContractResult, Route};
-
-// Max allowed slippage percentage for swap
-const MAX_SLIPPAGE_PERCENTAGE: u64 = 10;
 
 pub struct SwapBase<'a, Q, M, R, C>
 where
@@ -92,9 +89,9 @@ where
             ExecuteMsg::SwapExactIn {
                 coin_in,
                 denom_out,
-                slippage,
+                min_receive,
                 route,
-            } => self.swap_exact_in(deps, env, info, coin_in, denom_out, slippage, route),
+            } => self.swap_exact_in(deps, env, info, coin_in, denom_out, min_receive, route),
             ExecuteMsg::TransferResult {
                 recipient,
                 denom_in,
@@ -188,17 +185,9 @@ where
         info: MessageInfo,
         coin_in: Coin,
         denom_out: String,
-        slippage: Decimal,
+        min_receive: Uint128,
         route: Option<SwapperRoute>,
     ) -> ContractResult<Response<M>> {
-        let max_slippage = Decimal::percent(MAX_SLIPPAGE_PERCENTAGE);
-        if slippage > max_slippage {
-            return Err(ContractError::MaxSlippageExceeded {
-                max_slippage,
-                slippage,
-            });
-        }
-
         // if route is not provided, use the default route from state
         let route = match route {
             Some(route) => {
@@ -215,7 +204,7 @@ where
                 })?,
         };
 
-        let swap_msg = route.build_exact_in_swap_msg(&deps.querier, &env, &coin_in, slippage)?;
+        let swap_msg = route.build_exact_in_swap_msg(&deps.querier, &env, &coin_in, min_receive)?;
 
         // Check balance of result of swapper and send back result to sender
         let transfer_msg = CosmosMsg::Wasm(WasmMsg::Execute {
@@ -235,7 +224,7 @@ where
             .add_attribute("denom_in", coin_in.denom)
             .add_attribute("amount_in", coin_in.amount)
             .add_attribute("denom_out", denom_out)
-            .add_attribute("slippage", slippage.to_string()))
+            .add_attribute("min_receive", min_receive.to_string()))
     }
 
     fn transfer_result(

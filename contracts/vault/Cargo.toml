@@ -1,0 +1,41 @@
+[package]
+name          = "mars-vault"
+version       = { workspace = true }
+authors       = { workspace = true }
+license       = { workspace = true }
+edition       = { workspace = true }
+repository    = { workspace = true }
+homepage      = { workspace = true }
+documentation = { workspace = true }
+keywords      = { workspace = true }
+
+[lib]
+crate-type = ["cdylib", "rlib"]
+doctest    = false
+
+[features]
+# for quicker tests, cargo test --lib
+# for more explicit tests, cargo test --features=backtraces
+backtraces = ["cosmwasm-std/backtraces"]
+library    = []
+
+[dependencies]
+cosmwasm-schema   = { workspace = true }
+cosmwasm-std      = { workspace = true, features = ["cosmwasm_1_1"] }
+cw2               = { workspace = true }
+cw-storage-plus   = { workspace = true }
+cw-utils          = { workspace = true }
+cw-paginate       = { workspace = true }
+cw-vault-standard = { workspace = true }
+mars-owner        = { workspace = true }
+mars-types        = { workspace = true }
+mars-utils        = { workspace = true }
+thiserror         = { workspace = true }
+osmosis-std       = { workspace = true }
+
+[dev-dependencies]
+anyhow           = { workspace = true }
+cw-multi-test    = { workspace = true, features = ["cosmwasm_1_1"] }
+mars-mock-oracle = { workspace = true }
+mars-testing     = { workspace = true }
+test-case        = { workspace = true }

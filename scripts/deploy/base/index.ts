@@ -15,16 +15,16 @@ export const taskRunner = async ({ config, label }: TaskRunnerProps) => {
     await deployer.assertDeployerBalance()
 
     // Upload contracts
-    await deployer.upload('redBank', 'mars_red_bank.wasm')
-    await deployer.upload('addressProvider', 'mars_address_provider.wasm')
-    await deployer.upload('incentives', 'mars_incentives.wasm')
-    await deployer.upload('oracle', `mars_oracle_${config.oracle.name}.wasm`)
+    await deployer.upload('redBank', wasmFile('mars_red_bank'))
+    await deployer.upload('addressProvider', wasmFile('mars_address_provider'))
+    await deployer.upload('incentives', wasmFile('mars_incentives'))
+    await deployer.upload('oracle', wasmFile(`mars_oracle_${config.oracle.name}`))
     await deployer.upload(
       'rewardsCollector',
-      `mars_rewards_collector_${config.rewardsCollector.name}.wasm`,
+      wasmFile(`mars_rewards_collector_${config.rewardsCollector.name}`),
     )
-    await deployer.upload('swapper', `mars_swapper_${config.swapper.name}.wasm`)
-    await deployer.upload('params', `mars_params.wasm`)
+    await deployer.upload('swapper', wasmFile(`mars_swapper_${config.swapper.name}`))
+    await deployer.upload('params', wasmFile(`mars_params`))
     await deployer.upload('accountNft', wasmFile('mars_account_nft'))
     await deployer.upload('mockVault', wasmFile('mars_mock_vault'))
     await deployer.upload('zapper', wasmFile(config.zapperContractName))
@@ -51,6 +51,11 @@ export const taskRunner = async ({ config, label }: TaskRunnerProps) => {
 
     await deployer.updateAddressProvider()
 
+    if (config.swapper.name == 'astroport') {
+      await deployer.updateSwapperAstroportConfig(config.astroportConfig!)
+      await deployer.setAstroportIncentivesAddress(config.astroportConfig!.incentives!)
+    }
+
     // setup
     for (const asset of config.assets) {
       await deployer.updateAssetParams(asset)
@@ -63,8 +68,6 @@ export const taskRunner = async ({ config, label }: TaskRunnerProps) => {
       await deployer.setOracle(oracleConfig)
     }
     await deployer.setRoutes()
-
-    await deployer.grantCreditLines()
 
     // Test basic user flows
     if (config.runTests && config.testActions) {

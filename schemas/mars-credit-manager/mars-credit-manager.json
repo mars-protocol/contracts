@@ -147,6 +147,34 @@
         "additionalProperties": false
       },
       {
+        "description": "Mints NFT representing a credit account for user with optional custom account_id creation. User can have many accounts.",
+        "type": "object",
+        "required": [
+          "create_credit_account_v2"
+        ],
+        "properties": {
+          "create_credit_account_v2": {
+            "type": "object",
+            "required": [
+              "kind"
+            ],
+            "properties": {
+              "account_id": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "kind": {
+                "$ref": "#/definitions/AccountKind"
+              }
+            },
+            "additionalProperties": false
+          }
+        },
+        "additionalProperties": false
+      },
+      {
         "description": "Update user's position on their credit account",
         "type": "object",
         "required": [
@@ -156,12 +184,24 @@
           "update_credit_account": {
             "type": "object",
             "required": [
-              "account_id",
               "actions"
             ],
             "properties": {
               "account_id": {
-                "type": "string"
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "account_kind": {
+                "anyOf": [
+                  {
+                    "$ref": "#/definitions/AccountKind"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
               },
               "actions": {
                 "type": "array",
@@ -284,10 +324,36 @@
     ],
     "definitions": {
       "AccountKind": {
-        "type": "string",
-        "enum": [
-          "default",
-          "high_levered_strategy"
+        "oneOf": [
+          {
+            "type": "string",
+            "enum": [
+              "default",
+              "high_levered_strategy"
+            ]
+          },
+          {
+            "description": "A vault that is managed by a fund manager. Fund manager (wallet) is responsible for managing the vault. Fund manager can't deposit and withdraw funds from the vault.",
+            "type": "object",
+            "required": [
+              "fund_manager"
+            ],
+            "properties": {
+              "fund_manager": {
+                "type": "object",
+                "required": [
+                  "vault_addr"
+                ],
+                "properties": {
+                  "vault_addr": {
+                    "type": "string"
+                  }
+                },
+                "additionalProperties": false
+              }
+            },
+            "additionalProperties": false
+          }
         ]
       },
       "AccountNftBase_for_String": {
@@ -318,6 +384,32 @@
             "properties": {
               "withdraw": {
                 "$ref": "#/definitions/ActionCoin"
+              }
+            },
+            "additionalProperties": false
+          },
+          {
+            "description": "Withdraw coin of specified denom and amount to a wallet address",
+            "type": "object",
+            "required": [
+              "withdraw_to_wallet"
+            ],
+            "properties": {
+              "withdraw_to_wallet": {
+                "type": "object",
+                "required": [
+                  "coin",
+                  "recipient"
+                ],
+                "properties": {
+                  "coin": {
+                    "$ref": "#/definitions/ActionCoin"
+                  },
+                  "recipient": {
+                    "type": "string"
+                  }
+                },
+                "additionalProperties": false
               }
             },
             "additionalProperties": false
@@ -562,7 +654,7 @@
                 "required": [
                   "coin_in",
                   "denom_out",
-                  "slippage"
+                  "min_receive"
                 ],
                 "properties": {
                   "coin_in": {
@@ -570,6 +662,9 @@
                   },
                   "denom_out": {
                     "type": "string"
+                  },
+                  "min_receive": {
+                    "$ref": "#/definitions/Uint128"
                   },
                   "route": {
                     "anyOf": [
@@ -580,9 +675,6 @@
                         "type": "null"
                       }
                     ]
-                  },
-                  "slippage": {
-                    "$ref": "#/definitions/Decimal"
                   }
                 },
                 "additionalProperties": false
@@ -642,6 +734,72 @@
                   },
                   "slippage": {
                     "$ref": "#/definitions/Decimal"
+                  }
+                },
+                "additionalProperties": false
+              }
+            },
+            "additionalProperties": false
+          },
+          {
+            "description": "Stake lp token in astroport incentives contract via mars incentives",
+            "type": "object",
+            "required": [
+              "stake_astro_lp"
+            ],
+            "properties": {
+              "stake_astro_lp": {
+                "type": "object",
+                "required": [
+                  "lp_token"
+                ],
+                "properties": {
+                  "lp_token": {
+                    "$ref": "#/definitions/ActionCoin"
+                  }
+                },
+                "additionalProperties": false
+              }
+            },
+            "additionalProperties": false
+          },
+          {
+            "description": "Unstake lp token from astroport incentives contract via mars incentives",
+            "type": "object",
+            "required": [
+              "unstake_astro_lp"
+            ],
+            "properties": {
+              "unstake_astro_lp": {
+                "type": "object",
+                "required": [
+                  "lp_token"
+                ],
+                "properties": {
+                  "lp_token": {
+                    "$ref": "#/definitions/ActionCoin"
+                  }
+                },
+                "additionalProperties": false
+              }
+            },
+            "additionalProperties": false
+          },
+          {
+            "description": "Claim accrued LP incentive rewards from astroport incentives contract via mars incentives",
+            "type": "object",
+            "required": [
+              "claim_astro_lp_rewards"
+            ],
+            "properties": {
+              "claim_astro_lp_rewards": {
+                "type": "object",
+                "required": [
+                  "lp_denom"
+                ],
+                "properties": {
+                  "lp_denom": {
+                    "type": "string"
                   }
                 },
                 "additionalProperties": false
@@ -960,7 +1118,7 @@
             "additionalProperties": false
           },
           {
-            "description": "Calls incentive contract to claim all rewards and: - for Default account increments account balance - for HLS account withdraws claimed rewards. HLS accounts have special rules - some assets can't be in the account. For simplicity we withdraw all claimed rewards.",
+            "description": "Calls incentive contract to claim all rewards and increment account balance",
             "type": "object",
             "required": [
               "claim_rewards"
@@ -969,15 +1127,11 @@
               "claim_rewards": {
                 "type": "object",
                 "required": [
-                  "account_id",
-                  "recipient"
+                  "account_id"
                 ],
                 "properties": {
                   "account_id": {
                     "type": "string"
-                  },
-                  "recipient": {
-                    "$ref": "#/definitions/Addr"
                   }
                 },
                 "additionalProperties": false
@@ -1242,7 +1396,7 @@
                   "account_id",
                   "coin_in",
                   "denom_out",
-                  "slippage"
+                  "min_receive"
                 ],
                 "properties": {
                   "account_id": {
@@ -1254,6 +1408,9 @@
                   "denom_out": {
                     "type": "string"
                   },
+                  "min_receive": {
+                    "$ref": "#/definitions/Uint128"
+                  },
                   "route": {
                     "anyOf": [
                       {
@@ -1263,9 +1420,6 @@
                         "type": "null"
                       }
                     ]
-                  },
-                  "slippage": {
-                    "$ref": "#/definitions/Decimal"
                   }
                 },
                 "additionalProperties": false
@@ -1393,6 +1547,84 @@
             "additionalProperties": false
           },
           {
+            "description": "Stake lp token in astroport incentives contract via mars incentives",
+            "type": "object",
+            "required": [
+              "stake_astro_lp"
+            ],
+            "properties": {
+              "stake_astro_lp": {
+                "type": "object",
+                "required": [
+                  "account_id",
+                  "lp_token"
+                ],
+                "properties": {
+                  "account_id": {
+                    "type": "string"
+                  },
+                  "lp_token": {
+                    "$ref": "#/definitions/ActionCoin"
+                  }
+                },
+                "additionalProperties": false
+              }
+            },
+            "additionalProperties": false
+          },
+          {
+            "description": "Unstake lp token from astroport incentives contract via mars incentives.",
+            "type": "object",
+            "required": [
+              "unstake_astro_lp"
+            ],
+            "properties": {
+              "unstake_astro_lp": {
+                "type": "object",
+                "required": [
+                  "account_id",
+                  "lp_token"
+                ],
+                "properties": {
+                  "account_id": {
+                    "type": "string"
+                  },
+                  "lp_token": {
+                    "$ref": "#/definitions/ActionCoin"
+                  }
+                },
+                "additionalProperties": false
+              }
+            },
+            "additionalProperties": false
+          },
+          {
+            "description": "Claim all accrued rewards for LP position in astroport incentives",
+            "type": "object",
+            "required": [
+              "claim_astro_lp_rewards"
+            ],
+            "properties": {
+              "claim_astro_lp_rewards": {
+                "type": "object",
+                "required": [
+                  "account_id",
+                  "lp_denom"
+                ],
+                "properties": {
+                  "account_id": {
+                    "type": "string"
+                  },
+                  "lp_denom": {
+                    "type": "string"
+                  }
+                },
+                "additionalProperties": false
+              }
+            },
+            "additionalProperties": false
+          },
+          {
             "description": "Send LP token and withdraw corresponding reserve assets from pool. If `lp_token.amount: AccountBalance`, the account balance of `lp_token.denom` will be used.",
             "type": "object",
             "required": [
@@ -1475,39 +1707,6 @@
             "properties": {
               "remove_reentrancy_guard": {
                 "type": "object",
-                "additionalProperties": false
-              }
-            },
-            "additionalProperties": false
-          },
-          {
-            "description": "Send reward amounts of coin from credit manager to recipient by querying balance, claiming rewards, and comparing previous balance to new balance after reward claim - send the diff to the recipient.",
-            "type": "object",
-            "required": [
-              "send_rewards_to_addr"
-            ],
-            "properties": {
-              "send_rewards_to_addr": {
-                "type": "object",
-                "required": [
-                  "account_id",
-                  "previous_balances",
-                  "recipient"
-                ],
-                "properties": {
-                  "account_id": {
-                    "type": "string"
-                  },
-                  "previous_balances": {
-                    "type": "array",
-                    "items": {
-                      "$ref": "#/definitions/Coin"
-                    }
-                  },
-                  "recipient": {
-                    "$ref": "#/definitions/Addr"
-                  }
-                },
                 "additionalProperties": false
               }
             },
@@ -1782,6 +1981,19 @@
               }
             },
             "additionalProperties": false
+          },
+          {
+            "description": "Pay back debt of a liquidatable credit manager account for a via liquidating an Astro LP position. LP shares are transfered from the liquidatable to the liquidator.",
+            "type": "object",
+            "required": [
+              "staked_astro_lp"
+            ],
+            "properties": {
+              "staked_astro_lp": {
+                "type": "string"
+              }
+            },
+            "additionalProperties": false
           }
         ]
       },
@@ -1835,6 +2047,19 @@
                   }
                 },
                 "additionalProperties": false
+              }
+            },
+            "additionalProperties": false
+          },
+          {
+            "description": "Pay back debt of a liquidatable credit manager account for a via liquidating an Astro LP position. LP shares are transfered from the liquidatable to the liquidator.",
+            "type": "object",
+            "required": [
+              "staked_astro_lp"
+            ],
+            "properties": {
+              "staked_astro_lp": {
+                "type": "string"
               }
             },
             "additionalProperties": false
@@ -2454,6 +2679,36 @@
           }
         },
         "additionalProperties": false
+      },
+      {
+        "description": "Enumerate all vault bindings; start_after accepts account_id",
+        "type": "object",
+        "required": [
+          "vault_bindings"
+        ],
+        "properties": {
+          "vault_bindings": {
+            "type": "object",
+            "properties": {
+              "limit": {
+                "type": [
+                  "integer",
+                  "null"
+                ],
+                "format": "uint32",
+                "minimum": 0.0
+              },
+              "start_after": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              }
+            },
+            "additionalProperties": false
+          }
+        },
+        "additionalProperties": false
       }
     ],
     "definitions": {
@@ -2605,10 +2860,36 @@
     "account_kind": {
       "$schema": "http://json-schema.org/draft-07/schema#",
       "title": "AccountKind",
-      "type": "string",
-      "enum": [
-        "default",
-        "high_levered_strategy"
+      "oneOf": [
+        {
+          "type": "string",
+          "enum": [
+            "default",
+            "high_levered_strategy"
+          ]
+        },
+        {
+          "description": "A vault that is managed by a fund manager. Fund manager (wallet) is responsible for managing the vault. Fund manager can't deposit and withdraw funds from the vault.",
+          "type": "object",
+          "required": [
+            "fund_manager"
+          ],
+          "properties": {
+            "fund_manager": {
+              "type": "object",
+              "required": [
+                "vault_addr"
+              ],
+              "properties": {
+                "vault_addr": {
+                  "type": "string"
+                }
+              },
+              "additionalProperties": false
+            }
+          },
+          "additionalProperties": false
+        }
       ]
     },
     "accounts": {
@@ -2636,10 +2917,36 @@
           "additionalProperties": false
         },
         "AccountKind": {
-          "type": "string",
-          "enum": [
-            "default",
-            "high_levered_strategy"
+          "oneOf": [
+            {
+              "type": "string",
+              "enum": [
+                "default",
+                "high_levered_strategy"
+              ]
+            },
+            {
+              "description": "A vault that is managed by a fund manager. Fund manager (wallet) is responsible for managing the vault. Fund manager can't deposit and withdraw funds from the vault.",
+              "type": "object",
+              "required": [
+                "fund_manager"
+              ],
+              "properties": {
+                "fund_manager": {
+                  "type": "object",
+                  "required": [
+                    "vault_addr"
+                  ],
+                  "properties": {
+                    "vault_addr": {
+                      "type": "string"
+                    }
+                  },
+                  "additionalProperties": false
+                }
+              },
+              "additionalProperties": false
+            }
           ]
         }
       }
@@ -3146,14 +3453,19 @@
       "type": "object",
       "required": [
         "account_id",
+        "account_kind",
         "debts",
         "deposits",
         "lends",
+        "staked_astro_lps",
         "vaults"
       ],
       "properties": {
         "account_id": {
           "type": "string"
+        },
+        "account_kind": {
+          "$ref": "#/definitions/AccountKind"
         },
         "debts": {
           "type": "array",
@@ -3173,6 +3485,12 @@
             "$ref": "#/definitions/Coin"
           }
         },
+        "staked_astro_lps": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/Coin"
+          }
+        },
         "vaults": {
           "type": "array",
           "items": {
@@ -3182,6 +3500,39 @@
       },
       "additionalProperties": false,
       "definitions": {
+        "AccountKind": {
+          "oneOf": [
+            {
+              "type": "string",
+              "enum": [
+                "default",
+                "high_levered_strategy"
+              ]
+            },
+            {
+              "description": "A vault that is managed by a fund manager. Fund manager (wallet) is responsible for managing the vault. Fund manager can't deposit and withdraw funds from the vault.",
+              "type": "object",
+              "required": [
+                "fund_manager"
+              ],
+              "properties": {
+                "fund_manager": {
+                  "type": "object",
+                  "required": [
+                    "vault_addr"
+                  ],
+                  "properties": {
+                    "vault_addr": {
+                      "type": "string"
+                    }
+                  },
+                  "additionalProperties": false
+                }
+              },
+              "additionalProperties": false
+            }
+          ]
+        },
         "Addr": {
           "description": "A human readable address.\n\nIn Cosmos, this is typically bech32 encoded. But for multi-chain smart contracts no assumptions should be made other than being UTF-8 encoded and of reasonable length.\n\nThis type represents a validated address. It can be created in the following ways 1. Use `Addr::unchecked(input)` 2. Use `let checked: Addr = deps.api.addr_validate(input)?` 3. Use `let checked: Addr = deps.api.addr_humanize(canonical_addr)?` 4. Deserialize from JSON. This must only be done from JSON that was validated before such as a contract's state. `Addr` must not be used in messages sent by the user because this would result in unvalidated instances.\n\nThis type is immutable. If you really need to mutate it (Really? Are you sure?), create a mutable copy using `let mut mutable = Addr::to_string()` and operate on that `String` instance.",
           "type": "string"
@@ -3363,6 +3714,32 @@
         "Uint128": {
           "description": "A thin wrapper around u128 that is using strings for JSON encoding/decoding, such that the full u128 range can be used for clients that convert JSON numbers to floats, like JavaScript and jq.\n\n# Examples\n\nUse `from` to create instances of this and `u128` to get the value out:\n\n``` # use cosmwasm_std::Uint128; let a = Uint128::from(123u128); assert_eq!(a.u128(), 123);\n\nlet b = Uint128::from(42u64); assert_eq!(b.u128(), 42);\n\nlet c = Uint128::from(70u32); assert_eq!(c.u128(), 70); ```",
           "type": "string"
+        }
+      }
+    },
+    "vault_bindings": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Array_of_VaultBinding",
+      "type": "array",
+      "items": {
+        "$ref": "#/definitions/VaultBinding"
+      },
+      "definitions": {
+        "VaultBinding": {
+          "type": "object",
+          "required": [
+            "account_id",
+            "vault_address"
+          ],
+          "properties": {
+            "account_id": {
+              "type": "string"
+            },
+            "vault_address": {
+              "type": "string"
+            }
+          },
+          "additionalProperties": false
         }
       }
     },

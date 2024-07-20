@@ -19,7 +19,7 @@ use crate::{
 };
 
 pub fn update_config(
-    deps: DepsMut,
+    mut deps: DepsMut,
     env: Env,
     info: MessageInfo,
     updates: ConfigUpdates,
@@ -109,7 +109,8 @@ pub fn update_config(
             },
         )?;
 
-        let res = create_credit_account(deps, rewards_collector_addr, AccountKind::Default)?;
+        let (_, res) =
+            create_credit_account(&mut deps, rewards_collector_addr, AccountKind::Default, None)?;
 
         response = response
             .add_submessages(res.messages)

@@ -18,7 +18,6 @@ fn store_config_with_epoch_duration(storage: &mut dyn Storage, epoch_duration: u
             &Config {
                 address_provider: Addr::unchecked(""),
                 max_whitelisted_denoms: 10,
-                mars_denom: "umars".to_string(),
             },
         )
         .unwrap();

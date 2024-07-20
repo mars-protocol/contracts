@@ -40,6 +40,11 @@ pub enum ContractError {
         reason: String,
     },
 
+    #[error("Invalid min receive: {reason}")]
+    InvalidMinReceive {
+        reason: String,
+    },
+
     #[error("Invalid actions. Only Withdraw and WithdrawLiquidity is possible to pass for CreditManager")]
     InvalidActionsForCreditManager {},
 

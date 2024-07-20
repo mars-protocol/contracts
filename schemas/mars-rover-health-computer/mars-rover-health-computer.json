@@ -26,10 +26,36 @@
   "additionalProperties": false,
   "definitions": {
     "AccountKind": {
-      "type": "string",
-      "enum": [
-        "default",
-        "high_levered_strategy"
+      "oneOf": [
+        {
+          "type": "string",
+          "enum": [
+            "default",
+            "high_levered_strategy"
+          ]
+        },
+        {
+          "description": "A vault that is managed by a fund manager. Fund manager (wallet) is responsible for managing the vault. Fund manager can't deposit and withdraw funds from the vault.",
+          "type": "object",
+          "required": [
+            "fund_manager"
+          ],
+          "properties": {
+            "fund_manager": {
+              "type": "object",
+              "required": [
+                "vault_addr"
+              ],
+              "properties": {
+                "vault_addr": {
+                  "type": "string"
+                }
+              },
+              "additionalProperties": false
+            }
+          },
+          "additionalProperties": false
+        }
       ]
     },
     "Addr": {
@@ -325,14 +351,19 @@
       "type": "object",
       "required": [
         "account_id",
+        "account_kind",
         "debts",
         "deposits",
         "lends",
+        "staked_astro_lps",
         "vaults"
       ],
       "properties": {
         "account_id": {
           "type": "string"
+        },
+        "account_kind": {
+          "$ref": "#/definitions/AccountKind"
         },
         "debts": {
           "type": "array",
@@ -347,6 +378,12 @@
           }
         },
         "lends": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/Coin"
+          }
+        },
+        "staked_astro_lps": {
           "type": "array",
           "items": {
             "$ref": "#/definitions/Coin"

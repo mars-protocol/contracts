@@ -108,6 +108,13 @@
             "enum": [
               "swapper"
             ]
+          },
+          {
+            "description": "Astroport incentives contract",
+            "type": "string",
+            "enum": [
+              "astroport_incentives"
+            ]
           }
         ]
       },
@@ -312,6 +319,13 @@
             "enum": [
               "swapper"
             ]
+          },
+          {
+            "description": "Astroport incentives contract",
+            "type": "string",
+            "enum": [
+              "astroport_incentives"
+            ]
           }
         ]
       }
@@ -383,6 +397,13 @@
               "type": "string",
               "enum": [
                 "swapper"
+              ]
+            },
+            {
+              "description": "Astroport incentives contract",
+              "type": "string",
+              "enum": [
+                "astroport_incentives"
               ]
             }
           ]
@@ -459,6 +480,13 @@
               "enum": [
                 "swapper"
               ]
+            },
+            {
+              "description": "Astroport incentives contract",
+              "type": "string",
+              "enum": [
+                "astroport_incentives"
+              ]
             }
           ]
         }
@@ -533,6 +561,13 @@
               "type": "string",
               "enum": [
                 "swapper"
+              ]
+            },
+            {
+              "description": "Astroport incentives contract",
+              "type": "string",
+              "enum": [
+                "astroport_incentives"
               ]
             }
           ]

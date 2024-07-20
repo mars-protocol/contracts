@@ -9,7 +9,7 @@ use mars_types::{
 };
 use osmosis_std::types::osmosis::twap::v1beta1::ArithmeticTwapToNowResponse;
 
-use super::{helpers, helpers::mock_instantiate_msg};
+use super::helpers;
 
 #[test]
 fn swapping_asset() {
@@ -67,6 +67,8 @@ fn swapping_asset() {
                     to: cfg.fee_collector_denom.to_string(),
                 }],
             })),
+            safety_fund_min_receive: Some(Uint128::new(1822)),
+            fee_collector_min_receive: Some(Uint128::new(4458)),
         },
     )
     .unwrap();
@@ -78,7 +80,7 @@ fn swapping_asset() {
         msg: to_json_binary(&swapper::ExecuteMsg::<Empty, Empty>::SwapExactIn {
             coin_in: coin(safety_fund_input.u128(), "uatom"),
             denom_out: cfg.safety_fund_denom.to_string(),
-            slippage: cfg.slippage_tolerance,
+            min_receive: Uint128::new(1822),
             route: Some(SwapperRoute::Osmo(OsmoRoute {
                 swaps: vec![OsmoSwap {
                     pool_id: 12,
@@ -97,7 +99,7 @@ fn swapping_asset() {
         msg: to_json_binary(&swapper::ExecuteMsg::<Empty, Empty>::SwapExactIn {
             coin_in: coin(fee_collector_input.u128(), "uatom"),
             denom_out: cfg.fee_collector_denom.to_string(),
-            slippage: cfg.slippage_tolerance,
+            min_receive: Uint128::new(4458),
             route: Some(SwapperRoute::Osmo(OsmoRoute {
                 swaps: vec![OsmoSwap {
                     pool_id: 69,
@@ -170,6 +172,8 @@ fn skipping_swap_if_denom_matches() {
                     to: "umars".to_string(),
                 }],
             })),
+            safety_fund_min_receive: Some(Uint128::new(1822)),
+            fee_collector_min_receive: Some(Uint128::new(4458)),
         },
     )
     .unwrap();
@@ -194,7 +198,7 @@ fn skipping_swap_if_denom_matches() {
         msg: to_json_binary(&swapper::ExecuteMsg::<Empty, Empty>::SwapExactIn {
             coin_in: coin(926u128, "uusdc"),
             denom_out: "umars".to_string(),
-            slippage: mock_instantiate_msg().slippage_tolerance,
+            min_receive: Uint128::new(4458),
             route: Some(SwapperRoute::Osmo(OsmoRoute {
                 swaps: vec![OsmoSwap {
                     pool_id: 69,

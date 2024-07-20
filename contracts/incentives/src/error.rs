@@ -72,6 +72,17 @@ pub enum ContractError {
 
     #[error("{0}")]
     Guard(#[from] GuardError),
+
+    #[error("Account id {account_id} has no staked LP position for denom: {denom}")]
+    NoStakedLp {
+        account_id: String,
+        denom: String,
+    },
+
+    #[error("No deposits for {denom} exist")]
+    NoDeposits {
+        denom: String,
+    },
 }
 
 impl From<ContractError> for StdError {

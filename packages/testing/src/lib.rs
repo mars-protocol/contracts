@@ -2,6 +2,7 @@
 
 extern crate core;
 
+pub mod astroport_incentives_querier;
 #[cfg(feature = "astroport")]
 pub mod astroport_swapper;
 mod cosmwasm_pool_querier;
@@ -11,6 +12,7 @@ mod incentives_querier;
 mod mars_mock_querier;
 mod mock_address_provider;
 mod mocks;
+pub mod multitest;
 mod oracle_querier;
 mod osmosis_querier;
 mod params_querier;

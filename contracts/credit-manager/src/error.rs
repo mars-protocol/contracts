@@ -90,6 +90,12 @@ pub enum ContractError {
         reason: String,
     },
 
+    #[error("Insufficient funds. Requested {requested:?}, available {available:?}")]
+    InsufficientFunds {
+        requested: Uint128,
+        available: Uint128,
+    },
+
     #[error("{reason:?}")]
     InvalidConfig {
         reason: String,
@@ -109,6 +115,9 @@ pub enum ContractError {
 
     #[error("Nothing lent to reclaim")]
     NoneLent,
+
+    #[error("No Astro LP available")]
+    NoAstroLp,
 
     #[error(
         "{account_id:?} is not a liquidatable credit account. Health factor: {lqdt_health_factor:?}."
@@ -189,4 +198,7 @@ pub enum ContractError {
 
     #[error("Debt cannot be represented by zero debt shares")]
     ZeroDebtShares,
+
+    #[error("{0} asset params not found")]
+    AssetParamsNotFound(String),
 }

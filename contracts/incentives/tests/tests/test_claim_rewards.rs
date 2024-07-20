@@ -4,8 +4,9 @@ use cosmwasm_std::{
     Addr, BankMsg, CosmosMsg, Decimal, SubMsg, Timestamp, Uint128,
 };
 use mars_incentives::{
-    contract::{execute, query_user_unclaimed_rewards},
+    contract::execute,
     helpers::{compute_incentive_index, compute_user_accrued_rewards},
+    query,
     state::{EMISSIONS, INCENTIVE_STATES, USER_ASSET_INDICES, USER_UNCLAIMED_REWARDS},
 };
 use mars_testing::MockEnvParams;
@@ -21,7 +22,11 @@ use super::helpers::{th_setup, ths_setup_with_epoch_duration};
 fn execute_claim_rewards() {
     // SETUP
     let env = mock_env();
-    let mut deps = ths_setup_with_epoch_duration(env, 604800);
+    let mut deps: cosmwasm_std::OwnedDeps<
+        cosmwasm_std::MemoryStorage,
+        cosmwasm_std::testing::MockApi,
+        mars_testing::MarsMockQuerier,
+    > = ths_setup_with_epoch_duration(env, 604800);
     let user_addr = Addr::unchecked("user");
 
     let previous_unclaimed_rewards = Uint128::new(50_000);
@@ -199,7 +204,7 @@ fn execute_claim_rewards() {
         block_time: Timestamp::from_seconds(time_contract_call - 10_000),
         ..Default::default()
     });
-    let rewards_query_before = query_user_unclaimed_rewards(
+    let rewards_query_before = query::query_user_unclaimed_rewards(
         deps.as_ref(),
         env_before,
         String::from("user"),
@@ -213,7 +218,7 @@ fn execute_claim_rewards() {
     assert!(rewards_query_before[0].amount < expected_accrued_rewards);
 
     // query before execution gives expected rewards
-    let rewards_query = query_user_unclaimed_rewards(
+    let rewards_query = query::query_user_unclaimed_rewards(
         deps.as_ref(),
         env.clone(),
         String::from("user"),
@@ -232,7 +237,7 @@ fn execute_claim_rewards() {
     // NOTE: the query should return an empty array, instead of a non-empty array
     // with a zero-amount coin! the latter is considered an invalid coins array
     // and will result in error.
-    let rewards_query_after = query_user_unclaimed_rewards(
+    let rewards_query_after = query::query_user_unclaimed_rewards(
         deps.as_ref(),
         env,
         String::from("user"),

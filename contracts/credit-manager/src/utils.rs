@@ -1,11 +1,9 @@
 use std::{collections::HashSet, hash::Hash};
 
 use cosmwasm_std::{
-    to_json_binary, Addr, Coin, CosmosMsg, Decimal, Deps, DepsMut, Empty, QuerierWrapper,
-    StdResult, Storage, Uint128, WasmMsg,
+    to_json_binary, Addr, Coin, CosmosMsg, Decimal, Deps, DepsMut, QuerierWrapper, StdResult,
+    Storage, Uint128, WasmMsg,
 };
-use cw721::OwnerOfResponse;
-use cw721_base::QueryMsg;
 use mars_types::{
     credit_manager::{CallbackMsg, ChangeExpected, ExecuteMsg},
     health::AccountKind,
@@ -52,21 +50,13 @@ pub fn assert_slippage(storage: &dyn Storage, slippage: Decimal) -> ContractResu
 }
 
 pub fn query_nft_token_owner(deps: Deps, account_id: &str) -> ContractResult<String> {
-    let contract_addr = ACCOUNT_NFT.load(deps.storage)?;
-    let res: OwnerOfResponse = deps.querier.query_wasm_smart(
-        contract_addr.address(),
-        &QueryMsg::<Empty>::OwnerOf {
-            token_id: account_id.to_string(),
-            include_expired: None,
-        },
-    )?;
-    Ok(res.owner)
+    Ok(ACCOUNT_NFT.load(deps.storage)?.query_nft_token_owner(&deps.querier, account_id)?)
 }
 
 pub fn assert_coin_is_whitelisted(deps: &mut DepsMut, denom: &str) -> ContractResult<()> {
     let params = PARAMS.load(deps.storage)?;
     match params.query_asset_params(&deps.querier, denom) {
-        Ok(p) if p.credit_manager.whitelisted => Ok(()),
+        Ok(Some(p)) if p.credit_manager.whitelisted => Ok(()),
         _ => Err(ContractError::NotWhitelisted(denom.to_string())),
     }
 }

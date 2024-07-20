@@ -1,3 +1,4 @@
+use astroport_v5::asset::Asset;
 use cosmwasm_std::{
     from_json,
     testing::{MockQuerier, MOCK_CONTRACT_ADDR},
@@ -16,6 +17,7 @@ use osmosis_std::types::osmosis::{
 use pyth_sdk_cw::{PriceFeedResponse, PriceIdentifier};
 
 use crate::{
+    astroport_incentives_querier::AstroportIncentivesQuerier,
     cosmwasm_pool_querier::CosmWasmPoolQuerier,
     incentives_querier::IncentivesQuerier,
     mock_address_provider,
@@ -31,6 +33,7 @@ pub struct MarsMockQuerier {
     base: MockQuerier<Empty>,
     oracle_querier: OracleQuerier,
     incentives_querier: IncentivesQuerier,
+    astroport_incentives_querier: AstroportIncentivesQuerier,
     osmosis_querier: OsmosisQuerier,
     pyth_querier: PythQuerier,
     redbank_querier: RedBankQuerier,
@@ -61,6 +64,7 @@ impl MarsMockQuerier {
             base,
             oracle_querier: OracleQuerier::default(),
             incentives_querier: IncentivesQuerier::default(),
+            astroport_incentives_querier: AstroportIncentivesQuerier::default(),
             osmosis_querier: OsmosisQuerier::default(),
             pyth_querier: PythQuerier::default(),
             redbank_querier: RedBankQuerier::default(),
@@ -88,6 +92,10 @@ impl MarsMockQuerier {
         self.incentives_querier.incentives_addr = address;
     }
 
+    pub fn set_astroport_incentives_address(&mut self, addr: Addr) {
+        self.astroport_incentives_querier.incentives_addr = addr;
+    }
+
     pub fn set_unclaimed_rewards(
         &mut self,
         user_address: String,
@@ -98,6 +106,24 @@ impl MarsMockQuerier {
             (Addr::unchecked(user_address), incentive_denom.to_string()),
             unclaimed_rewards,
         );
+    }
+
+    pub fn set_astroport_deposit(&mut self, user: &str, lp_denom: &str, deposit: Uint128) {
+        self.astroport_incentives_querier
+            .deposits
+            .insert((user.to_string(), lp_denom.to_string()), deposit);
+    }
+
+    pub fn set_unclaimed_astroport_lp_rewards(
+        &mut self,
+        lp_denom: &str,
+        // We will only every use the incentives contract as the user addr
+        account_id: &str,
+        reward_assets: Vec<Asset>,
+    ) {
+        self.astroport_incentives_querier
+            .unclaimed_rewards
+            .insert((account_id.to_string(), lp_denom.to_string()), reward_assets);
     }
 
     pub fn set_query_pool_response(&mut self, pool_id: u64, pool_response: PoolResponse) {
@@ -215,7 +241,6 @@ impl MarsMockQuerier {
                 msg,
             }) => {
                 let contract_addr = Addr::unchecked(contract_addr);
-
                 // Address Provider Queries
                 let parse_address_provider_query: StdResult<address_provider::QueryMsg> =
                     from_json(msg);
@@ -236,6 +261,15 @@ impl MarsMockQuerier {
                 let parse_incentives_query: StdResult<incentives::QueryMsg> = from_json(msg);
                 if let Ok(incentives_query) = parse_incentives_query {
                     return self.incentives_querier.handle_query(&contract_addr, incentives_query);
+                }
+
+                // Astroport Incentive Queries
+                if let Ok(astroport_incentives_query) =
+                    from_json::<astroport_v5::incentives::QueryMsg>(msg)
+                {
+                    return self
+                        .astroport_incentives_querier
+                        .handle_query(&contract_addr, astroport_incentives_query);
                 }
 
                 // Pyth Queries
@@ -265,6 +299,7 @@ impl MarsMockQuerier {
 
                 // CosmWasm pool Queries
                 if let Ok(cw_pool_query) = from_json::<CalcOutAmtGivenInRequest>(msg) {
+                    println!("query: {:?}", cw_pool_query);
                     return self.cosmwasm_pool_queries.handle_query(cw_pool_query);
                 }
 

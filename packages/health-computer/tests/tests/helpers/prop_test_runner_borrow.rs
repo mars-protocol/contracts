@@ -3,7 +3,7 @@ use mars_rover_health_computer::HealthComputer;
 use mars_types::{
     adapters::vault::{CoinValue, VaultPositionValue},
     credit_manager::DebtAmount,
-    health::BorrowTarget,
+    health::{AccountKind, BorrowTarget},
 };
 use proptest::{
     strategy::Strategy,
@@ -77,6 +77,11 @@ fn add_borrow(
     target: &BorrowTarget,
 ) -> StdResult<HealthComputer> {
     let mut new_h = h.clone();
+
+    // HLS can have only 0 or 1 debt
+    if h.kind == AccountKind::HighLeveredStrategy {
+        new_h.positions.debts.clear();
+    }
 
     new_h.positions.debts.push(DebtAmount {
         denom: denom.to_string(),
