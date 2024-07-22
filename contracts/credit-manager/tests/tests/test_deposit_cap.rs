@@ -45,7 +45,7 @@ use super::helpers::{AccountToFund, MockEnv};
     "deposit cap exceeded"
 )]
 #[test_case(
-    // initial balance, deposit cap already exceeded
+    // initial balance, deposit cap already exceeded by another user
     vec![coin(101, "uatom")],
     [("uatom", 100)].into(),
     vec![
@@ -120,7 +120,7 @@ use super::helpers::{AccountToFund, MockEnv};
     "a deposit action is below cap but a follow up swap action exceeds the cap"
 )]
 #[test_case(
-    // initial balance, deposit cap already exceeded
+    // initial balance, deposit cap already exceeded by another user
     vec![coin(100, "uosmo")],
     // in our specific test setup, 123 uatom swaps to 1337 uosmo
     // we set the cap to 0 uosmo which should be exceeded
@@ -176,7 +176,7 @@ use super::helpers::{AccountToFund, MockEnv};
     "LP deposit cap exceeded"
 )]
 #[test_case(
-    // initial balance, deposit cap already exceeded
+    // initial balance, deposit cap already exceeded by another user
     vec![coin(1001, ASTRO_LP_DENOM)],
     [("uosmo", 1000), ("ujake", 1000), (ASTRO_LP_DENOM, 1000)].into(),
     vec![
