@@ -71,7 +71,7 @@ pub fn assert_deposit_caps(
 
         // - If there is None in the map, it means that the deposit cap should be enforced. It is related to the Deposit action.
         // - If there is Some in the map, it means that the deposit amount should be compared (value before and after the TX).
-        // It is realted to the SwapExactIn and ProvideLiquidity actions.
+        // It is related to the SwapExactIn and ProvideLiquidity actions.
         if let Some(deposited) = deposited_opt {
             // amount is lower than or equal to the previous deposit amount so it is fine
             if amount <= deposited {
