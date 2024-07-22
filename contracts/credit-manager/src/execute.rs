@@ -16,7 +16,7 @@ use crate::{
     borrow::borrow,
     claim_astro_lp_rewards::claim_lp_rewards,
     claim_rewards::claim_rewards,
-    deposit::{assert_deposit_caps, deposit, update_denom_deposits},
+    deposit::{assert_deposit_caps, deposit, update_or_reset_denom_deposits},
     error::{ContractError, ContractResult},
     health::{assert_max_ltv, query_health_state},
     hls::assert_hls_rules,
@@ -152,7 +152,7 @@ pub fn dispatch_actions(
         None
     };
 
-    // We use a Set to record all denoms whose deposited amount may go up as the
+    // We use a Map to record all denoms whose deposited amount may go up as the
     // result of any action. We invoke the AssertDepositCaps callback in the end
     // to make sure that none of the deposit cap is exceeded.
     //
@@ -170,14 +170,16 @@ pub fn dispatch_actions(
     // Note that Borrow/Lend/Reclaim does not impact total deposit amount,
     // because they simply move assets between Red Bank and Rover. We don't
     // check these actions.
+    // If there is None in the map, it means that the deposit cap should be enforced,
+    // otherwise it should compare deposit amount before and after the TX.
     let mut denoms_for_cap_check: BTreeMap<String, Option<Uint128>> = BTreeMap::new();
 
     for action in actions {
         match action {
             Action::Deposit(coin) => {
                 response = deposit(&mut deps, response, account_id, &coin, &mut received_coins)?;
-                // check the deposit cap of the deposited denom
-                update_denom_deposits(
+                // add the denom to the map to check the deposit cap in the end of the TX
+                update_or_reset_denom_deposits(
                     deps.as_ref(),
                     &mut denoms_for_cap_check,
                     &coin.denom,
@@ -289,8 +291,8 @@ pub fn dispatch_actions(
                     min_receive,
                     route,
                 });
-                // check the deposit cap of the swap output denom
-                update_denom_deposits(
+                // add the output denom to the map to check the deposit cap in the end of the TX
+                update_or_reset_denom_deposits(
                     deps.as_ref(),
                     &mut denoms_for_cap_check,
                     &denom_out,
@@ -334,8 +336,8 @@ pub fn dispatch_actions(
                     slippage,
                 });
 
-                // check the deposit cap of the LP output denom
-                update_denom_deposits(
+                // add the LP output denom to the map to check the deposit cap in the end of the TX
+                update_or_reset_denom_deposits(
                     deps.as_ref(),
                     &mut denoms_for_cap_check,
                     &lp_token_out,

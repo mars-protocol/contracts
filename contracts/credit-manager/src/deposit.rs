@@ -99,7 +99,9 @@ pub fn assert_deposit_caps(
 }
 
 /// Update the total deposit amount for the asset in the denom_deposits map
-pub fn update_denom_deposits(
+/// The function either resets the deposit amount to None for Deposit actions
+/// or updates the deposit amount based on the received coins and existing parameters.
+pub fn update_or_reset_denom_deposits(
     deps: Deps,
     denom_deposits: &mut BTreeMap<String, Option<Uint128>>,
     denom: &str,
