@@ -150,6 +150,43 @@ use super::helpers::{AccountToFund, MockEnv};
     "a deposit action is below cap but a follow up swap action try to exceed the cap, refunding saves it"
 )]
 #[test_case(
+    // initial balance, deposit cap already exceeded by another user
+    vec![coin(101, "uosmo")],
+    // in our specific test setup, 123 uatom swaps to 1337 uosmo
+    // we set the cap to 100 uosmo which should be exceeded
+    [("uatom", 200), ("uosmo", 100)].into(),
+    vec![
+        Action::Deposit(Coin {
+            denom: "uatom".into(),
+            amount: Uint128::new(123),
+        }),
+        Action::Deposit(Coin {
+            denom: "uosmo".into(),
+            amount: Uint128::new(10),
+        }),
+        Action::SwapExactIn {
+            coin_in: ActionCoin {
+                denom: "uatom".into(),
+                amount: ActionAmount::AccountBalance,
+            },
+            denom_out: "uosmo".into(),
+            min_receive: Uint128::zero(),
+            route: Some(SwapperRoute::Osmo(OsmoRoute{swaps: vec![
+                OsmoSwap {
+                    pool_id: 101,
+                    to: "uosmo".into(),
+                }
+            ]}))
+        },
+        Action::RefundAllCoinBalances {}
+    ],
+    false;
+    // Deposit action is more important than Swap / ProvideLiquidity actions for the same asset.
+    // It means that if Deposit action set a denom to be checked for deposit cap, then all other actions
+    // for this denom can't save it by comparing deposits before and after the TX.
+    "a deposit action is above cap, swapping to deposited coin and refunding cannot save it"
+)]
+#[test_case(
     vec![],
     [("uosmo", 1000), ("ujake", 1000), (ASTRO_LP_DENOM, 1000)].into(),
     vec![
@@ -282,6 +319,7 @@ fn asserting_deposit_cap(
         assert!(result.is_ok());
     } else {
         let err: ContractError = result.unwrap_err().downcast().unwrap();
+        println!("err: {:?}", err);
         // if errors, we make sure the error is the AboveAssetDepositCap error
         // and not any other error
         assert!(matches!(err, ContractError::AboveAssetDepositCap { .. }));
