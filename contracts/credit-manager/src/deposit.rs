@@ -121,7 +121,11 @@ pub fn update_or_reset_denom_deposits(
         return Ok(());
     }
 
-    // Check if denom is already in the list
+    // Check if the denomination is already in the list.
+    // This ensures that a Deposit action (which does not have an associated amount)
+    // is not overwritten by a subsequent Swap or ProvideLiquidity action.
+    // By confirming the existence of the denomination in the list, we maintain
+    // the integrity of the original Deposit action.
     if denom_deposits.contains_key(denom) {
         return Ok(());
     }
