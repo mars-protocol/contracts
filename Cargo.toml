@@ -62,8 +62,7 @@ anyhow             = "1.0.86"
 apollo-cw-asset    = { version = "0.1.2", features = ["astroport"] }
 apollo-utils       = "0.1.2"
 astroport          = "2.8.0"
-# TODO: update with official release once ready
-astroport-v5       = { package = "astroport", version = "=5.0.0-rc.1-tokenfactory" }
+astroport-v5       = { package = "astroport", version = "5.2.0" }
 bech32             = "0.11.0"
 cosmwasm-schema    = "1.5.5"
 cosmwasm-std       = "1.5.5"
