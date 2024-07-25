@@ -65,7 +65,7 @@ fn rewards_claim() {
     assert!(rewards_balance.is_empty());
 }
 
-// Credit accounts can deposit / withdraw from Red Bank and accure rewards in incentives contract.
+// Credit accounts can deposit / withdraw from Red Bank and accrue rewards in incentives contract.
 #[test]
 fn rewards_claim_for_credit_account() {
     let owner = Addr::unchecked("owner");

@@ -287,7 +287,7 @@ index 1ec39a76..c94cad79 100644
 -        /// How many MARS will be assigned per second to be distributed among all Red Bank
 -        /// depositors
 -        emission_per_second: Option<Uint128>,
-+        /// The denom of the collatearal token to receive incentives
++        /// The denom of the collateral token to receive incentives
 +        collateral_denom: String,
 +        /// The denom of the token to give incentives with
 +        incentive_denom: String,
