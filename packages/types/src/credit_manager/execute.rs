@@ -1,4 +1,4 @@
-use std::collections::BTreeSet;
+use std::collections::BTreeMap;
 
 use cosmwasm_schema::cw_serde;
 use cosmwasm_std::{to_json_binary, Addr, Coin, CosmosMsg, Decimal, StdResult, Uint128, WasmMsg};
@@ -275,7 +275,7 @@ pub enum CallbackMsg {
     /// Assert that the total deposit amounts of the given denoms across Red
     /// Bank and Rover do not exceed their respective deposit caps.
     AssertDepositCaps {
-        denoms: BTreeSet<String>,
+        denoms: BTreeMap<String, Option<Uint128>>,
     },
     /// Adds coin to a vault strategy
     EnterVault {
