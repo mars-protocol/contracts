@@ -234,7 +234,6 @@ fn distribute_rewards_if_ibc_channel_invalid() {
         .init_accounts(
             &[
                 coin(1_000_000_000_000, "uusdc"),
-                coin(1_000_000_000_000, "umars"),
                 coin(1_000_000_000_000, "uosmo"), // for gas
             ],
             2,
@@ -253,16 +252,6 @@ fn distribute_rewards_if_ibc_channel_invalid() {
             prefix: "osmo".to_string(),
         },
     );
-    wasm.execute(
-        &addr_provider_addr,
-        &ExecuteMsgAddr::SetAddress {
-            address_type: MarsAddressType::FeeCollector,
-            address: "mars17xpfvakm2amg962yls6f84z3kell8c5ldy6e7x".to_string(),
-        },
-        &[],
-        signer,
-    )
-    .unwrap();
     wasm.execute(
         &addr_provider_addr,
         &ExecuteMsgAddr::SetAddress {
@@ -297,13 +286,9 @@ fn distribute_rewards_if_ibc_channel_invalid() {
     // fund rewards-collector contract
     let bank = Bank::new(&app);
     let usdc_funded = 800_000_000u128;
-    let mars_funded = 50_000_000u128;
     bank.send(user, &rewards_addr, &[coin(usdc_funded, "uusdc")]).unwrap();
-    bank.send(user, &rewards_addr, &[coin(mars_funded, "umars")]).unwrap();
     let usdc_balance = bank.query_balance(&rewards_addr, "uusdc");
     assert_eq!(usdc_balance, usdc_funded);
-    let mars_balance = bank.query_balance(&rewards_addr, "umars");
-    assert_eq!(mars_balance, mars_balance);
 
     // distribute usdc
     let res = wasm
@@ -338,18 +323,76 @@ fn distribute_rewards_if_ibc_channel_invalid() {
         signer,
     )
     .unwrap();
+}
 
-    // distribute mars
-    let res = wasm
-        .execute(
-            &rewards_addr,
-            &ExecuteMsg::DistributeRewards {
-                denom: "umars".to_string(),
-                amount: None,
-            },
-            &[],
-            signer,
+#[test]
+fn burn_rewards() {
+    let app = OsmosisTestApp::new();
+    let wasm = Wasm::new(&app);
+
+    let accs = app
+        .init_accounts(
+            &[
+                coin(1_000_000_000_000, "umars"),
+                coin(1_000_000_000_000, "uosmo"), // for gas
+            ],
+            2,
         )
-        .unwrap_err();
-    assert_err(res, "port ID (transfer) channel ID (channel-1): channel not found");
+        .unwrap();
+    let signer = &accs[0];
+    let user = &accs[1];
+
+    // setup address-provider contract
+    let addr_provider_addr = instantiate_contract(
+        &wasm,
+        signer,
+        OSMOSIS_ADDR_PROVIDER_CONTRACT_NAME,
+        &InstantiateAddr {
+            owner: signer.address(),
+            prefix: "osmo".to_string(),
+        },
+    );
+
+    // setup rewards-collector contract
+    let safety_fund_denom = "uusdc";
+    let fee_collector_denom = "umars";
+    let rewards_addr = instantiate_contract(
+        &wasm,
+        signer,
+        OSMOSIS_REWARDS_CONTRACT_NAME,
+        &InstantiateRewards {
+            owner: signer.address(),
+            address_provider: addr_provider_addr,
+            safety_tax_rate: Decimal::percent(50),
+            safety_fund_denom: safety_fund_denom.to_string(),
+            fee_collector_denom: fee_collector_denom.to_string(),
+            channel_id: "".to_string(),
+            timeout_seconds: 60,
+            slippage_tolerance: Decimal::percent(1),
+            neutron_ibc_config: None,
+        },
+    );
+
+    // fund rewards-collector contract
+    let bank = Bank::new(&app);
+    let mars_funded = 50_000_000u128;
+    bank.send(user, &rewards_addr, &[coin(mars_funded, "umars")]).unwrap();
+    let mars_balance = bank.query_balance(&rewards_addr, "umars");
+    assert_eq!(mars_balance, mars_funded);
+
+    // since umars is the fee denom, the umars should be burnt
+    wasm.execute(
+        &rewards_addr,
+        &ExecuteMsg::DistributeRewards {
+            denom: "umars".to_string(),
+            amount: None,
+        },
+        &[],
+        signer,
+    )
+    .unwrap();
+
+    // assert the rewards collector balance of umars is 0 to confirm umars has been burnt
+    let mars_balance = bank.query_balance(&rewards_addr, "umars");
+    assert_eq!(mars_balance, 0);
 }

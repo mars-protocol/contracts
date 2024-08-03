@@ -1,6 +1,6 @@
 use cosmwasm_std::{
-    coin, to_json_binary, Addr, Binary, Coin, CosmosMsg, CustomMsg, Deps, DepsMut, Empty, Env,
-    MessageInfo, Response, StdResult, Uint128, WasmMsg,
+    coin, coins, to_json_binary, Addr, BankMsg, Binary, Coin, CosmosMsg, CustomMsg, Deps, DepsMut,
+    Empty, Env, MessageInfo, Response, StdResult, Uint128, WasmMsg,
 };
 use cw_storage_plus::Item;
 use mars_owner::{Owner, OwnerInit::SetInitialOwner, OwnerUpdate};
@@ -352,43 +352,45 @@ where
     ) -> ContractResult<Response<M>> {
         let cfg = self.config.load(deps.storage)?;
 
-        let to_address = if denom == cfg.safety_fund_denom {
-            address_provider::helpers::query_module_addr(
-                deps.as_ref(),
-                &cfg.address_provider,
-                MarsAddressType::SafetyFund,
-            )?
-        } else if denom == cfg.fee_collector_denom {
-            address_provider::helpers::query_module_addr(
-                deps.as_ref(),
-                &cfg.address_provider,
-                MarsAddressType::FeeCollector,
-            )?
-        } else {
-            return Err(ContractError::AssetNotEnabledForDistribution {
-                denom,
-            });
-        };
-
         let amount_to_distribute =
             unwrap_option_amount(&deps.querier, &env.contract.address, &denom, amount)?;
 
-        let transfer_msg = I::ibc_transfer_msg(
-            env,
-            to_address.clone(),
-            Coin {
-                denom: denom.clone(),
-                amount: amount_to_distribute,
-            },
-            cfg,
-        )?;
+        let response = Response::new()
+            .add_attribute("denom", &denom)
+            .add_attribute("amount", amount_to_distribute);
 
-        Ok(Response::new()
-            .add_message(transfer_msg)
-            .add_attribute("action", "distribute_rewards")
-            .add_attribute("denom", denom)
-            .add_attribute("amount", amount_to_distribute)
-            .add_attribute("to", to_address))
+        if denom == cfg.safety_fund_denom {
+            let to_address = address_provider::helpers::query_module_addr(
+                deps.as_ref(),
+                &cfg.address_provider,
+                MarsAddressType::SafetyFund,
+            )?;
+
+            let transfer_msg = I::ibc_transfer_msg(
+                env,
+                to_address.clone(),
+                Coin {
+                    denom: denom.clone(),
+                    amount: amount_to_distribute,
+                },
+                cfg,
+            )?;
+
+            Ok(response
+                .add_attribute("action", "distribute_rewards")
+                .add_attribute("to", to_address)
+                .add_message(transfer_msg))
+        } else if denom == cfg.fee_collector_denom {
+            Ok(response.add_attribute("action", "burn_rewards").add_message(CosmosMsg::Bank(
+                BankMsg::Burn {
+                    amount: coins(amount_to_distribute.u128(), denom),
+                },
+            )))
+        } else {
+            Err(ContractError::AssetNotEnabledForDistribution {
+                denom,
+            })
+        }
     }
 
     pub fn query_config(&self, deps: Deps) -> StdResult<ConfigResponse> {

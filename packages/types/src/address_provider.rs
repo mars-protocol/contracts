@@ -14,19 +14,14 @@ pub enum MarsAddressType {
     RewardsCollector,
     Params,
     CreditManager,
-    /// Protocol admin is an ICS-27 interchain account controlled by Mars Hub's x/gov module.
-    /// This account will take the owner and admin roles of red-bank contracts.
+    /// Protocol admin is a Mars Hubs governance smart contract instance,
+    /// or ICS-27 interchain account controlled by Mars Hubs governance instance.
+    /// This account will take the owner and admin roles of Mars Protocol contracts.
     ///
     /// Owner means the account who can invoke certain priviliged execute methods on a contract,
     /// such as updating the config.
     /// Admin means the account who can migrate a contract.
     ProtocolAdmin,
-    /// The `fee_collector` module account controlled by Mars Hub's x/distribution module.
-    /// Funds sent to this account will be distributed as staking rewards.
-    ///
-    /// NOTE: This is a Mars Hub address with the `mars` bech32 prefix, which may not be recognized
-    /// by the `api.addr_validate` method.
-    FeeCollector,
     /// The module account controlled by the by Mars Hub's x/safety module.
     /// Funds sent to this account will be deposited into the safety fund.
     ///
@@ -41,7 +36,6 @@ impl fmt::Display for MarsAddressType {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         let s = match self {
             MarsAddressType::CreditManager => "credit_manager",
-            MarsAddressType::FeeCollector => "fee_collector",
             MarsAddressType::Incentives => "incentives",
             MarsAddressType::Oracle => "oracle",
             MarsAddressType::Params => "params",
@@ -61,7 +55,6 @@ impl FromStr for MarsAddressType {
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         match s {
             "credit_manager" => Ok(MarsAddressType::CreditManager),
-            "fee_collector" => Ok(MarsAddressType::FeeCollector),
             "incentives" => Ok(MarsAddressType::Incentives),
             "oracle" => Ok(MarsAddressType::Oracle),
             "params" => Ok(MarsAddressType::Params),
