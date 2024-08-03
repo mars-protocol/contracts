@@ -16,6 +16,7 @@ use mars_types::{
 };
 
 use super::helpers::MockEnv;
+use crate::tests::helpers::default_asset_params;
 
 #[test]
 fn raises_when_credit_manager_not_set() {
@@ -52,10 +53,12 @@ fn computes_correct_position_with_zero_assets() {
         account_id,
         &Positions {
             account_id: account_id.to_string(),
+            account_kind: AccountKind::Default,
             deposits: vec![],
             debts: vec![],
             lends: vec![],
             vaults: vec![],
+            staked_astro_lps: vec![],
         },
     );
 
@@ -85,6 +88,7 @@ fn adds_vault_base_denoms_to_oracle_and_red_bank() {
         account_id,
         &Positions {
             account_id: account_id.to_string(),
+            account_kind: AccountKind::Default,
             deposits: vec![],
             debts: vec![],
             lends: vec![],
@@ -101,6 +105,7 @@ fn adds_vault_base_denoms_to_oracle_and_red_bank() {
                     }]),
                 }),
             }],
+            staked_astro_lps: vec![],
         },
     );
 
@@ -208,6 +213,7 @@ fn whitelisted_coins_work() {
         account_id,
         &Positions {
             account_id: account_id.to_string(),
+            account_kind: AccountKind::Default,
             deposits: vec![Coin {
                 denom: umars.to_string(),
                 amount: deposit_amount,
@@ -215,6 +221,7 @@ fn whitelisted_coins_work() {
             debts: vec![],
             lends: vec![],
             vaults: vec![],
+            staked_astro_lps: vec![],
         },
     );
 
@@ -264,6 +271,7 @@ fn vault_whitelist_affects_max_ltv() {
         account_id,
         &Positions {
             account_id: account_id.to_string(),
+            account_kind: AccountKind::Default,
             deposits: vec![],
             debts: vec![],
             lends: vec![],
@@ -271,6 +279,7 @@ fn vault_whitelist_affects_max_ltv() {
                 vault: vault.clone(),
                 amount: VaultPositionAmount::Unlocked(VaultAmount::new(vault_token_amount)),
             }],
+            staked_astro_lps: vec![],
         },
     );
 
@@ -335,4 +344,61 @@ fn vault_whitelist_affects_max_ltv() {
     let health =
         mock.query_health_values(account_id, AccountKind::Default, ActionKind::Default).unwrap();
     assert_eq!(health.max_ltv_adjusted_collateral, Uint128::zero());
+}
+
+#[test]
+fn not_whitelisted_coins_work() {
+    let mut mock = MockEnv::new().build().unwrap();
+
+    let umars = "umars";
+    let urandom = "urandom";
+
+    mock.set_price(umars, Decimal::one(), ActionKind::Default);
+    let umars_ap = default_asset_params(umars);
+    mock.update_asset_params(AddOrUpdate {
+        params: umars_ap.clone(),
+    });
+
+    let umars_deposit_amount = Uint128::new(30);
+    let urandom_deposit_amount = Uint128::new(1200);
+
+    let account_id = "123";
+    mock.set_positions_response(
+        account_id,
+        &Positions {
+            account_id: account_id.to_string(),
+            account_kind: AccountKind::Default,
+            deposits: vec![
+                Coin {
+                    denom: umars.to_string(),
+                    amount: umars_deposit_amount,
+                },
+                Coin {
+                    denom: urandom.to_string(),
+                    amount: urandom_deposit_amount,
+                },
+            ],
+            debts: vec![],
+            lends: vec![],
+            vaults: vec![],
+            staked_astro_lps: vec![],
+        },
+    );
+
+    let health =
+        mock.query_health_values(account_id, AccountKind::Default, ActionKind::Default).unwrap();
+    assert_eq!(health.total_debt_value, Uint128::zero());
+    assert_eq!(health.total_collateral_value, umars_deposit_amount); // price of 1
+    assert_eq!(
+        health.max_ltv_adjusted_collateral,
+        umars_deposit_amount.checked_mul_floor(umars_ap.max_loan_to_value).unwrap()
+    );
+    assert_eq!(
+        health.liquidation_threshold_adjusted_collateral,
+        umars_deposit_amount.checked_mul_floor(umars_ap.liquidation_threshold).unwrap()
+    );
+    assert_eq!(health.max_ltv_health_factor, None);
+    assert_eq!(health.liquidation_health_factor, None);
+    assert!(!health.liquidatable);
+    assert!(!health.above_max_ltv);
 }

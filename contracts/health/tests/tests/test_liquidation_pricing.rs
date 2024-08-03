@@ -55,6 +55,7 @@ fn uses_liquidation_pricing() {
         account_id,
         &Positions {
             account_id: account_id.to_string(),
+            account_kind: AccountKind::Default,
             deposits: vec![Coin {
                 denom: umars.to_string(),
                 amount: Uint128::new(30),
@@ -66,6 +67,7 @@ fn uses_liquidation_pricing() {
             }],
             lends: vec![],
             vaults: vec![],
+            staked_astro_lps: vec![],
         },
     );
 

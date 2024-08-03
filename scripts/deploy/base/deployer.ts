@@ -1,6 +1,7 @@
 import { SigningCosmWasmClient } from '@cosmjs/cosmwasm-stargate'
 import {
   AssetConfig,
+  AstroportConfig,
   DeploymentConfig,
   OracleConfig,
   SwapperExecuteMsg,
@@ -20,7 +21,10 @@ import {
   ExecuteMsg as CreditManagerExecute,
   InstantiateMsg as RoverInstantiateMsg,
 } from '../../types/generated/mars-credit-manager/MarsCreditManager.types'
-import { InstantiateMsg as AstroportSwapperInstantiateMsg } from '../../types/generated/mars-swapper-astroport/MarsSwapperAstroport.types'
+import {
+  InstantiateMsg as AstroportSwapperInstantiateMsg,
+  AstroportConfig as SwapperAstroportConfig,
+} from '../../types/generated/mars-swapper-astroport/MarsSwapperAstroport.types'
 import { InstantiateMsg as OsmosisSwapperInstantiateMsg } from '../../types/generated/mars-swapper-osmosis/MarsSwapperOsmosis.types'
 import { InstantiateMsg as ParamsInstantiateMsg } from '../../types/generated/mars-params/MarsParams.types'
 import { ExecuteMsg as ParamsExecuteMsg } from '../../types/generated/mars-params/MarsParams.types'
@@ -282,33 +286,6 @@ export class Deployer {
     )
   }
 
-  async grantCreditLines() {
-    if (this.storage.actions.grantedCreditLines) {
-      printGray('Credit lines already granted')
-      return
-    }
-
-    const wallet = await getWallet(this.config.deployerMnemonic, this.config.chain.prefix)
-    const client = await setupClient(this.config, wallet)
-    const addr = await getAddress(wallet)
-
-    for (const creditLineCoin of this.config.creditLineCoins) {
-      const msg = {
-        update_uncollateralized_loan_limit: {
-          user: this.storage.addresses.creditManager,
-          denom: creditLineCoin.denom,
-          new_limit: creditLineCoin.creditLine,
-        },
-      }
-      printBlue(
-        `Granting credit line to Rover for: ${creditLineCoin.creditLine} ${creditLineCoin.denom}`,
-      )
-      await client.execute(addr, this.storage.addresses.redBank!, msg, 'auto')
-    }
-
-    this.storage.actions.grantedCreditLines = true
-  }
-
   async updateCreditManagerOwner() {
     if (!this.config.multisigAddr) throw new Error('No multisig addresses to transfer ownership to')
 
@@ -398,7 +375,6 @@ export class Deployer {
       address_provider: this.storage.addresses['addressProvider']!,
       epoch_duration: this.config.incentives.epochDuration,
       max_whitelisted_denoms: this.config.incentives.maxWhitelistedIncentiveDenoms,
-      mars_denom: this.config.marsDenom,
     }
     await this.instantiate('incentives', this.storage.codeIds.incentives!, msg)
   }
@@ -530,6 +506,43 @@ export class Deployer {
     printYellow(`${vaultConfig.symbol} updated.`)
 
     this.storage.actions.vaultsSet.push(vaultConfig.vault.addr)
+  }
+
+  async updateSwapperAstroportConfig(config: AstroportConfig) {
+    printBlue(`Updating swapper astroport config...`)
+
+    const swapperConfig: SwapperAstroportConfig = {
+      router: config.router,
+      factory: config.factory,
+      oracle: this.storage.addresses.oracle!,
+    }
+
+    await this.cwClient.execute(
+      this.deployerAddr,
+      this.storage.addresses.swapper!,
+      { update_config: { config: swapperConfig } },
+      'auto',
+    )
+
+    printYellow(`Swapper astroport config updated.`)
+  }
+
+  async setAstroportIncentivesAddress(addr: string) {
+    printBlue(`Updating address provider with astroport incentives...`)
+
+    const address: AddressResponseItem = {
+      address: addr,
+      address_type: 'astroport_incentives',
+    }
+
+    await this.cwClient.execute(
+      this.deployerAddr,
+      this.storage.addresses.addressProvider!,
+      { set_address: address },
+      'auto',
+    )
+
+    printYellow(`Address provider updated.`)
   }
 
   async setRoutes() {
@@ -837,7 +850,7 @@ export class Deployer {
       },
     }
     await this.cwClient.execute(this.deployerAddr, this.storage.addresses.incentives!, msg, 'auto')
-    printYellow('Owner updated to Mutlisig for Incentives')
+    printYellow('Owner updated to Multisig for Incentives')
     const incentivesConfig = (await this.cwClient.queryContractSmart(
       this.storage.addresses.incentives!,
       {
@@ -860,7 +873,7 @@ export class Deployer {
       },
     }
     await this.cwClient.execute(this.deployerAddr, this.storage.addresses['redBank']!, msg, 'auto')
-    printYellow('Owner updated to Mutlisig for Red Bank')
+    printYellow('Owner updated to Multisig for Red Bank')
     const redbankConfig = (await this.cwClient.queryContractSmart(
       this.storage.addresses['redBank']!,
       {
@@ -882,7 +895,7 @@ export class Deployer {
       },
     }
     await this.cwClient.execute(this.deployerAddr, this.storage.addresses.oracle!, msg, 'auto')
-    printYellow('Owner updated to Mutlisig for Oracle')
+    printYellow('Owner updated to Multisig for Oracle')
     const oracleConfig = (await this.cwClient.queryContractSmart(this.storage.addresses.oracle!, {
       config: {},
     })) as { proposed_new_owner: string }
@@ -906,7 +919,7 @@ export class Deployer {
       msg,
       'auto',
     )
-    printYellow('Owner updated to Mutlisig for Rewards Collector')
+    printYellow('Owner updated to Multisig for Rewards Collector')
     const rewardsConfig = (await this.cwClient.queryContractSmart(
       this.storage.addresses['rewardsCollector']!,
       {
@@ -928,7 +941,7 @@ export class Deployer {
       },
     }
     await this.cwClient.execute(this.deployerAddr, this.storage.addresses.swapper!, msg, 'auto')
-    printYellow('Owner updated to Mutlisig for Swapper')
+    printYellow('Owner updated to Multisig for Swapper')
     const swapperConfig = (await this.cwClient.queryContractSmart(this.storage.addresses.swapper!, {
       owner: {},
     })) as { proposed: string }
@@ -947,7 +960,7 @@ export class Deployer {
       },
     }
     await this.cwClient.execute(this.deployerAddr, this.storage.addresses.params!, msg, 'auto')
-    printYellow('Owner updated to Mutlisig for Params')
+    printYellow('Owner updated to Multisig for Params')
     const paramsConfig = (await this.cwClient.queryContractSmart(this.storage.addresses.params!, {
       owner: {},
     })) as { proposed: string }
@@ -971,7 +984,7 @@ export class Deployer {
       msg,
       'auto',
     )
-    printYellow('Owner updated to Mutlisig for Rewards Collector')
+    printYellow('Owner updated to Multisig for Rewards Collector')
     const addressProviderConfig = (await this.cwClient.queryContractSmart(
       this.storage.addresses['addressProvider']!,
       {

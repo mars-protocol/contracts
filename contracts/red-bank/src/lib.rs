@@ -14,7 +14,6 @@ pub mod migrations;
 pub mod query;
 pub mod repay;
 pub mod state;
-pub mod uncollateralized_loan;
 pub mod user;
 pub mod withdraw;
 

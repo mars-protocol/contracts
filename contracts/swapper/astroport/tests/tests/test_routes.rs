@@ -1,4 +1,4 @@
-use astroport::{asset::AssetInfo, router::SwapOperation};
+use astroport_v5::{asset::AssetInfo, router::SwapOperation};
 use cosmwasm_std::coin;
 use cw_it::{astroport::robot::AstroportTestRobot, robot::TestRobot, traits::CwItRunner};
 use mars_swapper_astroport::route::AstroportRoute;

@@ -65,7 +65,7 @@
         "additionalProperties": false
       },
       {
-        "description": "Perform a swapper with an exact-in amount. Requires slippage allowance %.",
+        "description": "Perform a swapper with an exact-in amount",
         "type": "object",
         "required": [
           "swap_exact_in"
@@ -76,7 +76,7 @@
             "required": [
               "coin_in",
               "denom_out",
-              "slippage"
+              "min_receive"
             ],
             "properties": {
               "coin_in": {
@@ -84,6 +84,9 @@
               },
               "denom_out": {
                 "type": "string"
+              },
+              "min_receive": {
+                "$ref": "#/definitions/Uint128"
               },
               "route": {
                 "anyOf": [
@@ -94,9 +97,6 @@
                     "type": "null"
                   }
                 ]
-              },
-              "slippage": {
-                "$ref": "#/definitions/Decimal"
               }
             },
             "additionalProperties": false
@@ -312,10 +312,6 @@
             "type": "string"
           }
         }
-      },
-      "Decimal": {
-        "description": "A fixed-point decimal value with 18 fractional digits, i.e. Decimal(1_000_000_000_000_000_000) == 1.0\n\nThe greatest possible value that can be represented is 340282366920938463463.374607431768211455 (which is (2^128 - 1) / 10^18)",
-        "type": "string"
       },
       "OsmoRoute": {
         "type": "object",

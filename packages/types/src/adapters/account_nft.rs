@@ -1,6 +1,6 @@
 use cosmwasm_schema::cw_serde;
 use cosmwasm_std::{Addr, Api, QuerierWrapper, StdResult};
-use cw721::TokensResponse;
+use cw721::{OwnerOfResponse, TokensResponse};
 
 use crate::account_nft::QueryMsg;
 
@@ -52,5 +52,20 @@ impl AccountNft {
                 limit,
             },
         )
+    }
+
+    pub fn query_nft_token_owner(
+        &self,
+        querier: &QuerierWrapper,
+        account_id: &str,
+    ) -> StdResult<String> {
+        let res: OwnerOfResponse = querier.query_wasm_smart(
+            self.address().to_string(),
+            &QueryMsg::OwnerOf {
+                token_id: account_id.to_string(),
+                include_expired: None,
+            },
+        )?;
+        Ok(res.owner)
     }
 }

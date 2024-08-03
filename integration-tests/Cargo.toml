@@ -18,6 +18,7 @@ backtraces = ["cosmwasm-std/backtraces"]
 
 [dev-dependencies]
 anyhow                         = { workspace = true }
+astroport-v5                   = { workspace = true }
 cosmwasm-std                   = { workspace = true }
 cw-it                          = { workspace = true, features = ["osmosis-test-tube"] }
 cw-multi-test                  = { workspace = true }

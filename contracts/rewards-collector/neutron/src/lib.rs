@@ -1,5 +1,3 @@
-mod migrations;
-
 use std::vec;
 
 use cosmwasm_std::{coin, Coin, CosmosMsg, Env, StdError};
@@ -10,6 +8,8 @@ use neutron_sdk::{
     bindings::msg::{IbcFee, NeutronMsg},
     sudo::msg::RequestPacketTimeoutHeight,
 };
+
+pub mod migrations;
 
 pub struct NeutronIbcMsgFactory {}
 

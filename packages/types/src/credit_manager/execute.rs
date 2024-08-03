@@ -1,4 +1,4 @@
-use std::collections::BTreeSet;
+use std::collections::BTreeMap;
 
 use cosmwasm_schema::cw_serde;
 use cosmwasm_std::{to_json_binary, Addr, Coin, CosmosMsg, Decimal, StdResult, Uint128, WasmMsg};
@@ -19,9 +19,15 @@ pub enum ExecuteMsg {
     //--------------------------------------------------------------------------------------------------
     /// Mints NFT representing a credit account for user. User can have many.
     CreateCreditAccount(AccountKind),
+    /// Mints NFT representing a credit account for user with optional custom account_id creation. User can have many accounts.
+    CreateCreditAccountV2 {
+        kind: AccountKind,
+        account_id: Option<String>,
+    },
     /// Update user's position on their credit account
     UpdateCreditAccount {
-        account_id: String,
+        account_id: Option<String>,
+        account_kind: Option<AccountKind>,
         actions: Vec<Action>,
     },
     /// Repay debt on behalf of an account, funded from wallet. Must send exactly one coin in message funds.
@@ -110,6 +116,9 @@ pub enum LiquidateRequest<T> {
         request_vault: T,
         position_type: VaultPositionType,
     },
+    /// Pay back debt of a liquidatable credit manager account for a via liquidating an Astro LP position.
+    /// LP shares are transfered from the liquidatable to the liquidator.
+    StakedAstroLp(String),
 }
 
 /// The list of actions that users can perform on their positions
@@ -119,6 +128,11 @@ pub enum Action {
     Deposit(Coin),
     /// Withdraw coin of specified denom and amount
     Withdraw(ActionCoin),
+    /// Withdraw coin of specified denom and amount to a wallet address
+    WithdrawToWallet {
+        coin: ActionCoin,
+        recipient: String,
+    },
     /// Borrow coin of specified amount from Red Bank
     Borrow(Coin),
     /// Lend coin to the Red Bank
@@ -171,7 +185,7 @@ pub enum Action {
     SwapExactIn {
         coin_in: ActionCoin,
         denom_out: String,
-        slippage: Decimal,
+        min_receive: Uint128,
         route: Option<SwapperRoute>,
     },
     /// Add Vec<Coin> to liquidity pool in exchange for LP tokens.
@@ -187,6 +201,18 @@ pub enum Action {
     WithdrawLiquidity {
         lp_token: ActionCoin,
         slippage: Decimal,
+    },
+    /// Stake lp token in astroport incentives contract via mars incentives
+    StakeAstroLp {
+        lp_token: ActionCoin,
+    },
+    /// Unstake lp token from astroport incentives contract via mars incentives
+    UnstakeAstroLp {
+        lp_token: ActionCoin,
+    },
+    /// Claim accrued LP incentive rewards from astroport incentives contract via mars incentives
+    ClaimAstroLpRewards {
+        lp_denom: String,
     },
     /// Refunds all coin balances back to user wallet
     RefundAllCoinBalances {},
@@ -233,13 +259,9 @@ pub enum CallbackMsg {
         account_id: String,
         coin: ActionCoin,
     },
-    /// Calls incentive contract to claim all rewards and:
-    /// - for Default account increments account balance
-    /// - for HLS account withdraws claimed rewards. HLS accounts have special rules - some assets can't be in the account.
-    /// For simplicity we withdraw all claimed rewards.
+    /// Calls incentive contract to claim all rewards and increment account balance
     ClaimRewards {
         account_id: String,
-        recipient: Addr,
     },
     /// Assert MaxLTV is either:
     /// - Healthy, if prior to actions MaxLTV health factor >= 1 or None
@@ -253,7 +275,7 @@ pub enum CallbackMsg {
     /// Assert that the total deposit amounts of the given denoms across Red
     /// Bank and Rover do not exceed their respective deposit caps.
     AssertDepositCaps {
-        denoms: BTreeSet<String>,
+        denoms: BTreeMap<String, Option<Uint128>>,
     },
     /// Adds coin to a vault strategy
     EnterVault {
@@ -300,7 +322,7 @@ pub enum CallbackMsg {
         account_id: String,
         coin_in: ActionCoin,
         denom_out: String,
-        slippage: Decimal,
+        min_receive: Uint128,
         route: Option<SwapperRoute>,
     },
     /// Used to update the coin balance of account after an async action
@@ -329,6 +351,25 @@ pub enum CallbackMsg {
         lp_token_out: String,
         slippage: Decimal,
     },
+    /// Stake lp token in astroport incentives contract via mars incentives
+    StakeAstroLp {
+        // Account id staking the LP
+        account_id: String,
+        // Amount / denom to stake
+        lp_token: ActionCoin,
+    },
+    /// Unstake lp token from astroport incentives contract via mars incentives.
+    UnstakeAstroLp {
+        // account id  unstaking the LP
+        account_id: String,
+        // lp coin to unstake
+        lp_token: ActionCoin,
+    },
+    /// Claim all accrued rewards for LP position in astroport incentives
+    ClaimAstroLpRewards {
+        account_id: String,
+        lp_denom: String,
+    },
     /// Send LP token and withdraw corresponding reserve assets from pool.
     /// If `lp_token.amount: AccountBalance`, the account balance of `lp_token.denom` will be used.
     WithdrawLiquidity {
@@ -347,13 +388,6 @@ pub enum CallbackMsg {
     /// At the end of the execution of dispatched actions, this callback removes the guard
     /// and allows subsequent dispatches.
     RemoveReentrancyGuard {},
-    /// Send reward amounts of coin from credit manager to recipient by querying balance, claiming rewards,
-    /// and comparing previous balance to new balance after reward claim - send the diff to the recipient.
-    SendRewardsToAddr {
-        account_id: String,
-        previous_balances: Vec<Coin>,
-        recipient: Addr,
-    },
 }
 
 impl CallbackMsg {

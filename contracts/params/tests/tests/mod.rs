@@ -1,5 +1,6 @@
 mod helpers;
 
+mod test_all_total_deposits_v2;
 mod test_asset_validation;
 mod test_deposit_cap;
 mod test_emergency_powers;

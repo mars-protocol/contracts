@@ -32,20 +32,23 @@ mars-liquidation  = { workspace = true }
 mars-owner        = { workspace = true }
 mars-types        = { workspace = true }
 mars-utils        = { workspace = true }
+mars-vault        = { workspace = true }
 thiserror         = { workspace = true }
 
 [dev-dependencies]
-anyhow                = { workspace = true }
-cw-multi-test         = { workspace = true }
-itertools             = { workspace = true }
-mars-account-nft      = { workspace = true }
-mars-address-provider = { workspace = true }
-mars-mock-incentives  = { workspace = true }
-mars-mock-oracle      = { workspace = true }
-mars-mock-red-bank    = { workspace = true }
-mars-mock-vault       = { workspace = true }
-mars-params           = { workspace = true }
-mars-rover-health     = { workspace = true }
-mars-swapper-mock     = { workspace = true }
-mars-zapper-mock      = { workspace = true }
-test-case             = { workspace = true }
+anyhow                          = { workspace = true }
+cw-multi-test                   = { workspace = true }
+itertools                       = { workspace = true }
+mars-account-nft                = { workspace = true }
+mars-address-provider           = { workspace = true }
+mars-mock-astroport-incentives  = { workspace = true }
+mars-mock-incentives            = { workspace = true }
+mars-mock-oracle                = { workspace = true }
+mars-mock-red-bank              = { workspace = true }
+mars-mock-vault                 = { workspace = true }
+mars-params                     = { workspace = true }
+mars-rover-health               = { workspace = true }
+mars-swapper-mock               = { workspace = true }
+mars-testing                    = { workspace = true }
+mars-zapper-mock                = { workspace = true }
+test-case                       = { workspace = true }

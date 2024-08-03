@@ -24,3 +24,6 @@ cw2                         = { workspace = true }
 mars-rewards-collector-base = { workspace = true }
 mars-types                  = { workspace = true }
 neutron-sdk                 = { workspace = true }
+
+[dev-dependencies]
+mars-testing = { workspace = true }

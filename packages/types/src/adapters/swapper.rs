@@ -1,6 +1,6 @@
 use cosmwasm_schema::cw_serde;
 use cosmwasm_std::{
-    to_json_binary, Addr, Api, Coin, CosmosMsg, Decimal, Empty, StdResult, WasmMsg,
+    to_json_binary, Addr, Api, Coin, CosmosMsg, Empty, StdResult, Uint128, WasmMsg,
 };
 
 use crate::swapper::{ExecuteMsg, SwapperRoute};
@@ -39,7 +39,7 @@ impl Swapper {
         &self,
         coin_in: &Coin,
         denom_out: &str,
-        slippage: Decimal,
+        min_receive: Uint128,
         route: Option<SwapperRoute>,
     ) -> StdResult<CosmosMsg> {
         Ok(CosmosMsg::Wasm(WasmMsg::Execute {
@@ -47,7 +47,7 @@ impl Swapper {
             msg: to_json_binary(&ExecuteMsg::<Empty, Empty>::SwapExactIn {
                 coin_in: coin_in.clone(),
                 denom_out: denom_out.to_string(),
-                slippage,
+                min_receive,
                 route,
             })?,
             funds: vec![coin_in.clone()],
@@ -95,7 +95,7 @@ mod tests {
         let swapper = Swapper::new(Addr::unchecked("swapper"));
         let coin_in = Coin::new(100, "in");
         let denom_out = "out";
-        let slippage = Decimal::percent(1);
+        let min_receive = Uint128::new(123);
 
         let route = SwapperRoute::Osmo(OsmoRoute {
             swaps: vec![
@@ -109,8 +109,9 @@ mod tests {
                 },
             ],
         });
-        let msg =
-            swapper.swap_exact_in_msg(&coin_in, denom_out, slippage, Some(route.clone())).unwrap();
+        let msg = swapper
+            .swap_exact_in_msg(&coin_in, denom_out, min_receive, Some(route.clone()))
+            .unwrap();
         assert_eq!(
             msg,
             CosmosMsg::Wasm(WasmMsg::Execute {
@@ -118,7 +119,7 @@ mod tests {
                 msg: to_json_binary(&ExecuteMsg::<Empty, Empty>::SwapExactIn {
                     coin_in: coin_in.clone(),
                     denom_out: denom_out.to_string(),
-                    slippage,
+                    min_receive,
                     route: Some(route)
                 })
                 .unwrap(),
@@ -138,8 +139,9 @@ mod tests {
                 },
             ],
         });
-        let msg =
-            swapper.swap_exact_in_msg(&coin_in, denom_out, slippage, Some(route.clone())).unwrap();
+        let msg = swapper
+            .swap_exact_in_msg(&coin_in, denom_out, min_receive, Some(route.clone()))
+            .unwrap();
         assert_eq!(
             msg,
             CosmosMsg::Wasm(WasmMsg::Execute {
@@ -147,7 +149,7 @@ mod tests {
                 msg: to_json_binary(&ExecuteMsg::<Empty, Empty>::SwapExactIn {
                     coin_in: coin_in.clone(),
                     denom_out: denom_out.to_string(),
-                    slippage,
+                    min_receive,
                     route: Some(route)
                 })
                 .unwrap(),

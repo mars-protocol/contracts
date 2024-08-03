@@ -1,11 +1,9 @@
 use cosmwasm_std::{coin, coins, Addr, Coin, Coins, Uint128};
-use mars_credit_manager::error::ContractError::{
-    ExtraFundsReceived, FundsMismatch, NotTokenOwner, NotWhitelisted,
-};
+use mars_credit_manager::error::ContractError::{ExtraFundsReceived, FundsMismatch, NotTokenOwner};
 use mars_types::credit_manager::{Action, Positions};
 
 use super::helpers::{
-    assert_err, blacklisted_coin, uatom_info, ujake_info, uosmo_info, AccountToFund, CoinInfo,
+    assert_err, blacklisted_coin_info, uatom_info, ujake_info, uosmo_info, AccountToFund, CoinInfo,
     MockEnv,
 };
 
@@ -115,42 +113,52 @@ fn deposit_but_not_enough_funds() {
 }
 
 #[test]
-fn can_only_deposit_allowed_assets() {
-    let blacklisted_coin = blacklisted_coin();
-    let not_listed_coin = ujake_info().to_coin(234);
+fn can_deposit_not_whitelisted_assets() {
+    let blacklisted_coin_info = blacklisted_coin_info();
+    let not_listed_coin_info = ujake_info();
+    let blacklisted_coin = blacklisted_coin_info.to_coin(300);
+    let not_listed_coin = not_listed_coin_info.to_coin(250);
 
     let user = Addr::unchecked("user");
     let mut mock = MockEnv::new()
-        .set_params(&[blacklisted_coin.clone()])
+        .set_params(&[blacklisted_coin_info.clone()])
         .fund_account(AccountToFund {
             addr: user.clone(),
             funds: vec![
-                coin(300, blacklisted_coin.denom.clone()),
-                coin(300, not_listed_coin.denom.clone()),
+                coin(300, blacklisted_coin_info.denom.clone()),
+                coin(300, not_listed_coin_info.denom.clone()),
             ],
         })
         .build()
         .unwrap();
     let account_id = mock.create_credit_account(&user).unwrap();
 
-    let res = mock.update_credit_account(
+    mock.update_credit_account(
         &account_id,
         &user,
         vec![Action::Deposit(not_listed_coin.clone())],
-        &[coin(250, not_listed_coin.denom.clone())],
-    );
-    assert_err(res, NotWhitelisted(not_listed_coin.denom));
+        &[not_listed_coin.clone()],
+    )
+    .unwrap();
 
-    let res = mock.update_credit_account(
+    mock.update_credit_account(
         &account_id,
         &user,
-        vec![Action::Deposit(blacklisted_coin.to_coin(250))],
-        &[coin(250, blacklisted_coin.denom.clone())],
-    );
-    assert_err(res, NotWhitelisted(blacklisted_coin.denom));
+        vec![Action::Deposit(blacklisted_coin.clone())],
+        &[blacklisted_coin.clone()],
+    )
+    .unwrap();
 
     let res = mock.query_positions(&account_id);
-    assert_eq!(res.deposits.len(), 0);
+    assert_eq!(res.deposits.len(), 2);
+    assert_present(&res, &blacklisted_coin_info, blacklisted_coin.amount);
+    assert_present(&res, &not_listed_coin_info, not_listed_coin.amount);
+
+    let coin = mock.query_balance(&mock.rover, &blacklisted_coin.denom);
+    assert_eq!(coin.amount, blacklisted_coin.amount);
+
+    let coin = mock.query_balance(&mock.rover, &not_listed_coin.denom);
+    assert_eq!(coin.amount, not_listed_coin.amount);
 }
 
 #[test]

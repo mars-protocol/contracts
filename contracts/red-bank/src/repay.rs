@@ -1,6 +1,6 @@
 use cosmwasm_std::{Addr, DepsMut, Env, MessageInfo, Response, Uint128};
 use mars_interest_rate::{get_scaled_debt_amount, get_underlying_debt_amount};
-use mars_types::{address_provider, address_provider::MarsAddressType};
+use mars_types::address_provider::{self, MarsAddressType};
 use mars_utils::helpers::build_send_asset_msg;
 
 use crate::{
@@ -18,33 +18,38 @@ pub fn repay(
     denom: String,
     repay_amount: Uint128,
 ) -> Result<Response, ContractError> {
+    let config = CONFIG.load(deps.storage)?;
+
+    let addresses = address_provider::helpers::query_contract_addrs(
+        deps.as_ref(),
+        &config.address_provider,
+        vec![
+            MarsAddressType::Incentives,
+            MarsAddressType::RewardsCollector,
+            MarsAddressType::CreditManager,
+        ],
+    )?;
+    let rewards_collector_addr = &addresses[&MarsAddressType::RewardsCollector];
+    let incentives_addr = &addresses[&MarsAddressType::Incentives];
+    let credit_manager_addr = &addresses[&MarsAddressType::CreditManager];
+
     let user_addr: Addr;
-    let user = if let Some(address) = on_behalf_of {
-        user_addr = deps.api.addr_validate(&address)?;
-        let user = User(&user_addr);
-        // Uncollateralized loans should not have 'on behalf of' because it creates accounting complexity for them
-        if !user.uncollateralized_loan_limit(deps.storage, &denom)?.is_zero() {
-            return Err(ContractError::CannotRepayUncollateralizedLoanOnBehalfOf {});
+    let user = match on_behalf_of.as_ref() {
+        // Cannot repay on behalf of credit-manager users. It creates accounting complexity for them.
+        Some(address) if address == credit_manager_addr.as_str() => {
+            return Err(ContractError::CannotRepayOnBehalfOfCreditManager {});
         }
-        user
-    } else {
-        User(&info.sender)
+        Some(address) => {
+            user_addr = deps.api.addr_validate(address)?;
+            User(&user_addr)
+        }
+        None => User(&info.sender),
     };
 
     // Check new debt
     let debt = DEBTS
         .may_load(deps.storage, (user.address(), &denom))?
         .ok_or(ContractError::CannotRepayZeroDebt {})?;
-
-    let config = CONFIG.load(deps.storage)?;
-
-    let addresses = address_provider::helpers::query_contract_addrs(
-        deps.as_ref(),
-        &config.address_provider,
-        vec![MarsAddressType::Incentives, MarsAddressType::RewardsCollector],
-    )?;
-    let rewards_collector_addr = &addresses[&MarsAddressType::RewardsCollector];
-    let incentives_addr = &addresses[&MarsAddressType::Incentives];
 
     let mut market = MARKETS.load(deps.storage, &denom)?;
 

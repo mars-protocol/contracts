@@ -1,15 +1,15 @@
 use cosmwasm_std::{entry_point, Binary, Deps, DepsMut, Empty, Env, MessageInfo, Response};
 use cw2::set_contract_version;
-use mars_swapper_base::{ContractResult, SwapBase};
+use mars_swapper_base::{ContractError, ContractResult, SwapBase};
 use mars_types::swapper::{ExecuteMsg, InstantiateMsg, QueryMsg};
 
-use crate::{config::AstroportConfig, route::AstroportRoute};
+use crate::{config::AstroportConfig, migrations, route::AstroportRoute};
 
 /// The Astroport swapper contract inherits logic from the base swapper contract
 pub type AstroportSwap<'a> = SwapBase<'a, Empty, Empty, AstroportRoute, AstroportConfig>;
 
-const CONTRACT_NAME: &str = env!("CARGO_PKG_NAME");
-const CONTRACT_VERSION: &str = env!("CARGO_PKG_VERSION");
+pub const CONTRACT_NAME: &str = env!("CARGO_PKG_NAME");
+pub const CONTRACT_VERSION: &str = env!("CARGO_PKG_VERSION");
 
 #[cfg_attr(not(feature = "library"), entry_point)]
 pub fn instantiate(
@@ -35,4 +35,9 @@ pub fn execute(
 #[cfg_attr(not(feature = "library"), entry_point)]
 pub fn query(deps: Deps, env: Env, msg: QueryMsg) -> ContractResult<Binary> {
     AstroportSwap::default().query(deps, env, msg)
+}
+
+#[cfg_attr(not(feature = "library"), entry_point)]
+pub fn migrate(deps: DepsMut, _env: Env, _msg: Empty) -> Result<Response, ContractError> {
+    migrations::v2_0_0::migrate(deps)
 }

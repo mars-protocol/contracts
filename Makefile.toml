@@ -10,10 +10,10 @@ default_to_workspace = false
 # Directory with wasm files used by integration tests (another directory can be used instead, for example 'artifacts' from rust-optimizer)
 ARTIFACTS_DIR_PATH = "target/wasm32-unknown-unknown/release"
 # If you bump this version, verify RUST_VERSION correctness
-RUST_OPTIMIZER_VERSION = "0.15.0"
-# Use rust version from rust-optimizer Dockerfile (see https://github.com/CosmWasm/rust-optimizer/blob/v0.15.0/Dockerfile#L1)
+RUST_OPTIMIZER_VERSION = "0.15.1"
+# Use rust version from rust-optimizer Dockerfile (see https://github.com/CosmWasm/optimizer/blob/v0.15.1/Dockerfile#L1)
 # to be sure that we compile / test against the same version
-RUST_VERSION = "1.73.0"
+RUST_VERSION = "1.75.0"
 
 [tasks.install-stable]
 script = '''
@@ -61,12 +61,12 @@ args = ["test", "--locked"]
 [tasks.unit-test]
 toolchain = "${RUST_VERSION}"
 command = "cargo"
-args = ["test", "--locked", "--workspace", "--exclude", "mars-integration-tests", "--exclude", "mars-swapper-astroport", "--exclude", "mars-oracle-wasm", "--exclude", "mars-swapper-osmosis"]
+args = ["test", "--locked", "--workspace", "--exclude", "mars-integration-tests", "--exclude", "mars-swapper-astroport", "--exclude", "mars-oracle-wasm", "--exclude", "mars-swapper-osmosis", "--exclude", "mars-zapper-osmosis"]
 
 [tasks.integration-test]
 toolchain = "${RUST_VERSION}"
 command = "cargo"
-args = ["test", "--locked", "-p", "mars-integration-tests", "-p", "mars-swapper-astroport", "-p", "mars-oracle-wasm", "-p", "mars-swapper-osmosis", "--test", "*"]
+args = ["test", "--locked", "-p", "mars-integration-tests", "-p", "mars-swapper-astroport", "-p", "mars-oracle-wasm", "-p", "mars-swapper-osmosis", "-p", "mars-zapper-osmosis", "--test", "*"]
 
 [tasks.fmt]
 toolchain = "nightly"
@@ -96,13 +96,13 @@ alias = "coverage-grcov-lcov"
 
 [tasks.all-actions]
 dependencies = [
-  "install-stable",
-  "install-nightly",
-  "fmt",
-  "clippy",
-  "build",
-  "test",
-  "audit",
-  "generate-all-schemas",
-  "rust-optimizer",
+    "install-stable",
+    "install-nightly",
+    "fmt",
+    "clippy",
+    "build",
+    "test",
+    "audit",
+    "generate-all-schemas",
+    "rust-optimizer",
 ]

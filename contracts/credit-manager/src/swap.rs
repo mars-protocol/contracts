@@ -1,4 +1,4 @@
-use cosmwasm_std::{Coin, Decimal, DepsMut, Env, Response, Uint128};
+use cosmwasm_std::{Coin, DepsMut, Env, Response, Uint128};
 use mars_types::{
     credit_manager::{ActionAmount, ActionCoin, ChangeExpected},
     swapper::SwapperRoute,
@@ -7,24 +7,18 @@ use mars_types::{
 use crate::{
     error::{ContractError, ContractResult},
     state::{COIN_BALANCES, SWAPPER},
-    utils::{
-        assert_coin_is_whitelisted, assert_slippage, decrement_coin_balance, update_balance_msg,
-    },
+    utils::{decrement_coin_balance, update_balance_msg},
 };
 
 pub fn swap_exact_in(
-    mut deps: DepsMut,
+    deps: DepsMut,
     env: Env,
     account_id: &str,
     coin_in: &ActionCoin,
     denom_out: &str,
-    slippage: Decimal,
+    min_receive: Uint128,
     route: Option<SwapperRoute>,
 ) -> ContractResult<Response> {
-    assert_slippage(deps.storage, slippage)?;
-
-    assert_coin_is_whitelisted(&mut deps, denom_out)?;
-
     let coin_in_to_trade = Coin {
         denom: coin_in.denom.clone(),
         amount: match coin_in.amount {
@@ -53,7 +47,7 @@ pub fn swap_exact_in(
     let swapper = SWAPPER.load(deps.storage)?;
 
     Ok(Response::new()
-        .add_message(swapper.swap_exact_in_msg(&coin_in_to_trade, denom_out, slippage, route)?)
+        .add_message(swapper.swap_exact_in_msg(&coin_in_to_trade, denom_out, min_receive, route)?)
         .add_message(update_coin_balance_msg)
         .add_attribute("action", "swapper")
         .add_attribute("account_id", account_id)

@@ -1,7 +1,7 @@
 use std::fmt;
 
 use cosmwasm_schema::cw_serde;
-use cosmwasm_std::{coin, BlockInfo, CosmosMsg, Decimal, Empty, Env, QuerierWrapper, Uint128};
+use cosmwasm_std::{coin, BlockInfo, CosmosMsg, Empty, Env, QuerierWrapper, Uint128};
 use mars_osmosis::helpers::{query_arithmetic_twap_price, query_pool, CommonPoolData, Pool};
 use mars_swapper_base::{ContractError, ContractResult, Route};
 use mars_types::swapper::{EstimateExactInSwapResponse, SwapperRoute};
@@ -134,19 +134,16 @@ impl Route<Empty, Empty, OsmosisConfig> for OsmosisRoute {
     /// Build a CosmosMsg that swaps given an input denom and amount
     fn build_exact_in_swap_msg(
         &self,
-        querier: &QuerierWrapper,
+        _querier: &QuerierWrapper,
         env: &Env,
         coin_in: &cosmwasm_std::Coin,
-        slippage: Decimal,
+        min_receive: Uint128,
     ) -> ContractResult<CosmosMsg> {
         let steps = &self.0;
 
         steps.first().ok_or(ContractError::InvalidRoute {
             reason: "the route must contain at least one step".to_string(),
         })?;
-
-        let out_amount = query_out_amount(querier, &env.block, coin_in, steps)?;
-        let min_out_amount = (Decimal::one() - slippage) * out_amount;
 
         let routes: Vec<_> = steps
             .iter()
@@ -163,7 +160,7 @@ impl Route<Empty, Empty, OsmosisConfig> for OsmosisRoute {
                 denom: coin_in.denom.clone(),
                 amount: coin_in.amount.to_string(),
             }),
-            token_out_min_amount: min_out_amount.to_string(),
+            token_out_min_amount: min_receive.to_string(),
         }
         .into();
         Ok(swap_msg)

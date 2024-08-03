@@ -33,6 +33,7 @@ pub fn compute_health(
         })
         .collect::<StdResult<HashMap<_, _>>>()?;
     let vault_base_token_denoms = vault_infos.values().map(|v| &v.base_token).collect::<Vec<_>>();
+    let staked_lp_denoms = positions.staked_astro_lps.iter().map(|d| &d.denom).collect::<Vec<_>>();
 
     // Collect prices + asset
     let mut denoms_data: DenomsData = Default::default();
@@ -41,11 +42,16 @@ pub fn compute_health(
         .chain(debt_denoms)
         .chain(lend_denoms)
         .chain(vault_base_token_denoms)
+        .chain(staked_lp_denoms)
         .try_for_each(|denom| -> StdResult<()> {
-            let price = q.oracle.query_price(&deps.querier, denom, action.clone())?.price;
-            denoms_data.prices.insert(denom.clone(), price);
-            let params = q.params.query_asset_params(&deps.querier, denom)?;
-            denoms_data.params.insert(denom.clone(), params);
+            let params_opt = q.params.query_asset_params(&deps.querier, denom)?;
+            // If the asset is not supported, we skip it (both params and price)
+            if let Some(params) = params_opt {
+                denoms_data.params.insert(denom.clone(), params);
+
+                let price = q.oracle.query_price(&deps.querier, denom, action.clone())?.price;
+                denoms_data.prices.insert(denom.clone(), price);
+            }
             Ok(())
         })?;
 

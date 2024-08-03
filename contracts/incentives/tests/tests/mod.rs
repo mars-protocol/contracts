@@ -2,6 +2,7 @@ mod helpers;
 
 mod test_admin;
 mod test_balance_change;
+mod test_claim_astro_lp_rewards;
 mod test_claim_rewards;
 mod test_indices_usage;
 mod test_migration_v2;

@@ -120,9 +120,15 @@ pub fn ustars_info() -> CoinInfo {
                 hls: Some(HlsParams {
                     max_loan_to_value: Decimal::from_str("0.75").unwrap(),
                     liquidation_threshold: Decimal::from_str("0.8").unwrap(),
-                    correlations: vec![HlsAssetType::Coin {
-                        denom: "stStars".to_string(),
-                    }],
+                    correlations: vec![
+                        HlsAssetType::Coin {
+                            denom: "stStars".to_string(),
+                        },
+                        HlsAssetType::Coin {
+                            // can be also deposited for HLS
+                            denom: "ustars".to_string(),
+                        },
+                    ],
                 }),
             },
             red_bank: RedBankSettings {

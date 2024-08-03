@@ -18,14 +18,26 @@ use crate::{
     error::ContractError::{
         self, BaseError, BurnNotAllowed, CreditManagerContractNotSet, HealthContractNotSet,
     },
+    helpers::validate_token_id,
     state::{CONFIG, NEXT_ID},
 };
 
-pub fn mint(deps: DepsMut, info: MessageInfo, user: &str) -> Result<Response, ContractError> {
-    let next_id = NEXT_ID.load(deps.storage)?;
-    NEXT_ID.save(deps.storage, &(next_id + 1))?;
+pub fn mint(
+    deps: DepsMut,
+    info: MessageInfo,
+    user: &str,
+    token_id: Option<String>,
+) -> Result<Response, ContractError> {
+    let next_id = if let Some(ti) = token_id {
+        validate_token_id(&ti)?;
+        ti
+    } else {
+        let next_id = NEXT_ID.load(deps.storage)?;
+        NEXT_ID.save(deps.storage, &(next_id + 1))?;
+        next_id.to_string()
+    };
     Parent::default()
-        .mint(deps, info, next_id.to_string(), user.to_string(), None, Empty {})
+        .mint(deps, info, next_id, user.to_string(), None, Empty {})
         .map_err(Into::into)
 }
 

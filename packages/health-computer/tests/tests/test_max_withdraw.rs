@@ -35,6 +35,8 @@ fn missing_price_data() {
         kind: AccountKind::Default,
         positions: Positions {
             account_id: "123".to_string(),
+            account_kind: AccountKind::Default,
+
             deposits: vec![coin(1200, &umars.denom), coin(33, &udai.denom)],
             debts: vec![
                 DebtAmount {
@@ -50,6 +52,7 @@ fn missing_price_data() {
             ],
             lends: vec![],
             vaults: vec![],
+            staked_astro_lps: vec![],
         },
         denoms_data,
         vaults_data,
@@ -81,6 +84,8 @@ fn missing_params() {
         kind: AccountKind::Default,
         positions: Positions {
             account_id: "123".to_string(),
+            account_kind: AccountKind::Default,
+
             deposits: vec![coin(1200, &umars.denom), coin(33, &udai.denom)],
             debts: vec![
                 DebtAmount {
@@ -96,6 +101,7 @@ fn missing_params() {
             ],
             lends: vec![],
             vaults: vec![],
+            staked_astro_lps: vec![],
         },
         denoms_data,
         vaults_data,
@@ -121,10 +127,13 @@ fn deposit_not_present() {
         kind: AccountKind::Default,
         positions: Positions {
             account_id: "123".to_string(),
+            account_kind: AccountKind::Default,
+
             deposits: vec![],
             debts: vec![],
             lends: vec![],
             vaults: vec![],
+            staked_astro_lps: vec![],
         },
         denoms_data,
         vaults_data,
@@ -163,6 +172,8 @@ fn blacklisted_assets_should_be_able_be_fully_withdrawn() {
         kind: AccountKind::Default,
         positions: Positions {
             account_id: "123".to_string(),
+            account_kind: AccountKind::Default,
+
             deposits: vec![coin(total_deposit.u128(), &umars.denom), coin(33, &udai.denom)],
             debts: vec![
                 DebtAmount {
@@ -178,6 +189,7 @@ fn blacklisted_assets_should_be_able_be_fully_withdrawn() {
             ],
             lends: vec![],
             vaults: vec![],
+            staked_astro_lps: vec![],
         },
         denoms_data,
         vaults_data,
@@ -216,6 +228,8 @@ fn zero_when_unhealthy() {
         kind: AccountKind::Default,
         positions: Positions {
             account_id: "123".to_string(),
+            account_kind: AccountKind::Default,
+
             deposits: vec![coin(1200, &umars.denom), coin(33, &udai.denom)],
             debts: vec![
                 DebtAmount {
@@ -231,6 +245,7 @@ fn zero_when_unhealthy() {
             ],
             lends: vec![],
             vaults: vec![],
+            staked_astro_lps: vec![],
         },
         denoms_data,
         vaults_data,
@@ -261,10 +276,13 @@ fn no_debts() {
         kind: AccountKind::Default,
         positions: Positions {
             account_id: "123".to_string(),
+            account_kind: AccountKind::Default,
+
             deposits: vec![coin(deposit_amount.u128(), &ustars.denom)],
             debts: vec![],
             lends: vec![],
             vaults: vec![],
+            staked_astro_lps: vec![],
         },
         denoms_data,
         vaults_data,
@@ -300,6 +318,7 @@ fn should_allow_max_withdraw() {
         kind: AccountKind::Default,
         positions: Positions {
             account_id: "123".to_string(),
+            account_kind: AccountKind::Default,
             deposits: vec![coin(1200, &umars.denom), coin(deposit_amount.u128(), &udai.denom)],
             debts: vec![DebtAmount {
                 denom: udai.denom.clone(),
@@ -308,6 +327,7 @@ fn should_allow_max_withdraw() {
             }],
             lends: vec![],
             vaults: vec![],
+            staked_astro_lps: vec![],
         },
         denoms_data,
         vaults_data,
@@ -321,17 +341,10 @@ fn should_allow_max_withdraw() {
 #[test]
 fn hls_with_max_withdraw() {
     let ustars = ustars_info();
-    let udai = udai_info();
 
     let denoms_data = DenomsData {
-        prices: HashMap::from([
-            (ustars.denom.clone(), ustars.price),
-            (udai.denom.clone(), udai.price),
-        ]),
-        params: HashMap::from([
-            (ustars.denom.clone(), ustars.params.clone()),
-            (udai.denom.clone(), udai.params.clone()),
-        ]),
+        prices: HashMap::from([(ustars.denom.clone(), ustars.price)]),
+        params: HashMap::from([(ustars.denom.clone(), ustars.params.clone())]),
     };
 
     let vault = Vault::new(Addr::unchecked("vault_addr_123".to_string()));
@@ -373,24 +386,19 @@ fn hls_with_max_withdraw() {
         kind: AccountKind::Default,
         positions: Positions {
             account_id: "123".to_string(),
+            account_kind: AccountKind::Default,
             deposits: vec![coin(1200, &ustars.denom)],
-            debts: vec![
-                DebtAmount {
-                    denom: udai.denom,
-                    shares: Default::default(),
-                    amount: Uint128::new(3100),
-                },
-                DebtAmount {
-                    denom: ustars.denom.clone(),
-                    shares: Default::default(),
-                    amount: Uint128::new(800),
-                },
-            ],
+            debts: vec![DebtAmount {
+                denom: ustars.denom.clone(),
+                shares: Default::default(),
+                amount: Uint128::new(800),
+            }],
             lends: vec![],
             vaults: vec![VaultPosition {
                 vault,
                 amount: VaultPositionAmount::Unlocked(VaultAmount::new(Uint128::new(5264))),
             }],
+            staked_astro_lps: vec![],
         },
         denoms_data,
         vaults_data,

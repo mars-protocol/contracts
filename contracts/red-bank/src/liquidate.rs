@@ -38,6 +38,25 @@ pub fn liquidate(
     let recipient_addr = option_string_to_addr(deps.api, recipient, info.sender.clone())?;
     let recipient = User(&recipient_addr);
 
+    let config = CONFIG.load(deps.storage)?;
+
+    let addresses = address_provider::helpers::query_contract_addrs(
+        deps.as_ref(),
+        &config.address_provider,
+        vec![
+            MarsAddressType::Oracle,
+            MarsAddressType::Incentives,
+            MarsAddressType::RewardsCollector,
+            MarsAddressType::Params,
+            MarsAddressType::CreditManager,
+        ],
+    )?;
+    let rewards_collector_addr = &addresses[&MarsAddressType::RewardsCollector];
+    let incentives_addr = &addresses[&MarsAddressType::Incentives];
+    let oracle_addr = &addresses[&MarsAddressType::Oracle];
+    let params_addr = &addresses[&MarsAddressType::Params];
+    let credit_manager_addr = &addresses[&MarsAddressType::CreditManager];
+
     // 1. Validate liquidation
 
     // User cannot liquidate themselves
@@ -45,10 +64,9 @@ pub fn liquidate(
         return Err(ContractError::CannotLiquidateSelf {});
     }
 
-    // If user (contract) has a positive uncollateralized limit then the user
-    // cannot be liquidated
-    if !liquidatee.uncollateralized_loan_limit(deps.storage, &debt_denom)?.is_zero() {
-        return Err(ContractError::CannotLiquidateWhenPositiveUncollateralizedLoanLimit {});
+    // Cannot liquidate credit manager users. They have own liquidation logic in credit-manager contract.
+    if liquidatee_addr == credit_manager_addr {
+        return Err(ContractError::CannotLiquidateCreditManager {});
     };
 
     let user_id = UserId::credit_manager(liquidatee_addr.clone(), "".to_string());
@@ -73,23 +91,6 @@ pub fn liquidate(
     let collateral_market = MARKETS.load(deps.storage, &collateral_denom)?;
 
     // 2. Compute health factor
-    let config = CONFIG.load(deps.storage)?;
-
-    let addresses = address_provider::helpers::query_contract_addrs(
-        deps.as_ref(),
-        &config.address_provider,
-        vec![
-            MarsAddressType::Oracle,
-            MarsAddressType::Incentives,
-            MarsAddressType::RewardsCollector,
-            MarsAddressType::Params,
-        ],
-    )?;
-    let rewards_collector_addr = &addresses[&MarsAddressType::RewardsCollector];
-    let incentives_addr = &addresses[&MarsAddressType::Incentives];
-    let oracle_addr = &addresses[&MarsAddressType::Oracle];
-    let params_addr = &addresses[&MarsAddressType::Params];
-
     let (health, assets_positions) = get_health_and_positions(
         &deps.as_ref(),
         &env,

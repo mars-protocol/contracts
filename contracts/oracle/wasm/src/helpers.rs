@@ -1,12 +1,14 @@
 use std::cmp::Ordering;
 
-use astroport::{
+use astroport_v5::{
     asset::{Asset, AssetInfo, PairInfo},
-    pair::{CumulativePricesResponse, QueryMsg as PairQueryMsg},
+    factory::PairType,
+    pair::{ConfigResponse, CumulativePricesResponse, PoolResponse, QueryMsg as PairQueryMsg},
+    pair_concentrated::QueryMsg as ConcentratedPairQueryMsg,
 };
 use cosmwasm_std::{
-    to_json_binary, Addr, Decimal, Deps, Env, QuerierWrapper, QueryRequest, StdResult, Uint128,
-    WasmQuery,
+    ensure_eq, to_json_binary, Addr, Decimal, Decimal256, Deps, Env, QuerierWrapper, QueryRequest,
+    StdResult, Uint128, WasmQuery,
 };
 use cw_storage_plus::Map;
 use mars_oracle_base::{ContractError, ContractResult, PriceSourceChecked};
@@ -20,6 +22,35 @@ pub fn query_astroport_pair_info(
     pair_contract: impl Into<String>,
 ) -> StdResult<PairInfo> {
     querier.query_wasm_smart(pair_contract, &PairQueryMsg::Pair {})
+}
+
+/// Queries the pair contract for the pool info.
+pub fn query_astroport_pool(
+    querier: &QuerierWrapper,
+    pair_contract: impl Into<String>,
+) -> StdResult<PoolResponse> {
+    querier.query_wasm_smart(pair_contract, &PairQueryMsg::Pool {})
+}
+
+pub fn query_astroport_config(
+    querier: &QuerierWrapper,
+    pair_contract: impl Into<String>,
+) -> StdResult<ConfigResponse> {
+    querier.query_wasm_smart(pair_contract, &PairQueryMsg::Config {})
+}
+
+pub fn query_astroport_pcl_curve_invariant(
+    querier: &QuerierWrapper,
+    pair_contract: impl Into<String>,
+) -> StdResult<Decimal256> {
+    querier.query_wasm_smart(pair_contract, &ConcentratedPairQueryMsg::ComputeD {})
+}
+
+pub fn query_astroport_ss_curve_invariant(
+    querier: &QuerierWrapper,
+    pair_contract: impl Into<String>,
+) -> StdResult<Uint128> {
+    querier.query_wasm_smart(pair_contract, &PairQueryMsg::QueryComputeD {})
 }
 
 /// Helper function to create an Astroport native token AssetInfo.
@@ -115,7 +146,7 @@ pub fn query_token_precision(
     astroport_factory: &Addr,
     denom: &str,
 ) -> ContractResult<u8> {
-    Ok(astroport::querier::query_token_precision(
+    Ok(astroport_v5::querier::query_token_precision(
         querier,
         &AssetInfo::NativeToken {
             denom: denom.to_string(),
@@ -206,4 +237,44 @@ pub fn adjust_precision(
         Ordering::Greater => value
             .checked_div(Uint128::new(10_u128.pow((current_precision - new_precision) as u32)))?,
     })
+}
+
+pub fn validate_astroport_lp_pool_for_type(
+    deps: &Deps,
+    pair_address: &Addr,
+    price_sources: &Map<&str, WasmPriceSourceChecked>,
+    pair_type: PairType,
+) -> ContractResult<()> {
+    let pair_info = query_astroport_pair_info(&deps.querier, pair_address)?;
+    ensure_eq!(
+        pair_info.pair_type,
+        pair_type,
+        ContractError::InvalidPriceSource {
+            reason: format!(
+                "expecting pair {} to be {} pool; found {}",
+                pair_address, pair_type, pair_info.pair_type
+            ),
+        }
+    );
+
+    let pair_denoms = get_astroport_pair_denoms(&pair_info)?;
+    if pair_denoms.len() != 2 {
+        return Err(ContractError::InvalidPriceSource {
+            reason: format!(
+                "expecting pair {} to contain exactly two coins; found {}",
+                pair_address,
+                pair_denoms.len()
+            ),
+        });
+    }
+
+    for denom in pair_denoms.iter() {
+        if !price_sources.has(deps.storage, denom) {
+            return Err(ContractError::InvalidPriceSource {
+                reason: format!("missing price source for {}", denom),
+            });
+        }
+    }
+
+    Ok(())
 }

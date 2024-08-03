@@ -1,6 +1,9 @@
 use cosmwasm_schema::{cw_serde, QueryResponses};
-use cosmwasm_std::{Addr, Decimal, Uint128};
+use cosmwasm_std::{Addr, Coin, Decimal, Uint128};
+use cw_paginate::PaginationResponse;
 use mars_owner::OwnerUpdate;
+
+use crate::credit_manager::ActionCoin;
 
 /// Global configuration
 #[cw_serde]
@@ -10,8 +13,6 @@ pub struct Config {
     /// The maximum number of incentive denoms that can be whitelisted at any given time. This is
     /// a guard against accidentally whitelisting too many denoms, which could cause max gas errors.
     pub max_whitelisted_denoms: u8,
-    /// Mars Token Denom
-    pub mars_denom: String,
 }
 
 /// Incentive Metadata for a given incentive
@@ -89,8 +90,6 @@ pub struct InstantiateMsg {
     /// The maximum number of incentive denoms that can be whitelisted at any given time. This is
     /// a guard against accidentally whitelisting too many denoms, which could cause max gas errors.
     pub max_whitelisted_denoms: u8,
-    /// Mars Token Denom
-    pub mars_denom: String,
 }
 
 #[cw_serde]
@@ -154,6 +153,28 @@ pub enum ExecuteMsg {
         limit: Option<u32>,
     },
 
+    ClaimStakedAstroLpRewards {
+        account_id: String,
+        lp_denom: String,
+    },
+
+    /// Stake Astroport LP tokens in astroport incentives contract to receive rewards.
+    StakeAstroLp {
+        /// User credit account Id
+        account_id: String,
+        /// AstroLp token to stake.
+        lp_coin: Coin,
+    },
+
+    /// Unstake Astroport LP tokens from astroport incentives contract.
+    /// Sends tokens back to the users credit account
+    UnstakeAstroLp {
+        /// User credit account Id
+        account_id: String,
+        /// AstroLp token to unstake.
+        lp_coin: ActionCoin,
+    },
+
     /// Update contract config (only callable by owner)
     UpdateConfig {
         /// The address provider contract address
@@ -184,6 +205,15 @@ pub enum MigrateV1ToV2 {
 #[cw_serde]
 #[derive(QueryResponses)]
 pub enum QueryMsg {
+    /// Query account staked LP rewards
+    #[returns(PaginatedLpRewardsResponse)]
+    StakedAstroLpRewards {
+        /// The id of the account who owns the LP
+        account_id: String,
+        /// Denom of LP that is accruing rewards
+        lp_denom: String,
+    },
+
     /// Query all active incentive emissions for a collateral denom
     #[returns(Vec<ActiveEmission>)]
     ActiveEmissions {
@@ -246,6 +276,27 @@ pub enum QueryMsg {
         limit: Option<u32>,
     },
 
+    /// Enumerate a users LP positions with pagination
+    #[returns(PaginatedStakedLpResponse)]
+    StakedAstroLpPositions {
+        /// The id of the account who owns the LP
+        account_id: String,
+        /// Start pagination after this lp denom, if used.
+        start_after: Option<String>,
+        /// The maximum number of results to return. If not set, 5 is used. If larger than 10,
+        /// 10 is used.
+        limit: Option<u32>,
+    },
+
+    /// Get specific details on a users LP Position
+    #[returns(StakedLpPositionResponse)]
+    StakedAstroLpPosition {
+        /// The id of the account who owns the LP
+        account_id: String,
+        /// The denom of the LP position
+        lp_denom: String,
+    },
+
     /// Query user current unclaimed rewards
     #[returns(Vec<cosmwasm_std::Coin>)]
     UserUnclaimedRewards {
@@ -267,16 +318,6 @@ pub enum QueryMsg {
     /// denoms of all whitelisted incentive denoms, as well as the minimum emission rate for each.
     #[returns(Vec<WhitelistEntry>)]
     Whitelist {},
-}
-
-#[cw_serde]
-pub struct MigrateMsg {
-    /// The amount of time in seconds for each incentive epoch. This is the minimum amount of time
-    /// that an incentive can last, and each incentive must be a multiple of this duration.
-    pub epoch_duration: u64,
-    /// The maximum number of incentive denoms that can be whitelisted at any given time. This is
-    /// a guard against accidentally whitelisting too many denoms, which could cause max gas errors.
-    pub max_whitelisted_denoms: u8,
 }
 
 #[cw_serde]
@@ -330,4 +371,27 @@ pub struct ConfigResponse {
     pub epoch_duration: u64,
     /// The count of the number of whitelisted incentive denoms
     pub whitelist_count: u8,
+}
+
+#[cw_serde]
+pub struct StakedLpPositionResponse {
+    pub lp_coin: Coin,
+    pub rewards: Vec<Coin>,
+}
+
+pub type PaginatedStakedLpResponse = PaginationResponse<StakedLpPositionResponse>;
+pub type PaginatedLpRewardsResponse = PaginationResponse<(String, Vec<Coin>)>;
+#[cw_serde]
+pub enum LpModification {
+    Deposit,
+    Withdraw,
+}
+
+impl From<LpModification> for String {
+    fn from(lp_modification: LpModification) -> Self {
+        match lp_modification {
+            LpModification::Deposit => "Deposit".to_string(),
+            LpModification::Withdraw => "Withdraw".to_string(),
+        }
+    }
 }

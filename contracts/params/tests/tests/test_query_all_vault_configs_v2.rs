@@ -26,7 +26,7 @@ fn validate_address_correctly() {
 
     let vault_configs = mock.query_all_vault_configs_v2(None, Some(1));
 
-    assert_eq!(vault_configs.data.get(0).unwrap().addr, Addr::unchecked("vault_1"));
+    assert_eq!(vault_configs.data.first().unwrap().addr, Addr::unchecked("vault_1"));
     assert_eq!(vault_configs.data.len(), 1)
 }
 
@@ -53,7 +53,7 @@ fn allows_setting_limit() {
 
     let vault_configs = mock.query_all_vault_configs_v2(None, Some(1));
 
-    assert_eq!(vault_configs.data.get(0).unwrap().addr, Addr::unchecked("vault_1"));
+    assert_eq!(vault_configs.data.first().unwrap().addr, Addr::unchecked("vault_1"));
     assert_eq!(vault_configs.data.len(), 1);
 }
 
@@ -81,5 +81,5 @@ fn start_after_skips_first() {
     let vault_configs = mock.query_all_vault_configs_v2(Some("vault_1".to_string()), None);
 
     assert_eq!(vault_configs.data.len(), 1);
-    assert_eq!(vault_configs.data.get(0).unwrap().addr, Addr::unchecked("vault_2"));
+    assert_eq!(vault_configs.data.first().unwrap().addr, Addr::unchecked("vault_2"));
 }

@@ -1,6 +1,6 @@
 use std::{fmt, str::FromStr};
 
-use astroport::{asset::AssetInfo, pair::MAX_ALLOWED_SLIPPAGE, router::SwapOperation};
+use astroport_v5::{asset::AssetInfo, pair::MAX_ALLOWED_SLIPPAGE, router::SwapOperation};
 use cosmwasm_schema::cw_serde;
 use cosmwasm_std::{
     to_json_binary, Coin, CosmosMsg, Decimal, Empty, Env, QuerierWrapper, QueryRequest, StdError,
@@ -196,10 +196,10 @@ impl Route<Empty, Empty, AstroportConfig> for AstroportRoute {
     /// Build a CosmosMsg that swaps given an input denom and amount
     fn build_exact_in_swap_msg(
         &self,
-        querier: &QuerierWrapper,
+        _querier: &QuerierWrapper,
         _env: &Env,
         coin_in: &Coin,
-        slippage: Decimal,
+        min_receive: Uint128,
     ) -> ContractResult<CosmosMsg> {
         let steps = &self.operations;
 
@@ -207,15 +207,11 @@ impl Route<Empty, Empty, AstroportConfig> for AstroportRoute {
             reason: "the route must contain at least one step".to_string(),
         })?;
 
-        // Calculate the minimum amount of output tokens to receive
-        let out_amount = self.estimate_out_amount(querier, coin_in)?;
-        let minimum_receive = Some((Decimal::one() - slippage) * out_amount);
-
         let swap_msg: CosmosMsg = WasmMsg::Execute {
             contract_addr: self.router.clone(),
-            msg: to_json_binary(&astroport::router::ExecuteMsg::ExecuteSwapOperations {
+            msg: to_json_binary(&astroport_v5::router::ExecuteMsg::ExecuteSwapOperations {
                 operations: self.operations.clone(),
-                minimum_receive,
+                minimum_receive: Some(min_receive),
                 to: None,
                 // If we set max_spread to None, Astroport will unwrap it as 0.5%, so instead we
                 // set it to the max allowed since we control slippage via minimum_receive instead.

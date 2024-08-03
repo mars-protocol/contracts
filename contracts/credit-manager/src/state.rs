@@ -43,3 +43,6 @@ pub const VAULT_REQUEST_TEMP_STORAGE: Item<RequestTempStorage> =
 
 // (account id, addr) for rewards-collector contract
 pub const REWARDS_COLLECTOR: Item<RewardsCollector> = Item::new("rewards_collector");
+
+// (account id, vault addr) bindings between account and vault
+pub const VAULTS: Map<&str, Addr> = Map::new("vaults");

@@ -3,27 +3,30 @@
 use std::{collections::HashMap, default::Default, mem::take, str::FromStr};
 
 use anyhow::Result as AnyResult;
+use astroport_v5::incentives::InputSchedule;
 use cosmwasm_std::{coin, Addr, Coin, Decimal, Empty, StdResult, Uint128};
 use cw_multi_test::{App, AppResponse, BankSudo, BasicApp, Executor, SudoMsg};
+use cw_paginate::PaginationResponse;
 use mars_oracle_osmosis::OsmosisPriceSourceUnchecked;
 use mars_types::{
     address_provider::{self, MarsAddressType},
+    credit_manager::ActionCoin,
     incentives,
     oracle::{
         self,
         ActionKind::{Default as ActionDefault, Liquidation},
         PriceResponse,
     },
-    params::{AssetParams, AssetParamsUpdate},
+    params::{AssetParams, AssetParamsUpdate, TotalDepositResponse},
     red_bank::{
-        self, CreateOrUpdateConfig, InitOrUpdateAssetParams, Market,
-        UncollateralizedLoanLimitResponse, UserCollateralResponse, UserDebtResponse,
-        UserPositionResponse,
+        self, CreateOrUpdateConfig, InitOrUpdateAssetParams, Market, MarketV2Response,
+        UserCollateralResponse, UserDebtResponse, UserPositionResponse,
     },
     rewards_collector,
 };
 use pyth_sdk_cw::PriceIdentifier;
 
+use super::mock_contracts::mock_astroport_incentives;
 use crate::integration::mock_contracts::{
     mock_address_provider_contract, mock_incentives_contract, mock_oracle_osmosis_contract,
     mock_params_osmosis_contract, mock_pyth_contract, mock_red_bank_contract,
@@ -34,6 +37,7 @@ pub struct MockEnv {
     pub app: App,
     pub owner: Addr,
     pub address_provider: AddressProvider,
+    pub astro_incentives: AstroIncentives,
     pub incentives: Incentives,
     pub oracle: Oracle,
     pub red_bank: RedBank,
@@ -45,6 +49,11 @@ pub struct MockEnv {
 
 #[derive(Clone)]
 pub struct AddressProvider {
+    pub contract_addr: Addr,
+}
+
+#[derive(Clone)]
+pub struct AstroIncentives {
     pub contract_addr: Addr,
 }
 
@@ -113,6 +122,28 @@ impl MockEnv {
     pub fn query_all_balances(&self, addr: &Addr) -> HashMap<String, Uint128> {
         let res: Vec<Coin> = self.app.wrap().query_all_balances(addr).unwrap();
         res.into_iter().map(|r| (r.denom, r.amount)).collect()
+    }
+}
+
+impl AstroIncentives {
+    pub fn set_incentive_schedule(
+        &self,
+        env: &mut MockEnv,
+        lp_denom: &str,
+        incentive_schedule: &InputSchedule,
+        funds: Vec<Coin>,
+    ) {
+        env.app
+            .execute_contract(
+                env.owner.clone(),
+                self.contract_addr.clone(),
+                &astroport_v5::incentives::ExecuteMsg::Incentivize {
+                    lp_token: lp_denom.to_string(),
+                    schedule: incentive_schedule.clone(),
+                },
+                &funds,
+            )
+            .unwrap();
     }
 }
 
@@ -206,6 +237,64 @@ impl Incentives {
         )
     }
 
+    pub fn claim_astro_rewards(
+        &self,
+        env: &mut MockEnv,
+        sender: &Addr,
+        account_id: String,
+        lp_denom: &str,
+    ) -> AnyResult<AppResponse> {
+        env.app.execute_contract(
+            sender.clone(),
+            self.contract_addr.clone(),
+            &incentives::ExecuteMsg::ClaimStakedAstroLpRewards {
+                account_id,
+                lp_denom: lp_denom.to_string(),
+            },
+            &[],
+        )
+    }
+
+    pub fn stake_astro_lp(
+        &self,
+        env: &mut MockEnv,
+        sender: &Addr,
+        account_id: String,
+        lp_coin: Coin,
+    ) {
+        env.app
+            .execute_contract(
+                sender.clone(),
+                self.contract_addr.clone(),
+                &incentives::ExecuteMsg::StakeAstroLp {
+                    account_id,
+                    lp_coin: lp_coin.clone(),
+                },
+                &[lp_coin],
+            )
+            .unwrap();
+    }
+
+    pub fn unstake_astro_lp(
+        &self,
+        env: &mut MockEnv,
+        sender: &Addr,
+        account_id: String,
+        lp_coin: Coin,
+    ) {
+        env.app
+            .execute_contract(
+                sender.clone(),
+                self.contract_addr.clone(),
+                &incentives::ExecuteMsg::UnstakeAstroLp {
+                    account_id,
+                    lp_coin: ActionCoin::from(&lp_coin.clone()),
+                },
+                &[],
+            )
+            .unwrap();
+    }
+
     pub fn query_unclaimed_rewards(&self, env: &mut MockEnv, user: &Addr) -> StdResult<Vec<Coin>> {
         self.query_unclaimed_rewards_with_acc_id(env, user, None)
     }
@@ -224,6 +313,21 @@ impl Incentives {
                 start_after_collateral_denom: None,
                 start_after_incentive_denom: None,
                 limit: None,
+            },
+        )
+    }
+
+    pub fn query_unclaimed_astroport_rewards(
+        &self,
+        env: &MockEnv,
+        account_id: String,
+        lp_denom: &str,
+    ) -> StdResult<Vec<Coin>> {
+        env.app.wrap().query_wasm_smart(
+            self.contract_addr.clone(),
+            &incentives::QueryMsg::StakedAstroLpRewards {
+                account_id,
+                lp_denom: lp_denom.to_string(),
             },
         )
     }
@@ -463,32 +567,24 @@ impl RedBank {
         )
     }
 
-    pub fn update_uncollateralized_loan_limit(
-        &self,
-        env: &mut MockEnv,
-        sender: &Addr,
-        user: &Addr,
-        denom: &str,
-        new_limit: Uint128,
-    ) -> AnyResult<AppResponse> {
-        env.app.execute_contract(
-            sender.clone(),
-            self.contract_addr.clone(),
-            &red_bank::ExecuteMsg::UpdateUncollateralizedLoanLimit {
-                user: user.to_string(),
-                denom: denom.to_string(),
-                new_limit,
-            },
-            &[],
-        )
-    }
-
     pub fn query_market(&self, env: &mut MockEnv, denom: &str) -> Market {
         env.app
             .wrap()
             .query_wasm_smart(
                 self.contract_addr.clone(),
                 &red_bank::QueryMsg::Market {
+                    denom: denom.to_string(),
+                },
+            )
+            .unwrap()
+    }
+
+    pub fn query_market_v2(&self, env: &mut MockEnv, denom: &str) -> MarketV2Response {
+        env.app
+            .wrap()
+            .query_wasm_smart(
+                self.contract_addr.clone(),
+                &red_bank::QueryMsg::MarketV2 {
                     denom: denom.to_string(),
                 },
             )
@@ -649,24 +745,6 @@ impl RedBank {
             )
             .unwrap()
     }
-
-    pub fn query_uncollateralized_loan_limit(
-        &self,
-        env: &mut MockEnv,
-        user: &Addr,
-        denom: &str,
-    ) -> UncollateralizedLoanLimitResponse {
-        env.app
-            .wrap()
-            .query_wasm_smart(
-                self.contract_addr.clone(),
-                &red_bank::QueryMsg::UncollateralizedLoanLimit {
-                    user: user.to_string(),
-                    denom: denom.to_string(),
-                },
-            )
-            .unwrap()
-    }
 }
 
 impl RewardsCollector {
@@ -721,6 +799,24 @@ impl Params {
                 self.contract_addr.clone(),
                 &mars_types::params::QueryMsg::AssetParams {
                     denom: denom.to_string(),
+                },
+            )
+            .unwrap()
+    }
+
+    pub fn all_total_deposits_v2(
+        &self,
+        env: &mut MockEnv,
+        start_after: Option<String>,
+        limit: Option<u32>,
+    ) -> PaginationResponse<TotalDepositResponse> {
+        env.app
+            .wrap()
+            .query_wasm_smart(
+                self.contract_addr.clone(),
+                &mars_types::params::QueryMsg::AllTotalDepositsV2 {
+                    start_after,
+                    limit,
                 },
             )
             .unwrap()
@@ -824,6 +920,7 @@ impl MockEnvBuilder {
         let rewards_collector_addr = self.deploy_rewards_collector_osmosis(&address_provider_addr);
         let params_addr = self.deploy_params_osmosis(&address_provider_addr);
         let pyth_addr = self.deploy_mock_pyth();
+        let astroport_incentives_addr = self.deploy_mock_astroport_incentives();
 
         self.update_address_provider(
             &address_provider_addr,
@@ -848,12 +945,20 @@ impl MockEnvBuilder {
             MarsAddressType::CreditManager,
             &cm_addr,
         );
+        self.update_address_provider(
+            &address_provider_addr,
+            MarsAddressType::AstroportIncentives,
+            &astroport_incentives_addr,
+        );
 
         MockEnv {
             app: take(&mut self.app),
             owner: self.owner.clone(),
             address_provider: AddressProvider {
                 contract_addr: address_provider_addr,
+            },
+            astro_incentives: AstroIncentives {
+                contract_addr: astroport_incentives_addr,
             },
             incentives: Incentives {
                 contract_addr: incentives_addr,
@@ -905,7 +1010,6 @@ impl MockEnvBuilder {
                     address_provider: address_provider_addr.to_string(),
                     epoch_duration: 604800,
                     max_whitelisted_denoms: 10,
-                    mars_denom: "umars".to_string(),
                 },
                 &[],
                 "incentives",
@@ -1002,6 +1106,21 @@ impl MockEnvBuilder {
 
         self.app
             .instantiate_contract(code_id, self.owner.clone(), &Empty {}, &[], "mock-pyth", None)
+            .unwrap()
+    }
+
+    pub fn deploy_mock_astroport_incentives(&mut self) -> Addr {
+        let code_id = self.app.store_code(mock_astroport_incentives());
+
+        self.app
+            .instantiate_contract(
+                code_id,
+                self.owner.clone(),
+                &Empty {},
+                &[],
+                "mock-astroport-incentives",
+                None,
+            )
             .unwrap()
     }
 
