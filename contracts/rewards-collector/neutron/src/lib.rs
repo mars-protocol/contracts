@@ -1,3 +1,5 @@
+mod migrations;
+
 use std::vec;
 
 use cosmwasm_std::{coin, Coin, CosmosMsg, Env, StdError};
@@ -47,15 +49,13 @@ pub type NeutronCollector<'a> = Collector<'a, NeutronMsg, NeutronIbcMsgFactory>;
 
 #[cfg(not(feature = "library"))]
 pub mod entry {
-    use cosmwasm_std::{
-        entry_point, Binary, Deps, DepsMut, Empty, Env, MessageInfo, Response, StdResult,
-    };
+    use cosmwasm_std::{entry_point, Binary, Deps, DepsMut, Env, MessageInfo, Response, StdResult};
     use cw2::set_contract_version;
-    use mars_rewards_collector_base::ContractResult;
-    use mars_types::rewards_collector::{ExecuteMsg, InstantiateMsg, QueryMsg};
+    use mars_rewards_collector_base::{ContractError, ContractResult};
+    use mars_types::rewards_collector::{ExecuteMsg, InstantiateMsg, NeutronMigrateMsg, QueryMsg};
     use neutron_sdk::bindings::msg::NeutronMsg;
 
-    use crate::NeutronCollector;
+    use crate::{migrations, NeutronCollector};
 
     pub const CONTRACT_NAME: &str = env!("CARGO_PKG_NAME");
     pub const CONTRACT_VERSION: &str = env!("CARGO_PKG_VERSION");
@@ -90,7 +90,13 @@ pub mod entry {
     }
 
     #[entry_point]
-    pub fn migrate(_deps: DepsMut, _env: Env, _msg: Empty) -> StdResult<Response> {
-        Ok(Response::default())
+    pub fn migrate(
+        deps: DepsMut,
+        _env: Env,
+        msg: NeutronMigrateMsg,
+    ) -> Result<Response, ContractError> {
+        match msg {
+            NeutronMigrateMsg::V1_2_0ToV2_0_2 {} => migrations::v2_0_2::migrate(deps),
+        }
     }
 }
