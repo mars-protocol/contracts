@@ -1,7 +1,7 @@
 use std::str::FromStr;
 
 use anyhow::Result as AnyResult;
-use cosmwasm_std::{coin, Addr, Decimal};
+use cosmwasm_std::{coin, Addr, Decimal, Uint128};
 use cw_multi_test::Executor;
 use mars_utils::error::ValidationError;
 use mars_vault::{
@@ -42,7 +42,10 @@ fn instantiate_with_empty_metadata() {
             performance_fee_config: PerformanceFeeConfig {
                 fee_rate: Decimal::zero(),
                 withdrawal_interval: 0
-            }
+            },
+            total_base_tokens: Uint128::zero(),
+            total_vault_tokens: Uint128::zero(),
+            share_price: None,
         }
     )
 }
@@ -99,7 +102,10 @@ fn instantiate_with_metadata() {
             performance_fee_config: PerformanceFeeConfig {
                 fee_rate: Decimal::from_str("0.000046287042457349").unwrap(),
                 withdrawal_interval: 1563,
-            }
+            },
+            total_base_tokens: Uint128::zero(),
+            total_vault_tokens: Uint128::zero(),
+            share_price: None,
         }
     )
 }
