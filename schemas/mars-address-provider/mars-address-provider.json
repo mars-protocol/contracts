@@ -82,17 +82,10 @@
             ]
           },
           {
-            "description": "Protocol admin is an ICS-27 interchain account controlled by Mars Hub's x/gov module. This account will take the owner and admin roles of red-bank contracts.\n\nOwner means the account who can invoke certain priviliged execute methods on a contract, such as updating the config. Admin means the account who can migrate a contract.",
+            "description": "Protocol admin is a Mars Hubs governance smart contract instance, or ICS-27 interchain account controlled by Mars Hubs governance instance. This account will take the owner and admin roles of Mars Protocol contracts.\n\nOwner means the account who can invoke certain priviliged execute methods on a contract, such as updating the config. Admin means the account who can migrate a contract.",
             "type": "string",
             "enum": [
               "protocol_admin"
-            ]
-          },
-          {
-            "description": "The `fee_collector` module account controlled by Mars Hub's x/distribution module. Funds sent to this account will be distributed as staking rewards.\n\nNOTE: This is a Mars Hub address with the `mars` bech32 prefix, which may not be recognized by the `api.addr_validate` method.",
-            "type": "string",
-            "enum": [
-              "fee_collector"
             ]
           },
           {
@@ -293,17 +286,10 @@
             ]
           },
           {
-            "description": "Protocol admin is an ICS-27 interchain account controlled by Mars Hub's x/gov module. This account will take the owner and admin roles of red-bank contracts.\n\nOwner means the account who can invoke certain priviliged execute methods on a contract, such as updating the config. Admin means the account who can migrate a contract.",
+            "description": "Protocol admin is a Mars Hubs governance smart contract instance, or ICS-27 interchain account controlled by Mars Hubs governance instance. This account will take the owner and admin roles of Mars Protocol contracts.\n\nOwner means the account who can invoke certain priviliged execute methods on a contract, such as updating the config. Admin means the account who can migrate a contract.",
             "type": "string",
             "enum": [
               "protocol_admin"
-            ]
-          },
-          {
-            "description": "The `fee_collector` module account controlled by Mars Hub's x/distribution module. Funds sent to this account will be distributed as staking rewards.\n\nNOTE: This is a Mars Hub address with the `mars` bech32 prefix, which may not be recognized by the `api.addr_validate` method.",
-            "type": "string",
-            "enum": [
-              "fee_collector"
             ]
           },
           {
@@ -372,17 +358,10 @@
               ]
             },
             {
-              "description": "Protocol admin is an ICS-27 interchain account controlled by Mars Hub's x/gov module. This account will take the owner and admin roles of red-bank contracts.\n\nOwner means the account who can invoke certain priviliged execute methods on a contract, such as updating the config. Admin means the account who can migrate a contract.",
+              "description": "Protocol admin is a Mars Hubs governance smart contract instance, or ICS-27 interchain account controlled by Mars Hubs governance instance. This account will take the owner and admin roles of Mars Protocol contracts.\n\nOwner means the account who can invoke certain priviliged execute methods on a contract, such as updating the config. Admin means the account who can migrate a contract.",
               "type": "string",
               "enum": [
                 "protocol_admin"
-              ]
-            },
-            {
-              "description": "The `fee_collector` module account controlled by Mars Hub's x/distribution module. Funds sent to this account will be distributed as staking rewards.\n\nNOTE: This is a Mars Hub address with the `mars` bech32 prefix, which may not be recognized by the `api.addr_validate` method.",
-              "type": "string",
-              "enum": [
-                "fee_collector"
               ]
             },
             {
@@ -454,17 +433,10 @@
               ]
             },
             {
-              "description": "Protocol admin is an ICS-27 interchain account controlled by Mars Hub's x/gov module. This account will take the owner and admin roles of red-bank contracts.\n\nOwner means the account who can invoke certain priviliged execute methods on a contract, such as updating the config. Admin means the account who can migrate a contract.",
+              "description": "Protocol admin is a Mars Hubs governance smart contract instance, or ICS-27 interchain account controlled by Mars Hubs governance instance. This account will take the owner and admin roles of Mars Protocol contracts.\n\nOwner means the account who can invoke certain priviliged execute methods on a contract, such as updating the config. Admin means the account who can migrate a contract.",
               "type": "string",
               "enum": [
                 "protocol_admin"
-              ]
-            },
-            {
-              "description": "The `fee_collector` module account controlled by Mars Hub's x/distribution module. Funds sent to this account will be distributed as staking rewards.\n\nNOTE: This is a Mars Hub address with the `mars` bech32 prefix, which may not be recognized by the `api.addr_validate` method.",
-              "type": "string",
-              "enum": [
-                "fee_collector"
               ]
             },
             {
@@ -536,17 +508,10 @@
               ]
             },
             {
-              "description": "Protocol admin is an ICS-27 interchain account controlled by Mars Hub's x/gov module. This account will take the owner and admin roles of red-bank contracts.\n\nOwner means the account who can invoke certain priviliged execute methods on a contract, such as updating the config. Admin means the account who can migrate a contract.",
+              "description": "Protocol admin is a Mars Hubs governance smart contract instance, or ICS-27 interchain account controlled by Mars Hubs governance instance. This account will take the owner and admin roles of Mars Protocol contracts.\n\nOwner means the account who can invoke certain priviliged execute methods on a contract, such as updating the config. Admin means the account who can migrate a contract.",
               "type": "string",
               "enum": [
                 "protocol_admin"
-              ]
-            },
-            {
-              "description": "The `fee_collector` module account controlled by Mars Hub's x/distribution module. Funds sent to this account will be distributed as staking rewards.\n\nNOTE: This is a Mars Hub address with the `mars` bech32 prefix, which may not be recognized by the `api.addr_validate` method.",
-              "type": "string",
-              "enum": [
-                "fee_collector"
               ]
             },
             {
