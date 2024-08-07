@@ -596,10 +596,6 @@ export class Deployer {
         address_type: 'red_bank',
       },
       {
-        address: this.config.feeCollectorAddr,
-        address_type: 'fee_collector',
-      },
-      {
         address: this.config.safetyFundAddr,
         address_type: 'safety_fund',
       },
