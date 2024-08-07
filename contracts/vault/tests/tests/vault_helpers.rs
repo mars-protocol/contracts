@@ -110,6 +110,10 @@ pub fn query_vault_info(mock_env: &MockEnv, vault: &Addr) -> VaultInfoResponseEx
         .unwrap()
 }
 
+pub fn query_total_assets(mock_env: &MockEnv, vault: &Addr) -> Uint128 {
+    mock_env.app.wrap().query_wasm_smart(vault.to_string(), &QueryMsg::TotalAssets {}).unwrap()
+}
+
 pub fn query_total_vault_token_supply(mock_env: &MockEnv, vault: &Addr) -> Uint128 {
     mock_env
         .app
