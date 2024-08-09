@@ -1,4 +1,4 @@
-use cosmwasm_std::{coin, Addr, Decimal};
+use cosmwasm_std::{coin, Addr, Decimal, Uint128};
 use mars_types::health::AccountKind;
 use mars_vault::{
     error::ContractError, msg::VaultInfoResponseExt, performance_fee::PerformanceFeeConfig,
@@ -56,7 +56,10 @@ fn only_credit_manager_can_bind_account() {
             performance_fee_config: PerformanceFeeConfig {
                 fee_rate: Decimal::zero(),
                 withdrawal_interval: 0
-            }
+            },
+            total_base_tokens: Uint128::zero(),
+            total_vault_tokens: Uint128::zero(),
+            share_price: None,
         }
     )
 }

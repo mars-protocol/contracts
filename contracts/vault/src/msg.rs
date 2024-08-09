@@ -1,5 +1,5 @@
 use cosmwasm_schema::cw_serde;
-use cosmwasm_std::Uint128;
+use cosmwasm_std::{Decimal, Uint128};
 use cw_vault_standard::{VaultStandardExecuteMsg, VaultStandardQueryMsg};
 
 use crate::performance_fee::PerformanceFeeConfig;
@@ -98,6 +98,20 @@ pub struct VaultInfoResponseExt {
 
     /// Performance fee configuration
     pub performance_fee_config: PerformanceFeeConfig,
+
+    /// Total base tokens in the vault
+    pub total_base_tokens: Uint128,
+
+    /// Total vault tokens minted
+    pub total_vault_tokens: Uint128,
+
+    /// Current share price, representing the value of one vault token in terms of the base token.
+    /// It is calculated as the ratio of total base tokens in the vault to the total supply of vault tokens.
+    /// Denominated as a decimal value:
+    /// `share_price = total_base_tokens / total_vault_tokens`
+    /// This share price allows users to determine how many base tokens can be redeemed per vault token:
+    /// `base_tokens = vault_share * vault_tokens`
+    pub share_price: Option<Decimal>,
 }
 
 /// Unlock state for a single user
