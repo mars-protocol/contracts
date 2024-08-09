@@ -1,5 +1,6 @@
 use cosmwasm_std::{
-    coin, testing::mock_env, CosmosMsg, IbcMsg, IbcTimeout, SubMsg, Timestamp, Uint128,
+    coin, coins, testing::mock_env, BankMsg, CosmosMsg, IbcMsg, IbcTimeout, SubMsg, Timestamp,
+    Uint128,
 };
 use mars_rewards_collector_base::ContractError;
 use mars_rewards_collector_osmosis::entry::execute;
@@ -39,7 +40,7 @@ fn distributing_rewards() {
         }))
     );
 
-    // distribute umars to fee collector
+    // burn umars as fee collector denom
     let res = execute(
         deps.as_mut(),
         env,
@@ -53,11 +54,8 @@ fn distributing_rewards() {
     assert_eq!(res.messages.len(), 1);
     assert_eq!(
         res.messages[0],
-        SubMsg::new(CosmosMsg::Ibc(IbcMsg::Transfer {
-            channel_id: "channel-69".to_string(),
-            to_address: "fee_collector".to_string(),
-            amount: coin(8964, "umars"),
-            timeout: IbcTimeout::with_timestamp(Timestamp::from_seconds(17000300))
+        SubMsg::new(CosmosMsg::Bank(BankMsg::Burn {
+            amount: coins(8964, "umars")
         }))
     );
 
