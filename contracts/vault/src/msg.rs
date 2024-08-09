@@ -105,7 +105,12 @@ pub struct VaultInfoResponseExt {
     /// Total vault tokens minted
     pub total_vault_tokens: Uint128,
 
-    /// Current share price
+    /// Current share price, representing the value of one vault token in terms of the base token.
+    /// It is calculated as the ratio of total base tokens in the vault to the total supply of vault tokens.
+    /// Denominated as a decimal value:
+    /// `share_price = total_base_tokens / total_vault_tokens`
+    /// This share price allows users to determine how many base tokens can be redeemed per vault token:
+    /// `base_tokens = vault_share * vault_tokens`
     pub share_price: Option<Decimal>,
 }
 
