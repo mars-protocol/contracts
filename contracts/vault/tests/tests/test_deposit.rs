@@ -1,6 +1,5 @@
 use cosmwasm_std::{coin, Addr, Decimal, Uint128};
 use cw_utils::PaymentError;
-use mars_types::health::AccountKind;
 use mars_vault::error::ContractError;
 
 use super::{
@@ -32,14 +31,7 @@ fn deposit_invalid_funds() {
 
     let managed_vault_addr = deploy_managed_vault(&mut mock.app, &fund_manager, &credit_manager);
 
-    mock.create_credit_account_v2(
-        &fund_manager,
-        AccountKind::FundManager {
-            vault_addr: managed_vault_addr.to_string(),
-        },
-        None,
-    )
-    .unwrap();
+    mock.create_fund_manager_account(&fund_manager, &managed_vault_addr);
 
     let res = execute_deposit(
         &mut mock,
@@ -132,15 +124,7 @@ fn deposit_succeded() {
     let vault_token_balance = mock.query_balance(&user, &vault_token).amount;
     assert!(vault_token_balance.is_zero());
 
-    let account_id = mock
-        .create_credit_account_v2(
-            &fund_manager,
-            AccountKind::FundManager {
-                vault_addr: managed_vault_addr.to_string(),
-            },
-            None,
-        )
-        .unwrap();
+    let account_id = mock.create_fund_manager_account(&fund_manager, &managed_vault_addr);
 
     let deposited_amt = Uint128::new(123_000_000);
     execute_deposit(

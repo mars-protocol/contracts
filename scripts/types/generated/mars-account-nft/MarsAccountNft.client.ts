@@ -287,10 +287,8 @@ export interface MarsAccountNftInterface extends MarsAccountNftReadOnlyInterface
   ) => Promise<ExecuteResult>
   mint: (
     {
-      tokenId,
       user,
     }: {
-      tokenId?: string
       user: string
     },
     fee?: number | StdFee | 'auto',
@@ -443,10 +441,8 @@ export class MarsAccountNftClient
   }
   mint = async (
     {
-      tokenId,
       user,
     }: {
-      tokenId?: string
       user: string
     },
     fee: number | StdFee | 'auto' = 'auto',
@@ -458,7 +454,6 @@ export class MarsAccountNftClient
       this.contractAddress,
       {
         mint: {
-          token_id: tokenId,
           user,
         },
       },

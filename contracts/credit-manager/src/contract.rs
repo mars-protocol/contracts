@@ -49,12 +49,8 @@ pub fn execute(
 ) -> ContractResult<Response> {
     match msg {
         ExecuteMsg::CreateCreditAccount(kind) => {
-            create_credit_account(&mut deps, info.sender, kind, None).map(|res| res.1)
+            create_credit_account(&mut deps, info.sender, kind).map(|res| res.1)
         }
-        ExecuteMsg::CreateCreditAccountV2 {
-            kind,
-            account_id,
-        } => create_credit_account(&mut deps, info.sender, kind, account_id).map(|res| res.1),
         ExecuteMsg::UpdateConfig {
             updates,
         } => update_config(deps, env, info, updates),

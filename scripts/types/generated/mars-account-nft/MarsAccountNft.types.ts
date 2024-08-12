@@ -22,7 +22,6 @@ export type ExecuteMsg =
     }
   | {
       mint: {
-        token_id?: string | null
         user: string
       }
     }

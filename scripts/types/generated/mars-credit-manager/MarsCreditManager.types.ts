@@ -31,12 +31,6 @@ export type ExecuteMsg =
       create_credit_account: AccountKind
     }
   | {
-      create_credit_account_v2: {
-        account_id?: string | null
-        kind: AccountKind
-      }
-    }
-  | {
       update_credit_account: {
         account_id?: string | null
         account_kind?: AccountKind | null

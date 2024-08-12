@@ -2,10 +2,7 @@ use cosmwasm_std::{coin, coins, Addr, Coin, Uint128};
 use cw_multi_test::{BankSudo, SudoMsg};
 use cw_paginate::{Metadata, PaginationResponse};
 use mars_credit_manager::error::ContractError;
-use mars_types::{
-    credit_manager::{Action, ActionAmount, ActionCoin, VaultBinding},
-    health::AccountKind,
-};
+use mars_types::credit_manager::{Action, ActionAmount, ActionCoin, VaultBinding};
 
 use super::helpers::{assert_err, deploy_managed_vault, uosmo_info, AccountToFund, MockEnv};
 
@@ -27,15 +24,7 @@ fn fund_manager_wallet_cannot_deposit_and_withdraw() {
     let managed_vault_addr =
         deploy_managed_vault(&mut mock.app, &fund_manager_wallet, &credit_manager);
 
-    let account_id = mock
-        .create_credit_account_v2(
-            &fund_manager_wallet,
-            AccountKind::FundManager {
-                vault_addr: managed_vault_addr.to_string(),
-            },
-            None,
-        )
-        .unwrap();
+    let account_id = mock.create_fund_manager_account(&fund_manager_wallet, &managed_vault_addr);
 
     // deposit not allowed
     let deposit_amount = Uint128::new(234);
@@ -183,15 +172,7 @@ fn addr_not_connected_to_fund_manager_acc_does_not_work() {
     let managed_vault_addr =
         deploy_managed_vault(&mut mock.app, &fund_manager_wallet, &credit_manager);
 
-    let account_id = mock
-        .create_credit_account_v2(
-            &fund_manager_wallet,
-            AccountKind::FundManager {
-                vault_addr: managed_vault_addr.to_string(),
-            },
-            None,
-        )
-        .unwrap();
+    let account_id = mock.create_fund_manager_account(&fund_manager_wallet, &managed_vault_addr);
 
     // try to deposit from different addr
     let deposit_amount = Uint128::new(234);
@@ -238,15 +219,7 @@ fn fund_manager_wallet_can_work_on_behalf_of_vault() {
         }))
         .unwrap();
 
-    let account_id = mock
-        .create_credit_account_v2(
-            &fund_manager_wallet,
-            AccountKind::FundManager {
-                vault_addr: managed_vault_addr.to_string(),
-            },
-            None,
-        )
-        .unwrap();
+    let account_id = mock.create_fund_manager_account(&fund_manager_wallet, &managed_vault_addr);
 
     // deposit from vault to fund manager account
     let deposit_amount = Uint128::new(234);
@@ -337,15 +310,7 @@ fn vault_bindings() {
     let credit_manager = mock.rover.clone();
 
     let vault_addr_1 = deploy_managed_vault(&mut mock.app, &fund_manager_wallet, &credit_manager);
-    let fund_acc_id_1 = mock
-        .create_credit_account_v2(
-            &fund_manager_wallet,
-            AccountKind::FundManager {
-                vault_addr: vault_addr_1.to_string(),
-            },
-            None,
-        )
-        .unwrap();
+    let fund_acc_id_1 = mock.create_fund_manager_account(&fund_manager_wallet, &vault_addr_1);
 
     let res = mock.query_vault_bindings(None, None).unwrap();
     assert_eq!(
@@ -362,25 +327,9 @@ fn vault_bindings() {
     );
 
     let vault_addr_2 = deploy_managed_vault(&mut mock.app, &fund_manager_wallet, &credit_manager);
-    let fund_acc_id_2 = mock
-        .create_credit_account_v2(
-            &fund_manager_wallet,
-            AccountKind::FundManager {
-                vault_addr: vault_addr_2.to_string(),
-            },
-            None,
-        )
-        .unwrap();
+    let fund_acc_id_2 = mock.create_fund_manager_account(&fund_manager_wallet, &vault_addr_2);
     let vault_addr_3 = deploy_managed_vault(&mut mock.app, &fund_manager_wallet, &credit_manager);
-    let fund_acc_id_3 = mock
-        .create_credit_account_v2(
-            &fund_manager_wallet,
-            AccountKind::FundManager {
-                vault_addr: vault_addr_3.to_string(),
-            },
-            None,
-        )
-        .unwrap();
+    let fund_acc_id_3 = mock.create_fund_manager_account(&fund_manager_wallet, &vault_addr_3);
 
     let res = mock.query_vault_bindings(None, None).unwrap();
     assert_eq!(

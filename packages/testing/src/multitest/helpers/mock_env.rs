@@ -314,29 +314,21 @@ impl MockEnv {
         self._create_credit_account(sender, AccountKind::HighLeveredStrategy).unwrap()
     }
 
+    pub fn create_fund_manager_account(&mut self, sender: &Addr, vault: &Addr) -> String {
+        self._create_credit_account(
+            sender,
+            AccountKind::FundManager {
+                vault_addr: vault.to_string(),
+            },
+        )
+        .unwrap()
+    }
+
     fn _create_credit_account(&mut self, sender: &Addr, kind: AccountKind) -> AnyResult<String> {
         let res = self.app.execute_contract(
             sender.clone(),
             self.rover.clone(),
             &ExecuteMsg::CreateCreditAccount(kind),
-            &[],
-        )?;
-        Ok(self.get_account_id(res))
-    }
-
-    pub fn create_credit_account_v2(
-        &mut self,
-        sender: &Addr,
-        kind: AccountKind,
-        account_id: Option<String>,
-    ) -> AnyResult<String> {
-        let res = self.app.execute_contract(
-            sender.clone(),
-            self.rover.clone(),
-            &ExecuteMsg::CreateCreditAccountV2 {
-                kind,
-                account_id,
-            },
             &[],
         )?;
         Ok(self.get_account_id(res))

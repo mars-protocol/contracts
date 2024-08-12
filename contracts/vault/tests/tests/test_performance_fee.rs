@@ -6,7 +6,7 @@ use mars_mock_oracle::msg::CoinPrice;
 use mars_testing::multitest::helpers::{
     coin_info, deploy_managed_vault_with_performance_fee, uatom_info, CoinInfo,
 };
-use mars_types::{credit_manager::Action, health::AccountKind, oracle::ActionKind};
+use mars_types::{credit_manager::Action, oracle::ActionKind};
 use mars_vault::{
     error::ContractError,
     performance_fee::{PerformanceFeeConfig, PerformanceFeeState},
@@ -66,15 +66,7 @@ fn unauthorized_performance_fee_withdraw() {
 
     let managed_vault_addr = deploy_managed_vault(&mut mock.app, &fund_manager, &credit_manager);
 
-    let vault_acc_id = mock
-        .create_credit_account_v2(
-            &fund_manager,
-            AccountKind::FundManager {
-                vault_addr: managed_vault_addr.to_string(),
-            },
-            None,
-        )
-        .unwrap();
+    let vault_acc_id = mock.create_fund_manager_account(&fund_manager, &managed_vault_addr);
 
     // vault user can't withdraw performance fee
     let res = execute_withdraw_performance_fee(&mut mock, &user, &managed_vault_addr, None);
@@ -131,14 +123,7 @@ fn cannot_withdraw_zero_performance_fee() {
         },
     );
 
-    mock.create_credit_account_v2(
-        &fund_manager,
-        AccountKind::FundManager {
-            vault_addr: managed_vault_addr.to_string(),
-        },
-        None,
-    )
-    .unwrap();
+    mock.create_fund_manager_account(&fund_manager, &managed_vault_addr);
 
     let res = execute_withdraw_performance_fee(&mut mock, &fund_manager, &managed_vault_addr, None);
     assert_vault_err(res, ContractError::ZeroPerformanceFee {});
@@ -178,15 +163,7 @@ fn cannot_withdraw_if_withdrawal_interval_not_passed() {
         },
     );
 
-    let fund_acc_id = mock
-        .create_credit_account_v2(
-            &fund_manager,
-            AccountKind::FundManager {
-                vault_addr: managed_vault_addr.to_string(),
-            },
-            None,
-        )
-        .unwrap();
+    let fund_acc_id = mock.create_fund_manager_account(&fund_manager, &managed_vault_addr);
 
     // simulate base token price = 1 USD
     mock.price_change(CoinPrice {
@@ -284,15 +261,7 @@ fn performance_fee_correctly_accumulated() {
         },
     );
 
-    let fund_acc_id = mock
-        .create_credit_account_v2(
-            &fund_manager,
-            AccountKind::FundManager {
-                vault_addr: managed_vault_addr.to_string(),
-            },
-            None,
-        )
-        .unwrap();
+    let fund_acc_id = mock.create_fund_manager_account(&fund_manager, &managed_vault_addr);
 
     // simulate base token price = 1 USD
     mock.price_change(CoinPrice {

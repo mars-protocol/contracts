@@ -4,7 +4,6 @@ use mars_mock_oracle::msg::CoinPrice;
 use mars_testing::multitest::helpers::{uosmo_info, CoinInfo};
 use mars_types::{
     credit_manager::{Action, ActionAmount, ActionCoin},
-    health::AccountKind,
     oracle::ActionKind,
     params::LiquidationBonus,
 };
@@ -39,14 +38,7 @@ fn redeem_invalid_funds() {
 
     let managed_vault_addr = deploy_managed_vault(&mut mock.app, &fund_manager, &credit_manager);
 
-    mock.create_credit_account_v2(
-        &fund_manager,
-        AccountKind::FundManager {
-            vault_addr: managed_vault_addr.to_string(),
-        },
-        None,
-    )
-    .unwrap();
+    mock.create_fund_manager_account(&fund_manager, &managed_vault_addr);
 
     let res = execute_redeem(
         &mut mock,
@@ -135,14 +127,7 @@ fn redeem_if_unlocked_positions_not_found() {
     let vault_info_res = query_vault_info(&mock, &managed_vault_addr);
     let vault_token = vault_info_res.vault_token;
 
-    mock.create_credit_account_v2(
-        &fund_manager,
-        AccountKind::FundManager {
-            vault_addr: managed_vault_addr.to_string(),
-        },
-        None,
-    )
-    .unwrap();
+    mock.create_fund_manager_account(&fund_manager, &managed_vault_addr);
 
     // deposit to get vault tokens
     let deposited_amt = Uint128::new(123_000_000);
@@ -189,14 +174,7 @@ fn redeem_invalid_unlocked_amount() {
     let vault_info_res = query_vault_info(&mock, &managed_vault_addr);
     let vault_token = vault_info_res.vault_token;
 
-    mock.create_credit_account_v2(
-        &fund_manager,
-        AccountKind::FundManager {
-            vault_addr: managed_vault_addr.to_string(),
-        },
-        None,
-    )
-    .unwrap();
+    mock.create_fund_manager_account(&fund_manager, &managed_vault_addr);
 
     let deposited_amt = Uint128::new(12_400_000);
     execute_deposit(
@@ -274,14 +252,7 @@ fn redeem_with_refund() {
     let vault_info_res = query_vault_info(&mock, &managed_vault_addr);
     let vault_token = vault_info_res.vault_token;
 
-    mock.create_credit_account_v2(
-        &fund_manager,
-        AccountKind::FundManager {
-            vault_addr: managed_vault_addr.to_string(),
-        },
-        None,
-    )
-    .unwrap();
+    mock.create_fund_manager_account(&fund_manager, &managed_vault_addr);
 
     let deposited_amt = Uint128::new(12_400_000);
     execute_deposit(
@@ -388,15 +359,7 @@ fn redeem_succeded(
     let vault_info_res = query_vault_info(&mock, &managed_vault_addr);
     let vault_token = vault_info_res.vault_token;
 
-    let fund_acc_id = mock
-        .create_credit_account_v2(
-            &fund_manager,
-            AccountKind::FundManager {
-                vault_addr: managed_vault_addr.to_string(),
-            },
-            None,
-        )
-        .unwrap();
+    let fund_acc_id = mock.create_fund_manager_account(&fund_manager, &managed_vault_addr);
 
     let mut fund_acc_amt = deposit_amt;
 
