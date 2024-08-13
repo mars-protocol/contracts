@@ -147,34 +147,6 @@
         "additionalProperties": false
       },
       {
-        "description": "Mints NFT representing a credit account for user with optional custom account_id creation. User can have many accounts.",
-        "type": "object",
-        "required": [
-          "create_credit_account_v2"
-        ],
-        "properties": {
-          "create_credit_account_v2": {
-            "type": "object",
-            "required": [
-              "kind"
-            ],
-            "properties": {
-              "account_id": {
-                "type": [
-                  "string",
-                  "null"
-                ]
-              },
-              "kind": {
-                "$ref": "#/definitions/AccountKind"
-              }
-            },
-            "additionalProperties": false
-          }
-        },
-        "additionalProperties": false
-      },
-      {
         "description": "Update user's position on their credit account",
         "type": "object",
         "required": [

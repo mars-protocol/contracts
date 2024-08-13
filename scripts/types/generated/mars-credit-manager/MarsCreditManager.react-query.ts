@@ -730,30 +730,6 @@ export function useMarsCreditManagerUpdateCreditAccountMutation(
     options,
   )
 }
-export interface MarsCreditManagerCreateCreditAccountV2Mutation {
-  client: MarsCreditManagerClient
-  msg: {
-    accountId?: string
-    kind: AccountKind
-  }
-  args?: {
-    fee?: number | StdFee | 'auto'
-    memo?: string
-    funds?: Coin[]
-  }
-}
-export function useMarsCreditManagerCreateCreditAccountV2Mutation(
-  options?: Omit<
-    UseMutationOptions<ExecuteResult, Error, MarsCreditManagerCreateCreditAccountV2Mutation>,
-    'mutationFn'
-  >,
-) {
-  return useMutation<ExecuteResult, Error, MarsCreditManagerCreateCreditAccountV2Mutation>(
-    ({ client, msg, args: { fee, memo, funds } = {} }) =>
-      client.createCreditAccountV2(msg, fee, memo, funds),
-    options,
-  )
-}
 export interface MarsCreditManagerCreateCreditAccountMutation {
   client: MarsCreditManagerClient
   msg: AccountKind

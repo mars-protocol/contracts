@@ -7,7 +7,6 @@ use mars_types::{
     account_nft::{ExecuteMsg, QueryMsg::OwnerOf},
     health::AccountKind,
 };
-use proptest::prelude::*;
 
 use super::helpers::{below_max_for_burn, MockEnv};
 
@@ -71,7 +70,6 @@ fn only_minter_can_mint() {
         mock.nft_contract.clone(),
         &ExecuteMsg::Mint {
             user: bad_guy.into(),
-            token_id: None,
         },
         &[],
     );
@@ -105,79 +103,4 @@ fn normal_base_cw721_actions_can_still_be_taken() {
         )
         .unwrap();
     assert_eq!(res.owner, rover_user_b.to_string())
-}
-
-#[test]
-fn invalid_custom_token_id_length() {
-    let mut mock = MockEnv::new().build().unwrap();
-    mock.assert_next_id("1");
-
-    let user = Addr::unchecked("user_abc");
-
-    let res = mock.mint_with_custom_token_id(&user, Some("abc".to_string()));
-    let err: ContractError = res.unwrap_err().downcast().unwrap();
-    assert_eq!(
-        err,
-        ContractError::InvalidTokenId {
-            reason: "token_id length should be between 4 and 15 chars".to_string()
-        }
-    );
-    mock.assert_next_id("1");
-
-    let res = mock.mint_with_custom_token_id(&user, Some("abcdefghijklmnop".to_string()));
-    let err: ContractError = res.unwrap_err().downcast().unwrap();
-    assert_eq!(
-        err,
-        ContractError::InvalidTokenId {
-            reason: "token_id length should be between 4 and 15 chars".to_string()
-        }
-    );
-    mock.assert_next_id("1");
-}
-
-#[test]
-fn custom_token_id_can_not_be_same_as_automatically_generated() {
-    let mut mock = MockEnv::new().build().unwrap();
-    mock.assert_next_id("1");
-
-    let user = Addr::unchecked("user_abc");
-
-    let res = mock.mint_with_custom_token_id(&user, Some("12345".to_string()));
-    let err: ContractError = res.unwrap_err().downcast().unwrap();
-    assert_eq!(
-        err,
-        ContractError::InvalidTokenId {
-            reason: "token_id should contain at least one letter".to_string()
-        }
-    );
-    mock.assert_next_id("1");
-}
-
-proptest! {
-    #[test]
-    fn invalid_custom_token_id_characters(token_id in "[!@#$%^&*()-+]{4,15}") {
-        let mut mock = MockEnv::new().build().unwrap();
-        mock.assert_next_id("1");
-
-        let user = Addr::unchecked("user_abc");
-        let res = mock.mint_with_custom_token_id(&user, Some(token_id));
-        let err: ContractError = res.unwrap_err().downcast().unwrap();
-        prop_assert_eq!(err, ContractError::InvalidTokenId { reason: "token_id can contain only letters, numbers, and underscores".to_string() });
-        mock.assert_next_id("1");
-    }
-
-    /// The regex pattern ensures that the string:
-    /// - starts with three characters (letters, digits, or underscores),
-    /// - contains at least one letter,
-    /// - can have up to 11 additional characters (letters, digits, or underscores) to fulfill the length requirement.
-    #[test]
-    fn valid_custom_token_id(token_id in "[a-zA-Z0-9_]{3}[a-zA-Z][a-zA-Z0-9_]{0,11}") {
-        let mut mock = MockEnv::new().build().unwrap();
-        mock.assert_next_id("1");
-
-        let user = Addr::unchecked("user_abc");
-        let saved_token_id = mock.mint_with_custom_token_id(&user, Some(token_id.clone())).unwrap();
-        assert_eq!(saved_token_id, token_id);
-        mock.assert_next_id("1");
-    }
 }

@@ -689,7 +689,6 @@ export function useMarsAccountNftBurnMutation(
 export interface MarsAccountNftMintMutation {
   client: MarsAccountNftClient
   msg: {
-    tokenId?: string
     user: string
   }
   args?: {

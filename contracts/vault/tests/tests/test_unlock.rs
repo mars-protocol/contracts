@@ -1,5 +1,4 @@
 use cosmwasm_std::{coin, Addr, Uint128};
-use mars_types::health::AccountKind;
 use mars_vault::{error::ContractError, msg::VaultUnlock};
 
 use super::{
@@ -52,14 +51,7 @@ fn unlock_invalid_amount() {
 
     let managed_vault_addr = deploy_managed_vault(&mut mock.app, &fund_manager, &credit_manager);
 
-    mock.create_credit_account_v2(
-        &fund_manager,
-        AccountKind::FundManager {
-            vault_addr: managed_vault_addr.to_string(),
-        },
-        None,
-    )
-    .unwrap();
+    mock.create_fund_manager_account(&fund_manager, &managed_vault_addr);
 
     // unlock zero vault tokens
     let res = execute_unlock(&mut mock, &user, &managed_vault_addr, Uint128::zero(), &[]);
@@ -117,14 +109,7 @@ fn unlock_succeded() {
 
     let managed_vault_addr = deploy_managed_vault(&mut mock.app, &fund_manager, &credit_manager);
 
-    mock.create_credit_account_v2(
-        &fund_manager,
-        AccountKind::FundManager {
-            vault_addr: managed_vault_addr.to_string(),
-        },
-        None,
-    )
-    .unwrap();
+    mock.create_fund_manager_account(&fund_manager, &managed_vault_addr);
 
     let deposited_amt = Uint128::new(123_000_000);
     execute_deposit(
