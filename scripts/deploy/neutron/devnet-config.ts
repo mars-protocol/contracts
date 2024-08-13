@@ -4,7 +4,8 @@ import { NeutronIbcConfig } from '../../types/generated/mars-rewards-collector-b
 const nobleUsdcDenom = 'ibc/B559A80D62249C8AA07A380E2A2BEA6E5CA9A6F079C912C3A9E9B494105E4F81'
 const atomDenom = 'ibc/C4CFF46FD6DE35CA4CF4CE031E643C8FDC9BA4B99AE598E9B0ED98FE3A2319F9'
 const marsDenom = 'ibc/9598CDEB7C6DB7FC21E746C8E0250B30CD5154F39CA111A9D4948A4362F638BD'
-const dAtomDenom = 'factory/neutron1r89rnk4uu3dq4z44cxvl6809cwq7s0edfeja5lny3xueatkargqs7pfz9f/udatom'
+const dAtomDenom =
+  'factory/neutron1r89rnk4uu3dq4z44cxvl6809cwq7s0edfeja5lny3xueatkargqs7pfz9f/udatom'
 
 const dAtomUsdcLpDenom =
   'factory/neutron1k3755gvujh2nldgqwdz9caszquah53f0kg0zflwja3vrq5z4ur6sq4c4nc/astroport/share'
@@ -115,7 +116,7 @@ export const dAtomOracle: OracleConfig = {
     astroport_twap: {
       pair_address: dAtomAtomPairAddr,
       window_size: 1800,
-      tolerance: 120
+      tolerance: 120,
     },
   },
 }
@@ -203,8 +204,8 @@ export const atomAsset: AssetConfig = {
     hls: {
       max_loan_to_value: '0.86',
       liquidation_threshold: '0.865',
-      correlations: [{ coin: { denom: dAtomDenom } }, { coin: { denom: dAtomAtomLpDenom } }]
-    }
+      correlations: [{ coin: { denom: dAtomDenom } }, { coin: { denom: dAtomAtomLpDenom } }],
+    },
   },
   red_bank: {
     borrow_enabled: true,
@@ -271,10 +272,10 @@ export const dAtomAsset: AssetConfig = {
   deposit_cap: '50000000000',
   reserve_factor: '0.1',
   interest_rate_model: {
-    optimal_utilization_rate: '0',
+    optimal_utilization_rate: '0.6',
     base: '0',
-    slope_1: '0',
-    slope_2: '0',
+    slope_1: '0.15',
+    slope_2: '3',
   },
 }
 
@@ -300,10 +301,10 @@ export const dAtomUsdcLpAsset: AssetConfig = {
   deposit_cap: '1000000000000000000',
   reserve_factor: '0.1',
   interest_rate_model: {
-    optimal_utilization_rate: '0',
+    optimal_utilization_rate: '0.6',
     base: '0',
-    slope_1: '0',
-    slope_2: '0',
+    slope_1: '0.15',
+    slope_2: '3',
   },
 }
 
@@ -329,10 +330,10 @@ export const dAtomNtrnLpAsset: AssetConfig = {
   deposit_cap: '1000000000000000000',
   reserve_factor: '0.1',
   interest_rate_model: {
-    optimal_utilization_rate: '0',
+    optimal_utilization_rate: '0.6',
     base: '0',
-    slope_1: '0',
-    slope_2: '0',
+    slope_1: '0.15',
+    slope_2: '3',
   },
 }
 
@@ -358,17 +359,17 @@ export const ntrnUsdcLpAsset: AssetConfig = {
   deposit_cap: '1000000000000000000',
   reserve_factor: '0.1',
   interest_rate_model: {
-    optimal_utilization_rate: '0',
+    optimal_utilization_rate: '0.6',
     base: '0',
-    slope_1: '0',
-    slope_2: '0',
+    slope_1: '0.15',
+    slope_2: '3',
   },
 }
 
 export const dAtomAtomLpAsset: AssetConfig = {
   denom: dAtomAtomLpDenom,
   max_loan_to_value: '0',
-  liquidation_threshold: '0',
+  liquidation_threshold: '0.01',
   liquidation_bonus: {
     max_lb: '0.2',
     min_lb: '0.05',
@@ -387,10 +388,10 @@ export const dAtomAtomLpAsset: AssetConfig = {
   deposit_cap: '1000000000000000000',
   reserve_factor: '0.1',
   interest_rate_model: {
-    optimal_utilization_rate: '0',
+    optimal_utilization_rate: '0.6',
     base: '0',
-    slope_1: '0',
-    slope_2: '0',
+    slope_1: '0.15',
+    slope_2: '3',
   },
 }
 
@@ -446,9 +447,9 @@ export const neutronDevnetConfig: DeploymentConfig = {
     atomAsset,
     nobleUSDCAsset,
     dAtomUsdcLpAsset,
-    dAtomNtrnLpAsset,
+    // dAtomNtrnLpAsset,
     ntrnUsdcLpAsset,
-    dAtomAtomLpAsset
+    dAtomAtomLpAsset,
   ],
   vaults: [],
   oracleConfigs: [
@@ -458,7 +459,7 @@ export const neutronDevnetConfig: DeploymentConfig = {
     ntrnOracle,
     dAtomOracle,
     dAtomUsdcLpOracle,
-    dAtomNtrnLpOracle,
+    // dAtomNtrnLpOracle,
     ntrnUsdcLpOracle,
     dAtomAtomLpOracle,
   ],
