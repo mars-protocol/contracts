@@ -1,13 +1,13 @@
 {
-  "addressProvider": "neutron1ddrvlzptl90mgv59akqnw6a4ee8leqh95ptcc6ehwsr0pp2054gsn77h8r",
-  "redBank": "neutron1qq7jy9xvr6mhch3fh9v75wjucp3z0zhmuw5u7f6szwuvxrsp69tq23v79a",
-  "incentives": "neutron1qs4e0czgalrpd2370kqs56e6zy3fwdpyesm7r8qr28vca73hfm8qfdjpzm",
-  "oracle": "neutron1d8azuw3uq3p3ujk2pl2es2adazz594mlxu96whu043ukk32g6l6sar53su",
-  "rewardsCollector": "neutron1cajk6xwa25r8emxzscvxxdkgw4279qphzrrqh5c8sy0qducz82msxmxvah",
-  "swapper": "neutron1gmxj7msgq0seam8g2fz4mmpy0tpg8terxrw3s0dden65n4gwymks7svmmg",
-  "params": "neutron1s87zxg4dfzeelxu3w2lh7m6fxdrqeek0w8kcq24vvcdj7y4qj7dqv4up92",
-  "zapper": "neutron1a93l2c3fsgrwqvtyd4xqxnya2jmta4erwlaaufwc06j870lx63pq9ruyde",
-  "health": "neutron1n5tslf6xswzqlg026jkc0u78zll60pxf8p5gsgt55nd22vgnac8qscqjm3",
-  "creditManager": "neutron19g6ga4wjv5h4xyz8w0qmpyzekxnptzndw05h86hkvj6jlhdcv0dslc65fm",
-  "accountNft": "neutron19pv2hwh2qk3f3yq2q7976fg0rh3nsh6kw5lwpnl46cu3tusa7tms6jh2mh"
+  "addressProvider": "neutron1fg5v00sa0x3avsxa4rft5v9sgktl3s6fvkjwxy03lplcc6hrqxps08u2lc",
+  "redBank": "neutron1xucw5lg7sh9gmupd90jaeupvq0nm4pj5esu3ff7f64pacy2lyjsqfwft80",
+  "incentives": "neutron1uf6nclgqvwnqv5lfverunenpzyw556h739sekj75k62h062k9lrqzhm3up",
+  "oracle": "neutron14rjfsglulewu9narj077ata6p0dkfjjuayguku50f8tg2fyf4ups44a0ww",
+  "rewardsCollector": "neutron1l0ehl3wptumpyg85csv6n5dky93h4sph4ypfjpztnu4cj7kg9uvstzlwrr",
+  "swapper": "neutron1t29va54hgzsakwuh2azpr77ty793h57yd978gz0dkekvyqrpcupqhhy6g3",
+  "params": "neutron102xprj349yslxu5xncpsmv8qk38ryag870xvgxgm5r9dnagvetwszssu59",
+  "zapper": "neutron16604kpsj3uptdxharvdn5w4ps3j7lydudn0dprwnmg5aj35uhatqse2l37",
+  "health": "neutron18g6w7vkqwkdkexzl227g5h7464lzx4et4l5w9aawp8j7njf6gjkqrzpuug",
+  "creditManager": "neutron1eekxmplmetd0eq2fs6lyn5lrds5nwa92gv5nw6ahjjlu8xudm2xs03784t",
+  "accountNft": "neutron1jdpceeuzrptvrvvln3f72haxwl0w38peg6ux76wrm3d265ghne7se4wug2"
 }

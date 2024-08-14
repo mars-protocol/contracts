@@ -5,14 +5,14 @@ const nobleUsdcDenom = 'ibc/B559A80D62249C8AA07A380E2A2BEA6E5CA9A6F079C912C3A9E9
 const atomDenom = 'ibc/C4CFF46FD6DE35CA4CF4CE031E643C8FDC9BA4B99AE598E9B0ED98FE3A2319F9'
 const marsDenom = 'ibc/9598CDEB7C6DB7FC21E746C8E0250B30CD5154F39CA111A9D4948A4362F638BD'
 const dAtomDenom =
-  'factory/neutron1r89rnk4uu3dq4z44cxvl6809cwq7s0edfeja5lny3xueatkargqs7pfz9f/udatom'
+  'factory/neutron1k6hr0f83e7un2wjf29cspk7j69jrnskk65k3ek2nj9dztrlzpj6q00rtsa/udatom'
 
 const dAtomUsdcLpDenom =
-  'factory/neutron1k3755gvujh2nldgqwdz9caszquah53f0kg0zflwja3vrq5z4ur6sq4c4nc/astroport/share'
-const dAtomUsdcPairAddr = 'neutron1k3755gvujh2nldgqwdz9caszquah53f0kg0zflwja3vrq5z4ur6sq4c4nc'
+  'factory/neutron1nfns3ck2ykrs0fknckrzd9728cyf77devuzernhwcwrdxw7ssk2s3tjf8r/astroport/share'
+const dAtomUsdcPairAddr = 'neutron1nfns3ck2ykrs0fknckrzd9728cyf77devuzernhwcwrdxw7ssk2s3tjf8r'
 const dAtomAtomLpDenom =
-  'factory/neutron1rl990rnqsnlrgdfv8mnxk5jdtlh57mnv8j0l6qfr0h2pj4nff9dqvfa7wt/astroport/share'
-const dAtomAtomPairAddr = 'neutron1rl990rnqsnlrgdfv8mnxk5jdtlh57mnv8j0l6qfr0h2pj4nff9dqvfa7wt'
+  'factory/neutron1yem82r0wf837lfkwvcu2zxlyds5qrzwkz8alvmg0apyrjthk64gqeq2e98/astroport/share'
+const dAtomAtomPairAddr = 'neutron1yem82r0wf837lfkwvcu2zxlyds5qrzwkz8alvmg0apyrjthk64gqeq2e98'
 const dAtomNtrnLpDenom =
   'factory/neutron1ke92yjl47eqy0mpgn9x4xups4szsm0ql6xhn4htw9zgn9wl5gm0quzh6ch/astroport/share'
 const dAtomNtrnPairAddr = 'neutron1ke92yjl47eqy0mpgn9x4xups4szsm0ql6xhn4htw9zgn9wl5gm0quzh6ch'
@@ -447,7 +447,7 @@ export const neutronDevnetConfig: DeploymentConfig = {
     atomAsset,
     nobleUSDCAsset,
     dAtomUsdcLpAsset,
-    // dAtomNtrnLpAsset,
+    dAtomNtrnLpAsset,
     ntrnUsdcLpAsset,
     dAtomAtomLpAsset,
   ],
@@ -459,7 +459,7 @@ export const neutronDevnetConfig: DeploymentConfig = {
     ntrnOracle,
     dAtomOracle,
     dAtomUsdcLpOracle,
-    // dAtomNtrnLpOracle,
+    dAtomNtrnLpOracle,
     ntrnUsdcLpOracle,
     dAtomAtomLpOracle,
   ],
