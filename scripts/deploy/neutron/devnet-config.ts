@@ -264,6 +264,11 @@ export const dAtomAsset: AssetConfig = {
   symbol: 'ATOM',
   credit_manager: {
     whitelisted: true,
+    hls: {
+      max_loan_to_value: '0.86',
+      liquidation_threshold: '0.865',
+      correlations: [{ coin: { denom: atomDenom } }, { coin: { denom: dAtomAtomLpDenom } }],
+    },
   },
   red_bank: {
     borrow_enabled: false,
@@ -379,7 +384,12 @@ export const dAtomAtomLpAsset: AssetConfig = {
   protocol_liquidation_fee: '0.25',
   symbol: 'PCL_LP_dATOM_ATOM',
   credit_manager: {
-    whitelisted: false,
+    whitelisted: true,
+    hls: {
+      max_loan_to_value: '0.86',
+      liquidation_threshold: '0.865',
+      correlations: [{ coin: { denom: dAtomDenom } }, { coin: { denom: atomDenom } }],
+    },
   },
   red_bank: {
     borrow_enabled: false,
