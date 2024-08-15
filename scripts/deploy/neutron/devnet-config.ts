@@ -446,6 +446,7 @@ export const neutronDevnetConfig: DeploymentConfig = {
     ntrnAsset,
     atomAsset,
     nobleUSDCAsset,
+    dAtomAsset,
     dAtomUsdcLpAsset,
     dAtomNtrnLpAsset,
     ntrnUsdcLpAsset,
