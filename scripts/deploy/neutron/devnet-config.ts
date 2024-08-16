@@ -384,7 +384,7 @@ export const dAtomAtomLpAsset: AssetConfig = {
   protocol_liquidation_fee: '0.25',
   symbol: 'PCL_LP_dATOM_ATOM',
   credit_manager: {
-    whitelisted: true,
+    whitelisted: false,
     hls: {
       max_loan_to_value: '0.86',
       liquidation_threshold: '0.865',
