@@ -20,6 +20,9 @@ const ntrnUsdcLpDenom =
   'factory/neutron18c8qejysp4hgcfuxdpj4wf29mevzwllz5yh8uayjxamwtrs0n9fshq9vtv/astroport/share'
 const ntrnUsdcPairAddr = 'neutron18c8qejysp4hgcfuxdpj4wf29mevzwllz5yh8uayjxamwtrs0n9fshq9vtv'
 
+const redemptionRateContractAddr =
+  'neutron16cdl2nd8wtaggvgsczuqe38xndhdaf5znfmqttcl6krjj262c6ys62ldmr'
+
 const protocolAdminAddr = 'neutron1ltzuv25ltw9mkwuvvmt7e54a6ene283hfj7l0c'
 
 const marsNeutronChannelId = 'channel-16'
@@ -113,10 +116,17 @@ export const usdOracle: OracleConfig = {
 export const dAtomOracle: OracleConfig = {
   denom: dAtomDenom,
   price_source: {
-    astroport_twap: {
-      pair_address: dAtomAtomPairAddr,
-      window_size: 1800,
-      tolerance: 120,
+    lsd: {
+      transitive_denom: atomDenom,
+      redemption_rate: {
+        contract_addr: redemptionRateContractAddr,
+        max_staleness: 93600,
+      },
+      twap: {
+        pair_address: dAtomAtomPairAddr,
+        window_size: 1800,
+        tolerance: 120,
+      },
     },
   },
 }
