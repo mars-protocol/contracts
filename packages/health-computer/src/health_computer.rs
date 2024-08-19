@@ -220,7 +220,7 @@ impl HealthComputer {
                 // This represents the max ltv adjusted value of the coin being swapped from
                 let swap_from_ltv_value = from_coin_value.checked_mul_floor(from_ltv)?;
 
-                // The from_denom is always taken on as debt, as the trade is the bullish direction
+                // The from_denom is always taken on as debt, as the trade is in the bullish direction
                 // of the to_denom (expecting it to outpace the borrow rate from the from_denom)
                 let swap_to_ltv_value = from_coin_value.checked_mul_floor(to_ltv)?;
 
