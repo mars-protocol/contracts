@@ -161,7 +161,7 @@ pub fn query_staked_astro_lp_rewards_for_denom(
     lp_denom: &str,
 ) -> Result<Vec<Coin>, ContractError> {
     let lp_amount =
-        ASTRO_USER_LP_DEPOSITS.may_load(deps.storage, (&account_id, lp_denom))?.unwrap_or_default();
+        ASTRO_USER_LP_DEPOSITS.may_load(deps.storage, (account_id, lp_denom))?.unwrap_or_default();
 
     let lp_coin = Coin {
         denom: lp_denom.to_string(),

@@ -38,13 +38,13 @@ members  = [
 ]
 
 [workspace.package]
-version       = "2.0.0"
+version       = "2.1.0"
 authors       = [
-  "Gabe R. <gabe.r@delphilabs.io>",
-  "Larry Engineer <larry@delphidigital.io>",
-  "Piotr B. <piotr@delphilabs.io>",
+  "Piotr B. <piotr@marsprotocol.foundation>",
   "Bob v.d. H. <bob@marsprotocol.foundation>",
   "Mark Watney <mark@marsprotocol.foundation>",
+  "Gabe R. <gabe.r@delphilabs.io>",
+  "Larry Engineer <larry@delphidigital.io>",
   "Spike Spiegel <spikeonmars@protonmail.com>",
   "Brianna M. <brianna@delphilabs.io>",
   "Ahmad Kaouk",
@@ -64,8 +64,8 @@ apollo-utils       = "0.1.2"
 astroport          = "2.8.0"
 astroport-v5       = { package = "astroport", version = "5.2.0" }
 bech32             = "0.11.0"
-cosmwasm-schema    = "1.5.5"
-cosmwasm-std       = "1.5.5"
+cosmwasm-schema    = "1.5.7"
+cosmwasm-std       = "1.5.7"
 cw2                = "1.1.2"
 cw721              = { git = "https://github.com/CosmWasm/cw-nfts/", branch = "main" }
 cw721-base         = { git = "https://github.com/CosmWasm/cw-nfts/", branch = "main", features = ["library"] }
