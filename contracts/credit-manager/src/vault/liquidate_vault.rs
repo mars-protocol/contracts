@@ -140,10 +140,10 @@ fn calculate_vault_liquidation(
         &vault_info.base_token,
         total_underlying,
     )?;
-    liquidatee_request.denom = vault_info.vault_token.clone();
+    liquidatee_request.denom.clone_from(&vault_info.vault_token);
     liquidatee_request.amount =
         amount.checked_multiply_ratio(liquidatee_request.amount, total_underlying)?;
-    liquidator_request.denom = vault_info.vault_token.clone();
+    liquidator_request.denom.clone_from(&vault_info.vault_token);
     liquidator_request.amount =
         amount.checked_multiply_ratio(liquidator_request.amount, total_underlying)?;
     Ok((debt, liquidator_request, liquidatee_request))

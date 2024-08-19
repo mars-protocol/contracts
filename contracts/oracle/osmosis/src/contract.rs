@@ -16,10 +16,9 @@ pub mod entry {
     use cosmwasm_std::{entry_point, Binary, Deps, DepsMut, Env, MessageInfo, Response};
     use cw2::set_contract_version;
     use mars_oracle_base::ContractResult;
-    use mars_types::oracle::{ExecuteMsg, InstantiateMsg, MigrateMsg, QueryMsg};
+    use mars_types::oracle::{ExecuteMsg, InstantiateMsg, QueryMsg};
 
     use super::*;
-    use crate::migrations;
 
     #[entry_point]
     pub fn instantiate(
@@ -45,13 +44,5 @@ pub mod entry {
     #[entry_point]
     pub fn query(deps: Deps, env: Env, msg: QueryMsg) -> ContractResult<Binary> {
         OsmosisOracle::default().query(deps, env, msg)
-    }
-
-    #[entry_point]
-    pub fn migrate(deps: DepsMut, _env: Env, msg: MigrateMsg) -> ContractResult<Response> {
-        match msg {
-            MigrateMsg::V1_1_0ToV2_0_0(updates) => migrations::v2_0_0::migrate(deps, updates),
-            MigrateMsg::V2_0_0ToV2_0_1 {} => migrations::v2_0_1::migrate(deps),
-        }
     }
 }
