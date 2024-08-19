@@ -669,22 +669,22 @@ export class Deployer {
 
     this.storage.actions.oraclePricesSet.push(oracleConfig.denom)
 
-    try {
-      const oracleResult = (await this.cwClient.queryContractSmart(this.storage.addresses.oracle!, {
-        price: { denom: oracleConfig.denom },
-      })) as { price: number; denom: string }
+    // try {
+    //   const oracleResult = (await this.cwClient.queryContractSmart(this.storage.addresses.oracle!, {
+    //     price: { denom: oracleConfig.denom },
+    //   })) as { price: number; denom: string }
 
-      printGreen(
-        `${this.config.chain.id} :: ${oracleConfig.denom} oracle price:  ${JSON.stringify(
-          oracleResult,
-        )}`,
-      )
-    } catch (e) {
-      // Querying astroport TWAP can fail if enough TWAP snapshots have not been recorded yet
-      if (!Object.keys(oracleConfig.price_source).includes('astroport_twap')) {
-        throw e
-      }
-    }
+    //   printGreen(
+    //     `${this.config.chain.id} :: ${oracleConfig.denom} oracle price:  ${JSON.stringify(
+    //       oracleResult,
+    //     )}`,
+    //   )
+    // } catch (e) {
+    //   // Querying astroport TWAP can fail if enough TWAP snapshots have not been recorded yet
+    //   if (!Object.keys(oracleConfig.price_source).includes('astroport_twap')) {
+    //     throw e
+    //   }
+    // }
   }
 
   async executeDeposit() {
