@@ -1,6 +1,6 @@
 {
   "contract_name": "mars-account-nft",
-  "contract_version": "2.0.0",
+  "contract_version": "2.1.0",
   "idl_version": "1.0.0",
   "instantiate": {
     "$schema": "http://json-schema.org/draft-07/schema#",
@@ -122,18 +122,6 @@
               }
             },
             "additionalProperties": false
-          }
-        },
-        "additionalProperties": false
-      },
-      {
-        "type": "object",
-        "required": [
-          "migrate"
-        ],
-        "properties": {
-          "migrate": {
-            "$ref": "#/definitions/MigrateV1ToV2"
           }
         },
         "additionalProperties": false
@@ -420,35 +408,6 @@
             "properties": {
               "never": {
                 "type": "object",
-                "additionalProperties": false
-              }
-            },
-            "additionalProperties": false
-          }
-        ]
-      },
-      "MigrateV1ToV2": {
-        "description": "Migrate from V1 to V2",
-        "oneOf": [
-          {
-            "description": "Burns empty accounts in batches",
-            "type": "object",
-            "required": [
-              "burn_empty_accounts"
-            ],
-            "properties": {
-              "burn_empty_accounts": {
-                "type": "object",
-                "properties": {
-                  "limit": {
-                    "type": [
-                      "integer",
-                      "null"
-                    ],
-                    "format": "uint32",
-                    "minimum": 0.0
-                  }
-                },
                 "additionalProperties": false
               }
             },

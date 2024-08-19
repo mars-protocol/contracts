@@ -110,12 +110,12 @@ fn full_migration() {
     assert!(res.data.is_none());
     assert_eq!(
         res.attributes,
-        vec![attr("action", "migrate"), attr("from_version", "1.2.1"), attr("to_version", "2.0.1")]
+        vec![attr("action", "migrate"), attr("from_version", "1.2.1"), attr("to_version", "2.1.0")]
     );
 
     let new_contract_version = ContractVersion {
         contract: "crates.io:mars-red-bank".to_string(),
-        version: "2.0.1".to_string(),
+        version: "2.1.0".to_string(),
     };
     assert_eq!(cw2::get_contract_version(deps.as_ref().storage).unwrap(), new_contract_version);
 

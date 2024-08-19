@@ -11,8 +11,7 @@ use mars_mock_credit_manager::msg::ExecuteMsg::SetAccountKindResponse;
 use mars_mock_rover_health::msg::ExecuteMsg::SetHealthResponse;
 use mars_types::{
     account_nft::{
-        ExecuteMsg, ExecuteMsg::UpdateConfig, MigrateV1ToV2, NftConfigUpdates, QueryMsg,
-        UncheckedNftConfig,
+        ExecuteMsg, ExecuteMsg::UpdateConfig, NftConfigUpdates, QueryMsg, UncheckedNftConfig,
     },
     health::{AccountKind, HealthValuesResponse},
 };
@@ -150,21 +149,6 @@ impl MockEnv {
             &ExecuteMsg::Burn {
                 token_id: token_id.to_string(),
             },
-            &[],
-        )
-    }
-
-    pub fn burn_empty_accounts(
-        &mut self,
-        sender: &Addr,
-        limit: Option<u32>,
-    ) -> AnyResult<AppResponse> {
-        self.app.execute_contract(
-            sender.clone(),
-            self.nft_contract.clone(),
-            &ExecuteMsg::Migrate(MigrateV1ToV2::BurnEmptyAccounts {
-                limit,
-            }),
             &[],
         )
     }

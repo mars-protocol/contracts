@@ -1,11 +1,9 @@
-use cosmwasm_std::{
-    entry_point, Binary, Deps, DepsMut, Empty, Env, MessageInfo, Response, StdResult,
-};
+use cosmwasm_std::{entry_point, Binary, Deps, DepsMut, Env, MessageInfo, Response, StdResult};
 use cw2::set_contract_version;
 use mars_types::zapper::{ExecuteMsg, InstantiateMsg, QueryMsg};
 use mars_zapper_base::{ContractError, ZapperBase};
 
-use crate::{lp_pool::OsmosisLpPool, migrations};
+use crate::lp_pool::OsmosisLpPool;
 
 /// The Osmosis zapper contract inherits logic from the base zapper contract
 pub type OsmosisZapper = ZapperBase<OsmosisLpPool>;
@@ -37,9 +35,4 @@ pub fn execute(
 #[cfg_attr(not(feature = "library"), entry_point)]
 pub fn query(deps: Deps, env: Env, msg: QueryMsg) -> StdResult<Binary> {
     OsmosisZapper::default().query(deps, env, msg)
-}
-
-#[cfg_attr(not(feature = "library"), entry_point)]
-pub fn migrate(deps: DepsMut, _env: Env, _msg: Empty) -> Result<Response, ContractError> {
-    migrations::v2_0_0::migrate(deps)
 }

@@ -2122,7 +2122,7 @@ checksum = "b5e6163cb8c49088c2c36f57875e58ccd8c87c7427f7fbd50ea6710b2f3f2e8f"
 
 [[package]]
 name = "mars-account-nft"
-version = "2.0.0"
+version = "2.1.0"
 dependencies = [
  "anyhow",
  "cosmwasm-schema",
@@ -2144,7 +2144,7 @@ dependencies = [
 
 [[package]]
 name = "mars-address-provider"
-version = "2.0.0"
+version = "2.1.0"
 dependencies = [
  "bech32 0.11.0",
  "cosmwasm-schema",
@@ -2160,7 +2160,7 @@ dependencies = [
 
 [[package]]
 name = "mars-credit-manager"
-version = "2.0.3"
+version = "2.1.0"
 dependencies = [
  "anyhow",
  "cosmwasm-schema",
@@ -2188,7 +2188,7 @@ dependencies = [
  "mars-swapper-mock",
  "mars-testing",
  "mars-types",
- "mars-utils 2.0.0",
+ "mars-utils 2.1.0",
  "mars-vault",
  "mars-zapper-mock",
  "test-case",
@@ -2206,7 +2206,7 @@ dependencies = [
 
 [[package]]
 name = "mars-health"
-version = "2.0.0"
+version = "2.1.0"
 dependencies = [
  "cosmwasm-std",
  "mars-testing",
@@ -2216,7 +2216,7 @@ dependencies = [
 
 [[package]]
 name = "mars-incentives"
-version = "2.0.0"
+version = "2.1.0"
 dependencies = [
  "astroport 5.2.0",
  "cosmwasm-schema",
@@ -2230,7 +2230,7 @@ dependencies = [
  "mars-red-bank-types 1.0.0 (git+https://github.com/mars-protocol/red-bank?tag=v1.0.0)",
  "mars-testing",
  "mars-types",
- "mars-utils 2.0.0",
+ "mars-utils 2.1.0",
  "osmosis-std 0.22.0",
  "test-case",
  "thiserror",
@@ -2238,7 +2238,7 @@ dependencies = [
 
 [[package]]
 name = "mars-integration-tests"
-version = "2.0.0"
+version = "2.1.0"
 dependencies = [
  "anyhow",
  "astroport 5.2.0",
@@ -2256,7 +2256,7 @@ dependencies = [
  "mars-swapper-osmosis",
  "mars-testing",
  "mars-types",
- "mars-utils 2.0.0",
+ "mars-utils 2.1.0",
  "osmosis-std 0.22.0",
  "osmosis-test-tube",
  "serde",
@@ -2264,7 +2264,7 @@ dependencies = [
 
 [[package]]
 name = "mars-interest-rate"
-version = "2.0.0"
+version = "2.1.0"
 dependencies = [
  "cosmwasm-std",
  "mars-types",
@@ -2275,14 +2275,14 @@ name = "mars-liquidation"
 version = "1.0.0"
 dependencies = [
  "cosmwasm-std",
- "mars-health 2.0.0",
+ "mars-health 2.1.0",
  "mars-types",
  "thiserror",
 ]
 
 [[package]]
 name = "mars-mock-astroport-incentives"
-version = "2.0.0"
+version = "2.1.0"
 dependencies = [
  "astroport 5.2.0",
  "cosmwasm-schema",
@@ -2295,7 +2295,7 @@ dependencies = [
 
 [[package]]
 name = "mars-mock-credit-manager"
-version = "2.0.0"
+version = "2.1.0"
 dependencies = [
  "cosmwasm-schema",
  "cosmwasm-std",
@@ -2305,7 +2305,7 @@ dependencies = [
 
 [[package]]
 name = "mars-mock-incentives"
-version = "2.0.0"
+version = "2.1.0"
 dependencies = [
  "cosmwasm-std",
  "cw-paginate",
@@ -2315,7 +2315,7 @@ dependencies = [
 
 [[package]]
 name = "mars-mock-oracle"
-version = "2.0.0"
+version = "2.1.0"
 dependencies = [
  "cosmwasm-schema",
  "cosmwasm-std",
@@ -2325,7 +2325,7 @@ dependencies = [
 
 [[package]]
 name = "mars-mock-pyth"
-version = "2.0.0"
+version = "2.1.0"
 dependencies = [
  "cosmwasm-std",
  "pyth-sdk-cw",
@@ -2333,7 +2333,7 @@ dependencies = [
 
 [[package]]
 name = "mars-mock-red-bank"
-version = "2.0.0"
+version = "2.1.0"
 dependencies = [
  "cosmwasm-schema",
  "cosmwasm-std",
@@ -2345,7 +2345,7 @@ dependencies = [
 
 [[package]]
 name = "mars-mock-rover-health"
-version = "2.0.0"
+version = "2.1.0"
 dependencies = [
  "cosmwasm-schema",
  "cosmwasm-std",
@@ -2355,7 +2355,7 @@ dependencies = [
 
 [[package]]
 name = "mars-mock-vault"
-version = "2.0.0"
+version = "2.1.0"
 dependencies = [
  "cosmwasm-schema",
  "cosmwasm-std",
@@ -2368,7 +2368,7 @@ dependencies = [
 
 [[package]]
 name = "mars-oracle-base"
-version = "2.0.0"
+version = "2.1.0"
 dependencies = [
  "cosmwasm-schema",
  "cosmwasm-std",
@@ -2377,7 +2377,7 @@ dependencies = [
  "ica-oracle",
  "mars-owner 2.0.0",
  "mars-types",
- "mars-utils 2.0.0",
+ "mars-utils 2.1.0",
  "pyth-sdk-cw",
  "schemars",
  "serde",
@@ -2386,7 +2386,7 @@ dependencies = [
 
 [[package]]
 name = "mars-oracle-osmosis"
-version = "2.0.1"
+version = "2.1.0"
 dependencies = [
  "cosmwasm-schema",
  "cosmwasm-std",
@@ -2398,7 +2398,7 @@ dependencies = [
  "mars-owner 2.0.0",
  "mars-testing",
  "mars-types",
- "mars-utils 2.0.0",
+ "mars-utils 2.1.0",
  "osmosis-std 0.22.0",
  "pyth-sdk-cw",
  "schemars",
@@ -2408,7 +2408,7 @@ dependencies = [
 
 [[package]]
 name = "mars-oracle-wasm"
-version = "2.0.0"
+version = "2.1.0"
 dependencies = [
  "astroport 2.9.0",
  "astroport 5.2.0",
@@ -2429,7 +2429,7 @@ dependencies = [
 
 [[package]]
 name = "mars-osmosis"
-version = "2.0.0"
+version = "2.1.0"
 dependencies = [
  "cosmwasm-schema",
  "cosmwasm-std",
@@ -2466,7 +2466,7 @@ dependencies = [
 
 [[package]]
 name = "mars-params"
-version = "2.0.1"
+version = "2.1.0"
 dependencies = [
  "anyhow",
  "astroport 5.2.0",
@@ -2480,14 +2480,14 @@ dependencies = [
  "mars-owner 2.0.0",
  "mars-testing",
  "mars-types",
- "mars-utils 2.0.0",
+ "mars-utils 2.1.0",
  "test-case",
  "thiserror",
 ]
 
 [[package]]
 name = "mars-red-bank"
-version = "2.0.1"
+version = "2.1.0"
 dependencies = [
  "anyhow",
  "cosmwasm-schema",
@@ -2497,13 +2497,13 @@ dependencies = [
  "cw-storage-plus 1.2.0",
  "cw-utils 1.0.3",
  "cw2 1.1.2",
- "mars-health 2.0.0",
+ "mars-health 2.1.0",
  "mars-interest-rate",
  "mars-liquidation",
  "mars-owner 2.0.0",
  "mars-testing",
  "mars-types",
- "mars-utils 2.0.0",
+ "mars-utils 2.1.0",
  "test-case",
  "thiserror",
 ]
@@ -2535,7 +2535,7 @@ dependencies = [
 
 [[package]]
 name = "mars-rewards-collector-base"
-version = "2.0.0"
+version = "2.1.0"
 dependencies = [
  "cosmwasm-schema",
  "cosmwasm-std",
@@ -2543,7 +2543,7 @@ dependencies = [
  "cw2 1.1.2",
  "mars-owner 2.0.0",
  "mars-types",
- "mars-utils 2.0.0",
+ "mars-utils 2.1.0",
  "schemars",
  "serde",
  "thiserror",
@@ -2551,7 +2551,7 @@ dependencies = [
 
 [[package]]
 name = "mars-rewards-collector-neutron"
-version = "2.0.0"
+version = "2.1.0"
 dependencies = [
  "cosmwasm-std",
  "cw2 1.1.2",
@@ -2563,7 +2563,7 @@ dependencies = [
 
 [[package]]
 name = "mars-rewards-collector-osmosis"
-version = "2.0.1"
+version = "2.1.0"
 dependencies = [
  "cosmwasm-schema",
  "cosmwasm-std",
@@ -2574,7 +2574,7 @@ dependencies = [
  "mars-rewards-collector-base",
  "mars-testing",
  "mars-types",
- "mars-utils 2.0.0",
+ "mars-utils 2.1.0",
  "osmosis-std 0.22.0",
  "serde",
 ]
@@ -2601,7 +2601,7 @@ dependencies = [
 
 [[package]]
 name = "mars-rover-health"
-version = "2.0.0"
+version = "2.1.0"
 dependencies = [
  "anyhow",
  "cosmwasm-schema",
@@ -2622,7 +2622,7 @@ dependencies = [
 
 [[package]]
 name = "mars-rover-health-computer"
-version = "2.0.0"
+version = "2.1.0"
 dependencies = [
  "console_error_panic_hook",
  "cosmwasm-schema",
@@ -2638,7 +2638,7 @@ dependencies = [
 
 [[package]]
 name = "mars-swapper-astroport"
-version = "2.0.0"
+version = "2.1.0"
 dependencies = [
  "anyhow",
  "astroport 2.9.0",
@@ -2656,7 +2656,7 @@ dependencies = [
 
 [[package]]
 name = "mars-swapper-base"
-version = "2.0.0"
+version = "2.1.0"
 dependencies = [
  "cosmwasm-schema",
  "cosmwasm-std",
@@ -2672,7 +2672,7 @@ dependencies = [
 
 [[package]]
 name = "mars-swapper-mock"
-version = "2.0.0"
+version = "2.1.0"
 dependencies = [
  "anyhow",
  "cosmwasm-std",
@@ -2682,7 +2682,7 @@ dependencies = [
 
 [[package]]
 name = "mars-swapper-osmosis"
-version = "2.0.3"
+version = "2.1.0"
 dependencies = [
  "anyhow",
  "cosmwasm-schema",
@@ -2701,7 +2701,7 @@ dependencies = [
 
 [[package]]
 name = "mars-testing"
-version = "2.0.0"
+version = "2.1.0"
 dependencies = [
  "anyhow",
  "astroport 2.9.0",
@@ -2748,7 +2748,7 @@ dependencies = [
 
 [[package]]
 name = "mars-types"
-version = "2.0.0"
+version = "2.1.0"
 dependencies = [
  "cosmwasm-schema",
  "cosmwasm-std",
@@ -2759,7 +2759,7 @@ dependencies = [
  "cw721 0.18.0",
  "cw721-base 0.18.0",
  "mars-owner 2.0.0",
- "mars-utils 2.0.0",
+ "mars-utils 2.1.0",
  "serde-json-wasm 1.0.1",
  "strum 0.26.2",
  "thiserror",
@@ -2788,7 +2788,7 @@ dependencies = [
 
 [[package]]
 name = "mars-utils"
-version = "2.0.0"
+version = "2.1.0"
 dependencies = [
  "cosmwasm-schema",
  "cosmwasm-std",
@@ -2798,7 +2798,7 @@ dependencies = [
 
 [[package]]
 name = "mars-vault"
-version = "2.0.0"
+version = "2.1.0"
 dependencies = [
  "anyhow",
  "cosmwasm-schema",
@@ -2813,7 +2813,7 @@ dependencies = [
  "mars-owner 2.0.0",
  "mars-testing",
  "mars-types",
- "mars-utils 2.0.0",
+ "mars-utils 2.1.0",
  "osmosis-std 0.22.0",
  "test-case",
  "thiserror",
@@ -2821,7 +2821,7 @@ dependencies = [
 
 [[package]]
 name = "mars-zapper-astroport"
-version = "2.0.0"
+version = "2.1.0"
 dependencies = [
  "anyhow",
  "apollo-cw-asset",
@@ -2840,7 +2840,7 @@ dependencies = [
 
 [[package]]
 name = "mars-zapper-base"
-version = "2.0.0"
+version = "2.1.0"
 dependencies = [
  "cosmwasm-schema",
  "cosmwasm-std",
@@ -2855,7 +2855,7 @@ dependencies = [
 
 [[package]]
 name = "mars-zapper-mock"
-version = "2.0.0"
+version = "2.1.0"
 dependencies = [
  "cosmwasm-schema",
  "cosmwasm-std",
@@ -2867,7 +2867,7 @@ dependencies = [
 
 [[package]]
 name = "mars-zapper-osmosis"
-version = "2.0.0"
+version = "2.1.0"
 dependencies = [
  "cosmwasm-std",
  "cw-dex",
