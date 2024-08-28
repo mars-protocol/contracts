@@ -110,7 +110,7 @@ pub fn update_config(
         )?;
 
         let (_, res) =
-            create_credit_account(&mut deps, rewards_collector_addr, AccountKind::Default, None)?;
+            create_credit_account(&mut deps, rewards_collector_addr, AccountKind::Default)?;
 
         response = response
             .add_submessages(res.messages)

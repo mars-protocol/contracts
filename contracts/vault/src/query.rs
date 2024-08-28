@@ -1,4 +1,4 @@
-use cosmwasm_std::{Addr, Deps, Order, Uint128};
+use cosmwasm_std::{Addr, Decimal, Deps, Order, Uint128};
 use cw_paginate::{paginate_map_query, PaginationResponse, DEFAULT_LIMIT, MAX_LIMIT};
 use cw_storage_plus::Bound;
 
@@ -14,16 +14,35 @@ use crate::{
 };
 
 pub fn query_vault_info(deps: Deps) -> ContractResult<VaultInfoResponseExt> {
+    let vault_token = VAULT_TOKEN.load(deps.storage)?;
+    let total_vault_tokens = vault_token.query_total_supply(deps)?;
+
+    // If vault account is not set, we don't calculate share price.
+    // It means that the vault is not binded to any account yet.
+    let vault_account_id_opt = VAULT_ACC_ID.may_load(deps.storage)?;
+    let mut total_base_tokens = Uint128::zero();
+    let mut share_price = None;
+    if vault_account_id_opt.is_some() {
+        total_base_tokens = total_base_tokens_in_account(deps)?;
+        share_price = if total_vault_tokens.is_zero() {
+            None
+        } else {
+            Some(Decimal::checked_from_ratio(total_base_tokens, total_vault_tokens)?)
+        };
+    }
     Ok(VaultInfoResponseExt {
         base_token: BASE_TOKEN.load(deps.storage)?,
-        vault_token: VAULT_TOKEN.load(deps.storage)?.to_string(),
+        vault_token: vault_token.to_string(),
         title: TITLE.may_load(deps.storage)?,
         subtitle: SUBTITLE.may_load(deps.storage)?,
         description: DESCRIPTION.may_load(deps.storage)?,
         credit_manager: CREDIT_MANAGER.load(deps.storage)?,
-        vault_account_id: VAULT_ACC_ID.may_load(deps.storage)?,
+        vault_account_id: vault_account_id_opt,
         cooldown_period: COOLDOWN_PERIOD.load(deps.storage)?,
         performance_fee_config: PERFORMANCE_FEE_CONFIG.load(deps.storage)?,
+        total_base_tokens,
+        total_vault_tokens,
+        share_price,
     })
 }
 

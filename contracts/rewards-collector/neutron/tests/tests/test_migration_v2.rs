@@ -1,16 +1,15 @@
-use cosmwasm_std::{attr, testing::mock_env, Event};
+use cosmwasm_std::{attr, testing::mock_env, Empty, Event};
 use cw2::{ContractVersion, VersionError};
 use mars_rewards_collector_base::ContractError;
 use mars_rewards_collector_neutron::entry::migrate;
 use mars_testing::mock_dependencies;
-use mars_types::rewards_collector::NeutronMigrateMsg;
 
 #[test]
 fn wrong_contract_name() {
     let mut deps = mock_dependencies(&[]);
     cw2::set_contract_version(deps.as_mut().storage, "contract_xyz", "1.2.0").unwrap();
 
-    let err = migrate(deps.as_mut(), mock_env(), NeutronMigrateMsg::V1_2_0ToV2_0_2 {}).unwrap_err();
+    let err = migrate(deps.as_mut(), mock_env(), Empty {}).unwrap_err();
 
     assert_eq!(
         err,
@@ -31,7 +30,7 @@ fn wrong_contract_version() {
     )
     .unwrap();
 
-    let err = migrate(deps.as_mut(), mock_env(), NeutronMigrateMsg::V1_2_0ToV2_0_2 {}).unwrap_err();
+    let err = migrate(deps.as_mut(), mock_env(), Empty {}).unwrap_err();
 
     assert_eq!(
         err,
@@ -52,19 +51,19 @@ fn successful_migration() {
     )
     .unwrap();
 
-    let res = migrate(deps.as_mut(), mock_env(), NeutronMigrateMsg::V1_2_0ToV2_0_2 {}).unwrap();
+    let res = migrate(deps.as_mut(), mock_env(), Empty {}).unwrap();
 
     assert_eq!(res.messages, vec![]);
     assert_eq!(res.events, vec![] as Vec<Event>);
     assert!(res.data.is_none());
     assert_eq!(
         res.attributes,
-        vec![attr("action", "migrate"), attr("from_version", "1.2.0"), attr("to_version", "2.0.2")]
+        vec![attr("action", "migrate"), attr("from_version", "1.2.0"), attr("to_version", "2.1.0")]
     );
 
     let new_contract_version = ContractVersion {
         contract: "crates.io:mars-rewards-collector-neutron".to_string(),
-        version: "2.0.2".to_string(),
+        version: "2.1.0".to_string(),
     };
     assert_eq!(cw2::get_contract_version(deps.as_ref().storage).unwrap(), new_contract_version);
 }

@@ -1,6 +1,6 @@
 {
   "contract_name": "mars-credit-manager",
-  "contract_version": "2.0.3",
+  "contract_version": "2.1.0",
   "idl_version": "1.0.0",
   "instantiate": {
     "$schema": "http://json-schema.org/draft-07/schema#",
@@ -142,34 +142,6 @@
         "properties": {
           "create_credit_account": {
             "$ref": "#/definitions/AccountKind"
-          }
-        },
-        "additionalProperties": false
-      },
-      {
-        "description": "Mints NFT representing a credit account for user with optional custom account_id creation. User can have many accounts.",
-        "type": "object",
-        "required": [
-          "create_credit_account_v2"
-        ],
-        "properties": {
-          "create_credit_account_v2": {
-            "type": "object",
-            "required": [
-              "kind"
-            ],
-            "properties": {
-              "account_id": {
-                "type": [
-                  "string",
-                  "null"
-                ]
-              },
-              "kind": {
-                "$ref": "#/definitions/AccountKind"
-              }
-            },
-            "additionalProperties": false
           }
         },
         "additionalProperties": false

@@ -16,22 +16,15 @@ pub enum ExecuteMsg {
     UpdateConfig {
         updates: NftConfigUpdates,
     },
-    /// Mint a new NFT to the specified user; can only be called by the contract minter.
-    /// Create own token_id or use the next available one.
+    /// Mint a new NFT to the specified user; can only be called by the contract minter
     Mint {
         user: String,
-        token_id: Option<String>,
     },
     /// Burn an NFT the sender has access to. Will attempt to query the Credit Manager first
     /// to ensure the balance is below the config set threshold.
     Burn {
         token_id: String,
     },
-
-    //--------------------------------------------------------------------------------------------------
-    // Migrate message to work in batches
-    //--------------------------------------------------------------------------------------------------
-    Migrate(MigrateV1ToV2),
 
     //--------------------------------------------------------------------------------------------------
     // Base cw721 messages

@@ -5,12 +5,11 @@ use cosmwasm_std::{
 };
 use cw2::set_contract_version;
 use cw721_base::Cw721Contract;
-use mars_types::account_nft::{ExecuteMsg, InstantiateMsg, MigrateV1ToV2, NftConfig, QueryMsg};
+use mars_types::account_nft::{ExecuteMsg, InstantiateMsg, NftConfig, QueryMsg};
 
 use crate::{
     error::ContractError,
     execute::{burn, mint, update_config},
-    migrations::{self},
     query::{query_config, query_next_id},
     state::{CONFIG, NEXT_ID},
 };
@@ -61,19 +60,13 @@ pub fn execute(
     match msg {
         ExecuteMsg::Mint {
             user,
-            token_id,
-        } => mint(deps, info, &user, token_id),
+        } => mint(deps, info, &user),
         ExecuteMsg::UpdateConfig {
             updates,
         } => update_config(deps, info, updates),
         ExecuteMsg::Burn {
             token_id,
         } => burn(deps, env, info, token_id),
-        ExecuteMsg::Migrate(msg) => match msg {
-            MigrateV1ToV2::BurnEmptyAccounts {
-                limit,
-            } => migrations::v2_0_0::burn_empty_accounts(deps, limit),
-        },
         _ => Parent::default().execute(deps, env, info, msg.try_into()?).map_err(Into::into),
     }
 }
@@ -85,9 +78,4 @@ pub fn query(deps: Deps, env: Env, msg: QueryMsg) -> StdResult<Binary> {
         QueryMsg::NextId {} => to_json_binary(&query_next_id(deps)?),
         _ => Parent::default().query(deps, env, msg.try_into()?),
     }
-}
-
-#[cfg_attr(not(feature = "library"), entry_point)]
-pub fn migrate(deps: DepsMut, _env: Env, _msg: Empty) -> Result<Response, ContractError> {
-    migrations::v2_0_0::migrate(deps)
 }

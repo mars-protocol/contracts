@@ -335,10 +335,10 @@ fn update_hls_correlations(denoms_data: &mut DenomsData, vaults_data: &mut Vault
     let correlations = denoms.into_iter().chain(vaults).collect::<Vec<HlsAssetType<Addr>>>();
 
     for (_, params) in denoms_data.params.iter_mut() {
-        params.credit_manager.hls.as_mut().unwrap().correlations = correlations.clone();
+        params.credit_manager.hls.as_mut().unwrap().correlations.clone_from(&correlations);
     }
 
     for (_, config) in vaults_data.vault_configs.iter_mut() {
-        config.hls.as_mut().unwrap().correlations = correlations.clone();
+        config.hls.as_mut().unwrap().correlations.clone_from(&correlations);
     }
 }

@@ -6,6 +6,7 @@
     "deploy:osmosis-testnet": "yarn build && node build/deploy/osmosis/testnet-index.js",
     "deploy:osmosis-devnet": "yarn build && node build/deploy/osmosis/devnet-index.js",
     "deploy:osmosis-mainnet": "yarn build && node build/deploy/osmosis/mainnet-index.js",
+    "deploy:neutron-devnet": "yarn build && node build/deploy/neutron/devnet-index.js",
     "deploy:neutron-testnet": "yarn build && node build/deploy/neutron/testnet-index.js",
     "deploy:neutron-testnet-multisig": "yarn build && node build/deploy/neutron/testnet-multisig-index.js",
     "deploy:neutron-mainnet": "yarn build && node build/deploy/neutron/mainnet-index.js",

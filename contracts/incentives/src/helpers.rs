@@ -234,9 +234,7 @@ pub fn compute_updated_astro_incentive_states(
             .get(&reward_denom)
             .copied()
             // Otherwise we load from storage
-            .or_else(|| {
-                ASTRO_INCENTIVE_STATES.may_load(storage, (&lp_denom, &reward_denom)).ok()?
-            })
+            .or_else(|| ASTRO_INCENTIVE_STATES.may_load(storage, (lp_denom, &reward_denom)).ok()?)
             .unwrap_or(Decimal::zero());
 
         let updated_incentive =
@@ -280,7 +278,7 @@ pub fn calculate_rewards_for_staked_astro_lp_position(
             // Set user incentive to latest, as we claim every action
             USER_ASTRO_INCENTIVE_STATES.save(
                 *storage,
-                (&account_id, &lp_coin.denom, reward_denom),
+                (account_id, &lp_coin.denom, reward_denom),
                 incentive_index,
             )?;
         }

@@ -141,7 +141,7 @@ fn update_user_lp_position(
     // Claim all rewards from astroport before any modification
     let mut res = if !total_staked_lp_amount.is_zero() {
         let staked_lp_amount = ASTRO_USER_LP_DEPOSITS
-            .may_load(deps.storage, (&account_id, &lp_coin.denom))?
+            .may_load(deps.storage, (account_id, &lp_coin.denom))?
             .unwrap_or(Uint128::zero());
         claim_rewards_for_staked_lp_position(
             &mut deps,
@@ -213,7 +213,7 @@ fn increment_staked_lp(
     // Update user staked lp state
     ASTRO_USER_LP_DEPOSITS.update(
         store,
-        (&account_id, &lp_coin.denom),
+        (account_id, &lp_coin.denom),
         |existing| -> StdResult<_> {
             Ok(existing.unwrap_or_default().checked_add(lp_coin.amount)?)
         },
@@ -235,7 +235,7 @@ fn decrement_staked_lp(
     // Update user staked lp state
     ASTRO_USER_LP_DEPOSITS.update(
         store,
-        (&account_id, &lp_coin.denom),
+        (account_id, &lp_coin.denom),
         |existing| -> StdResult<_> {
             Ok(existing
                 .ok_or(ContractError::NoStakedLp {
@@ -269,7 +269,7 @@ fn update_incentive_states_for_lp_denom(
 
     for (incentive_denom, updated_incentive) in updated_incentives.iter() {
         // Store latest state
-        ASTRO_INCENTIVE_STATES.save(storage, (&lp_denom, incentive_denom), updated_incentive)?;
+        ASTRO_INCENTIVE_STATES.save(storage, (lp_denom, incentive_denom), updated_incentive)?;
     }
 
     Ok(Response::new())
@@ -297,11 +297,11 @@ pub fn execute_claim_rewards_for_staked_lp_position(
     ensure_eq!(info.sender, credit_manager_addr, ContractError::Mars(MarsError::Unauthorized {}));
 
     let staked_lp_amount = ASTRO_USER_LP_DEPOSITS
-        .may_load(deps.storage, (&account_id, &lp_denom))?
+        .may_load(deps.storage, (account_id, lp_denom))?
         .ok_or(NoStakedLp {
-            account_id: account_id.to_string(),
-            denom: lp_denom.to_string(),
-        })?;
+        account_id: account_id.to_string(),
+        denom: lp_denom.to_string(),
+    })?;
 
     claim_rewards_for_staked_lp_position(
         &mut deps,

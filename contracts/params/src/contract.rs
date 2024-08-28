@@ -1,6 +1,6 @@
 #[cfg(not(feature = "library"))]
 use cosmwasm_std::entry_point;
-use cosmwasm_std::{to_json_binary, Binary, Deps, DepsMut, Empty, Env, MessageInfo, Response};
+use cosmwasm_std::{to_json_binary, Binary, Deps, DepsMut, Env, MessageInfo, Response};
 use cw2::set_contract_version;
 use mars_owner::OwnerInit::SetInitialOwner;
 use mars_types::params::{
@@ -15,7 +15,6 @@ use crate::{
         assert_thf, update_asset_params, update_config, update_target_health_factor,
         update_vault_config,
     },
-    migrations,
     query::{
         query_all_asset_params, query_all_total_deposits_v2, query_all_vault_configs,
         query_all_vault_configs_v2, query_config, query_total_deposit, query_vault_config,
@@ -119,9 +118,4 @@ pub fn query(deps: Deps, env: Env, msg: QueryMsg) -> ContractResult<Binary> {
         } => to_json_binary(&query_all_total_deposits_v2(deps, start_after, limit)?),
     };
     res.map_err(Into::into)
-}
-
-#[cfg_attr(not(feature = "library"), entry_point)]
-pub fn migrate(deps: DepsMut, _env: Env, _msg: Empty) -> ContractResult<Response> {
-    migrations::v2_0_1::migrate(deps)
 }

@@ -22,7 +22,6 @@ export type ExecuteMsg =
     }
   | {
       mint: {
-        token_id?: string | null
         user: string
       }
     }
@@ -30,9 +29,6 @@ export type ExecuteMsg =
       burn: {
         token_id: string
       }
-    }
-  | {
-      migrate: MigrateV1ToV2
     }
   | {
       transfer_nft: {
@@ -74,11 +70,6 @@ export type ExecuteMsg =
   | {
       update_ownership: Action
     }
-export type MigrateV1ToV2 = {
-  burn_empty_accounts: {
-    limit?: number | null
-  }
-}
 export type Binary = string
 export type Expiration =
   | {

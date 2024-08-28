@@ -11,8 +11,7 @@ use mars_mock_credit_manager::msg::ExecuteMsg::SetAccountKindResponse;
 use mars_mock_rover_health::msg::ExecuteMsg::SetHealthResponse;
 use mars_types::{
     account_nft::{
-        ExecuteMsg, ExecuteMsg::UpdateConfig, MigrateV1ToV2, NftConfigUpdates, QueryMsg,
-        UncheckedNftConfig,
+        ExecuteMsg, ExecuteMsg::UpdateConfig, NftConfigUpdates, QueryMsg, UncheckedNftConfig,
     },
     health::{AccountKind, HealthValuesResponse},
 };
@@ -122,20 +121,11 @@ impl MockEnv {
     }
 
     pub fn mint(&mut self, token_owner: &Addr) -> AnyResult<String> {
-        self.mint_with_custom_token_id(token_owner, None)
-    }
-
-    pub fn mint_with_custom_token_id(
-        &mut self,
-        token_owner: &Addr,
-        token_id: Option<String>,
-    ) -> AnyResult<String> {
         let res = self.app.execute_contract(
             self.minter.clone(),
             self.nft_contract.clone(),
             &ExecuteMsg::Mint {
                 user: token_owner.into(),
-                token_id,
             },
             &[],
         )?;
@@ -159,21 +149,6 @@ impl MockEnv {
             &ExecuteMsg::Burn {
                 token_id: token_id.to_string(),
             },
-            &[],
-        )
-    }
-
-    pub fn burn_empty_accounts(
-        &mut self,
-        sender: &Addr,
-        limit: Option<u32>,
-    ) -> AnyResult<AppResponse> {
-        self.app.execute_contract(
-            sender.clone(),
-            self.nft_contract.clone(),
-            &ExecuteMsg::Migrate(MigrateV1ToV2::BurnEmptyAccounts {
-                limit,
-            }),
             &[],
         )
     }

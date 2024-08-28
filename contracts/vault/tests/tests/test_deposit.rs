@@ -1,13 +1,16 @@
-use cosmwasm_std::{coin, Addr, Uint128};
+use cosmwasm_std::{coin, Addr, Decimal, Uint128};
 use cw_utils::PaymentError;
-use mars_types::health::AccountKind;
 use mars_vault::error::ContractError;
 
 use super::{
     helpers::{AccountToFund, MockEnv},
     vault_helpers::{assert_vault_err, execute_deposit},
 };
-use crate::tests::{helpers::deploy_managed_vault, vault_helpers::query_vault_info};
+use crate::tests::{
+    helpers::deploy_managed_vault,
+    test_redeem::uusdc_info,
+    vault_helpers::{query_total_assets, query_total_vault_token_supply, query_vault_info},
+};
 
 #[test]
 fn deposit_invalid_funds() {
@@ -28,14 +31,7 @@ fn deposit_invalid_funds() {
 
     let managed_vault_addr = deploy_managed_vault(&mut mock.app, &fund_manager, &credit_manager);
 
-    mock.create_credit_account_v2(
-        &fund_manager,
-        AccountKind::FundManager {
-            vault_addr: managed_vault_addr.to_string(),
-        },
-        None,
-    )
-    .unwrap();
+    mock.create_fund_manager_account(&fund_manager, &managed_vault_addr);
 
     let res = execute_deposit(
         &mut mock,
@@ -105,6 +101,7 @@ fn deposit_succeded() {
     let user = Addr::unchecked("user");
     let user_funded_amt = Uint128::new(1_000_000_000);
     let mut mock = MockEnv::new()
+        .set_params(&[uusdc_info()])
         .fund_account(AccountToFund {
             addr: fund_manager.clone(),
             funds: vec![coin(1_000_000_000, "untrn")],
@@ -127,15 +124,7 @@ fn deposit_succeded() {
     let vault_token_balance = mock.query_balance(&user, &vault_token).amount;
     assert!(vault_token_balance.is_zero());
 
-    let account_id = mock
-        .create_credit_account_v2(
-            &fund_manager,
-            AccountKind::FundManager {
-                vault_addr: managed_vault_addr.to_string(),
-            },
-            None,
-        )
-        .unwrap();
+    let account_id = mock.create_fund_manager_account(&fund_manager, &managed_vault_addr);
 
     let deposited_amt = Uint128::new(123_000_000);
     execute_deposit(
@@ -165,4 +154,17 @@ fn deposit_succeded() {
     let assets_res = res.deposits.first().unwrap();
     assert_eq!(assets_res.amount, deposited_amt);
     assert_eq!(assets_res.denom, "uusdc".to_string());
+
+    // check total base/vault tokens and share price
+    let vault_info_res = query_vault_info(&mock, &managed_vault_addr);
+    let total_base_tokens = query_total_assets(&mock, &managed_vault_addr);
+    let total_vault_tokens = query_total_vault_token_supply(&mock, &managed_vault_addr);
+    assert_eq!(total_base_tokens, deposited_amt);
+    assert_eq!(total_vault_tokens, user_vault_token_balance);
+    assert_eq!(vault_info_res.total_base_tokens, total_base_tokens);
+    assert_eq!(vault_info_res.total_vault_tokens, total_vault_tokens);
+    assert_eq!(
+        vault_info_res.share_price,
+        Some(Decimal::from_ratio(total_base_tokens, total_vault_tokens))
+    );
 }

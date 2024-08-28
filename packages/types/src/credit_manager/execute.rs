@@ -19,11 +19,6 @@ pub enum ExecuteMsg {
     //--------------------------------------------------------------------------------------------------
     /// Mints NFT representing a credit account for user. User can have many.
     CreateCreditAccount(AccountKind),
-    /// Mints NFT representing a credit account for user with optional custom account_id creation. User can have many accounts.
-    CreateCreditAccountV2 {
-        kind: AccountKind,
-        account_id: Option<String>,
-    },
     /// Update user's position on their credit account
     UpdateCreditAccount {
         account_id: Option<String>,

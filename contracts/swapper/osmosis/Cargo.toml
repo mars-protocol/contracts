@@ -1,6 +1,6 @@
 [package]
 name          = "mars-swapper-osmosis"
-version       = "2.0.3"
+version       = { workspace = true }
 authors       = { workspace = true }
 license       = { workspace = true }
 edition       = { workspace = true }
