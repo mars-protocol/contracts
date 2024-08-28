@@ -22,7 +22,6 @@ export type ExecuteMsg =
 export type MarsAddressType =
   | ('incentives' | 'oracle' | 'red_bank' | 'rewards_collector' | 'params' | 'credit_manager')
   | 'protocol_admin'
-  | 'fee_collector'
   | 'safety_fund'
   | 'swapper'
   | 'astroport_incentives'
