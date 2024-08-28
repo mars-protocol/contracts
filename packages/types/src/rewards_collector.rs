@@ -205,12 +205,7 @@ pub enum QueryMsg {
 }
 
 #[cw_serde]
-pub enum OsmosisMigrateMsg {
+pub enum MigrateMsg {
     V1_0_0ToV2_0_0 {},
     V2_0_0ToV2_0_1 {},
-}
-
-#[cw_serde]
-pub enum NeutronMigrateMsg {
-    V1_2_0ToV2_0_2 {},
 }

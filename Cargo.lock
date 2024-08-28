@@ -2551,7 +2551,7 @@ dependencies = [
 
 [[package]]
 name = "mars-rewards-collector-neutron"
-version = "2.0.2"
+version = "2.1.0"
 dependencies = [
  "cosmwasm-std",
  "cw2 1.1.2",

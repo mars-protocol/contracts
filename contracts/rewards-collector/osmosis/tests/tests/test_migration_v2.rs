@@ -6,14 +6,14 @@ use mars_rewards_collector_osmosis::{
     migrations::v2_0_0::v1_state::{self, OwnerSetNoneProposed},
 };
 use mars_testing::mock_dependencies;
-use mars_types::rewards_collector::OsmosisMigrateMsg;
+use mars_types::rewards_collector::MigrateMsg;
 
 #[test]
 fn wrong_contract_name() {
     let mut deps = mock_dependencies(&[]);
     cw2::set_contract_version(deps.as_mut().storage, "contract_xyz", "1.0.0").unwrap();
 
-    let err = migrate(deps.as_mut(), mock_env(), OsmosisMigrateMsg::V1_0_0ToV2_0_0 {}).unwrap_err();
+    let err = migrate(deps.as_mut(), mock_env(), MigrateMsg::V1_0_0ToV2_0_0 {}).unwrap_err();
 
     assert_eq!(
         err,
@@ -34,7 +34,7 @@ fn wrong_contract_version() {
     )
     .unwrap();
 
-    let err = migrate(deps.as_mut(), mock_env(), OsmosisMigrateMsg::V1_0_0ToV2_0_0 {}).unwrap_err();
+    let err = migrate(deps.as_mut(), mock_env(), MigrateMsg::V1_0_0ToV2_0_0 {}).unwrap_err();
 
     assert_eq!(
         err,
@@ -78,7 +78,7 @@ fn successful_migration() {
     };
     v1_state::CONFIG.save(deps.as_mut().storage, &v1_config).unwrap();
 
-    let res = migrate(deps.as_mut(), mock_env(), OsmosisMigrateMsg::V1_0_0ToV2_0_0 {}).unwrap();
+    let res = migrate(deps.as_mut(), mock_env(), MigrateMsg::V1_0_0ToV2_0_0 {}).unwrap();
 
     assert_eq!(res.messages, vec![]);
     assert_eq!(res.events, vec![] as Vec<Event>);
@@ -123,7 +123,7 @@ fn successful_migration_to_v2_1_0() {
     )
     .unwrap();
 
-    let res = migrate(deps.as_mut(), mock_env(), OsmosisMigrateMsg::V2_0_0ToV2_0_1 {}).unwrap();
+    let res = migrate(deps.as_mut(), mock_env(), MigrateMsg::V2_0_0ToV2_0_1 {}).unwrap();
 
     assert_eq!(res.messages, vec![]);
     assert_eq!(res.events, vec![] as Vec<Event>);
