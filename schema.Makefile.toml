@@ -28,6 +28,7 @@ fn main() -> std::io::Result<()> {
         "mars-oracle-wasm",
         "mars-zapper-base",
         "mars-vault",
+        "mars-burn-contract",
     ];
 
     for contract in contracts {

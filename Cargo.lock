@@ -2159,6 +2159,19 @@ dependencies = [
 ]
 
 [[package]]
+name = "mars-burn-contract"
+version = "2.1.0"
+dependencies = [
+ "cosmwasm-schema",
+ "cosmwasm-std",
+ "cw-multi-test",
+ "cw-storage-plus 1.2.0",
+ "cw2 1.1.2",
+ "mars-types",
+ "thiserror",
+]
+
+[[package]]
 name = "mars-credit-manager"
 version = "2.1.0"
 dependencies = [
