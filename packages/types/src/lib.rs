@@ -1,6 +1,7 @@
 pub mod account_nft;
 pub mod adapters;
 pub mod address_provider;
+pub mod burn;
 pub mod credit_manager;
 pub mod error;
 pub mod health;
