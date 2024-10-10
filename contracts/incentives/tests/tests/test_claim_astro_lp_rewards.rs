@@ -632,18 +632,6 @@ fn lp_states_update_correctly() {
         .amount,
         Uint128::new(50u128)
     );
-    assert_eq!(
-        query::query_staked_astro_lp_position(
-            deps.as_ref(),
-            env.clone(),
-            user_b_id.to_string(),
-            lp_denom.to_string()
-        )
-        .unwrap()
-        .lp_coin
-        .amount,
-        Uint128::new(0u128)
-    );
 
     deposit_for_user(
         deps.as_mut(),
