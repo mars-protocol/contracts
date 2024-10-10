@@ -3,7 +3,12 @@ use cosmwasm_std::{
     testing::{mock_env, mock_info, MockApi},
     Addr, Coin, Deps, DepsMut, Env, MemoryStorage, OwnedDeps, Response, Uint128,
 };
-use mars_incentives::{contract::execute, query, state::ASTRO_TOTAL_LP_DEPOSITS, ContractError};
+use mars_incentives::{
+    contract::execute,
+    query,
+    state::{ASTRO_TOTAL_LP_DEPOSITS, ASTRO_USER_LP_DEPOSITS},
+    ContractError,
+};
 use mars_testing::{assert_eq_vec, MarsMockQuerier};
 use mars_types::{
     credit_manager::{
@@ -23,6 +28,7 @@ fn set_pending_astro_rewards(
 ) {
     deps.querier.set_unclaimed_astroport_lp_rewards(lp_denom, mars_incentives_contract, rewards);
 }
+
 fn deposit_for_user(
     deps: DepsMut,
     env: Env,
@@ -367,6 +373,15 @@ fn lp_lifecycle() {
         vec![],
     );
 
+    // Add new unclaimed rewards
+    set_pending_astro_rewards(
+        &mut deps,
+        lp_denom,
+        mars_incentives_contract,
+        unclaimed_rewards.clone(),
+    );
+
+    // unstake all user a
     unstake_for_user(
         deps.as_mut(),
         env.clone(),
@@ -379,10 +394,43 @@ fn lp_lifecycle() {
     )
     .unwrap();
 
-    // State:
-    // - LP in incentives = 300 (user_a 100, user_b 200)
-    // - Rewards available for user_1 = 0
-    // - Rewards available for user_2 = 0
+    assert_eq!(
+        ASTRO_USER_LP_DEPOSITS.may_load(&deps.storage, (user_a_id, lp_denom)).unwrap(),
+        None
+    );
+
+    // unstake all user b
+    unstake_for_user(
+        deps.as_mut(),
+        env.clone(),
+        credit_manager.as_str(),
+        user_b_id.to_string(),
+        ActionCoin {
+            denom: lp_denom.to_string(),
+            amount: ActionAmount::AccountBalance,
+        },
+    )
+    .unwrap();
+
+    assert_eq!(
+        ASTRO_USER_LP_DEPOSITS.may_load(&deps.storage, (user_b_id, lp_denom)).unwrap(),
+        None
+    );
+
+    // Remove rewards
+    set_pending_astro_rewards(&mut deps, lp_denom, mars_incentives_contract, vec![]);
+
+    // Deposit for user a
+    deposit_for_user(
+        deps.as_mut(),
+        env.clone(),
+        credit_manager.as_str(),
+        user_a_id.to_string(),
+        default_lp_coin.clone(),
+    )
+    .unwrap();
+
+    // User a should have no rewards after depositing
     assert_user_rewards(
         deps.as_ref(),
         env.clone(),
