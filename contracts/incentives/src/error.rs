@@ -1,6 +1,6 @@
 use std::string::FromUtf8Error;
 
-use cosmwasm_std::{Coin, StdError};
+use cosmwasm_std::{Coin, OverflowError, StdError};
 use mars_owner::OwnerError;
 use mars_types::error::MarsError;
 use mars_utils::error::{GuardError, ValidationError};
@@ -13,6 +13,9 @@ pub enum ContractError {
 
     #[error("{0}")]
     Validation(#[from] ValidationError),
+
+    #[error("{0}")]
+    OverflowError(#[from] OverflowError),
 
     #[error("{0}")]
     Std(#[from] StdError),
