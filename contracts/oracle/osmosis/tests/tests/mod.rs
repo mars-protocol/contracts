@@ -2,7 +2,6 @@ mod helpers;
 
 mod test_admin;
 mod test_custom_execute;
-mod test_migration_v2;
 mod test_price_source_fmt;
 mod test_query_price;
 mod test_query_price_for_pyth;

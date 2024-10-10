@@ -525,7 +525,7 @@ checksum = "7e141fb0f8be1c7b45887af94c88b182472b57c96b56773250ae00cd6a14a164"
 dependencies = [
  "bs58",
  "hmac",
- "k256 0.13.1",
+ "k256 0.13.3",
  "rand_core 0.6.4",
  "ripemd",
  "sha2 0.10.8",
@@ -786,7 +786,7 @@ dependencies = [
  "cosmos-sdk-proto 0.20.0",
  "ecdsa 0.16.8",
  "eyre",
- "k256 0.13.1",
+ "k256 0.13.3",
  "rand_core 0.6.4",
  "serde",
  "serde_json",
@@ -799,32 +799,31 @@ dependencies = [
 
 [[package]]
 name = "cosmwasm-crypto"
-version = "1.5.5"
+version = "1.5.7"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "dd50718a2b6830ce9eb5d465de5a018a12e71729d66b70807ce97e6dd14f931d"
+checksum = "0f862b355f7e47711e0acfe6af92cb3fd8fd5936b66a9eaa338b51edabd1e77d"
 dependencies = [
  "digest 0.10.7",
- "ecdsa 0.16.8",
  "ed25519-zebra",
- "k256 0.13.1",
+ "k256 0.13.3",
  "rand_core 0.6.4",
  "thiserror",
 ]
 
 [[package]]
 name = "cosmwasm-derive"
-version = "1.5.5"
+version = "1.5.7"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "242e98e7a231c122e08f300d9db3262d1007b51758a8732cd6210b3e9faa4f3a"
+checksum = "cd85de6467cd1073688c86b39833679ae6db18cf4771471edd9809f15f1679f1"
 dependencies = [
  "syn 1.0.109",
 ]
 
 [[package]]
 name = "cosmwasm-schema"
-version = "1.5.5"
+version = "1.5.7"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "7879036156092ad1c22fe0d7316efc5a5eceec2bc3906462a2560215f2a2f929"
+checksum = "5b4cd28147a66eba73720b47636a58097a979ad8c8bfdb4ed437ebcbfe362576"
 dependencies = [
  "cosmwasm-schema-derive",
  "schemars",
@@ -835,9 +834,9 @@ dependencies = [
 
 [[package]]
 name = "cosmwasm-schema-derive"
-version = "1.5.5"
+version = "1.5.7"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "0bb57855fbfc83327f8445ae0d413b1a05ac0d68c396ab4d122b2abd7bb82cb6"
+checksum = "9acd45c63d41bc9b16bc6dc7f6bd604a8c2ad29ce96c8f3c96d7fc8ef384392e"
 dependencies = [
  "proc-macro2",
  "quote",
@@ -846,9 +845,9 @@ dependencies = [
 
 [[package]]
 name = "cosmwasm-std"
-version = "1.5.5"
+version = "1.5.7"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "78c1556156fdf892a55cced6115968b961eaaadd6f724a2c2cb7d1e168e32dd3"
+checksum = "2685c2182624b2e9e17f7596192de49a3f86b7a0c9a5f6b25c1df5e24592e836"
 dependencies = [
  "base64 0.21.7",
  "bech32 0.9.1",
@@ -1471,7 +1470,7 @@ checksum = "a4b1e0c257a9e9f25f90ff76d7a68360ed497ee519c8e428d1825ef0000799d4"
 dependencies = [
  "der 0.7.8",
  "digest 0.10.7",
- "elliptic-curve 0.13.6",
+ "elliptic-curve 0.13.8",
  "rfc6979 0.4.0",
  "signature 2.1.0",
  "spki 0.7.2",
@@ -1543,9 +1542,9 @@ dependencies = [
 
 [[package]]
 name = "elliptic-curve"
-version = "0.13.6"
+version = "0.13.8"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "d97ca172ae9dc9f9b779a6e3a65d308f2af74e5b8c921299075bdb4a0370e914"
+checksum = "b5e6043086bf7973472e0c7dff2142ea0b680d30e18d9cc40f267efbf222bd47"
 dependencies = [
  "base16ct 0.2.0",
  "crypto-bigint 0.5.3",
@@ -2057,13 +2056,13 @@ dependencies = [
 
 [[package]]
 name = "k256"
-version = "0.13.1"
+version = "0.13.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "cadb76004ed8e97623117f3df85b17aaa6626ab0b0831e6573f104df16cd1bcc"
+checksum = "956ff9b67e26e1a6a866cb758f12c6f8746208489e3e4a4b5580802f2f0a587b"
 dependencies = [
  "cfg-if",
  "ecdsa 0.16.8",
- "elliptic-curve 0.13.6",
+ "elliptic-curve 0.13.8",
  "once_cell",
  "sha2 0.10.8",
  "signature 2.1.0",
@@ -2123,7 +2122,7 @@ checksum = "b5e6163cb8c49088c2c36f57875e58ccd8c87c7427f7fbd50ea6710b2f3f2e8f"
 
 [[package]]
 name = "mars-account-nft"
-version = "2.0.0"
+version = "2.1.0"
 dependencies = [
  "anyhow",
  "cosmwasm-schema",
@@ -2145,7 +2144,7 @@ dependencies = [
 
 [[package]]
 name = "mars-address-provider"
-version = "2.0.0"
+version = "2.1.0"
 dependencies = [
  "bech32 0.11.0",
  "cosmwasm-schema",
@@ -2161,7 +2160,7 @@ dependencies = [
 
 [[package]]
 name = "mars-credit-manager"
-version = "2.0.3"
+version = "2.1.0"
 dependencies = [
  "anyhow",
  "cosmwasm-schema",
@@ -2189,7 +2188,7 @@ dependencies = [
  "mars-swapper-mock",
  "mars-testing",
  "mars-types",
- "mars-utils 2.0.0",
+ "mars-utils 2.1.0",
  "mars-vault",
  "mars-zapper-mock",
  "test-case",
@@ -2207,7 +2206,7 @@ dependencies = [
 
 [[package]]
 name = "mars-health"
-version = "2.0.0"
+version = "2.1.0"
 dependencies = [
  "cosmwasm-std",
  "mars-testing",
@@ -2217,7 +2216,7 @@ dependencies = [
 
 [[package]]
 name = "mars-incentives"
-version = "2.0.0"
+version = "2.1.0"
 dependencies = [
  "astroport 5.2.0",
  "cosmwasm-schema",
@@ -2231,7 +2230,7 @@ dependencies = [
  "mars-red-bank-types 1.0.0 (git+https://github.com/mars-protocol/red-bank?tag=v1.0.0)",
  "mars-testing",
  "mars-types",
- "mars-utils 2.0.0",
+ "mars-utils 2.1.0",
  "osmosis-std 0.22.0",
  "test-case",
  "thiserror",
@@ -2239,7 +2238,7 @@ dependencies = [
 
 [[package]]
 name = "mars-integration-tests"
-version = "2.0.0"
+version = "2.1.0"
 dependencies = [
  "anyhow",
  "astroport 5.2.0",
@@ -2257,7 +2256,7 @@ dependencies = [
  "mars-swapper-osmosis",
  "mars-testing",
  "mars-types",
- "mars-utils 2.0.0",
+ "mars-utils 2.1.0",
  "osmosis-std 0.22.0",
  "osmosis-test-tube",
  "serde",
@@ -2265,7 +2264,7 @@ dependencies = [
 
 [[package]]
 name = "mars-interest-rate"
-version = "2.0.0"
+version = "2.1.0"
 dependencies = [
  "cosmwasm-std",
  "mars-types",
@@ -2276,14 +2275,14 @@ name = "mars-liquidation"
 version = "1.0.0"
 dependencies = [
  "cosmwasm-std",
- "mars-health 2.0.0",
+ "mars-health 2.1.0",
  "mars-types",
  "thiserror",
 ]
 
 [[package]]
 name = "mars-mock-astroport-incentives"
-version = "2.0.0"
+version = "2.1.0"
 dependencies = [
  "astroport 5.2.0",
  "cosmwasm-schema",
@@ -2296,7 +2295,7 @@ dependencies = [
 
 [[package]]
 name = "mars-mock-credit-manager"
-version = "2.0.0"
+version = "2.1.0"
 dependencies = [
  "cosmwasm-schema",
  "cosmwasm-std",
@@ -2306,7 +2305,7 @@ dependencies = [
 
 [[package]]
 name = "mars-mock-incentives"
-version = "2.0.0"
+version = "2.1.0"
 dependencies = [
  "cosmwasm-std",
  "cw-paginate",
@@ -2316,7 +2315,7 @@ dependencies = [
 
 [[package]]
 name = "mars-mock-oracle"
-version = "2.0.0"
+version = "2.1.0"
 dependencies = [
  "cosmwasm-schema",
  "cosmwasm-std",
@@ -2326,7 +2325,7 @@ dependencies = [
 
 [[package]]
 name = "mars-mock-pyth"
-version = "2.0.0"
+version = "2.1.0"
 dependencies = [
  "cosmwasm-std",
  "pyth-sdk-cw",
@@ -2334,7 +2333,7 @@ dependencies = [
 
 [[package]]
 name = "mars-mock-red-bank"
-version = "2.0.0"
+version = "2.1.0"
 dependencies = [
  "cosmwasm-schema",
  "cosmwasm-std",
@@ -2346,7 +2345,7 @@ dependencies = [
 
 [[package]]
 name = "mars-mock-rover-health"
-version = "2.0.0"
+version = "2.1.0"
 dependencies = [
  "cosmwasm-schema",
  "cosmwasm-std",
@@ -2356,7 +2355,7 @@ dependencies = [
 
 [[package]]
 name = "mars-mock-vault"
-version = "2.0.0"
+version = "2.1.0"
 dependencies = [
  "cosmwasm-schema",
  "cosmwasm-std",
@@ -2369,7 +2368,7 @@ dependencies = [
 
 [[package]]
 name = "mars-oracle-base"
-version = "2.0.0"
+version = "2.1.0"
 dependencies = [
  "cosmwasm-schema",
  "cosmwasm-std",
@@ -2378,7 +2377,7 @@ dependencies = [
  "ica-oracle",
  "mars-owner 2.0.0",
  "mars-types",
- "mars-utils 2.0.0",
+ "mars-utils 2.1.0",
  "pyth-sdk-cw",
  "schemars",
  "serde",
@@ -2387,7 +2386,7 @@ dependencies = [
 
 [[package]]
 name = "mars-oracle-osmosis"
-version = "2.0.1"
+version = "2.1.0"
 dependencies = [
  "cosmwasm-schema",
  "cosmwasm-std",
@@ -2399,7 +2398,7 @@ dependencies = [
  "mars-owner 2.0.0",
  "mars-testing",
  "mars-types",
- "mars-utils 2.0.0",
+ "mars-utils 2.1.0",
  "osmosis-std 0.22.0",
  "pyth-sdk-cw",
  "schemars",
@@ -2409,7 +2408,7 @@ dependencies = [
 
 [[package]]
 name = "mars-oracle-wasm"
-version = "2.0.0"
+version = "2.1.0"
 dependencies = [
  "astroport 2.9.0",
  "astroport 5.2.0",
@@ -2430,7 +2429,7 @@ dependencies = [
 
 [[package]]
 name = "mars-osmosis"
-version = "2.0.0"
+version = "2.1.0"
 dependencies = [
  "cosmwasm-schema",
  "cosmwasm-std",
@@ -2467,7 +2466,7 @@ dependencies = [
 
 [[package]]
 name = "mars-params"
-version = "2.0.1"
+version = "2.1.0"
 dependencies = [
  "anyhow",
  "astroport 5.2.0",
@@ -2481,14 +2480,14 @@ dependencies = [
  "mars-owner 2.0.0",
  "mars-testing",
  "mars-types",
- "mars-utils 2.0.0",
+ "mars-utils 2.1.0",
  "test-case",
  "thiserror",
 ]
 
 [[package]]
 name = "mars-red-bank"
-version = "2.0.1"
+version = "2.1.0"
 dependencies = [
  "anyhow",
  "cosmwasm-schema",
@@ -2498,13 +2497,13 @@ dependencies = [
  "cw-storage-plus 1.2.0",
  "cw-utils 1.0.3",
  "cw2 1.1.2",
- "mars-health 2.0.0",
+ "mars-health 2.1.0",
  "mars-interest-rate",
  "mars-liquidation",
  "mars-owner 2.0.0",
  "mars-testing",
  "mars-types",
- "mars-utils 2.0.0",
+ "mars-utils 2.1.0",
  "test-case",
  "thiserror",
 ]
@@ -2536,7 +2535,7 @@ dependencies = [
 
 [[package]]
 name = "mars-rewards-collector-base"
-version = "2.0.0"
+version = "2.1.0"
 dependencies = [
  "cosmwasm-schema",
  "cosmwasm-std",
@@ -2544,7 +2543,7 @@ dependencies = [
  "cw2 1.1.2",
  "mars-owner 2.0.0",
  "mars-types",
- "mars-utils 2.0.0",
+ "mars-utils 2.1.0",
  "schemars",
  "serde",
  "thiserror",
@@ -2552,7 +2551,7 @@ dependencies = [
 
 [[package]]
 name = "mars-rewards-collector-neutron"
-version = "2.0.0"
+version = "2.1.0"
 dependencies = [
  "cosmwasm-std",
  "cw2 1.1.2",
@@ -2564,7 +2563,7 @@ dependencies = [
 
 [[package]]
 name = "mars-rewards-collector-osmosis"
-version = "2.0.1"
+version = "2.1.0"
 dependencies = [
  "cosmwasm-schema",
  "cosmwasm-std",
@@ -2575,7 +2574,7 @@ dependencies = [
  "mars-rewards-collector-base",
  "mars-testing",
  "mars-types",
- "mars-utils 2.0.0",
+ "mars-utils 2.1.0",
  "osmosis-std 0.22.0",
  "serde",
 ]
@@ -2602,7 +2601,7 @@ dependencies = [
 
 [[package]]
 name = "mars-rover-health"
-version = "2.0.0"
+version = "2.1.0"
 dependencies = [
  "anyhow",
  "cosmwasm-schema",
@@ -2623,7 +2622,7 @@ dependencies = [
 
 [[package]]
 name = "mars-rover-health-computer"
-version = "2.0.0"
+version = "2.1.0"
 dependencies = [
  "console_error_panic_hook",
  "cosmwasm-schema",
@@ -2639,7 +2638,7 @@ dependencies = [
 
 [[package]]
 name = "mars-swapper-astroport"
-version = "2.0.0"
+version = "2.1.0"
 dependencies = [
  "anyhow",
  "astroport 2.9.0",
@@ -2657,7 +2656,7 @@ dependencies = [
 
 [[package]]
 name = "mars-swapper-base"
-version = "2.0.0"
+version = "2.1.0"
 dependencies = [
  "cosmwasm-schema",
  "cosmwasm-std",
@@ -2673,7 +2672,7 @@ dependencies = [
 
 [[package]]
 name = "mars-swapper-mock"
-version = "2.0.0"
+version = "2.1.0"
 dependencies = [
  "anyhow",
  "cosmwasm-std",
@@ -2683,7 +2682,7 @@ dependencies = [
 
 [[package]]
 name = "mars-swapper-osmosis"
-version = "2.0.3"
+version = "2.1.0"
 dependencies = [
  "anyhow",
  "cosmwasm-schema",
@@ -2702,7 +2701,7 @@ dependencies = [
 
 [[package]]
 name = "mars-testing"
-version = "2.0.0"
+version = "2.1.0"
 dependencies = [
  "anyhow",
  "astroport 2.9.0",
@@ -2749,7 +2748,7 @@ dependencies = [
 
 [[package]]
 name = "mars-types"
-version = "2.0.0"
+version = "2.1.0"
 dependencies = [
  "cosmwasm-schema",
  "cosmwasm-std",
@@ -2760,7 +2759,7 @@ dependencies = [
  "cw721 0.18.0",
  "cw721-base 0.18.0",
  "mars-owner 2.0.0",
- "mars-utils 2.0.0",
+ "mars-utils 2.1.0",
  "serde-json-wasm 1.0.1",
  "strum 0.26.2",
  "thiserror",
@@ -2789,7 +2788,7 @@ dependencies = [
 
 [[package]]
 name = "mars-utils"
-version = "2.0.0"
+version = "2.1.0"
 dependencies = [
  "cosmwasm-schema",
  "cosmwasm-std",
@@ -2799,7 +2798,7 @@ dependencies = [
 
 [[package]]
 name = "mars-vault"
-version = "2.0.0"
+version = "2.1.0"
 dependencies = [
  "anyhow",
  "cosmwasm-schema",
@@ -2814,7 +2813,7 @@ dependencies = [
  "mars-owner 2.0.0",
  "mars-testing",
  "mars-types",
- "mars-utils 2.0.0",
+ "mars-utils 2.1.0",
  "osmosis-std 0.22.0",
  "test-case",
  "thiserror",
@@ -2822,7 +2821,7 @@ dependencies = [
 
 [[package]]
 name = "mars-zapper-astroport"
-version = "2.0.0"
+version = "2.1.0"
 dependencies = [
  "anyhow",
  "apollo-cw-asset",
@@ -2841,7 +2840,7 @@ dependencies = [
 
 [[package]]
 name = "mars-zapper-base"
-version = "2.0.0"
+version = "2.1.0"
 dependencies = [
  "cosmwasm-schema",
  "cosmwasm-std",
@@ -2856,7 +2855,7 @@ dependencies = [
 
 [[package]]
 name = "mars-zapper-mock"
-version = "2.0.0"
+version = "2.1.0"
 dependencies = [
  "cosmwasm-schema",
  "cosmwasm-std",
@@ -2868,7 +2867,7 @@ dependencies = [
 
 [[package]]
 name = "mars-zapper-osmosis"
-version = "2.0.0"
+version = "2.1.0"
 dependencies = [
  "cosmwasm-std",
  "cw-dex",
@@ -3001,9 +3000,9 @@ dependencies = [
 
 [[package]]
 name = "once_cell"
-version = "1.18.0"
+version = "1.19.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "dd8b5dd2ae5ed71462c540258bedcb51965123ad7e7ccf4b9a8cafaa4a63576d"
+checksum = "3fdb12b2476b595f9358c5161aa467c2438859caa136dec86c26fdd2efe17b92"
 
 [[package]]
 name = "opaque-debug"
@@ -4285,7 +4284,7 @@ dependencies = [
  "ed25519-consensus",
  "flex-error",
  "futures",
- "k256 0.13.1",
+ "k256 0.13.3",
  "num-traits",
  "once_cell",
  "prost 0.12.6",
@@ -4994,9 +4993,9 @@ dependencies = [
 
 [[package]]
 name = "zeroize"
-version = "1.6.0"
+version = "1.8.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "2a0956f1ba7c7909bfb66c2e9e4124ab6f6482560f6628b5aaeba39207c9aad9"
+checksum = "ced3678a2879b30306d323f4542626697a464a97c0a07c9aebf7ebca65cd4dde"
 dependencies = [
  "zeroize_derive",
 ]
