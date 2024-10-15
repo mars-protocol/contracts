@@ -7,3 +7,5 @@ pub const INCENTIVE_SCHEDULES: Map<(&str, &str), IncentivesSchedule> =
     Map::new("astro_incentive_schedules");
 pub const ASTRO_LP_INCENTIVE_DEPOSITS: Map<(&str, &str), Uint128> =
     Map::new("astro_incentive_lp_deposits");
+pub const LAST_CLAIMED_HEIGHT: Map<(&str, &str), u64> =
+    Map::new("astro_incentive_last_claimed_height");

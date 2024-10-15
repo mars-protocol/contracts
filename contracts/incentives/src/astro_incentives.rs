@@ -392,13 +392,16 @@ fn claim_rewards_for_staked_lp_position(
         lp_denom,
         staked_lp_amount,
     )?;
+    let total_claimed_amount =
+        user_claimable_rewards.iter().fold(Uint128::zero(), |acc, coin| acc + coin.amount);
 
     for coin in &user_claimable_rewards {
         event = event
             .add_attribute("denom", coin.denom.to_string())
             .add_attribute("amount", coin.amount.to_string());
     }
-    res = if !user_claimable_rewards.is_empty() {
+
+    res = if !user_claimable_rewards.is_empty() && !total_claimed_amount.is_zero() {
         // Send the claimed rewards to the credit manager
         let send_rewards_to_cm_msg = CosmosMsg::Bank(BankMsg::Send {
             to_address: credit_manager_addr.to_string(),
