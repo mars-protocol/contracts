@@ -737,7 +737,7 @@ fn indexes_clean_correctly_when_all_users_unstake() {
         mars_incentives_contract,
         unclaimed_rewards.clone(),
     );
-    
+
     // State:
     // - LP in incentives = 200
     // - Rewards available for user_1 = 150
@@ -778,7 +778,8 @@ fn indexes_clean_correctly_when_all_users_unstake() {
             denom: lp_denom.to_string(),
             amount: mars_types::credit_manager::ActionAmount::AccountBalance,
         },
-    ).unwrap();
+    )
+    .unwrap();
 
     unstake_for_user(
         deps.as_mut(),
@@ -789,20 +790,16 @@ fn indexes_clean_correctly_when_all_users_unstake() {
             denom: lp_denom.to_string(),
             amount: mars_types::credit_manager::ActionAmount::AccountBalance,
         },
-    ).unwrap();
+    )
+    .unwrap();
 
     // State:
     // - LP in incentives = 0
     // - Rewards available = 0
-    assert_eq!(ASTRO_TOTAL_LP_DEPOSITS.may_load(&deps.storage, lp_denom).unwrap(), Some(Uint128::zero()));
+    assert_eq!(ASTRO_TOTAL_LP_DEPOSITS.may_load(&deps.storage, lp_denom).unwrap(), None);
 
     // set no rewards
-    set_pending_astro_rewards(
-        &mut deps,
-        lp_denom,
-        mars_incentives_contract,
-        vec![],
-    );
+    set_pending_astro_rewards(&mut deps, lp_denom, mars_incentives_contract, vec![]);
 
     // stake for user a
     deposit_for_user(
@@ -811,7 +808,8 @@ fn indexes_clean_correctly_when_all_users_unstake() {
         credit_manager.as_str(),
         user_a_id.to_string(),
         Coin::new(100u128, lp_denom),
-    ).unwrap();
+    )
+    .unwrap();
 
     // assert no rewards:
     assert_user_rewards(
