@@ -3,11 +3,11 @@ use std::str::FromStr;
 use astroport_v5::asset::Asset;
 use cosmwasm_std::{Coin, Decimal256, Deps, Env, StdResult, Uint128};
 
-use crate::state::{ASTRO_LP_INCENTIVE_DEPOSITS, INCENTIVE_SCHEDULES};
+use crate::state::{ASTRO_LP_INCENTIVE_DEPOSITS, INCENTIVE_SCHEDULES, LAST_CLAIMED_HEIGHT};
 
 pub fn query_rewards(
     deps: Deps,
-    _: Env,
+    env: Env,
     sender: String,
     lp_token: String,
 ) -> StdResult<Vec<Asset>> {
@@ -23,6 +23,20 @@ pub fn query_rewards(
                 >| {
                     let (reward_denom, schedule) = item.unwrap();
                     // Note - this gives all rewards to the claimer, but in reality we would need to calculate the rewards for each user.
+                    let current_height = env.block.height;
+                    let last_claimed = LAST_CLAIMED_HEIGHT
+                        .may_load(deps.storage, (&sender, &lp_token))
+                        .unwrap()
+                        .unwrap_or(0);
+
+                    if last_claimed == current_height {
+                        return Coin {
+                            amount: Uint128::zero(),
+                            denom: reward_denom,
+                        }
+                        .into();
+                    }
+
                     let amount =
                         schedule.rps.checked_mul(Decimal256::from_str("5000").unwrap()).unwrap();
                     Coin {
