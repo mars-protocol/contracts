@@ -80,11 +80,7 @@ pub fn withdraw(
     })?;
 
     // We will be claiming when withdrawing so we need to ensure our mock state is aware of that
-    LAST_CLAIMED_HEIGHT.save(
-        deps.storage,
-        (info.sender.as_ref(), &lp_token),
-        &env.block.height,
-    )?;
+    LAST_CLAIMED_HEIGHT.save(deps.storage, (info.sender.as_ref(), &lp_token), &env.block.height)?;
 
     Ok(Response::new().add_message(withdraw_lp_msg))
 }

@@ -262,8 +262,8 @@ fn update_user_staked_lp(
         let prefix = USER_ASTRO_INCENTIVE_STATES.prefix((account_id, lp_coin.denom.as_str()));
 
         // Iterate over all reward_denom keys
-        let keys_to_remove: Vec<String> =
-            prefix.keys(store, None, None, Order::Ascending).filter_map(|key| key.ok()).collect();
+        let keys_to_remove =
+            prefix.keys(store, None, None, Order::Ascending).collect::<StdResult<Vec<String>>>()?;
 
         // Delete each matching (account_id, lp_token_denom, reward_denom) incentive.
         for reward_denom in keys_to_remove {
@@ -294,8 +294,8 @@ fn update_total_staked_lp(store: &mut dyn Storage, lp_coin: &Coin) -> Result<(),
 
         // Get all incentive states for the lp_key
         let prefix = ASTRO_INCENTIVE_STATES.prefix(lp_key);
-        let keys_to_remove: Vec<_> =
-            prefix.keys(store, None, None, Order::Ascending).filter_map(Result::ok).collect();
+        let keys_to_remove =
+            prefix.keys(store, None, None, Order::Ascending).collect::<StdResult<Vec<String>>>()?;
 
         // Remove all incentive states related to the lp_key
         for key in keys_to_remove {
