@@ -249,7 +249,7 @@ fn update_user_staked_lp(
 ) -> Result<(), ContractError> {
     let key = (account_id, lp_coin.denom.as_str());
     let existing_amount =
-        ASTRO_USER_LP_DEPOSITS.load(store, key).map_err(|_| ContractError::NoStakedLp {
+        ASTRO_USER_LP_DEPOSITS.may_load(store, key)?.ok_or_else(|| ContractError::NoStakedLp {
             account_id: account_id.to_string(),
             denom: lp_coin.denom.clone(),
         })?;
@@ -266,9 +266,9 @@ fn update_user_staked_lp(
             prefix.keys(store, None, None, Order::Ascending).collect::<StdResult<Vec<String>>>()?;
 
         // Delete each matching (account_id, lp_token_denom, reward_denom) incentive.
-        for reward_denom in keys_to_remove {
+        for incentive_denom in keys_to_remove {
             USER_ASTRO_INCENTIVE_STATES
-                .remove(store, (account_id, lp_coin.denom.as_str(), &reward_denom));
+                .remove(store, (account_id, lp_coin.denom.as_str(), &incentive_denom));
         }
     } else {
         ASTRO_USER_LP_DEPOSITS.save(store, key, &new_amount)?;
@@ -278,10 +278,10 @@ fn update_user_staked_lp(
 }
 
 fn update_total_staked_lp(store: &mut dyn Storage, lp_coin: &Coin) -> Result<(), ContractError> {
-    let lp_key = lp_coin.denom.as_str(); // Use &str instead of &String
+    let lp_denom = lp_coin.denom.as_str(); // Use &str instead of &String
 
     let total_staked_lp_amount = ASTRO_TOTAL_LP_DEPOSITS
-        .may_load(store, lp_key)? // Directly use &str
+        .may_load(store, lp_denom)? // Directly use &str
         .ok_or_else(|| ContractError::NoDeposits {
             denom: lp_coin.denom.clone(),
         })?;
@@ -290,20 +290,20 @@ fn update_total_staked_lp(store: &mut dyn Storage, lp_coin: &Coin) -> Result<(),
 
     // If the new amount is zero, remove the entry and all associated incentive states
     if new_total_staked_lp_amount.is_zero() {
-        ASTRO_TOTAL_LP_DEPOSITS.remove(store, lp_key);
+        ASTRO_TOTAL_LP_DEPOSITS.remove(store, lp_denom);
 
         // Get all incentive states for the lp_key
-        let prefix = ASTRO_INCENTIVE_STATES.prefix(lp_key);
+        let prefix = ASTRO_INCENTIVE_STATES.prefix(lp_denom);
         let keys_to_remove =
             prefix.keys(store, None, None, Order::Ascending).collect::<StdResult<Vec<String>>>()?;
 
         // Remove all incentive states related to the lp_key
-        for key in keys_to_remove {
-            ASTRO_INCENTIVE_STATES.remove(store, (lp_key, key.as_str()));
+        for incentive_denom in keys_to_remove {
+            ASTRO_INCENTIVE_STATES.remove(store, (lp_denom, incentive_denom.as_str()));
         }
     } else {
         // Save the updated staked amount if it's not zero
-        ASTRO_TOTAL_LP_DEPOSITS.save(store, lp_key, &new_total_staked_lp_amount)?;
+        ASTRO_TOTAL_LP_DEPOSITS.save(store, lp_denom, &new_total_staked_lp_amount)?;
     }
     Ok(())
 }
@@ -401,6 +401,7 @@ fn claim_rewards_for_staked_lp_position(
             .add_attribute("amount", coin.amount.to_string());
     }
 
+    // Check if rewards not already claimed in the same block
     res = if !user_claimable_rewards.is_empty() && !total_claimed_amount.is_zero() {
         // Send the claimed rewards to the credit manager
         let send_rewards_to_cm_msg = CosmosMsg::Bank(BankMsg::Send {

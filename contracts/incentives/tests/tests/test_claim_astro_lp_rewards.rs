@@ -102,7 +102,7 @@ fn lp_lifecycle() {
     let env = mock_env();
     let mut deps: OwnedDeps<MemoryStorage, MockApi, MarsMockQuerier> = th_setup();
 
-    // users
+    // Users
     let user_a_id = "1";
     let user_b_id = "2";
 
@@ -171,7 +171,7 @@ fn lp_lifecycle() {
         unclaimed_rewards.iter().map(|asset| asset.as_coin().unwrap()).collect(),
     );
 
-    // deposit new user
+    // Deposit new user
     deposit_for_user(
         deps.as_mut(),
         env.clone(),
@@ -248,7 +248,7 @@ fn lp_lifecycle() {
         }],
     );
 
-    // claim rewards, set as null
+    // Claim rewards, set as null
     claim_for_user(
         deps.as_mut(),
         env.clone(),
@@ -329,7 +329,7 @@ fn lp_lifecycle() {
         }],
     );
 
-    // test double stake
+    // Test double stake
     deposit_for_user(
         deps.as_mut(),
         env.clone(),
@@ -381,7 +381,7 @@ fn lp_lifecycle() {
         unclaimed_rewards.clone(),
     );
 
-    // unstake all user a
+    // Unstake all user a
     unstake_for_user(
         deps.as_mut(),
         env.clone(),
@@ -399,7 +399,7 @@ fn lp_lifecycle() {
         None
     );
 
-    // unstake all user b
+    // Unstake all user b
     unstake_for_user(
         deps.as_mut(),
         env.clone(),
@@ -677,11 +677,11 @@ fn lp_states_update_correctly() {
 
 #[test]
 fn indexes_clean_correctly_when_all_users_unstake() {
-    // SETUP
+    // Setup
     let env = mock_env();
     let mut deps: OwnedDeps<MemoryStorage, MockApi, MarsMockQuerier> = th_setup();
 
-    // users
+    // Users
     let user_a_id = "1";
     let user_b_id = "2";
 
@@ -721,7 +721,7 @@ fn indexes_clean_correctly_when_all_users_unstake() {
         unclaimed_rewards.clone(),
     );
 
-    // deposit user b
+    // Deposit user b
     deposit_for_user(
         deps.as_mut(),
         env.clone(),
@@ -768,7 +768,7 @@ fn indexes_clean_correctly_when_all_users_unstake() {
         }],
     );
 
-    // unstake both users
+    // Unstake both users
     unstake_for_user(
         deps.as_mut(),
         env.clone(),
@@ -798,10 +798,10 @@ fn indexes_clean_correctly_when_all_users_unstake() {
     // - Rewards available = 0
     assert_eq!(ASTRO_TOTAL_LP_DEPOSITS.may_load(&deps.storage, lp_denom).unwrap(), None);
 
-    // set no rewards
+    // Set no rewards
     set_pending_astro_rewards(&mut deps, lp_denom, mars_incentives_contract, vec![]);
 
-    // stake for user a
+    // Stake for user a
     deposit_for_user(
         deps.as_mut(),
         env.clone(),
@@ -811,7 +811,7 @@ fn indexes_clean_correctly_when_all_users_unstake() {
     )
     .unwrap();
 
-    // assert no rewards:
+    // Assert no rewards:
     assert_user_rewards(
         deps.as_ref(),
         env.clone(),
