@@ -280,10 +280,11 @@ fn update_user_staked_lp(
 fn update_total_staked_lp(store: &mut dyn Storage, lp_coin: &Coin) -> Result<(), ContractError> {
     let lp_denom = lp_coin.denom.as_str();
 
-    let total_staked_lp_amount = ASTRO_TOTAL_LP_DEPOSITS
-        .may_load(store, lp_denom)?
-        .ok_or_else(|| ContractError::NoDeposits {
-            denom: lp_coin.denom.clone(),
+    let total_staked_lp_amount =
+        ASTRO_TOTAL_LP_DEPOSITS.may_load(store, lp_denom)?.ok_or_else(|| {
+            ContractError::NoDeposits {
+                denom: lp_coin.denom.clone(),
+            }
         })?;
 
     let new_total_staked_lp_amount = total_staked_lp_amount.checked_sub(lp_coin.amount)?;
