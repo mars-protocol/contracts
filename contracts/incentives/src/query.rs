@@ -199,8 +199,7 @@ pub fn query_staked_astro_lp_rewards_for_coin(
     )
     .unwrap_or_default();
 
-    // Update our global indexes for each reward. We only accept native tokens,
-    // cw20 will just be swallowed by contract
+    // Update our global indexes for each reward.
     let incentives_to_update =
         compute_updated_astro_incentive_states(deps.storage, pending_rewards, lp_denom)?;
 

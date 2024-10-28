@@ -3,7 +3,12 @@ use cosmwasm_std::{
     testing::{mock_env, mock_info, MockApi},
     Addr, Coin, Deps, DepsMut, Env, MemoryStorage, OwnedDeps, Response, Uint128,
 };
-use mars_incentives::{contract::execute, query, state::ASTRO_TOTAL_LP_DEPOSITS, ContractError};
+use mars_incentives::{
+    contract::execute,
+    query,
+    state::{ASTRO_TOTAL_LP_DEPOSITS, ASTRO_USER_LP_DEPOSITS},
+    ContractError,
+};
 use mars_testing::{assert_eq_vec, MarsMockQuerier};
 use mars_types::{
     credit_manager::{
@@ -23,6 +28,7 @@ fn set_pending_astro_rewards(
 ) {
     deps.querier.set_unclaimed_astroport_lp_rewards(lp_denom, mars_incentives_contract, rewards);
 }
+
 fn deposit_for_user(
     deps: DepsMut,
     env: Env,
@@ -96,7 +102,7 @@ fn lp_lifecycle() {
     let env = mock_env();
     let mut deps: OwnedDeps<MemoryStorage, MockApi, MarsMockQuerier> = th_setup();
 
-    // users
+    // Users
     let user_a_id = "1";
     let user_b_id = "2";
 
@@ -165,7 +171,7 @@ fn lp_lifecycle() {
         unclaimed_rewards.iter().map(|asset| asset.as_coin().unwrap()).collect(),
     );
 
-    // deposit new user
+    // Deposit new user
     deposit_for_user(
         deps.as_mut(),
         env.clone(),
@@ -242,7 +248,7 @@ fn lp_lifecycle() {
         }],
     );
 
-    // claim rewards, set as null
+    // Claim rewards, set as null
     claim_for_user(
         deps.as_mut(),
         env.clone(),
@@ -323,7 +329,7 @@ fn lp_lifecycle() {
         }],
     );
 
-    // test double stake
+    // Test double stake
     deposit_for_user(
         deps.as_mut(),
         env.clone(),
@@ -367,6 +373,15 @@ fn lp_lifecycle() {
         vec![],
     );
 
+    // Add new unclaimed rewards
+    set_pending_astro_rewards(
+        &mut deps,
+        lp_denom,
+        mars_incentives_contract,
+        unclaimed_rewards.clone(),
+    );
+
+    // Unstake all user a
     unstake_for_user(
         deps.as_mut(),
         env.clone(),
@@ -379,10 +394,43 @@ fn lp_lifecycle() {
     )
     .unwrap();
 
-    // State:
-    // - LP in incentives = 300 (user_a 100, user_b 200)
-    // - Rewards available for user_1 = 0
-    // - Rewards available for user_2 = 0
+    assert_eq!(
+        ASTRO_USER_LP_DEPOSITS.may_load(&deps.storage, (user_a_id, lp_denom)).unwrap(),
+        None
+    );
+
+    // Unstake all user b
+    unstake_for_user(
+        deps.as_mut(),
+        env.clone(),
+        credit_manager.as_str(),
+        user_b_id.to_string(),
+        ActionCoin {
+            denom: lp_denom.to_string(),
+            amount: ActionAmount::AccountBalance,
+        },
+    )
+    .unwrap();
+
+    assert_eq!(
+        ASTRO_USER_LP_DEPOSITS.may_load(&deps.storage, (user_b_id, lp_denom)).unwrap(),
+        None
+    );
+
+    // Remove rewards
+    set_pending_astro_rewards(&mut deps, lp_denom, mars_incentives_contract, vec![]);
+
+    // Deposit for user a
+    deposit_for_user(
+        deps.as_mut(),
+        env.clone(),
+        credit_manager.as_str(),
+        user_a_id.to_string(),
+        default_lp_coin.clone(),
+    )
+    .unwrap();
+
+    // User a should have no rewards after depositing
     assert_user_rewards(
         deps.as_ref(),
         env.clone(),
@@ -584,18 +632,6 @@ fn lp_states_update_correctly() {
         .amount,
         Uint128::new(50u128)
     );
-    assert_eq!(
-        query::query_staked_astro_lp_position(
-            deps.as_ref(),
-            env.clone(),
-            user_b_id.to_string(),
-            lp_denom.to_string()
-        )
-        .unwrap()
-        .lp_coin
-        .amount,
-        Uint128::new(0u128)
-    );
 
     deposit_for_user(
         deps.as_mut(),
@@ -636,5 +672,152 @@ fn lp_states_update_correctly() {
         .lp_coin
         .amount,
         Uint128::new(50u128)
+    );
+}
+
+#[test]
+fn indexes_clean_correctly_when_all_users_unstake() {
+    // Setup
+    let env = mock_env();
+    let mut deps: OwnedDeps<MemoryStorage, MockApi, MarsMockQuerier> = th_setup();
+
+    // Users
+    let user_a_id = "1";
+    let user_b_id = "2";
+
+    let credit_manager = Addr::unchecked("credit_manager");
+    let astroport_incentives_addr = Addr::unchecked("astroport_incentives");
+    deps.querier.set_astroport_incentives_address(astroport_incentives_addr.clone());
+
+    let lp_denom = "uusd/ubtc";
+    let unclaimed_rewards = vec![Asset::native("ibc/reward_1", 100u128)];
+
+    let default_lp_coin = Coin {
+        denom: lp_denom.to_string(),
+        amount: Uint128::new(100u128),
+    };
+
+    // State:
+    // - LP in incentives = 0
+    // - Rewards available = 0
+    assert_eq!(ASTRO_TOTAL_LP_DEPOSITS.may_load(&deps.storage, lp_denom).unwrap(), None);
+
+    let mars_incentives_contract = &env.contract.address.to_string();
+
+    // Deposit for user a
+    deposit_for_user(
+        deps.as_mut(),
+        env.clone(),
+        credit_manager.as_str(),
+        user_a_id.to_string(),
+        Coin::new(100u128, lp_denom),
+    )
+    .unwrap();
+
+    set_pending_astro_rewards(
+        &mut deps,
+        lp_denom,
+        mars_incentives_contract,
+        unclaimed_rewards.clone(),
+    );
+
+    // Deposit user b
+    deposit_for_user(
+        deps.as_mut(),
+        env.clone(),
+        credit_manager.as_str(),
+        user_b_id.to_string(),
+        Coin::new(100u128, lp_denom),
+    )
+    .unwrap();
+
+    set_pending_astro_rewards(
+        &mut deps,
+        lp_denom,
+        mars_incentives_contract,
+        unclaimed_rewards.clone(),
+    );
+
+    // State:
+    // - LP in incentives = 200
+    // - Rewards available for user_1 = 150
+    // - Rewards available for user_2 = 50
+
+    assert_user_rewards(
+        deps.as_ref(),
+        env.clone(),
+        astroport_incentives_addr.clone(),
+        user_a_id,
+        default_lp_coin.clone(),
+        vec![Coin {
+            denom: "ibc/reward_1".to_string(),
+            amount: Uint128::new(150u128),
+        }],
+    );
+
+    // User b
+    assert_user_rewards(
+        deps.as_ref(),
+        env.clone(),
+        astroport_incentives_addr.clone(),
+        user_b_id,
+        default_lp_coin.clone(),
+        vec![Coin {
+            denom: "ibc/reward_1".to_string(),
+            amount: Uint128::new(50u128),
+        }],
+    );
+
+    // Unstake both users
+    unstake_for_user(
+        deps.as_mut(),
+        env.clone(),
+        credit_manager.as_str(),
+        user_a_id.to_string(),
+        ActionCoin {
+            denom: lp_denom.to_string(),
+            amount: mars_types::credit_manager::ActionAmount::AccountBalance,
+        },
+    )
+    .unwrap();
+
+    unstake_for_user(
+        deps.as_mut(),
+        env.clone(),
+        credit_manager.as_str(),
+        user_b_id.to_string(),
+        ActionCoin {
+            denom: lp_denom.to_string(),
+            amount: mars_types::credit_manager::ActionAmount::AccountBalance,
+        },
+    )
+    .unwrap();
+
+    // State:
+    // - LP in incentives = 0
+    // - Rewards available = 0
+    assert_eq!(ASTRO_TOTAL_LP_DEPOSITS.may_load(&deps.storage, lp_denom).unwrap(), None);
+
+    // Set no rewards
+    set_pending_astro_rewards(&mut deps, lp_denom, mars_incentives_contract, vec![]);
+
+    // Stake for user a
+    deposit_for_user(
+        deps.as_mut(),
+        env.clone(),
+        credit_manager.as_str(),
+        user_a_id.to_string(),
+        Coin::new(100u128, lp_denom),
+    )
+    .unwrap();
+
+    // Assert no rewards:
+    assert_user_rewards(
+        deps.as_ref(),
+        env.clone(),
+        astroport_incentives_addr.clone(),
+        user_a_id,
+        default_lp_coin.clone(),
+        vec![],
     );
 }
