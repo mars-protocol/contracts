@@ -3,7 +3,7 @@ use cosmwasm_std::entry_point;
 use cosmwasm_std::{
     to_json_binary, Binary, Deps, DepsMut, Empty, Env, MessageInfo, Response, StdResult,
 };
-use cw2::set_contract_version;
+use cw2::{get_contract_version, set_contract_version};
 use mars_owner::OwnerInit::SetInitialOwner;
 use mars_types::incentives::{Config, ExecuteMsg, InstantiateMsg, QueryMsg};
 
@@ -253,5 +253,5 @@ pub fn query(deps: Deps, env: Env, msg: QueryMsg) -> StdResult<Binary> {
 
 #[cfg_attr(not(feature = "library"), entry_point)]
 pub fn migrate(deps: DepsMut, env: Env, msg: Empty) -> Result<Response, ContractError> {
-    migrations::v2_0_0::migrate(deps, env, msg)
+    migrations::v2_0_1::migrate(deps, env, msg)
 }

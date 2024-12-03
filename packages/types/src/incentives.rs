@@ -203,6 +203,12 @@ pub enum MigrateV1ToV2 {
 }
 
 #[cw_serde]
+pub enum MigrateMsg {
+    MigrateV1ToV2,
+    V2_0_0ToV2_0_1 {},
+}
+
+#[cw_serde]
 #[derive(QueryResponses)]
 pub enum QueryMsg {
     /// Query account staked LP rewards
