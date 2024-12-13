@@ -4,4 +4,4 @@
 # Ignore the following advisory IDs.
 # Reported vulnerabilities relate to test-tube which is only used for testing.
 # RUSTSEC-2024-0344 - no newer dependency fixing the issue in cosmwasm
-ignore = ["RUSTSEC-2024-0003", "RUSTSEC-2024-0006", "RUSTSEC-2024-0019", "RUSTSEC-2024-0332", "RUSTSEC-2024-0336", "RUSTSEC-2024-0344"]
+ignore = ["RUSTSEC-2024-0003", "RUSTSEC-2024-0006", "RUSTSEC-2024-0019", "RUSTSEC-2024-0332", "RUSTSEC-2024-0336", "RUSTSEC-2024-0344", "RUSTSEC-2024-0421"]

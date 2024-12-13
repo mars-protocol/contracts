@@ -105,8 +105,6 @@ mars-rover-health-computer = { path = "./packages/health-computer" }
 mars-interest-rate         = { path = "./packages/interest-rate" }
 mars-liquidation           = { path = "./packages/liquidation" }
 mars-osmosis               = { path = "./packages/chains/osmosis" }
-# Old rover types used for migration (https://github.com/mars-protocol/v2-fields-of-mars/releases/tag/v1.0.0)
-mars-rover-old             = { package = "mars-rover", git = "https://github.com/mars-protocol/v2-fields-of-mars", rev = "183e4c5" }
 mars-testing               = { path = "./packages/testing" }
 mars-types                 = { path = "./packages/types" }
 mars-utils                 = { path = "./packages/utils" }

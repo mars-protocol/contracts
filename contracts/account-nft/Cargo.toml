@@ -25,7 +25,6 @@ cw2             = { workspace = true }
 cw721           = { workspace = true }
 cw721-base      = { workspace = true }
 cw-storage-plus = { workspace = true }
-mars-rover-old  = { workspace = true }
 mars-types      = { workspace = true }
 thiserror       = { workspace = true }
 
