@@ -176,19 +176,7 @@ cargo make test
 
 ### neutron-1
 
-| Contract                  | Address                                                                    | Tag
-| ------------------------- | -------------------------------------------------------------------------- | --------------
-| mars-address-provider     | [`neutron17yehp4x7n79zq9dlw4g7xmnrvwdjjj2yecq26844sg8yu74knlxqfx5vqv`][24] | [`v2.1.0`][57] |
-| mars-account-nft          | [`neutron184kvu96rqtetmunkkmhu5hru8yaqg7qfhd8ldu5avjnamdqu69squrh3f5`][52] | [`v2.1.0`][57] |
-| mars-credit-manager       | [`neutron1qdzn3l4kn7gsjna2tfpg3g3mwd6kunx4p50lfya59k02846xas6qslgs3r`][53] | [`v2.1.0`][57] |
-| mars-health               | [`neutron17ktfwsr7ghlxzzma0gw0hke3j3rnssd58q87jv2wzfrk6uhawa3sv8xxtm`][54] | [`v2.1.0`][57] |
-| mars-incentives           | [`neutron1aszpdh35zsaz0yj80mz7f5dtl9zq5jfl8hgm094y0j0vsychfekqxhzd39`][25] | [`v2.1.0`][57] |
-| mars-oracle               | [`neutron1dwp6m7pdrz6rnhdyrx5ha0acsduydqcpzkylvfgspsz60pj2agxqaqrr7g`][26] | [`v2.1.0`][57] |
-| mars-params               | [`neutron1x4rgd7ry23v2n49y7xdzje0743c5tgrnqrqsvwyya2h6m48tz4jqqex06x`][55] | [`v2.1.0`][57] |
-| mars-red-bank             | [`neutron1n97wnm7q6d2hrcna3rqlnyqw2we6k0l8uqvmyqq6gsml92epdu7quugyph`][27] | [`v2.1.0`][57] |
-| mars-rewards-collector    | [`neutron1h4l6rvylzcuxwdw3gzkkdzfjdxf4mv2ypfdgvnvag0dtz6x07gps6fl2vm`][28] | [`v2.1.0`][57] |
-| mars-swapper              | [`neutron1udr9fc3kd743dezrj38v2ac74pxxr6qsx4xt4nfpcfczgw52rvyqyjp5au`][29] | [`v2.1.0`][57] |
-| mars-zapper               | [`neutron1dr0ckm3u2ztjuscmgqjr85lwyduphxkgl3tc02ac8zp54r05t5dqp5tgyq`][56] | [`v2.1.0`][57] |
+See repo: [core-contracts][58]
 
 ### mars-1
 
@@ -224,12 +212,6 @@ Contents of this repository are open source under [GNU General Public License v3
 [21]: https://osmosis.celat.one/osmosis-1/contracts/osmo17qwvc70pzc9mudr8t02t3pl74hhqsgwnskl734p4hug3s8mkerdqzduf7c
 [22]: https://osmosis.celat.one/osmosis-1/contracts/osmo1kqzkuyh23chjwemve7p9t7sl63v0sxtjh84e95w4fdz3htg8gmgspua7q4
 [23]: https://osmosis.celat.one/osmosis-1/contracts/osmo1aye5qcer5n52crrkaf35jprsad2807q6kg3eeeu7k79h4slxfausfqhc9y
-[24]: https://neutron.celat.one/neutron-1/contracts/neutron17yehp4x7n79zq9dlw4g7xmnrvwdjjj2yecq26844sg8yu74knlxqfx5vqv
-[25]: https://neutron.celat.one/neutron-1/contracts/neutron1aszpdh35zsaz0yj80mz7f5dtl9zq5jfl8hgm094y0j0vsychfekqxhzd39
-[26]: https://neutron.celat.one/neutron-1/contracts/neutron1dwp6m7pdrz6rnhdyrx5ha0acsduydqcpzkylvfgspsz60pj2agxqaqrr7g
-[27]: https://neutron.celat.one/neutron-1/contracts/neutron1n97wnm7q6d2hrcna3rqlnyqw2we6k0l8uqvmyqq6gsml92epdu7quugyph
-[28]: https://neutron.celat.one/neutron-1/contracts/neutron1h4l6rvylzcuxwdw3gzkkdzfjdxf4mv2ypfdgvnvag0dtz6x07gps6fl2vm
-[29]: https://neutron.celat.one/neutron-1/contracts/neutron1udr9fc3kd743dezrj38v2ac74pxxr6qsx4xt4nfpcfczgw52rvyqyjp5au
 [36]: https://www.mintscan.io/mars-protocol/accounts/mars17xpfvakm2amg962yls6f84z3kell8c5ldy6e7x
 [37]: https://www.mintscan.io/mars-protocol/accounts/mars1s4hgh56can3e33e0zqpnjxh0t5wdf7u3pze575
 [38]: https://go.dev/
@@ -246,9 +228,5 @@ Contents of this repository are open source under [GNU General Public License v3
 [49]: https://github.com/mars-protocol/contracts/releases/tag/v2.0.5
 [50]: https://github.com/mars-protocol/contracts/releases/tag/v2.0.7
 [51]: https://github.com/mars-protocol/contracts/releases/tag/v1.3.0
-[52]: https://neutron.celat.one/neutron-1/contracts/neutron184kvu96rqtetmunkkmhu5hru8yaqg7qfhd8ldu5avjnamdqu69squrh3f5
-[53]: https://neutron.celat.one/neutron-1/contracts/neutron1qdzn3l4kn7gsjna2tfpg3g3mwd6kunx4p50lfya59k02846xas6qslgs3r
-[54]: https://neutron.celat.one/neutron-1/contracts/neutron17ktfwsr7ghlxzzma0gw0hke3j3rnssd58q87jv2wzfrk6uhawa3sv8xxtm
-[55]: https://neutron.celat.one/neutron-1/contracts/neutron1x4rgd7ry23v2n49y7xdzje0743c5tgrnqrqsvwyya2h6m48tz4jqqex06x
-[56]: https://neutron.celat.one/neutron-1/contracts/neutron1dr0ckm3u2ztjuscmgqjr85lwyduphxkgl3tc02ac8zp54r05t5dqp5tgyq
 [57]: https://github.com/mars-protocol/contracts/releases/tag/v2.1.0
+[58]: https://github.com/mars-protocol/core-contracts?tab=readme-ov-file#neutron-1
