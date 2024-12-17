@@ -2810,6 +2810,7 @@ dependencies = [
  "cw-dex",
  "cw-utils 1.0.3",
  "cw2 1.1.2",
+ "mars-testing",
  "mars-types",
  "mars-zapper-base",
  "osmosis-std 0.22.0",
