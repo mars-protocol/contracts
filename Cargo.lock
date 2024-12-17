@@ -2562,6 +2562,7 @@ dependencies = [
  "mars-owner 2.0.0",
  "mars-params",
  "mars-rover-health-computer",
+ "mars-testing",
  "mars-types",
 ]
 
@@ -2701,6 +2702,7 @@ dependencies = [
  "cw-storage-plus 1.2.0",
  "cw-utils 1.0.3",
  "cw-vault-standard",
+ "cw2 1.1.2",
  "cw721 0.18.0",
  "cw721-base 0.18.0",
  "mars-owner 2.0.0",
