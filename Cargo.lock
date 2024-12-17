@@ -2123,6 +2123,7 @@ dependencies = [
  "mars-mock-credit-manager",
  "mars-mock-rover-health",
  "mars-owner 2.0.0",
+ "mars-testing",
  "mars-types",
  "serde_json",
  "thiserror",
