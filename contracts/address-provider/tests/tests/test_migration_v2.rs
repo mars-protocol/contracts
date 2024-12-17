@@ -6,7 +6,7 @@ use mars_testing::mock_dependencies;
 #[test]
 fn wrong_contract_name() {
     let mut deps = mock_dependencies(&[]);
-    cw2::set_contract_version(deps.as_mut().storage, "contract_xyz", "1.2.0").unwrap();
+    cw2::set_contract_version(deps.as_mut().storage, "contract_xyz", "2.0.0").unwrap();
 
     let err = migrate(deps.as_mut(), mock_env(), Empty {}).unwrap_err();
 
@@ -30,7 +30,7 @@ fn wrong_contract_version() {
     assert_eq!(
         err,
         ContractError::Version(VersionError::WrongVersion {
-            expected: "1.2.0".to_string(),
+            expected: "2.0.0".to_string(),
             found: "4.1.0".to_string()
         })
     );
@@ -39,7 +39,7 @@ fn wrong_contract_version() {
 #[test]
 fn successful_migration() {
     let mut deps = mock_dependencies(&[]);
-    cw2::set_contract_version(deps.as_mut().storage, "crates.io:mars-address-provider", "1.2.0")
+    cw2::set_contract_version(deps.as_mut().storage, "crates.io:mars-address-provider", "2.0.0")
         .unwrap();
 
     let res = migrate(deps.as_mut(), mock_env(), Empty {}).unwrap();
@@ -49,7 +49,7 @@ fn successful_migration() {
     assert!(res.data.is_none());
     assert_eq!(
         res.attributes,
-        vec![attr("action", "migrate"), attr("from_version", "1.2.0"), attr("to_version", "2.1.0")]
+        vec![attr("action", "migrate"), attr("from_version", "2.0.0"), attr("to_version", "2.1.0")]
     );
 
     let new_contract_version = ContractVersion {
