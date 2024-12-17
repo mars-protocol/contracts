@@ -102,8 +102,6 @@ pub enum ExecuteMsg {
         /// Option to enable (true) / disable (false) asset as collateral
         enable: bool,
     },
-    // Manages migration. It is used to handle migration in batches to avoid out of gas errors.
-    Migrate(MigrateV1ToV2),
 }
 
 #[cw_serde]

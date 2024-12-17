@@ -251,6 +251,6 @@ pub fn query(deps: Deps, env: Env, msg: QueryMsg) -> StdResult<Binary> {
 /// MIGRATION
 
 #[cfg_attr(not(feature = "library"), entry_point)]
-pub fn migrate(deps: DepsMut, env: Env, msg: Empty) -> Result<Response, ContractError> {
-    migrations::v2_1_0::migrate(deps, env, msg)
+pub fn migrate(deps: DepsMut, _env: Env, _msg: Empty) -> Result<Response, ContractError> {
+    migrations::v2_1_0::migrate(deps)
 }

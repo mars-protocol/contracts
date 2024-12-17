@@ -6,24 +6,17 @@ use crate::{
     error::ContractError,
 };
 
-const FROM_VERSION: &str = "2.0.0";
+const FROM_VERSION: &str = "2.0.1";
 
 pub mod v1_state {
-    use cosmwasm_std::{Addr, Decimal, DepsMut, Uint128};
+    use cosmwasm_std::{Addr, DepsMut, Uint128};
     use cw_storage_plus::Map;
 
-    /// Don't care about the actual types, just use some dummy types to clear the storage
-    pub const ASSET_INCENTIVES: Map<&str, String> = Map::new("incentives");
-    pub const USER_ASSET_INDICES: Map<(&Addr, &str), Decimal> = Map::new("indices");
-    pub const USER_UNCLAIMED_REWARDS: Map<&Addr, Uint128> = Map::new("unclaimed_rewards");
-    pub const USER_UNCLAIMED_REWARDS_BACKUP: Map<&Addr, Uint128> = Map::new("ur_backup");
+    pub const UNCOLLATERALIZED_LOAN_LIMITS: Map<(&Addr, &str), Uint128> = Map::new("limits");
 
     /// Clear old state so we can re-use the keys
     pub fn clear_state(deps: &mut DepsMut) {
-        ASSET_INCENTIVES.clear(deps.storage);
-        USER_ASSET_INDICES.clear(deps.storage);
-        USER_UNCLAIMED_REWARDS.clear(deps.storage);
-        USER_UNCLAIMED_REWARDS_BACKUP.clear(deps.storage);
+        UNCOLLATERALIZED_LOAN_LIMITS.clear(deps.storage);
     }
 }
 
