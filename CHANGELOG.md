@@ -21,6 +21,7 @@ All notable changes to this project will be documented in this file.
   - Added actions for staking, unstaking, and claiming rewards
   - Introduced `staked_astro_lps` positions
 - Updated deposit cap mechanism (see https://github.com/mars-protocol/contracts/pull/425)
+- Trade any asset (https://github.com/mars-protocol/contracts/pull/381)
 
 ### Incentives Contract
 - Added support for Astro ecosystem interactions:
