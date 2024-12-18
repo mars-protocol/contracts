@@ -1,9 +1,9 @@
 use cosmwasm_std::{entry_point, Binary, Deps, DepsMut, Empty, Env, MessageInfo, Response};
 use cw2::set_contract_version;
-use mars_swapper_base::{ContractResult, SwapBase};
+use mars_swapper_base::{ContractError, ContractResult, SwapBase};
 use mars_types::swapper::{ExecuteMsg, InstantiateMsg, QueryMsg};
 
-use crate::{config::OsmosisConfig, route::OsmosisRoute};
+use crate::{config::OsmosisConfig, migrations, route::OsmosisRoute};
 
 /// The Osmosis swapper contract inherits logic from the base swapper contract
 pub type OsmosisSwap<'a> = SwapBase<'a, Empty, Empty, OsmosisRoute, OsmosisConfig>;
@@ -35,4 +35,9 @@ pub fn execute(
 #[cfg_attr(not(feature = "library"), entry_point)]
 pub fn query(deps: Deps, env: Env, msg: QueryMsg) -> ContractResult<Binary> {
     OsmosisSwap::default().query(deps, env, msg)
+}
+
+#[cfg_attr(not(feature = "library"), entry_point)]
+pub fn migrate(deps: DepsMut, _env: Env, _msg: Empty) -> Result<Response, ContractError> {
+    migrations::v2_1_0::migrate(deps)
 }

@@ -120,10 +120,6 @@ pub fn execute(
             cw_utils::nonpayable(&info)?;
             collateral::update_asset_collateral_status(deps, env, info, denom, enable)
         }
-        ExecuteMsg::Migrate(msg) => {
-            cw_utils::nonpayable(&info)?;
-            migrations::v2_0_0::execute_migration(deps, info, msg)
-        }
     }
 }
 
@@ -249,5 +245,5 @@ pub fn query(deps: Deps, env: Env, msg: QueryMsg) -> Result<Binary, ContractErro
 
 #[cfg_attr(not(feature = "library"), entry_point)]
 pub fn migrate(deps: DepsMut, _env: Env, _msg: Empty) -> Result<Response, ContractError> {
-    migrations::v2_0_0::migrate(deps)
+    migrations::v2_1_0::migrate(deps)
 }

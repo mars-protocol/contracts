@@ -2,6 +2,66 @@
 
 All notable changes to this project will be documented in this file.
 
+## v2.1.0 - Osmosis Release
+
+### Credit Manager Contract
+- Introduced abstract account creation via `update_credit_account` message
+- Added new account type: FundManager for Managed Vaults
+- Updated `SwapExactIn` action:
+  ```diff
+  SwapExactIn {
+      coin_in: ActionCoin,
+      denom_out: String,
+  -   slippage: Decimal,
+  +   min_receive: Uint128,
+      route: Option<SwapperRoute>,
+  }
+  ```
+- Integrated Astro support:
+  - Added actions for staking, unstaking, and claiming rewards
+  - Introduced `staked_astro_lps` positions
+- Updated deposit cap mechanism (see https://github.com/mars-protocol/contracts/pull/425)
+- Trade any asset (https://github.com/mars-protocol/contracts/pull/381)
+
+### Incentives Contract
+- Added support for Astro ecosystem interactions:
+  - Introduced staking and unstaking functionality
+  - Added reward claiming mechanisms
+
+### Params Contract
+- Added new paginated queries:
+  - `QueryMsg::AllVaultConfigsV2`
+  - `QueryMsg::AllTotalDepositsV2`
+
+### Red Bank Contract
+- Removed UncollateralizedLoanLimit logic
+- Added `QueryMsg::MarketsV2`
+
+### Rewards Collector
+- Updated `SwapAsset` execute message to support minimum receive amounts:
+  ```diff
+  SwapAsset {
+      denom: String,
+      amount: Option<Uint128>,
+      safety_fund_route: Option<SwapperRoute>,
+      fee_collector_route: Option<SwapperRoute>,
+  +   safety_fund_min_receive: Option<Uint128>,
+  +   fee_collector_min_receive: Option<Uint128>,
+  }
+  ```
+
+### Swapper Contract
+- Updated `SwapExactIn` to use minimum receive instead of slippage:
+  ```diff
+  SwapExactIn {
+      coin_in: Coin,
+      denom_out: String,
+  -   slippage: Decimal,
+  +   min_receive: Uint128,
+      route: Option<SwapperRoute>,
+  }
+  ```
+
 ## v1.2.0
 
 - Allow Credit account to lend/reclaim to the Red Bank (calls Deposit/Withdraw in Red Bank), claim incentive rewards from lending to the Red Bank (pass account_id to track Credit Manager users in `red-bank` and `incentives` contract).

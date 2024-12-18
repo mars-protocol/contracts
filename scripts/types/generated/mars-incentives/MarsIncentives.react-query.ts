@@ -15,7 +15,6 @@ import {
   Addr,
   ActionAmount,
   OwnerUpdate,
-  MigrateV1ToV2,
   WhitelistEntry,
   Coin,
   ActionCoin,
@@ -428,26 +427,6 @@ export function useMarsIncentivesStakedAstroLpRewardsQuery<
       ...options,
       enabled: !!client && (options?.enabled != undefined ? options.enabled : true),
     },
-  )
-}
-export interface MarsIncentivesMigrateMutation {
-  client: MarsIncentivesClient
-  msg: MigrateV1ToV2
-  args?: {
-    fee?: number | StdFee | 'auto'
-    memo?: string
-    funds?: Coin[]
-  }
-}
-export function useMarsIncentivesMigrateMutation(
-  options?: Omit<
-    UseMutationOptions<ExecuteResult, Error, MarsIncentivesMigrateMutation>,
-    'mutationFn'
-  >,
-) {
-  return useMutation<ExecuteResult, Error, MarsIncentivesMigrateMutation>(
-    ({ client, msg, args: { fee, memo, funds } = {} }) => client.migrate(msg, fee, memo, funds),
-    options,
   )
 }
 export interface MarsIncentivesUpdateOwnerMutation {

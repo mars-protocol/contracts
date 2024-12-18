@@ -351,18 +351,6 @@
           }
         },
         "additionalProperties": false
-      },
-      {
-        "type": "object",
-        "required": [
-          "migrate"
-        ],
-        "properties": {
-          "migrate": {
-            "$ref": "#/definitions/MigrateV1ToV2"
-          }
-        },
-        "additionalProperties": false
       }
     ],
     "definitions": {
@@ -453,49 +441,6 @@
           }
         },
         "additionalProperties": false
-      },
-      "MigrateV1ToV2": {
-        "description": "Migrate from V1 to V2, only owner can call",
-        "oneOf": [
-          {
-            "description": "Migrate collaterals in batches",
-            "type": "object",
-            "required": [
-              "collaterals"
-            ],
-            "properties": {
-              "collaterals": {
-                "type": "object",
-                "required": [
-                  "limit"
-                ],
-                "properties": {
-                  "limit": {
-                    "type": "integer",
-                    "format": "uint32",
-                    "minimum": 0.0
-                  }
-                },
-                "additionalProperties": false
-              }
-            },
-            "additionalProperties": false
-          },
-          {
-            "description": "Clears old V1 state once all batches are migrated or after a certain time",
-            "type": "object",
-            "required": [
-              "clear_v1_state"
-            ],
-            "properties": {
-              "clear_v1_state": {
-                "type": "object",
-                "additionalProperties": false
-              }
-            },
-            "additionalProperties": false
-          }
-        ]
       },
       "OwnerUpdate": {
         "oneOf": [

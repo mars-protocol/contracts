@@ -35,4 +35,5 @@ cw-multi-test            = { workspace = true }
 mars-mock-credit-manager = { workspace = true }
 mars-mock-rover-health   = { workspace = true }
 mars-owner               = { workspace = true }
+mars-testing             = { workspace = true }
 serde_json               = { workspace = true }

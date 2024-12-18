@@ -1,5 +1,5 @@
 use cosmwasm_std::{
-    entry_point, to_json_binary, Binary, Deps, DepsMut, Env, MessageInfo, Reply, Response,
+    entry_point, to_json_binary, Binary, Deps, DepsMut, Empty, Env, MessageInfo, Reply, Response,
 };
 use cw2::set_contract_version;
 use mars_types::{
@@ -11,6 +11,7 @@ use crate::{
     error::{ContractError, ContractResult},
     execute::{create_credit_account, dispatch_actions, execute_callback},
     instantiate::store_config,
+    migrations,
     query::{
         query_accounts, query_all_coin_balances, query_all_debt_shares,
         query_all_total_debt_shares, query_all_vault_positions, query_all_vault_utilizations,
@@ -133,4 +134,9 @@ pub fn query(deps: Deps, env: Env, msg: QueryMsg) -> ContractResult<Binary> {
         } => to_json_binary(&query_vault_bindings(deps, start_after, limit)?),
     };
     res.map_err(Into::into)
+}
+
+#[cfg_attr(not(feature = "library"), entry_point)]
+pub fn migrate(deps: DepsMut, _env: Env, _msg: Empty) -> Result<Response, ContractError> {
+    migrations::v2_1_0::migrate(deps)
 }

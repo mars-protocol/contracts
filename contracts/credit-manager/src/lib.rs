@@ -13,6 +13,7 @@ pub mod liquidate;
 pub mod liquidate_astro_lp;
 pub mod liquidate_deposit;
 pub mod liquidate_lend;
+pub mod migrations;
 pub mod query;
 pub mod reclaim;
 pub mod refund;

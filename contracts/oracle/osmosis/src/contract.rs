@@ -19,6 +19,7 @@ pub mod entry {
     use mars_types::oracle::{ExecuteMsg, InstantiateMsg, QueryMsg};
 
     use super::*;
+    use crate::migrations;
 
     #[entry_point]
     pub fn instantiate(
@@ -44,5 +45,10 @@ pub mod entry {
     #[entry_point]
     pub fn query(deps: Deps, env: Env, msg: QueryMsg) -> ContractResult<Binary> {
         OsmosisOracle::default().query(deps, env, msg)
+    }
+
+    #[entry_point]
+    pub fn migrate(deps: DepsMut, _env: Env, _msg: Empty) -> ContractResult<Response> {
+        migrations::v2_1_0::migrate(deps)
     }
 }
