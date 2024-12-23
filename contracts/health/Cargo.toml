@@ -36,3 +36,4 @@ mars-mock-credit-manager = { workspace = true }
 mars-mock-oracle         = { workspace = true }
 mars-params              = { workspace = true }
 mars-mock-vault          = { workspace = true }
+mars-testing             = { workspace = true }

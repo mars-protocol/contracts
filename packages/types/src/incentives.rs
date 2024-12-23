@@ -186,9 +186,6 @@ pub enum ExecuteMsg {
 
     /// Manages admin role state
     UpdateOwner(OwnerUpdate),
-
-    // Manages migration. It is used to handle migration in batches to avoid out of gas errors.
-    Migrate(MigrateV1ToV2),
 }
 
 /// Migrate from V1 to V2, only owner can call

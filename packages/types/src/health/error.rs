@@ -1,4 +1,5 @@
 use cosmwasm_std::{CheckedFromRatioError, CheckedMultiplyFractionError, OverflowError, StdError};
+use cw2::VersionError;
 use mars_owner::OwnerError;
 use thiserror::Error;
 
@@ -49,4 +50,7 @@ pub enum HealthError {
 
     #[error("{0}")]
     Std(#[from] StdError),
+
+    #[error("{0}")]
+    Version(#[from] VersionError),
 }

@@ -10,6 +10,7 @@ use mars_types::account_nft::{ExecuteMsg, InstantiateMsg, NftConfig, QueryMsg};
 use crate::{
     error::ContractError,
     execute::{burn, mint, update_config},
+    migrations,
     query::{query_config, query_next_id},
     state::{CONFIG, NEXT_ID},
 };
@@ -78,4 +79,9 @@ pub fn query(deps: Deps, env: Env, msg: QueryMsg) -> StdResult<Binary> {
         QueryMsg::NextId {} => to_json_binary(&query_next_id(deps)?),
         _ => Parent::default().query(deps, env, msg.try_into()?),
     }
+}
+
+#[cfg_attr(not(feature = "library"), entry_point)]
+pub fn migrate(deps: DepsMut, _env: Env, _msg: Empty) -> Result<Response, ContractError> {
+    migrations::v2_1_0::migrate(deps)
 }
