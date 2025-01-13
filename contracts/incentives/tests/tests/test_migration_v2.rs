@@ -1,7 +1,10 @@
-use cosmwasm_std::{attr, testing::mock_env, Empty, Event};
+use cosmwasm_std::{attr, testing::mock_env, Addr, Empty, Event};
 use cw2::{ContractVersion, VersionError};
-use mars_incentives::{contract::migrate, ContractError};
+use mars_incentives::{
+    contract::migrate, migrations::v2_1_0::v1_state, state::CONFIG, ContractError,
+};
 use mars_testing::mock_dependencies;
+use mars_types::incentives::Config;
 
 #[test]
 fn wrong_contract_name() {
@@ -40,7 +43,27 @@ fn successful_migration() {
     let mut deps = mock_dependencies(&[]);
     cw2::set_contract_version(deps.as_mut().storage, "crates.io:mars-incentives", "2.0.0").unwrap();
 
+    v1_state::CONFIG
+        .save(
+            deps.as_mut().storage,
+            &v1_state::Config {
+                address_provider: Addr::unchecked("addr_provider".to_string()),
+                max_whitelisted_denoms: 15,
+                mars_denom: "mars".to_string(),
+            },
+        )
+        .unwrap();
+
     let res = migrate(deps.as_mut(), mock_env(), Empty {}).unwrap();
+
+    let config = CONFIG.load(deps.as_ref().storage).unwrap();
+    assert_eq!(
+        config,
+        Config {
+            address_provider: Addr::unchecked("addr_provider".to_string()),
+            max_whitelisted_denoms: 15,
+        }
+    );
 
     assert_eq!(res.messages, vec![]);
     assert_eq!(res.events, vec![] as Vec<Event>);
