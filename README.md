@@ -161,22 +161,22 @@ cargo make test
 ### osmosis-1
 
 | Contract               | Address                                                                 | Tag
-| ---------------------- | ----------------------------------------------------------------------- | --------------
-| mars-address-provider  | [`osmo1g677w7mfvn78eeudzwylxzlyz69fsgumqrscj6tekhdvs8fye3asufmvxr`][11] | [`v2.0.0`][40] |
-| mars-account-nft       | [`osmo1450hrg6dv2l58c0rvdwx8ec2a0r6dd50hn4frk370tpvqjhy8khqw7sw09`][12] | [`v2.0.0`][43] |
-| mars-credit-manager    | [`osmo1f2m24wktq0sw3c0lexlg7fv4kngwyttvzws3a3r3al9ld2s2pvds87jqvf`][13] | [`v2.0.5`][49] |
-| mars-health            | [`osmo1pdc49qlyhpkzx4j24uuw97kk6hv7e9xvrdjlww8qj6al53gmu49sge4g79`][14] | [`v2.0.0`][43] |
-| mars-incentives        | [`osmo1nkahswfr8shg8rlxqwup0vgahp0dk4x8w6tkv3rra8rratnut36sk22vrm`][15] | [`v2.0.0`][40] |
-| mars-oracle            | [`osmo1mhznfr60vjdp2gejhyv2gax9nvyyzhd3z0qcwseyetkfustjauzqycsy2g`][16] | [`v2.0.1`][41] |
-| mars-params            | [`osmo1nlmdxt9ctql2jr47qd4fpgzg84cjswxyw6q99u4y4u4q6c2f5ksq7ysent`][17] | [`v2.0.3`][46] |
-| mars-red-bank          | [`osmo1c3ljch9dfw5kf52nfwpxd2zmj2ese7agnx0p9tenkrryasrle5sqf3ftpg`][18] | [`v2.0.5`][49] |
-| mars-rewards-collector | [`osmo1urvqe5mw00ws25yqdd4c4hlh8kdyf567mpcml7cdve9w08z0ydcqvsrgdy`][19] | [`v2.0.4`][47] |
-| mars-swapper           | [`osmo1wee0z8c7tcawyl647eapqs4a88q8jpa7ddy6nn2nrs7t47p2zhxswetwla`][20] | [`v2.0.7`][50] |
-| mars-zapper            | [`osmo17qwvc70pzc9mudr8t02t3pl74hhqsgwnskl734p4hug3s8mkerdqzduf7c`][21] | [`v2.0.0`][43] |
+| ---------------------- | ----------------------------------------------------------------------- | --------------------
+| mars-address-provider  | [`osmo1g677w7mfvn78eeudzwylxzlyz69fsgumqrscj6tekhdvs8fye3asufmvxr`][11] | [`v2.1.0-osmo`][40] |
+| mars-account-nft       | [`osmo1450hrg6dv2l58c0rvdwx8ec2a0r6dd50hn4frk370tpvqjhy8khqw7sw09`][12] | [`v2.1.0-osmo`][40] |
+| mars-credit-manager    | [`osmo1f2m24wktq0sw3c0lexlg7fv4kngwyttvzws3a3r3al9ld2s2pvds87jqvf`][13] | [`v2.1.0-osmo`][40] |
+| mars-health            | [`osmo1pdc49qlyhpkzx4j24uuw97kk6hv7e9xvrdjlww8qj6al53gmu49sge4g79`][14] | [`v2.1.0-osmo`][40] |
+| mars-incentives        | [`osmo1nkahswfr8shg8rlxqwup0vgahp0dk4x8w6tkv3rra8rratnut36sk22vrm`][15] | [`v2.1.0-osmo`][40] |
+| mars-oracle            | [`osmo1mhznfr60vjdp2gejhyv2gax9nvyyzhd3z0qcwseyetkfustjauzqycsy2g`][16] | [`v2.1.0-osmo`][40] |
+| mars-params            | [`osmo1nlmdxt9ctql2jr47qd4fpgzg84cjswxyw6q99u4y4u4q6c2f5ksq7ysent`][17] | [`v2.1.0-osmo`][40] |
+| mars-red-bank          | [`osmo1c3ljch9dfw5kf52nfwpxd2zmj2ese7agnx0p9tenkrryasrle5sqf3ftpg`][18] | [`v2.1.0-osmo`][40] |
+| mars-rewards-collector | [`osmo1urvqe5mw00ws25yqdd4c4hlh8kdyf567mpcml7cdve9w08z0ydcqvsrgdy`][19] | [`v2.1.0-osmo`][40] |
+| mars-swapper           | [`osmo1wee0z8c7tcawyl647eapqs4a88q8jpa7ddy6nn2nrs7t47p2zhxswetwla`][20] | [`v2.1.0-osmo`][40] |
+| mars-zapper            | [`osmo17qwvc70pzc9mudr8t02t3pl74hhqsgwnskl734p4hug3s8mkerdqzduf7c`][21] | [`v2.1.0-osmo`][40] |
 
 ### neutron-1
 
-See repo: [core-contracts][58]
+See repo: [core-contracts][41]
 
 ### mars-1
 
@@ -216,17 +216,5 @@ Contents of this repository are open source under [GNU General Public License v3
 [37]: https://www.mintscan.io/mars-protocol/accounts/mars1s4hgh56can3e33e0zqpnjxh0t5wdf7u3pze575
 [38]: https://go.dev/
 [39]: https://github.com/osmosis-labs/test-tube
-[40]: https://github.com/mars-protocol/contracts/releases/tag/v2.0.0
-[41]: https://github.com/mars-protocol/contracts/releases/tag/v2.0.1
-[42]: https://github.com/mars-protocol/contracts/releases/tag/v2.0.2
-[43]: https://github.com/mars-protocol/rover/releases/tag/v2.0.0
-[44]: https://github.com/mars-protocol/contracts/releases/tag/v1.2.0
-[45]: https://github.com/mars-protocol/contracts/releases/tag/v1.2.1
-[46]: https://github.com/mars-protocol/contracts/releases/tag/v2.0.3
-[47]: https://github.com/mars-protocol/contracts/releases/tag/v2.0.4
-[48]: https://github.com/mars-protocol/contracts/releases/tag/v1.2.2
-[49]: https://github.com/mars-protocol/contracts/releases/tag/v2.0.5
-[50]: https://github.com/mars-protocol/contracts/releases/tag/v2.0.7
-[51]: https://github.com/mars-protocol/contracts/releases/tag/v1.3.0
-[57]: https://github.com/mars-protocol/contracts/releases/tag/v2.1.0
-[58]: https://github.com/mars-protocol/core-contracts?tab=readme-ov-file#neutron-1
+[40]: https://github.com/mars-protocol/contracts/releases/tag/v2.1.0-osmo
+[41]: https://github.com/mars-protocol/core-contracts?tab=readme-ov-file#neutron-1
