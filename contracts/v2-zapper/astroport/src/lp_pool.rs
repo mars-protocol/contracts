@@ -278,7 +278,7 @@ fn from_astro_to_apollo_assets_info(assets: &[AstroAssetInfo]) -> Vec<AssetInfo>
     assets.iter().map(|a| from_astro_to_apollo_asset_info(a.clone())).collect()
 }
 
-/// Converts Astro to Apollo `AssetInfo`. Apollo crates have coverters from Astro to Apollo but we use
+/// Converts Astro to Apollo `AssetInfo`. Apollo crates have converters from Astro to Apollo but we use
 /// different astroport version so we can't use them directly.
 fn from_astro_to_apollo_asset_info(asset_info: AstroAssetInfo) -> AssetInfo {
     match asset_info {

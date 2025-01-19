@@ -215,7 +215,7 @@ pub fn redeem(
     let total_unlocked_vault_tokens =
         unlocked.into_iter().map(|us| us.vault_tokens).sum::<Uint128>();
 
-    // check that the the provided vault tokens is equal or greater than total unlocked vault tokens
+    // check that the provided vault tokens is equal or greater than total unlocked vault tokens
     if vault_tokens < total_unlocked_vault_tokens {
         return Err(ContractError::InvalidAmount {
             reason: "provided vault tokens is less than total unlocked amount".to_string(),
