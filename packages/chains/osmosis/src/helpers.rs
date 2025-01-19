@@ -200,7 +200,7 @@ impl Pool {
     }
 }
 
-/// Query an Osmosis pool's coin depths and the supply of of liquidity token
+/// Query an Osmosis pool's coin depths and the supply of liquidity token
 pub fn query_pool(querier: &QuerierWrapper, pool_id: u64) -> StdResult<Pool> {
     let req: QueryRequest<Empty> = PoolRequest {
         pool_id,
