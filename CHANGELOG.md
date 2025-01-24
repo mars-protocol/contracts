@@ -319,7 +319,7 @@ type UserCollateralsResponse = {
 type UserCollateralsResponse = UserCollateralResponse[];
 ```
 
-- ([#61](https://github.com/mars-protocol/red-bank/pull/61)) Red Bank: Implement variable naming convension.
+- ([#61](https://github.com/mars-protocol/red-bank/pull/61)) Red Bank: Implement variable naming convention.
 
 ```diff
 pub struct CreateOrUpdateConfig {
