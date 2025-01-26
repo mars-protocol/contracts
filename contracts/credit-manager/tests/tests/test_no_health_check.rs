@@ -89,7 +89,7 @@ fn deposit_and_repay_works_without_hf_check() {
     )
     .unwrap();
 
-    // Repay for recepient should fail because of HF check
+    // Repay for recipient should fail because of HF check
     let res = mock.update_credit_account(
         &account_id,
         &user,

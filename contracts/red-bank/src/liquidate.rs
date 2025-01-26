@@ -200,7 +200,7 @@ pub fn liquidate(
     let user_debt_amount_scaled_after =
         get_scaled_debt_amount(user_debt_amount_after, &debt_market, block_time)?;
 
-    // Compute delta so it can be substracted to total debt
+    // Compute delta so it can be subtracted to total debt
     let debt_amount_scaled_delta =
         user_debt.amount_scaled.checked_sub(user_debt_amount_scaled_after)?;
 
