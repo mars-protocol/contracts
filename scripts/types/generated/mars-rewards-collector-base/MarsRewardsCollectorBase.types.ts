@@ -5,28 +5,23 @@
  * and run the @cosmwasm/ts-codegen generate command to regenerate this file.
  */
 
-export type Uint128 = string
+export type TransferType = 'ibc' | 'bank'
 export type Decimal = string
 export interface InstantiateMsg {
   address_provider: string
   channel_id: string
-  fee_collector_denom: string
-  neutron_ibc_config?: NeutronIbcConfig | null
+  fee_collector_config: RewardConfig
   owner: string
-  safety_fund_denom: string
+  revenue_share_config: RewardConfig
+  revenue_share_tax_rate: Decimal
+  safety_fund_config: RewardConfig
   safety_tax_rate: Decimal
   slippage_tolerance: Decimal
   timeout_seconds: number
 }
-export interface NeutronIbcConfig {
-  acc_fee: Coin[]
-  source_port: string
-  timeout_fee: Coin[]
-}
-export interface Coin {
-  amount: Uint128
-  denom: string
-  [k: string]: unknown
+export interface RewardConfig {
+  target_denom: string
+  transfer_type: TransferType
 }
 export type ExecuteMsg =
   | {
@@ -51,7 +46,6 @@ export type ExecuteMsg =
     }
   | {
       distribute_rewards: {
-        amount?: Uint128 | null
         denom: string
       }
     }
@@ -87,6 +81,7 @@ export type OwnerUpdate =
       }
     }
   | 'clear_emergency_owner'
+export type Uint128 = string
 export type Action =
   | {
       deposit: Coin
@@ -220,12 +215,18 @@ export type SwapperRoute =
 export interface UpdateConfig {
   address_provider?: string | null
   channel_id?: string | null
-  fee_collector_denom?: string | null
-  neutron_ibc_config?: NeutronIbcConfig | null
-  safety_fund_denom?: string | null
+  fee_collector_config?: RewardConfig | null
+  revenue_share_config?: RewardConfig | null
+  revenue_share_tax_rate?: Decimal | null
+  safety_fund_config?: RewardConfig | null
   safety_tax_rate?: Decimal | null
   slippage_tolerance?: Decimal | null
   timeout_seconds?: number | null
+}
+export interface Coin {
+  amount: Uint128
+  denom: string
+  [k: string]: unknown
 }
 export interface ActionCoin {
   amount: ActionAmount
@@ -254,11 +255,12 @@ export type QueryMsg = {
 export interface ConfigResponse {
   address_provider: string
   channel_id: string
-  fee_collector_denom: string
-  neutron_ibc_config?: NeutronIbcConfig | null
+  fee_collector_config: RewardConfig
   owner?: string | null
   proposed_new_owner?: string | null
-  safety_fund_denom: string
+  revenue_share_config: RewardConfig
+  revenue_share_tax_rate: Decimal
+  safety_fund_config: RewardConfig
   safety_tax_rate: Decimal
   slippage_tolerance: Decimal
   timeout_seconds: number

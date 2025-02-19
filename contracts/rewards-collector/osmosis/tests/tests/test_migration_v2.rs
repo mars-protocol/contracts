@@ -42,12 +42,12 @@ fn wrong_contract_version() {
 }
 
 #[test]
-fn successful_migration() {
+fn successful_migration_to_v2_1_0() {
     let mut deps = mock_dependencies(&[]);
     cw2::set_contract_version(
         deps.as_mut().storage,
         "crates.io:mars-rewards-collector-osmosis",
-        "2.0.1",
+        "2.0.0",
     )
     .unwrap();
 
@@ -58,12 +58,12 @@ fn successful_migration() {
     assert!(res.data.is_none());
     assert_eq!(
         res.attributes,
-        vec![attr("action", "migrate"), attr("from_version", "2.0.1"), attr("to_version", "2.1.0")]
+        vec![attr("action", "migrate"), attr("from_version", "2.0.0"), attr("to_version", "2.2.0")]
     );
 
     let new_contract_version = ContractVersion {
         contract: "crates.io:mars-rewards-collector-osmosis".to_string(),
-        version: "2.1.0".to_string(),
+        version: "2.2.0".to_string(),
     };
     assert_eq!(cw2::get_contract_version(deps.as_ref().storage).unwrap(), new_contract_version);
 }

@@ -1016,9 +1016,20 @@ export const osmosisMainnetConfig: DeploymentConfig = {
     name: 'osmosis',
     timeoutSeconds: 600,
     channelId: 'channel-557',
-    safetyFundFeeShare: '0.5',
-    feeCollectorDenom: mars,
-    safetyFundDenom: axlUSDC,
+    safetyFundFeeShare: '0.45',
+    revenueShare: '0.1',
+    feeCollectorConfig: {
+      target_denom: mars,
+      transfer_type: 'ibc',
+    },
+    safetyFundConfig: {
+      target_denom: axlUSDC,
+      transfer_type: 'ibc',
+    },
+    revenueShareConfig: {
+      target_denom: axlUSDC,
+      transfer_type: 'ibc',
+    },
     slippageTolerance: '0.01',
   },
   incentives: {

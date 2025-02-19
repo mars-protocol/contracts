@@ -1,5 +1,4 @@
-import { DeploymentConfig, AssetConfig, OracleConfig } from '../../types/config'
-import { NeutronIbcConfig } from '../../types/generated/mars-rewards-collector-base/MarsRewardsCollectorBase.types'
+import { DeploymentConfig, AssetConfig, OracleConfig, PerpDenom } from '../../types/config'
 
 const nobleUsdcDenom = 'ibc/4C19E7EC06C1AB2EC2D70C6855FEB6D48E9CE174913991DA0A517D21978E7E42'
 const atomDenom = 'ibc/C4CFF46FD6DE35CA4CF4CE031E643C8FDC9BA4B99AE598E9B0ED98FE3A2319F9'
@@ -25,29 +24,6 @@ const astroportIncentives = 'neutron1slxs8heecwyw0n6zmj7unj3nenrfhk2zpagfz2lt87d
 // note the following three addresses are all 'mars' bech32 prefix
 const safetyFundAddr = 'mars1s4hgh56can3e33e0zqpnjxh0t5wdf7u3pze575'
 const feeCollectorAddr = 'mars17xpfvakm2amg962yls6f84z3kell8c5ldy6e7x'
-
-// Pyth configuration
-const pythAddr = 'neutron15ldst8t80982akgr8w8ekcytejzkmfpgdkeq4xgtge48qs7435jqp87u3t'
-const pythAtomID = 'b00b60f88b03a6a625a8d1c048c3f66653edf217439983d037e7222c4e612819'
-const pythUsdcID = 'eaa020c61cc479712813461ce153894a96a6c00b21ed0cfc2798d1f9a9e9c94a'
-const pythNtrnID = 'a8e6517966a52cb1df864b2764f3629fde3f21d2b640b5c572fcd654cbccd65e'
-
-// IBC config for rewards-collector. See https://rest-palvus.pion-1.ntrn.tech/neutron-org/neutron/feerefunder/params
-export const neutronIbcConfig: NeutronIbcConfig = {
-  source_port: 'transfer',
-  acc_fee: [
-    {
-      denom: 'untrn',
-      amount: '1000',
-    },
-  ],
-  timeout_fee: [
-    {
-      denom: 'untrn',
-      amount: '1000',
-    },
-  ],
-}
 
 // Oracle configurations
 export const ntrnOracle: OracleConfig = {
@@ -460,11 +436,21 @@ export const neutronTestnetConfig: DeploymentConfig = {
     name: 'neutron',
     timeoutSeconds: 600,
     channelId: marsNeutronChannelId,
-    safetyFundFeeShare: '0.5',
-    feeCollectorDenom: marsDenom,
-    safetyFundDenom: nobleUsdcDenom,
+    safetyFundFeeShare: '0.45',
+    revenueShare: '0.1',
+    revenueShareConfig: {
+      target_denom: nobleUsdcDenom,
+      transfer_type: 'bank',
+    },
+    safetyFundConfig: {
+      target_denom: nobleUsdcDenom,
+      transfer_type: 'bank',
+    },
+    feeCollectorConfig: {
+      target_denom: marsDenom,
+      transfer_type: 'ibc',
+    },
     slippageTolerance: '0.01',
-    neutronIbcConfig: neutronIbcConfig,
   },
   incentives: {
     epochDuration: 604800, // 1 week

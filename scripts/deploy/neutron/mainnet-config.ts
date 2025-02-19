@@ -1,5 +1,4 @@
 import { DeploymentConfig, AssetConfig, OracleConfig } from '../../types/config'
-import { NeutronIbcConfig } from '../../types/generated/mars-rewards-collector-base/MarsRewardsCollectorBase.types'
 
 const axlUsdcDenom = 'ibc/F082B65C88E4B6D5EF1DB243CDA1D331D002759E938A0F5CD3FFDC5D53B3E349'
 const atomDenom = 'ibc/C4CFF46FD6DE35CA4CF4CE031E643C8FDC9BA4B99AE598E9B0ED98FE3A2319F9'
@@ -26,23 +25,6 @@ const feeCollectorAddr = 'mars17xpfvakm2amg962yls6f84z3kell8c5ldy6e7x'
 const pythAddr = 'neutron1m2emc93m9gpwgsrsf2vylv9xvgqh654630v7dfrhrkmr5slly53spg85wv'
 const pythAtomID = 'b00b60f88b03a6a625a8d1c048c3f66653edf217439983d037e7222c4e612819'
 const pythUsdcID = 'eaa020c61cc479712813461ce153894a96a6c00b21ed0cfc2798d1f9a9e9c94a'
-
-// IBC config for rewards-collector. See https://neutron.rpc.p2p.world/qgrnU6PsQZA8F9S5Fb8Fn3tV3kXmMBl2M9bcc9jWLjQy8p/lcd/neutron-org/neutron/feerefunder/params
-export const neutronIbcConfig: NeutronIbcConfig = {
-  source_port: 'transfer',
-  acc_fee: [
-    {
-      denom: 'untrn',
-      amount: '100000',
-    },
-  ],
-  timeout_fee: [
-    {
-      denom: 'untrn',
-      amount: '100000',
-    },
-  ],
-}
 
 // Oracle configurations
 export const marsOracle: OracleConfig = {
@@ -381,11 +363,21 @@ export const neutronMainnetConfig: DeploymentConfig = {
     name: 'neutron',
     timeoutSeconds: 600,
     channelId: marsNeutronChannelId,
-    safetyFundFeeShare: '0.5',
-    feeCollectorDenom: marsDenom,
-    safetyFundDenom: axlUsdcDenom,
+    safetyFundFeeShare: '0.45',
+    revenueShare: '0.1',
+    revenueShareConfig: {
+      target_denom: axlUsdcDenom,
+      transfer_type: 'bank',
+    },
+    safetyFundConfig: {
+      target_denom: axlUsdcDenom,
+      transfer_type: 'bank',
+    },
+    feeCollectorConfig: {
+      target_denom: marsDenom,
+      transfer_type: 'ibc',
+    },
     slippageTolerance: '0.01',
-    neutronIbcConfig: neutronIbcConfig,
   },
   incentives: {
     epochDuration: 604800, // 1 week

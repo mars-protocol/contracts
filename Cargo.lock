@@ -2542,6 +2542,7 @@ dependencies = [
  "mars-utils 2.1.0",
  "osmosis-std 0.22.0",
  "serde",
+ "test-case",
 ]
 
 [[package]]

@@ -1,14 +1,13 @@
 use std::fmt::{Debug, Display};
 
 use cosmwasm_std::{
-    Coin, CosmosMsg, CustomMsg, CustomQuery, Decimal, Empty, Env, IbcMsg, IbcTimeout,
-    QuerierWrapper, Uint128,
+    BankMsg, Coin, CosmosMsg, CustomMsg, CustomQuery, Decimal, Empty, Env, QuerierWrapper, Uint128,
 };
-use mars_types::rewards_collector::Config;
+use mars_types::rewards_collector::{Config, TransferType};
 use schemars::JsonSchema;
 use serde::{de::DeserializeOwned, Serialize};
 
-use crate::ContractResult;
+use crate::{ContractError, ContractResult};
 
 pub trait Route<M, Q>:
     Serialize + DeserializeOwned + Clone + Debug + Display + PartialEq + JsonSchema
@@ -35,27 +34,33 @@ where
     ) -> ContractResult<CosmosMsg<M>>;
 }
 
-pub trait IbcTransferMsg<M: CustomMsg> {
-    fn ibc_transfer_msg(
-        env: Env,
-        to_address: String,
+pub trait TransferMsg<M: CustomMsg> {
+    fn transfer_msg(
+        env: &Env,
+        to_address: &str,
         amount: Coin,
-        cfg: Config,
+        cfg: &Config,
+        transfer_type: &TransferType,
     ) -> ContractResult<CosmosMsg<M>>;
 }
 
-impl IbcTransferMsg<Empty> for Empty {
-    fn ibc_transfer_msg(
-        env: Env,
-        to_address: String,
+impl TransferMsg<Empty> for Empty {
+    fn transfer_msg(
+        _: &Env,
+        to_address: &str,
         amount: Coin,
-        cfg: Config,
+        _: &Config,
+        transfer_type: &TransferType,
     ) -> ContractResult<CosmosMsg<Empty>> {
-        Ok(CosmosMsg::Ibc(IbcMsg::Transfer {
-            channel_id: cfg.channel_id,
-            to_address,
-            amount,
-            timeout: IbcTimeout::with_timestamp(env.block.time.plus_seconds(cfg.timeout_seconds)),
-        }))
+        // By default, we only support bank transfers
+        match transfer_type {
+            TransferType::Bank => Ok(CosmosMsg::Bank(BankMsg::Send {
+                to_address: to_address.to_string(),
+                amount: vec![amount],
+            })),
+            TransferType::Ibc => Err(ContractError::UnsupportedTransferType {
+                transfer_type: transfer_type.to_string(),
+            }),
+        }
     }
 }

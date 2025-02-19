@@ -1,4 +1,37 @@
+use cosmwasm_std::{Coin, CosmosMsg, Empty, Env, IbcMsg, IbcTimeout};
+use mars_rewards_collector_base::{contract::Collector, ContractResult, TransferMsg};
+use mars_types::rewards_collector::{Config, TransferType};
+
 pub mod migrations;
+
+pub struct OsmosisMsgFactory {}
+
+impl TransferMsg<Empty> for OsmosisMsgFactory {
+    fn transfer_msg(
+        env: &Env,
+        to_address: &str,
+        amount: Coin,
+        cfg: &Config,
+        transfer_type: &TransferType,
+    ) -> ContractResult<CosmosMsg<Empty>> {
+        match transfer_type {
+            TransferType::Bank => Ok(CosmosMsg::Bank(cosmwasm_std::BankMsg::Send {
+                to_address: to_address.to_string(),
+                amount: vec![amount],
+            })),
+            TransferType::Ibc => Ok(CosmosMsg::Ibc(IbcMsg::Transfer {
+                channel_id: cfg.channel_id.to_string(),
+                to_address: to_address.to_string(),
+                amount,
+                timeout: IbcTimeout::with_timestamp(
+                    env.block.time.plus_seconds(cfg.timeout_seconds),
+                ),
+            })),
+        }
+    }
+}
+
+pub type OsmosisCollector<'a> = Collector<'a, Empty, OsmosisMsgFactory>;
 
 #[cfg(not(feature = "library"))]
 pub mod entry {
@@ -6,15 +39,13 @@ pub mod entry {
         entry_point, Binary, Deps, DepsMut, Empty, Env, MessageInfo, Response, StdResult,
     };
     use cw2::set_contract_version;
-    use mars_rewards_collector_base::{contract::Collector, ContractError, ContractResult};
+    use mars_rewards_collector_base::{ContractError, ContractResult};
     use mars_types::rewards_collector::{ExecuteMsg, InstantiateMsg, QueryMsg};
 
-    use crate::migrations;
+    use crate::{migrations, OsmosisCollector};
 
     pub const CONTRACT_NAME: &str = env!("CARGO_PKG_NAME");
     pub const CONTRACT_VERSION: &str = env!("CARGO_PKG_VERSION");
-
-    pub type OsmosisCollector<'a> = Collector<'a, Empty, Empty>;
 
     #[entry_point]
     pub fn instantiate(

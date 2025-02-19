@@ -1,5 +1,7 @@
+use std::fmt;
+
 use cosmwasm_schema::{cw_serde, QueryResponses};
-use cosmwasm_std::{Addr, Api, Coin, Decimal, StdResult, Uint128};
+use cosmwasm_std::{Addr, Api, Decimal, StdResult, Uint128};
 use mars_owner::OwnerUpdate;
 use mars_utils::{
     error::ValidationError,
@@ -18,18 +20,44 @@ pub struct InstantiateMsg {
     pub address_provider: String,
     /// Percentage of fees that are sent to the safety fund
     pub safety_tax_rate: Decimal,
-    /// The asset to which the safety fund share is converted
-    pub safety_fund_denom: String,
-    /// The asset to which the fee collector share is converted
-    pub fee_collector_denom: String,
-    /// The channel ID of the mars hub
+    /// Percentage of fees that are sent to the revenue share
+    pub revenue_share_tax_rate: Decimal,
+    /// Configuration for the safety fund reward share
+    pub safety_fund_config: RewardConfig,
+    /// Configuration for the revenue share reward share
+    pub revenue_share_config: RewardConfig,
+    /// Configuration for the fee collector reward share
+    pub fee_collector_config: RewardConfig,
+    /// The channel ID of neutron-1
     pub channel_id: String,
     /// Number of seconds after which an IBC transfer is to be considered failed, if no acknowledgement is received
     pub timeout_seconds: u64,
     /// Maximum percentage of price movement (minimum amount you accept to receive during swap)
     pub slippage_tolerance: Decimal,
-    /// Neutron Ibc config
-    pub neutron_ibc_config: Option<NeutronIbcConfig>,
+}
+#[cw_serde]
+pub enum TransferType {
+    // Use IBC to distribute rewards cross chain
+    Ibc,
+    // Use bank send to distribute rewards to a local address
+    Bank,
+}
+
+impl fmt::Display for TransferType {
+    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+        match self {
+            TransferType::Ibc => write!(f, "Ibc"),
+            TransferType::Bank => write!(f, "Bank"),
+        }
+    }
+}
+
+#[cw_serde]
+pub struct RewardConfig {
+    /// The denomination in which rewards will be distributed
+    pub target_denom: String,
+    /// The method of reward distribution (IBC or Bank transfer)
+    pub transfer_type: TransferType,
 }
 
 #[cw_serde]
@@ -38,30 +66,26 @@ pub struct Config {
     pub address_provider: Addr,
     /// Percentage of fees that are sent to the safety fund
     pub safety_tax_rate: Decimal,
-    /// The asset to which the safety fund share is converted
-    pub safety_fund_denom: String,
-    /// The asset to which the fee collector share is converted
-    pub fee_collector_denom: String,
-    /// The channel ID of the mars hub
+    /// Percentage of fees that are sent to the revenue share
+    pub revenue_share_tax_rate: Decimal,
+    /// Configuration for the safety fund transfer
+    pub safety_fund_config: RewardConfig,
+    /// Configuration for the revenue share parameters
+    pub revenue_share_config: RewardConfig,
+    /// Configuration for the fee collector parameters
+    pub fee_collector_config: RewardConfig,
+    /// The channel ID for osmosis -> neutron
     pub channel_id: String,
     /// Number of seconds after which an IBC transfer is to be considered failed, if no acknowledgement is received
     pub timeout_seconds: u64,
     /// Maximum percentage of price movement (minimum amount you accept to receive during swap)
     pub slippage_tolerance: Decimal,
-    /// Neutron IBC config
-    pub neutron_ibc_config: Option<NeutronIbcConfig>,
-}
-
-#[cw_serde]
-pub struct NeutronIbcConfig {
-    pub source_port: String,
-    pub acc_fee: Vec<Coin>,
-    pub timeout_fee: Vec<Coin>,
 }
 
 impl Config {
     pub fn validate(&self) -> Result<(), ValidationError> {
-        decimal_param_le_one(self.safety_tax_rate, "safety_tax_rate")?;
+        let total_tax_rate = self.safety_tax_rate + self.revenue_share_tax_rate;
+        decimal_param_le_one(total_tax_rate, "total_tax_rate")?;
 
         integer_param_gt_zero(self.timeout_seconds, "timeout_seconds")?;
 
@@ -73,8 +97,15 @@ impl Config {
             });
         }
 
-        validate_native_denom(&self.safety_fund_denom)?;
-        validate_native_denom(&self.fee_collector_denom)?;
+        // There is an assumption that revenue share and safety fund are swapped to the same denom
+        assert_eq!(self.safety_fund_config.target_denom, self.revenue_share_config.target_denom);
+
+        // Ensure that the fee collector is a different denom than the safety fund and revenue share
+        assert_ne!(self.fee_collector_config.target_denom, self.safety_fund_config.target_denom);
+
+        validate_native_denom(&self.safety_fund_config.target_denom)?;
+        validate_native_denom(&self.revenue_share_config.target_denom)?;
+        validate_native_denom(&self.fee_collector_config.target_denom)?;
 
         Ok(())
     }
@@ -85,12 +116,13 @@ impl Config {
         Ok(Config {
             address_provider: api.addr_validate(&msg.address_provider)?,
             safety_tax_rate: msg.safety_tax_rate,
-            safety_fund_denom: msg.safety_fund_denom,
-            fee_collector_denom: msg.fee_collector_denom,
+            revenue_share_tax_rate: msg.revenue_share_tax_rate,
+            safety_fund_config: msg.safety_fund_config,
+            revenue_share_config: msg.revenue_share_config,
+            fee_collector_config: msg.fee_collector_config,
             channel_id: msg.channel_id,
             timeout_seconds: msg.timeout_seconds,
             slippage_tolerance: msg.slippage_tolerance,
-            neutron_ibc_config: msg.neutron_ibc_config,
         })
     }
 }
@@ -102,18 +134,20 @@ pub struct UpdateConfig {
     pub address_provider: Option<String>,
     /// Percentage of fees that are sent to the safety fund
     pub safety_tax_rate: Option<Decimal>,
-    /// The asset to which the safety fund share is converted
-    pub safety_fund_denom: Option<String>,
-    /// The asset to which the fee collector share is converted
-    pub fee_collector_denom: Option<String>,
-    /// The channel id of the mars hub
+    /// Percentage of fees that are sent to the revenue share
+    pub revenue_share_tax_rate: Option<Decimal>,
+    /// Safety fund configuration
+    pub safety_fund_config: Option<RewardConfig>,
+    /// Revenue share configuration
+    pub revenue_share_config: Option<RewardConfig>,
+    /// Fee collector configuration
+    pub fee_collector_config: Option<RewardConfig>,
+    /// The channel id for osmosis -> neutron
     pub channel_id: Option<String>,
     /// Number of seconds after which an IBC transfer is to be considered failed, if no acknowledgement is received
     pub timeout_seconds: Option<u64>,
     /// Maximum percentage of price movement (minimum amount you accept to receive during swap)
     pub slippage_tolerance: Option<Decimal>,
-    /// Neutron Ibc config
-    pub neutron_ibc_config: Option<NeutronIbcConfig>,
 }
 
 #[cw_serde]
@@ -138,12 +172,11 @@ pub enum ExecuteMsg {
         actions: Vec<Action>,
     },
 
-    /// Distribute the accrued protocol income between the safety fund and the fee modules on mars hub,
-    /// according to the split set in config.
+    /// Distribute the accrued protocol income between the safety fund, fee collector and
+    /// revenue share addresses, according to the split set in config.
     /// Callable by any address.
     DistributeRewards {
         denom: String,
-        amount: Option<Uint128>,
     },
 
     /// Swap any asset on the contract
@@ -182,18 +215,20 @@ pub struct ConfigResponse {
     pub address_provider: String,
     /// Percentage of fees that are sent to the safety fund
     pub safety_tax_rate: Decimal,
-    /// The asset to which the safety fund share is converted
-    pub safety_fund_denom: String,
-    /// The asset to which the fee collector share is converted
-    pub fee_collector_denom: String,
-    /// The channel ID of the mars hub
+    /// Percentage of fees that are sent to the revenue share
+    pub revenue_share_tax_rate: Decimal,
+    /// Configuration for the safety fund parameters
+    pub safety_fund_config: RewardConfig,
+    /// Configuration for the revenue share parameters
+    pub revenue_share_config: RewardConfig,
+    /// Configuration for the fee collector parameters
+    pub fee_collector_config: RewardConfig,
+    /// The channel ID for osmosis -> neutron
     pub channel_id: String,
     /// Number of seconds after which an IBC transfer is to be considered failed, if no acknowledgement is received
     pub timeout_seconds: u64,
     /// Maximum percentage of price movement (minimum amount you accept to receive during swap)
     pub slippage_tolerance: Decimal,
-    /// Neutron Ibc config
-    pub neutron_ibc_config: Option<NeutronIbcConfig>,
 }
 
 #[cw_serde]

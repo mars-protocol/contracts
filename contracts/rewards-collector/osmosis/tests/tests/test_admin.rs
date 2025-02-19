@@ -27,16 +27,17 @@ fn instantiating() {
             proposed_new_owner: None,
             address_provider: config.address_provider.to_string(),
             safety_tax_rate: config.safety_tax_rate,
-            safety_fund_denom: config.safety_fund_denom,
-            fee_collector_denom: config.fee_collector_denom,
+            revenue_share_tax_rate: config.revenue_share_tax_rate,
+            safety_fund_config: config.safety_fund_config,
+            revenue_share_config: config.revenue_share_config,
+            fee_collector_config: config.fee_collector_config,
             channel_id: config.channel_id,
             timeout_seconds: config.timeout_seconds,
             slippage_tolerance: config.slippage_tolerance,
-            neutron_ibc_config: config.neutron_ibc_config
         }
     );
 
-    // init config with safety_tax_rate greater than 1; should fail
+    // init config with total_weight greater than 1; should fail
     init_msg.safety_tax_rate = Decimal::percent(150);
 
     let info = mock_info("deployer");
@@ -44,8 +45,8 @@ fn instantiating() {
     assert_eq!(
         err,
         ContractError::Validation(ValidationError::InvalidParam {
-            param_name: "safety_tax_rate".to_string(),
-            invalid_value: "1.5".to_string(),
+            param_name: "total_tax_rate".to_string(),
+            invalid_value: "1.6".to_string(),
             predicate: "<= 1".to_string(),
         })
     );
@@ -104,8 +105,8 @@ fn updating_config() {
     assert_eq!(
         err,
         ContractError::Validation(ValidationError::InvalidParam {
-            param_name: "safety_tax_rate".to_string(),
-            invalid_value: "1.25".to_string(),
+            param_name: "total_tax_rate".to_string(),
+            invalid_value: "1.35".to_string(),
             predicate: "<= 1".to_string(),
         })
     );

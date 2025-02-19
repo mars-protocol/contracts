@@ -34,3 +34,4 @@ mars-testing = { workspace = true }
 mars-utils   = { workspace = true }
 osmosis-std  = { workspace = true }
 serde        = { workspace = true }
+test-case    = { workspace = true }
