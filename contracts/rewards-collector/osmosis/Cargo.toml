@@ -1,6 +1,6 @@
 [package]
 name          = "mars-rewards-collector-osmosis"
-version       = { workspace = true }
+version       = "2.1.1"
 authors       = { workspace = true }
 edition       = { workspace = true }
 license       = { workspace = true }

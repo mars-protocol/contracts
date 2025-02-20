@@ -1,7 +1,7 @@
 [package]
 name          = "mars-address-provider"
 description   = "A smart contract that holds addresses of Mars Red Bank contracts"
-version       = { workspace = true }
+version       = "2.1.1"
 authors       = { workspace = true }
 edition       = { workspace = true }
 license       = { workspace = true }

@@ -36,7 +36,7 @@ pub type OsmosisCollector<'a> = Collector<'a, Empty, OsmosisMsgFactory>;
 #[cfg(not(feature = "library"))]
 pub mod entry {
     use cosmwasm_std::{
-        entry_point, Binary, Deps, DepsMut, Empty, Env, MessageInfo, Response, StdResult
+        entry_point, Binary, Deps, DepsMut, Empty, Env, MessageInfo, Response, StdResult,
     };
     use cw2::set_contract_version;
     use mars_rewards_collector_base::{ContractError, ContractResult};
@@ -77,11 +77,7 @@ pub mod entry {
     }
 
     #[entry_point]
-    pub fn migrate(
-        deps: DepsMut,
-        _env: Env,
-        _msg: Empty,
-    ) -> Result<Response, ContractError> {
+    pub fn migrate(deps: DepsMut, _env: Env, _msg: Empty) -> Result<Response, ContractError> {
         migrations::v2_1_1::migrate(deps)
     }
 }
