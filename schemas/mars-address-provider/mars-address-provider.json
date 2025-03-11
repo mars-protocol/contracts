@@ -117,13 +117,6 @@
             ]
           },
           {
-            "description": "Perps contract",
-            "type": "string",
-            "enum": [
-              "perps"
-            ]
-          },
-          {
             "description": "The address that shall receive the revenue share given to neutron (10%)",
             "type": "string",
             "enum": [
@@ -342,13 +335,6 @@
             ]
           },
           {
-            "description": "Perps contract",
-            "type": "string",
-            "enum": [
-              "perps"
-            ]
-          },
-          {
             "description": "The address that shall receive the revenue share given to neutron (10%)",
             "type": "string",
             "enum": [
@@ -432,13 +418,6 @@
               "type": "string",
               "enum": [
                 "astroport_incentives"
-              ]
-            },
-            {
-              "description": "Perps contract",
-              "type": "string",
-              "enum": [
-                "perps"
               ]
             },
             {
@@ -531,13 +510,6 @@
               ]
             },
             {
-              "description": "Perps contract",
-              "type": "string",
-              "enum": [
-                "perps"
-              ]
-            },
-            {
               "description": "The address that shall receive the revenue share given to neutron (10%)",
               "type": "string",
               "enum": [
@@ -624,13 +596,6 @@
               "type": "string",
               "enum": [
                 "astroport_incentives"
-              ]
-            },
-            {
-              "description": "Perps contract",
-              "type": "string",
-              "enum": [
-                "perps"
               ]
             },
             {
