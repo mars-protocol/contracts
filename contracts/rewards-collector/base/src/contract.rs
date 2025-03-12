@@ -476,7 +476,7 @@ where
             return Err(ContractError::SlippageLimitExceeded {
                 denom_in: asset_in_denom,
                 denom_out: asset_out_denom,
-                min_receive_minumum: min_receive_lower_limit,
+                min_receive_minimum: min_receive_lower_limit,
                 min_receive_given: min_receive,
             });
         }

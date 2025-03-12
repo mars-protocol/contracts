@@ -225,9 +225,9 @@ fn swap_fails_if_slippage_limit_exceeded() {
     // uatom for Fee collector = 88888 - 8888 - 22222 = 57778
     // worst price (atom -> mars ) = 12.5 / 0/5 = 25 * (1-0.03) = 24.25
     // worst price (atom -> usdc) = 12.5 = * (1-0.03) = 12.125
-    // minumum revenue share (atom -> usdc) = 8888 * 12.125 = 107767
-    // minumum safety fund (atom -> usdc) = 31110 * 12.125 = 377208
-    // minumum fee collector (atom -> mars) = 57778 * 24.25= 1401116
+    // minimum revenue share (atom -> usdc) = 8888 * 12.125 = 107767
+    // minimum safety fund (atom -> usdc) = 31110 * 12.125 = 377208
+    // minimum fee collector (atom -> mars) = 57778 * 24.25= 1401116
 
     // Safety Fund fail
     let res = execute(
@@ -259,7 +259,7 @@ fn swap_fails_if_slippage_limit_exceeded() {
         ContractError::SlippageLimitExceeded {
             denom_in: atom_denom.clone(),
             denom_out: usdc_denom.clone(),
-            min_receive_minumum: Uint128::new(377208),
+            min_receive_minimum: Uint128::new(377208),
             min_receive_given: Uint128::new(377207),
         }
     );
@@ -294,7 +294,7 @@ fn swap_fails_if_slippage_limit_exceeded() {
         ContractError::SlippageLimitExceeded {
             denom_in: atom_denom.clone(),
             denom_out: mars_denom.clone(),
-            min_receive_minumum: Uint128::new(1401116),
+            min_receive_minimum: Uint128::new(1401116),
             min_receive_given: Uint128::new(1401115),
         }
     );
