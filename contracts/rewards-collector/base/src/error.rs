@@ -54,11 +54,11 @@ pub enum ContractError {
         reason: String,
     },
 
-    #[error("Min receive given for swap: {denom_in} -> {denom_out} is too small. `min_receive` allowed: {min_receive_minumum}, `min_receive` given: {min_receive_given}")]
+    #[error("Min receive given for swap: {denom_in} -> {denom_out} is too small. `min_receive` allowed: {min_receive_minimum}, `min_receive` given: {min_receive_given}")]
     SlippageLimitExceeded {
         denom_in: String,
         denom_out: String,
-        min_receive_minumum: Uint128,
+        min_receive_minimum: Uint128,
         min_receive_given: Uint128,
     },
 
