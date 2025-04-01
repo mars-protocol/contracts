@@ -8,19 +8,20 @@
 import { CosmWasmClient, SigningCosmWasmClient, ExecuteResult } from '@cosmjs/cosmwasm-stargate'
 import { StdFee } from '@cosmjs/amino'
 import {
-  Uint128,
+  TransferType,
   Decimal,
   InstantiateMsg,
-  NeutronIbcConfig,
-  Coin,
+  RewardConfig,
   ExecuteMsg,
   OwnerUpdate,
+  Uint128,
   Action,
   ActionAmount,
   LiquidateRequestForVaultBaseForString,
   VaultPositionType,
   SwapperRoute,
   UpdateConfig,
+  Coin,
   ActionCoin,
   VaultBaseForString,
   AstroRoute,
@@ -96,10 +97,8 @@ export interface MarsRewardsCollectorBaseInterface
   ) => Promise<ExecuteResult>
   distributeRewards: (
     {
-      amount,
       denom,
     }: {
-      amount?: Uint128
       denom: string
     },
     fee?: number | StdFee | 'auto',
@@ -255,10 +254,8 @@ export class MarsRewardsCollectorBaseClient
   }
   distributeRewards = async (
     {
-      amount,
       denom,
     }: {
-      amount?: Uint128
       denom: string
     },
     fee: number | StdFee | 'auto' = 'auto',
@@ -270,7 +267,6 @@ export class MarsRewardsCollectorBaseClient
       this.contractAddress,
       {
         distribute_rewards: {
-          amount,
           denom,
         },
       },

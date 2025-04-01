@@ -393,12 +393,13 @@ export class Deployer {
       owner: this.deployerAddr,
       address_provider: this.storage.addresses['addressProvider']!,
       safety_tax_rate: this.config.rewardsCollector.safetyFundFeeShare,
-      safety_fund_denom: this.config.rewardsCollector.safetyFundDenom,
-      fee_collector_denom: this.config.rewardsCollector.feeCollectorDenom,
+      revenue_share_tax_rate: this.config.rewardsCollector.revenueShare,
+      revenue_share_config: this.config.rewardsCollector.revenueShareConfig,
+      safety_fund_config: this.config.rewardsCollector.safetyFundConfig,
+      fee_collector_config: this.config.rewardsCollector.feeCollectorConfig,
       channel_id: this.config.rewardsCollector.channelId,
       timeout_seconds: this.config.rewardsCollector.timeoutSeconds,
       slippage_tolerance: this.config.rewardsCollector.slippageTolerance,
-      neutron_ibc_config: this.config.rewardsCollector.neutronIbcConfig,
     }
     await this.instantiate('rewardsCollector', this.storage.codeIds['rewardsCollector']!, msg)
   }

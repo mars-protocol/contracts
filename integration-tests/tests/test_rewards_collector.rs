@@ -1,9 +1,13 @@
-use cosmwasm_std::{coin, Decimal, Uint128};
+use cosmwasm_std::{coin, Decimal, Empty, Uint128};
+use mars_oracle_osmosis::OsmosisPriceSourceUnchecked;
 use mars_types::{
     address_provider::{
         ExecuteMsg as ExecuteMsgAddr, InstantiateMsg as InstantiateAddr, MarsAddressType,
     },
-    rewards_collector::{ExecuteMsg, InstantiateMsg as InstantiateRewards, UpdateConfig},
+    oracle,
+    rewards_collector::{
+        ExecuteMsg, InstantiateMsg as InstantiateRewards, RewardConfig, TransferType, UpdateConfig,
+    },
     swapper::{EstimateExactInSwapResponse, OsmoRoute, OsmoSwap, QueryMsg, SwapperRoute},
 };
 use osmosis_test_tube::{Account, Gamm, Module, OsmosisTestApp, Wasm};
@@ -22,12 +26,12 @@ mod helpers;
 const OSMOSIS_ADDR_PROVIDER_CONTRACT_NAME: &str = "mars-address-provider";
 const OSMOSIS_REWARDS_CONTRACT_NAME: &str = "mars-rewards-collector-osmosis";
 const OSMOSIS_SWAPPER_CONTRACT_NAME: &str = "mars-swapper-osmosis";
+const OSMOSIS_ORACLE_CONTRACT_NAME: &str = "mars-oracle-osmosis";
 
 #[test]
 fn swapping_rewards() {
     let app = OsmosisTestApp::new();
     let wasm = Wasm::new(&app);
-
     let accs = app
         .init_accounts(
             &[
@@ -52,9 +56,13 @@ fn swapping_rewards() {
         },
     );
 
-    let safety_fund_denom = "uusdc";
+    let usdc_denom = "uusdc";
+    let mars_denom = "umars";
+    let safety_fund_denom = usdc_denom;
+    let revenue_share_denom = usdc_denom;
     let fee_collector_denom = "umars";
     let safety_tax_rate = Decimal::percent(25);
+    let revenue_share_tax_rate = Decimal::percent(10);
     let rewards_addr = instantiate_contract(
         &wasm,
         signer,
@@ -63,12 +71,22 @@ fn swapping_rewards() {
             owner: signer.address(),
             address_provider: addr_provider_addr.clone(),
             safety_tax_rate,
-            safety_fund_denom: safety_fund_denom.to_string(),
-            fee_collector_denom: fee_collector_denom.to_string(),
+            revenue_share_tax_rate,
+            safety_fund_config: RewardConfig {
+                target_denom: safety_fund_denom.to_string(),
+                transfer_type: TransferType::Bank,
+            },
+            revenue_share_config: RewardConfig {
+                target_denom: revenue_share_denom.to_string(),
+                transfer_type: TransferType::Bank,
+            },
+            fee_collector_config: RewardConfig {
+                target_denom: fee_collector_denom.to_string(),
+                transfer_type: TransferType::Ibc,
+            },
             channel_id: "channel-1".to_string(),
             timeout_seconds: 60,
-            slippage_tolerance: Decimal::percent(1),
-            neutron_ibc_config: None,
+            slippage_tolerance: Decimal::percent(5),
         },
     );
 
@@ -82,12 +100,89 @@ fn swapping_rewards() {
         },
     );
 
+    // Instantiate oracle addr
+    let oracle_addr = instantiate_contract(
+        &wasm,
+        signer,
+        OSMOSIS_ORACLE_CONTRACT_NAME,
+        &mars_types::oracle::InstantiateMsg::<Empty> {
+            owner: signer.address(),
+            base_denom: usdc_denom.to_string(),
+            custom_init: None,
+        },
+    );
+
     // Set swapper addr in address provider
     wasm.execute(
         &addr_provider_addr,
         &mars_types::address_provider::ExecuteMsg::SetAddress {
             address_type: MarsAddressType::Swapper,
             address: swapper_addr.clone(),
+        },
+        &[],
+        signer,
+    )
+    .unwrap();
+
+    // Set oracle addr in address provider
+    wasm.execute(
+        &addr_provider_addr,
+        &mars_types::address_provider::ExecuteMsg::SetAddress {
+            address_type: MarsAddressType::Oracle,
+            address: oracle_addr.clone(),
+        },
+        &[],
+        signer,
+    )
+    .unwrap();
+
+    // Set prices in the oracle
+    wasm.execute(
+        &oracle_addr,
+        &oracle::ExecuteMsg::<_, Empty>::SetPriceSource {
+            denom: usdc_denom.to_string(),
+            price_source: OsmosisPriceSourceUnchecked::Fixed {
+                price: Decimal::one(),
+            },
+        },
+        &[],
+        signer,
+    )
+    .unwrap();
+
+    wasm.execute(
+        &oracle_addr,
+        &oracle::ExecuteMsg::<_, Empty>::SetPriceSource {
+            denom: mars_denom.to_string(),
+            price_source: OsmosisPriceSourceUnchecked::Fixed {
+                price: Decimal::from_ratio(30u128, 20u128),
+            },
+        },
+        &[],
+        signer,
+    )
+    .unwrap();
+
+    wasm.execute(
+        &oracle_addr,
+        &oracle::ExecuteMsg::<_, Empty>::SetPriceSource {
+            denom: "uatom".to_string(),
+            price_source: OsmosisPriceSourceUnchecked::Fixed {
+                price: Decimal::from_ratio(50u128, 20u128),
+            },
+        },
+        &[],
+        signer,
+    )
+    .unwrap();
+
+    wasm.execute(
+        &oracle_addr,
+        &oracle::ExecuteMsg::<_, Empty>::SetPriceSource {
+            denom: "uosmo".to_string(),
+            price_source: OsmosisPriceSourceUnchecked::Fixed {
+                price: Decimal::from_ratio(10u128, 20u128),
+            },
         },
         &[],
         signer,
@@ -111,7 +206,6 @@ fn swapping_rewards() {
         .data
         .pool_id;
 
-    println!("pre swap");
     // swap to create historic index for TWAP
     swap_to_create_twap_records(
         &app,
@@ -138,8 +232,6 @@ fn swapping_rewards() {
         600u64,
     );
 
-    println!("postSwap");
-
     // fund contract
     let bank = Bank::new(&app);
     bank.send(user, &rewards_addr, &[coin(125u128, "uosmo")]).unwrap();
@@ -153,7 +245,8 @@ fn swapping_rewards() {
     let fee_collector_denom_balance = bank.query_balance(&rewards_addr, fee_collector_denom);
     assert_eq!(fee_collector_denom_balance, 0u128);
 
-    let safety_fund_amt_swap = Uint128::new(osmo_balance) * safety_tax_rate;
+    let safety_fund_amt_swap =
+        Uint128::new(osmo_balance) * (safety_tax_rate + revenue_share_tax_rate);
     let fee_collector_amt_swap = Uint128::new(osmo_balance) - safety_fund_amt_swap;
 
     let safety_fund_route = Some(SwapperRoute::Osmo(OsmoRoute {
@@ -172,6 +265,7 @@ fn swapping_rewards() {
             },
         )
         .unwrap();
+
     let safety_fund_min_receive = safety_fund_estimate.amount * Decimal::percent(99);
 
     let fee_collector_route = Some(SwapperRoute::Osmo(OsmoRoute {
@@ -193,7 +287,6 @@ fn swapping_rewards() {
     let fee_collector_min_receive = fee_collector_estimate.amount * Decimal::percent(99);
 
     // swap osmo
-    println!("swap osmo");
     wasm.execute(
         &rewards_addr,
         &ExecuteMsg::SwapAsset {
@@ -209,7 +302,8 @@ fn swapping_rewards() {
     )
     .unwrap();
 
-    let safety_fund_amt_swap = Uint128::new(atom_balance) * safety_tax_rate;
+    let safety_fund_amt_swap =
+        Uint128::new(atom_balance) * (safety_tax_rate + revenue_share_tax_rate);
     let fee_collector_amt_swap = Uint128::new(atom_balance) - safety_fund_amt_swap;
 
     let safety_fund_route = Some(SwapperRoute::Osmo(OsmoRoute {
@@ -320,7 +414,7 @@ fn distribute_rewards_if_ibc_channel_invalid() {
         &addr_provider_addr,
         &ExecuteMsgAddr::SetAddress {
             address_type: MarsAddressType::FeeCollector,
-            address: "mars17xpfvakm2amg962yls6f84z3kell8c5ldy6e7x".to_string(),
+            address: "osmo17xfxz0axs6cr7jejqpphuhs7yldnp295acmu9a".to_string(),
         },
         &[],
         signer,
@@ -330,7 +424,18 @@ fn distribute_rewards_if_ibc_channel_invalid() {
         &addr_provider_addr,
         &ExecuteMsgAddr::SetAddress {
             address_type: MarsAddressType::SafetyFund,
-            address: "mars1s4hgh56can3e33e0zqpnjxh0t5wdf7u3pze575".to_string(),
+            address: "osmo1f2m24wktq0sw3c0lexlg7fv4kngwyttvzws3a3r3al9ld2s2pvds87jqvf".to_string(),
+        },
+        &[],
+        signer,
+    )
+    .unwrap();
+
+    wasm.execute(
+        &addr_provider_addr,
+        &ExecuteMsgAddr::SetAddress {
+            address_type: MarsAddressType::RevenueShare,
+            address: "osmo14qncu5xag9ec26cx09x6pwncn9w74pq3wyr8rj".to_string(),
         },
         &[],
         signer,
@@ -340,6 +445,7 @@ fn distribute_rewards_if_ibc_channel_invalid() {
     // setup rewards-collector contract
     let safety_fund_denom = "uusdc";
     let fee_collector_denom = "umars";
+    let revenue_share_denom = "uusdc";
     let rewards_addr = instantiate_contract(
         &wasm,
         signer,
@@ -348,12 +454,22 @@ fn distribute_rewards_if_ibc_channel_invalid() {
             owner: signer.address(),
             address_provider: addr_provider_addr,
             safety_tax_rate: Decimal::percent(50),
-            safety_fund_denom: safety_fund_denom.to_string(),
-            fee_collector_denom: fee_collector_denom.to_string(),
+            revenue_share_tax_rate: Decimal::percent(10),
+            safety_fund_config: RewardConfig {
+                target_denom: safety_fund_denom.to_string(),
+                transfer_type: TransferType::Bank,
+            },
+            revenue_share_config: RewardConfig {
+                target_denom: revenue_share_denom.to_string(),
+                transfer_type: TransferType::Bank,
+            },
+            fee_collector_config: RewardConfig {
+                target_denom: fee_collector_denom.to_string(),
+                transfer_type: TransferType::Ibc,
+            },
             channel_id: "".to_string(),
             timeout_seconds: 60,
             slippage_tolerance: Decimal::percent(1),
-            neutron_ibc_config: None,
         },
     );
 
@@ -368,13 +484,12 @@ fn distribute_rewards_if_ibc_channel_invalid() {
     let mars_balance = bank.query_balance(&rewards_addr, "umars");
     assert_eq!(mars_balance, mars_balance);
 
-    // distribute usdc
+    // distribute umars rewards
     let res = wasm
         .execute(
             &rewards_addr,
             &ExecuteMsg::DistributeRewards {
-                denom: "uusdc".to_string(),
-                amount: None,
+                denom: "umars".to_string(),
             },
             &[],
             signer,
@@ -389,12 +504,13 @@ fn distribute_rewards_if_ibc_channel_invalid() {
             new_cfg: UpdateConfig {
                 address_provider: None,
                 safety_tax_rate: None,
-                safety_fund_denom: None,
-                fee_collector_denom: None,
+                revenue_share_tax_rate: None,
+                safety_fund_config: None,
+                revenue_share_config: None,
+                fee_collector_config: None,
                 channel_id: Some("channel-1".to_string()),
                 timeout_seconds: None,
                 slippage_tolerance: None,
-                neutron_ibc_config: None,
             },
         },
         &[],
@@ -402,13 +518,12 @@ fn distribute_rewards_if_ibc_channel_invalid() {
     )
     .unwrap();
 
-    // distribute mars
+    // distribute rewards
     let res = wasm
         .execute(
             &rewards_addr,
             &ExecuteMsg::DistributeRewards {
                 denom: "umars".to_string(),
-                amount: None,
             },
             &[],
             signer,

@@ -12,9 +12,9 @@ import {
   RedBankSettings,
   VaultConfigBaseForString,
 } from './generated/mars-params/MarsParams.types'
-import { NeutronIbcConfig } from './generated/mars-rewards-collector-base/MarsRewardsCollectorBase.types'
 import { Uint128 } from './generated/mars-red-bank/MarsRedBank.types'
 import { Duration, VaultInfoResponse } from './generated/mars-mock-vault/MarsMockVault.types'
+import { RewardConfig } from './generated/mars-rewards-collector-base/MarsRewardsCollectorBase.types'
 
 type SwapRoute = {
   denom_in: string
@@ -63,11 +63,12 @@ export interface DeploymentConfig {
   rewardsCollector: {
     name: string
     timeoutSeconds: number
-    neutronIbcConfig?: NeutronIbcConfig | null
     channelId: string
     safetyFundFeeShare: string
-    feeCollectorDenom: string
-    safetyFundDenom: string
+    revenueShare: string
+    revenueShareConfig: RewardConfig
+    safetyFundConfig: RewardConfig
+    feeCollectorConfig: RewardConfig
     slippageTolerance: string
   }
   incentives: {

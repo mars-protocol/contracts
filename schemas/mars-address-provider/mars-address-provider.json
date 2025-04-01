@@ -1,6 +1,6 @@
 {
   "contract_name": "mars-address-provider",
-  "contract_version": "2.1.0",
+  "contract_version": "2.1.1",
   "idl_version": "1.0.0",
   "instantiate": {
     "$schema": "http://json-schema.org/draft-07/schema#",
@@ -114,6 +114,13 @@
             "type": "string",
             "enum": [
               "astroport_incentives"
+            ]
+          },
+          {
+            "description": "The address that shall receive the revenue share given to neutron (10%)",
+            "type": "string",
+            "enum": [
+              "revenue_share"
             ]
           }
         ]
@@ -326,6 +333,13 @@
             "enum": [
               "astroport_incentives"
             ]
+          },
+          {
+            "description": "The address that shall receive the revenue share given to neutron (10%)",
+            "type": "string",
+            "enum": [
+              "revenue_share"
+            ]
           }
         ]
       }
@@ -404,6 +418,13 @@
               "type": "string",
               "enum": [
                 "astroport_incentives"
+              ]
+            },
+            {
+              "description": "The address that shall receive the revenue share given to neutron (10%)",
+              "type": "string",
+              "enum": [
+                "revenue_share"
               ]
             }
           ]
@@ -487,6 +508,13 @@
               "enum": [
                 "astroport_incentives"
               ]
+            },
+            {
+              "description": "The address that shall receive the revenue share given to neutron (10%)",
+              "type": "string",
+              "enum": [
+                "revenue_share"
+              ]
             }
           ]
         }
@@ -568,6 +596,13 @@
               "type": "string",
               "enum": [
                 "astroport_incentives"
+              ]
+            },
+            {
+              "description": "The address that shall receive the revenue share given to neutron (10%)",
+              "type": "string",
+              "enum": [
+                "revenue_share"
               ]
             }
           ]

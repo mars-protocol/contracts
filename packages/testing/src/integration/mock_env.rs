@@ -22,7 +22,7 @@ use mars_types::{
         self, CreateOrUpdateConfig, InitOrUpdateAssetParams, Market, MarketV2Response,
         UserCollateralResponse, UserDebtResponse, UserPositionResponse,
     },
-    rewards_collector,
+    rewards_collector::{self, RewardConfig},
 };
 use pyth_sdk_cw::PriceIdentifier;
 
@@ -836,8 +836,10 @@ pub struct MockEnvBuilder {
 
     // rewards-collector params
     safety_tax_rate: Decimal,
-    safety_fund_denom: String,
-    fee_collector_denom: String,
+    revenue_share_tax_rate: Decimal,
+    safety_fund_config: RewardConfig,
+    revenue_share_config: RewardConfig,
+    fee_collector_config: RewardConfig,
     slippage_tolerance: Decimal,
 
     pyth_contract_addr: String,
@@ -856,9 +858,20 @@ impl MockEnvBuilder {
             base_denom: "uosmo".to_string(),
             base_denom_decimals: 6u8,
             target_health_factor: Decimal::from_str("1.05").unwrap(),
-            safety_tax_rate: Decimal::percent(50),
-            safety_fund_denom: "uusdc".to_string(),
-            fee_collector_denom: "uusdc".to_string(),
+            safety_tax_rate: Decimal::percent(45),
+            revenue_share_tax_rate: Decimal::percent(10),
+            safety_fund_config: RewardConfig {
+                target_denom: "uusdc".to_string(),
+                transfer_type: rewards_collector::TransferType::Bank,
+            },
+            revenue_share_config: RewardConfig {
+                target_denom: "uusdc".to_string(),
+                transfer_type: rewards_collector::TransferType::Bank,
+            },
+            fee_collector_config: RewardConfig {
+                target_denom: "umars".to_string(),
+                transfer_type: rewards_collector::TransferType::Ibc,
+            },
             slippage_tolerance: Decimal::percent(5),
             pyth_contract_addr: "osmo1svg55quy7jjee6dn0qx85qxxvx5cafkkw4tmqpcjr9dx99l0zrhs4usft5"
                 .to_string(), // correct bech32 addr to pass validation
@@ -887,18 +900,18 @@ impl MockEnvBuilder {
         self
     }
 
-    pub fn safety_tax_rate(&mut self, percentage: Decimal) -> &mut Self {
-        self.safety_tax_rate = percentage;
+    pub fn safety_fund_config(&mut self, config: RewardConfig) -> &mut Self {
+        self.safety_fund_config = config;
         self
     }
 
-    pub fn safety_fund_denom(&mut self, denom: &str) -> &mut Self {
-        self.safety_fund_denom = denom.to_string();
+    pub fn revenue_share_config(&mut self, config: RewardConfig) -> &mut Self {
+        self.revenue_share_config = config;
         self
     }
 
-    pub fn fee_collector_denom(&mut self, denom: &str) -> &mut Self {
-        self.fee_collector_denom = denom.to_string();
+    pub fn fee_collector_config(&mut self, config: RewardConfig) -> &mut Self {
+        self.fee_collector_config = config;
         self
     }
 
@@ -1068,12 +1081,13 @@ impl MockEnvBuilder {
                     owner: self.owner.to_string(),
                     address_provider: address_provider_addr.to_string(),
                     safety_tax_rate: self.safety_tax_rate,
-                    safety_fund_denom: self.safety_fund_denom.clone(),
-                    fee_collector_denom: self.fee_collector_denom.clone(),
+                    revenue_share_tax_rate: self.revenue_share_tax_rate,
+                    safety_fund_config: self.safety_fund_config.clone(),
+                    revenue_share_config: self.revenue_share_config.clone(),
+                    fee_collector_config: self.fee_collector_config.clone(),
                     channel_id: "0".to_string(),
                     timeout_seconds: 900,
                     slippage_tolerance: self.slippage_tolerance,
-                    neutron_ibc_config: None,
                 },
                 &[],
                 "rewards-collector",

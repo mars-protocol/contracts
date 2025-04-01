@@ -37,6 +37,8 @@ pub enum MarsAddressType {
     Swapper,
     /// Astroport incentives contract
     AstroportIncentives,
+    /// The address that shall receive the revenue share given to neutron (10%)
+    RevenueShare,
 }
 
 impl fmt::Display for MarsAddressType {
@@ -53,6 +55,7 @@ impl fmt::Display for MarsAddressType {
             MarsAddressType::SafetyFund => "safety_fund",
             MarsAddressType::Swapper => "swapper",
             MarsAddressType::AstroportIncentives => "astroport_incentives",
+            MarsAddressType::RevenueShare => "revenue_share",
         };
         write!(f, "{s}")
     }
@@ -74,6 +77,7 @@ impl FromStr for MarsAddressType {
             "safety_fund" => Ok(MarsAddressType::SafetyFund),
             "swapper" => Ok(MarsAddressType::Swapper),
             "astroport_incentives" => Ok(MarsAddressType::AstroportIncentives),
+            "revenue_share" => Ok(MarsAddressType::RevenueShare),
             _ => Err(StdError::parse_err(type_name::<Self>(), s)),
         }
     }

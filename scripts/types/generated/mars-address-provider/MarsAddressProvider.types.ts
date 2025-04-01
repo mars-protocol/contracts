@@ -26,6 +26,7 @@ export type MarsAddressType =
   | 'safety_fund'
   | 'swapper'
   | 'astroport_incentives'
+  | 'revenue_share'
 export type OwnerUpdate =
   | {
       propose_new_owner: {

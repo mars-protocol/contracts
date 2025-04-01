@@ -8,7 +8,7 @@ use cosmwasm_std::{
 use mars_osmosis::BalancerPool;
 use mars_rewards_collector_osmosis::entry;
 use mars_testing::{mock_info, MarsMockQuerier};
-use mars_types::rewards_collector::{Config, InstantiateMsg, QueryMsg};
+use mars_types::rewards_collector::{Config, InstantiateMsg, QueryMsg, RewardConfig, TransferType};
 use osmosis_std::types::osmosis::{gamm::v1beta1::PoolAsset, poolmanager::v1beta1::PoolResponse};
 
 pub fn mock_instantiate_msg() -> InstantiateMsg {
@@ -16,12 +16,22 @@ pub fn mock_instantiate_msg() -> InstantiateMsg {
         owner: "owner".to_string(),
         address_provider: "address_provider".to_string(),
         safety_tax_rate: Decimal::percent(25),
-        safety_fund_denom: "uusdc".to_string(),
-        fee_collector_denom: "umars".to_string(),
+        revenue_share_tax_rate: Decimal::percent(10),
+        safety_fund_config: RewardConfig {
+            target_denom: "uusdc".to_string(),
+            transfer_type: TransferType::Bank,
+        },
+        revenue_share_config: RewardConfig {
+            target_denom: "uusdc".to_string(),
+            transfer_type: TransferType::Bank,
+        },
+        fee_collector_config: RewardConfig {
+            target_denom: "umars".to_string(),
+            transfer_type: TransferType::Ibc,
+        },
         channel_id: "channel-69".to_string(),
         timeout_seconds: 300,
         slippage_tolerance: Decimal::percent(3),
-        neutron_ibc_config: None,
     }
 }
 
@@ -30,15 +40,16 @@ pub fn mock_config(api: MockApi, msg: InstantiateMsg) -> Config {
 }
 
 pub fn setup_test() -> OwnedDeps<MockStorage, MockApi, MarsMockQuerier> {
-    let mut deps = OwnedDeps::<_, _, _> {
-        storage: MockStorage::default(),
-        api: MockApi::default(),
-        querier: MarsMockQuerier::new(MockQuerier::new(&[(
-            MOCK_CONTRACT_ADDR,
-            &[coin(88888, "uatom"), coin(1234, "uusdc"), coin(8964, "umars")],
-        )])),
-        custom_query_type: Default::default(),
-    };
+    let mut deps: OwnedDeps<cosmwasm_std::MemoryStorage, MockApi, MarsMockQuerier> =
+        OwnedDeps::<_, _, _> {
+            storage: MockStorage::default(),
+            api: MockApi::default(),
+            querier: MarsMockQuerier::new(MockQuerier::new(&[(
+                MOCK_CONTRACT_ADDR,
+                &[coin(88888, "uatom"), coin(1234, "uusdc"), coin(8964, "umars")],
+            )])),
+            custom_query_type: Default::default(),
+        };
 
     // set up pools for the mock osmosis querier
     deps.querier.set_query_pool_response(

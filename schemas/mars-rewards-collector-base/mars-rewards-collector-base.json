@@ -9,9 +9,11 @@
     "required": [
       "address_provider",
       "channel_id",
-      "fee_collector_denom",
+      "fee_collector_config",
       "owner",
-      "safety_fund_denom",
+      "revenue_share_config",
+      "revenue_share_tax_rate",
+      "safety_fund_config",
       "safety_tax_rate",
       "slippage_tolerance",
       "timeout_seconds"
@@ -22,21 +24,14 @@
         "type": "string"
       },
       "channel_id": {
-        "description": "The channel ID of the mars hub",
+        "description": "The channel ID of neutron-1",
         "type": "string"
       },
-      "fee_collector_denom": {
-        "description": "The asset to which the fee collector share is converted",
-        "type": "string"
-      },
-      "neutron_ibc_config": {
-        "description": "Neutron Ibc config",
-        "anyOf": [
+      "fee_collector_config": {
+        "description": "Configuration for the fee collector reward share",
+        "allOf": [
           {
-            "$ref": "#/definitions/NeutronIbcConfig"
-          },
-          {
-            "type": "null"
+            "$ref": "#/definitions/RewardConfig"
           }
         ]
       },
@@ -44,9 +39,29 @@
         "description": "The contract's owner",
         "type": "string"
       },
-      "safety_fund_denom": {
-        "description": "The asset to which the safety fund share is converted",
-        "type": "string"
+      "revenue_share_config": {
+        "description": "Configuration for the revenue share reward share",
+        "allOf": [
+          {
+            "$ref": "#/definitions/RewardConfig"
+          }
+        ]
+      },
+      "revenue_share_tax_rate": {
+        "description": "Percentage of fees that are sent to the revenue share",
+        "allOf": [
+          {
+            "$ref": "#/definitions/Decimal"
+          }
+        ]
+      },
+      "safety_fund_config": {
+        "description": "Configuration for the safety fund reward share",
+        "allOf": [
+          {
+            "$ref": "#/definitions/RewardConfig"
+          }
+        ]
       },
       "safety_tax_rate": {
         "description": "Percentage of fees that are sent to the safety fund",
@@ -73,54 +88,38 @@
     },
     "additionalProperties": false,
     "definitions": {
-      "Coin": {
-        "type": "object",
-        "required": [
-          "amount",
-          "denom"
-        ],
-        "properties": {
-          "amount": {
-            "$ref": "#/definitions/Uint128"
-          },
-          "denom": {
-            "type": "string"
-          }
-        }
-      },
       "Decimal": {
         "description": "A fixed-point decimal value with 18 fractional digits, i.e. Decimal(1_000_000_000_000_000_000) == 1.0\n\nThe greatest possible value that can be represented is 340282366920938463463.374607431768211455 (which is (2^128 - 1) / 10^18)",
         "type": "string"
       },
-      "NeutronIbcConfig": {
+      "RewardConfig": {
         "type": "object",
         "required": [
-          "acc_fee",
-          "source_port",
-          "timeout_fee"
+          "target_denom",
+          "transfer_type"
         ],
         "properties": {
-          "acc_fee": {
-            "type": "array",
-            "items": {
-              "$ref": "#/definitions/Coin"
-            }
-          },
-          "source_port": {
+          "target_denom": {
+            "description": "The denomination in which rewards will be distributed",
             "type": "string"
           },
-          "timeout_fee": {
-            "type": "array",
-            "items": {
-              "$ref": "#/definitions/Coin"
-            }
+          "transfer_type": {
+            "description": "The method of reward distribution (IBC or Bank transfer)",
+            "allOf": [
+              {
+                "$ref": "#/definitions/TransferType"
+              }
+            ]
           }
         },
         "additionalProperties": false
       },
-      "Uint128": {
-        "description": "A thin wrapper around u128 that is using strings for JSON encoding/decoding, such that the full u128 range can be used for clients that convert JSON numbers to floats, like JavaScript and jq.\n\n# Examples\n\nUse `from` to create instances of this and `u128` to get the value out:\n\n``` # use cosmwasm_std::Uint128; let a = Uint128::from(123u128); assert_eq!(a.u128(), 123);\n\nlet b = Uint128::from(42u64); assert_eq!(b.u128(), 42);\n\nlet c = Uint128::from(70u32); assert_eq!(c.u128(), 70); ```",
-        "type": "string"
+      "TransferType": {
+        "type": "string",
+        "enum": [
+          "ibc",
+          "bank"
+        ]
       }
     }
   },
@@ -225,7 +224,7 @@
         "additionalProperties": false
       },
       {
-        "description": "Distribute the accrued protocol income between the safety fund and the fee modules on mars hub, according to the split set in config. Callable by any address.",
+        "description": "Distribute the accrued protocol income between the safety fund, fee collector and revenue share addresses, according to the split set in config. Callable by any address.",
         "type": "object",
         "required": [
           "distribute_rewards"
@@ -237,16 +236,6 @@
               "denom"
             ],
             "properties": {
-              "amount": {
-                "anyOf": [
-                  {
-                    "$ref": "#/definitions/Uint128"
-                  },
-                  {
-                    "type": "null"
-                  }
-                ]
-              },
               "denom": {
                 "type": "string"
               }
@@ -993,32 +982,6 @@
           }
         ]
       },
-      "NeutronIbcConfig": {
-        "type": "object",
-        "required": [
-          "acc_fee",
-          "source_port",
-          "timeout_fee"
-        ],
-        "properties": {
-          "acc_fee": {
-            "type": "array",
-            "items": {
-              "$ref": "#/definitions/Coin"
-            }
-          },
-          "source_port": {
-            "type": "string"
-          },
-          "timeout_fee": {
-            "type": "array",
-            "items": {
-              "$ref": "#/definitions/Coin"
-            }
-          }
-        },
-        "additionalProperties": false
-      },
       "OsmoRoute": {
         "type": "object",
         "required": [
@@ -1131,6 +1094,28 @@
           }
         ]
       },
+      "RewardConfig": {
+        "type": "object",
+        "required": [
+          "target_denom",
+          "transfer_type"
+        ],
+        "properties": {
+          "target_denom": {
+            "description": "The denomination in which rewards will be distributed",
+            "type": "string"
+          },
+          "transfer_type": {
+            "description": "The method of reward distribution (IBC or Bank transfer)",
+            "allOf": [
+              {
+                "$ref": "#/definitions/TransferType"
+              }
+            ]
+          }
+        },
+        "additionalProperties": false
+      },
       "SwapperRoute": {
         "oneOf": [
           {
@@ -1159,6 +1144,13 @@
           }
         ]
       },
+      "TransferType": {
+        "type": "string",
+        "enum": [
+          "ibc",
+          "bank"
+        ]
+      },
       "Uint128": {
         "description": "A thin wrapper around u128 that is using strings for JSON encoding/decoding, such that the full u128 range can be used for clients that convert JSON numbers to floats, like JavaScript and jq.\n\n# Examples\n\nUse `from` to create instances of this and `u128` to get the value out:\n\n``` # use cosmwasm_std::Uint128; let a = Uint128::from(123u128); assert_eq!(a.u128(), 123);\n\nlet b = Uint128::from(42u64); assert_eq!(b.u128(), 42);\n\nlet c = Uint128::from(70u32); assert_eq!(c.u128(), 70); ```",
         "type": "string"
@@ -1174,35 +1166,54 @@
             ]
           },
           "channel_id": {
-            "description": "The channel id of the mars hub",
+            "description": "The channel id for osmosis -> neutron",
             "type": [
               "string",
               "null"
             ]
           },
-          "fee_collector_denom": {
-            "description": "The asset to which the fee collector share is converted",
-            "type": [
-              "string",
-              "null"
-            ]
-          },
-          "neutron_ibc_config": {
-            "description": "Neutron Ibc config",
+          "fee_collector_config": {
+            "description": "Fee collector configuration",
             "anyOf": [
               {
-                "$ref": "#/definitions/NeutronIbcConfig"
+                "$ref": "#/definitions/RewardConfig"
               },
               {
                 "type": "null"
               }
             ]
           },
-          "safety_fund_denom": {
-            "description": "The asset to which the safety fund share is converted",
-            "type": [
-              "string",
-              "null"
+          "revenue_share_config": {
+            "description": "Revenue share configuration",
+            "anyOf": [
+              {
+                "$ref": "#/definitions/RewardConfig"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "revenue_share_tax_rate": {
+            "description": "Percentage of fees that are sent to the revenue share",
+            "anyOf": [
+              {
+                "$ref": "#/definitions/Decimal"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "safety_fund_config": {
+            "description": "Safety fund configuration",
+            "anyOf": [
+              {
+                "$ref": "#/definitions/RewardConfig"
+              },
+              {
+                "type": "null"
+              }
             ]
           },
           "safety_tax_rate": {
@@ -1291,8 +1302,10 @@
       "required": [
         "address_provider",
         "channel_id",
-        "fee_collector_denom",
-        "safety_fund_denom",
+        "fee_collector_config",
+        "revenue_share_config",
+        "revenue_share_tax_rate",
+        "safety_fund_config",
         "safety_tax_rate",
         "slippage_tolerance",
         "timeout_seconds"
@@ -1303,21 +1316,14 @@
           "type": "string"
         },
         "channel_id": {
-          "description": "The channel ID of the mars hub",
+          "description": "The channel ID for osmosis -> neutron",
           "type": "string"
         },
-        "fee_collector_denom": {
-          "description": "The asset to which the fee collector share is converted",
-          "type": "string"
-        },
-        "neutron_ibc_config": {
-          "description": "Neutron Ibc config",
-          "anyOf": [
+        "fee_collector_config": {
+          "description": "Configuration for the fee collector parameters",
+          "allOf": [
             {
-              "$ref": "#/definitions/NeutronIbcConfig"
-            },
-            {
-              "type": "null"
+              "$ref": "#/definitions/RewardConfig"
             }
           ]
         },
@@ -1335,9 +1341,29 @@
             "null"
           ]
         },
-        "safety_fund_denom": {
-          "description": "The asset to which the safety fund share is converted",
-          "type": "string"
+        "revenue_share_config": {
+          "description": "Configuration for the revenue share parameters",
+          "allOf": [
+            {
+              "$ref": "#/definitions/RewardConfig"
+            }
+          ]
+        },
+        "revenue_share_tax_rate": {
+          "description": "Percentage of fees that are sent to the revenue share",
+          "allOf": [
+            {
+              "$ref": "#/definitions/Decimal"
+            }
+          ]
+        },
+        "safety_fund_config": {
+          "description": "Configuration for the safety fund parameters",
+          "allOf": [
+            {
+              "$ref": "#/definitions/RewardConfig"
+            }
+          ]
         },
         "safety_tax_rate": {
           "description": "Percentage of fees that are sent to the safety fund",
@@ -1364,54 +1390,38 @@
       },
       "additionalProperties": false,
       "definitions": {
-        "Coin": {
-          "type": "object",
-          "required": [
-            "amount",
-            "denom"
-          ],
-          "properties": {
-            "amount": {
-              "$ref": "#/definitions/Uint128"
-            },
-            "denom": {
-              "type": "string"
-            }
-          }
-        },
         "Decimal": {
           "description": "A fixed-point decimal value with 18 fractional digits, i.e. Decimal(1_000_000_000_000_000_000) == 1.0\n\nThe greatest possible value that can be represented is 340282366920938463463.374607431768211455 (which is (2^128 - 1) / 10^18)",
           "type": "string"
         },
-        "NeutronIbcConfig": {
+        "RewardConfig": {
           "type": "object",
           "required": [
-            "acc_fee",
-            "source_port",
-            "timeout_fee"
+            "target_denom",
+            "transfer_type"
           ],
           "properties": {
-            "acc_fee": {
-              "type": "array",
-              "items": {
-                "$ref": "#/definitions/Coin"
-              }
-            },
-            "source_port": {
+            "target_denom": {
+              "description": "The denomination in which rewards will be distributed",
               "type": "string"
             },
-            "timeout_fee": {
-              "type": "array",
-              "items": {
-                "$ref": "#/definitions/Coin"
-              }
+            "transfer_type": {
+              "description": "The method of reward distribution (IBC or Bank transfer)",
+              "allOf": [
+                {
+                  "$ref": "#/definitions/TransferType"
+                }
+              ]
             }
           },
           "additionalProperties": false
         },
-        "Uint128": {
-          "description": "A thin wrapper around u128 that is using strings for JSON encoding/decoding, such that the full u128 range can be used for clients that convert JSON numbers to floats, like JavaScript and jq.\n\n# Examples\n\nUse `from` to create instances of this and `u128` to get the value out:\n\n``` # use cosmwasm_std::Uint128; let a = Uint128::from(123u128); assert_eq!(a.u128(), 123);\n\nlet b = Uint128::from(42u64); assert_eq!(b.u128(), 42);\n\nlet c = Uint128::from(70u32); assert_eq!(c.u128(), 70); ```",
-          "type": "string"
+        "TransferType": {
+          "type": "string",
+          "enum": [
+            "ibc",
+            "bank"
+          ]
         }
       }
     }
