@@ -286,7 +286,7 @@ pub fn recovered_since_downtime_of_length(
                 nanos: 0,
             }),
         )?;
-    Ok(downtime_detector_res.succesfully_recovered)
+    Ok(downtime_detector_res.successfully_recovered)
 }
 
 /// Query contract address for cosmwasm pool id. It is used to query smart contract (e.g. `calc_out_amt_given_in`).

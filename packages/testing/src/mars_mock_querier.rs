@@ -186,7 +186,7 @@ impl MarsMockQuerier {
         self.osmosis_querier.downtime_detector.insert(
             (downtime_detector.downtime as i32, downtime_detector.recovery),
             RecoveredSinceDowntimeOfLengthResponse {
-                succesfully_recovered: recovered,
+                successfully_recovered: recovered,
             },
         );
     }
