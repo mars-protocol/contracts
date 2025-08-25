@@ -1084,5 +1084,5 @@ export const osmosisMainnetConfig: DeploymentConfig = {
     wbtcOsmoOracle,
     atomStAtomOracle,
   ],
-  // oracleConfigs: [osmoOracleTwap, atomOracleTwap, axlOracleTwap, stAtomOracleTwap, wbtcOracleTwap, axlUSDCOracleTwap, ethOracleTwap, atomOsmoOracle, usdcOsmoOracle, ethOsmoOracle, wbtcOsmoOracle, atomStAtomOracle],
+  swapFee: '0.0005',
 }

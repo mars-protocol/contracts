@@ -496,4 +496,5 @@ export const neutronTestnetConfig: DeploymentConfig = {
     router: astroportRouter,
     incentives: astroportIncentives,
   },
+  swapFee: '0.0005',
 }

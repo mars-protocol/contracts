@@ -201,6 +201,7 @@ export class Deployer {
       zapper: this.storage.addresses.zapper!,
       health_contract: this.storage.addresses.health!,
       incentives: this.storage.addresses.incentives!,
+      swap_fee: this.config.swapFee,
     }
 
     await this.instantiate('creditManager', this.storage.codeIds.creditManager!, msg)

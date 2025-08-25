@@ -187,6 +187,7 @@ pub struct ConfigResponse {
     pub zapper: String,
     pub health_contract: String,
     pub rewards_collector: Option<RewardsCollector>,
+    pub swap_fee: Decimal,
 }
 
 #[cw_serde]

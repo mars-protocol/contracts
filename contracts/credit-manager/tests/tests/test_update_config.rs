@@ -34,6 +34,7 @@ fn only_owner_can_update_config() {
             zapper: None,
             health_contract: None,
             rewards_collector: None,
+            swap_fee: None,
         },
     );
 
@@ -91,6 +92,7 @@ fn update_config_works_with_full_config() {
     let new_swapper = SwapperBase::new("new_swapper".to_string());
     let new_health_contract = HealthContractUnchecked::new("new_health_contract".to_string());
     let new_rewards_collector = "rewards_collector_contract_new".to_string();
+    let new_swap_fee = Decimal::percent(1);
 
     mock.update_config(
         &Addr::unchecked(original_config.ownership.owner.clone().unwrap()),
@@ -105,6 +107,7 @@ fn update_config_works_with_full_config() {
             zapper: Some(new_zapper.clone()),
             health_contract: Some(new_health_contract.clone()),
             rewards_collector: Some(new_rewards_collector.clone()),
+            swap_fee: Some(new_swap_fee),
         },
     )
     .unwrap();
@@ -139,6 +142,9 @@ fn update_config_works_with_full_config() {
 
     assert_eq!(&new_config.health_contract, new_health_contract.address());
     assert_ne!(new_config.health_contract, original_config.health_contract);
+
+    assert_eq!(new_config.swap_fee, new_swap_fee);
+    assert_ne!(new_config.swap_fee, original_config.swap_fee);
 
     let rc_accounts = mock.query_accounts(&new_rewards_collector, None, None);
     let rc_account = rc_accounts.first().unwrap();

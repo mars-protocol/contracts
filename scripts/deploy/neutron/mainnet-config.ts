@@ -397,4 +397,5 @@ export const neutronMainnetConfig: DeploymentConfig = {
   assets: [ntrnAsset, atomAsset, axlUSDCAsset],
   vaults: [],
   oracleConfigs: [usdOracle, axlUSDCOracle, marsOracle, atomOracle, ntrnOracle],
+  swapFee: '0.0005',
 }

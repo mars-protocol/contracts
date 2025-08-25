@@ -15,6 +15,7 @@
       "owner",
       "params",
       "red_bank",
+      "swap_fee",
       "swapper",
       "zapper"
     ],
@@ -76,6 +77,14 @@
         "allOf": [
           {
             "$ref": "#/definitions/RedBankUnchecked"
+          }
+        ]
+      },
+      "swap_fee": {
+        "description": "The swap fee applied to each swap. This is a percentage of the swap amount. For example, if set to 0.0001, 0.01% of the swap amount will be taken as a fee. This fee is applied once, no matter how many hops in the route",
+        "allOf": [
+          {
+            "$ref": "#/definitions/Decimal"
           }
         ]
       },
@@ -1795,6 +1804,16 @@
               "null"
             ]
           },
+          "swap_fee": {
+            "anyOf": [
+              {
+                "$ref": "#/definitions/Decimal"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
           "swapper": {
             "anyOf": [
               {
@@ -3276,6 +3295,7 @@
         "ownership",
         "params",
         "red_bank",
+        "swap_fee",
         "swapper",
         "zapper"
       ],
@@ -3319,6 +3339,9 @@
               "type": "null"
             }
           ]
+        },
+        "swap_fee": {
+          "$ref": "#/definitions/Decimal"
         },
         "swapper": {
           "type": "string"

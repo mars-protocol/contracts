@@ -92,6 +92,7 @@ export interface DeploymentConfig {
   vaults: VaultConfig[]
   oracleConfigs: OracleConfig[]
   astroportConfig?: AstroportConfig
+  swapFee: Decimal
 }
 
 export interface AssetConfig {

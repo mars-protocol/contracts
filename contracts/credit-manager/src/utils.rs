@@ -49,6 +49,15 @@ pub fn assert_slippage(storage: &dyn Storage, slippage: Decimal) -> ContractResu
     Ok(())
 }
 
+pub fn assert_swap_fee(swap_fee: Decimal) -> ContractResult<()> {
+    if swap_fee >= Decimal::one() {
+        return Err(ContractError::InvalidConfig {
+            reason: "Swap fee must be less than 1".to_string(),
+        });
+    }
+    Ok(())
+}
+
 pub fn query_nft_token_owner(deps: Deps, account_id: &str) -> ContractResult<String> {
     Ok(ACCOUNT_NFT.load(deps.storage)?.query_nft_token_owner(&deps.querier, account_id)?)
 }

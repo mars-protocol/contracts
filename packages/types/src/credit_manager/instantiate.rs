@@ -31,6 +31,10 @@ pub struct InstantiateMsg {
     pub params: ParamsUnchecked,
     /// Contract that handles lending incentive rewards
     pub incentives: IncentivesUnchecked,
+    /// The swap fee applied to each swap. This is a percentage of the swap amount.
+    /// For example, if set to 0.0001, 0.01% of the swap amount will be taken as a fee.
+    /// This fee is applied once, no matter how many hops in the route
+    pub swap_fee: Decimal,
 }
 
 /// Used when you want to update fields on Instantiate config
@@ -48,4 +52,5 @@ pub struct ConfigUpdates {
     pub health_contract: Option<HealthContractUnchecked>,
     /// The Mars Protocol rewards-collector contract. We collect protocol fee for its account.
     pub rewards_collector: Option<String>,
+    pub swap_fee: Option<Decimal>,
 }

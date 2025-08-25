@@ -23,6 +23,7 @@ export interface InstantiateMsg {
   owner: string
   params: ParamsBaseForString
   red_bank: RedBankUnchecked
+  swap_fee: Decimal
   swapper: SwapperBaseForString
   zapper: ZapperBaseForString
 }
@@ -462,6 +463,7 @@ export interface ConfigUpdates {
   oracle?: OracleBaseForString | null
   red_bank?: RedBankUnchecked | null
   rewards_collector?: string | null
+  swap_fee?: Decimal | null
   swapper?: SwapperBaseForString | null
   zapper?: ZapperBaseForString | null
 }
@@ -625,6 +627,7 @@ export interface ConfigResponse {
   params: string
   red_bank: string
   rewards_collector?: RewardsCollector | null
+  swap_fee: Decimal
   swapper: string
   zapper: string
 }

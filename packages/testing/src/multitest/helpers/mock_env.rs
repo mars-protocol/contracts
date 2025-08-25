@@ -113,6 +113,7 @@ pub struct MockEnvBuilder {
     pub max_slippage: Option<Decimal>,
     pub health_contract: Option<HealthContract>,
     pub evil_vault: Option<String>,
+    pub swap_fee: Option<Decimal>,
 }
 
 #[allow(clippy::new_ret_no_self)]
@@ -140,6 +141,7 @@ impl MockEnv {
             max_slippage: None,
             health_contract: None,
             evil_vault: None,
+            swap_fee: None,
         }
     }
 
@@ -1085,11 +1087,11 @@ impl MockEnvBuilder {
         let swapper = self.deploy_swapper().into();
         let max_unlocking_positions = self.get_max_unlocking_positions();
         let max_slippage = self.get_max_slippage();
-
         let oracle = self.get_oracle().into();
         let zapper = self.deploy_zapper(&oracle)?.into();
         let health_contract = self.get_health_contract().into();
         let params = self.get_params_contract().into();
+        let swap_fee = self.get_swap_fee();
 
         self.deploy_astroport_incentives();
 
@@ -1109,6 +1111,7 @@ impl MockEnvBuilder {
                     health_contract,
                     params,
                     incentives,
+                    swap_fee,
                 },
                 &[],
                 "mock-rover-contract",
@@ -1510,6 +1513,10 @@ impl MockEnvBuilder {
         self.max_slippage.unwrap_or_else(|| Decimal::percent(99))
     }
 
+    fn get_swap_fee(&self) -> Decimal {
+        self.swap_fee.unwrap_or_else(|| Decimal::percent(0))
+    }
+
     //--------------------------------------------------------------------------------------------------
     // Setter functions
     //--------------------------------------------------------------------------------------------------
@@ -1586,6 +1593,11 @@ impl MockEnvBuilder {
 
     pub fn evil_vault(mut self, credit_account: &str) -> Self {
         self.evil_vault = Some(credit_account.to_string());
+        self
+    }
+
+    pub fn swap_fee(mut self, ratio: Decimal) -> Self {
+        self.swap_fee = Some(ratio);
         self
     }
 }

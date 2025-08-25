@@ -1,4 +1,4 @@
-use cosmwasm_std::{coins, Addr, Coin, OverflowError, OverflowOperation::Sub, Uint128};
+use cosmwasm_std::{coins, Addr, Coin, Decimal, OverflowError, OverflowOperation::Sub, Uint128};
 use mars_credit_manager::error::ContractError;
 use mars_swapper_mock::contract::MOCK_SWAP_RESULT;
 use mars_types::{
@@ -361,4 +361,71 @@ fn swap_success_with_amount_none() {
     assert_eq!(position.deposits.len(), 1);
     assert_eq!(position.deposits.first().unwrap().denom, osmo_info.denom);
     assert_eq!(position.deposits.first().unwrap().amount, MOCK_SWAP_RESULT);
+}
+
+#[test]
+fn swap_fee_deducted() {
+    let coin_in = uatom_info();
+    let coin_out = uosmo_info();
+
+    let user = Addr::unchecked("user");
+    let mut mock = MockEnv::new()
+        .fund_account(AccountToFund {
+            addr: user.clone(),
+            funds: coins(10_000, coin_in.denom.clone()),
+        })
+        .set_params(&[coin_out.clone(), coin_in.clone()])
+        .swap_fee(Decimal::percent(1))
+        .build()
+        .unwrap();
+
+    let route = SwapperRoute::Osmo(OsmoRoute {
+        swaps: vec![OsmoSwap {
+            pool_id: 101,
+            to: coin_out.denom.clone(),
+        }],
+    });
+
+    let account_id = mock.create_credit_account(&user).unwrap();
+    let res = mock
+        .update_credit_account(
+            &account_id,
+            &user,
+            vec![
+                Deposit(coin_in.to_coin(10_000)),
+                SwapExactIn {
+                    coin_in: coin_in.to_action_coin_full_balance(),
+                    denom_out: coin_out.denom.clone(),
+                    min_receive: MOCK_SWAP_RESULT - Uint128::one(),
+                    route: Some(route),
+                },
+            ],
+            &[coin_in.to_coin(10_000)],
+        )
+        .unwrap();
+
+    // Prove we swapped amount in with the fee deducted
+    let event = &res.events[3];
+    assert_eq!(event.attributes[0].key, "_contract_address");
+    assert_eq!(event.attributes[0].value, "contract9");
+    assert_eq!(event.attributes[1].key, "action");
+    assert_eq!(event.attributes[1].value, "swapper");
+    assert_eq!(event.attributes[2].key, "account_id");
+    assert_eq!(event.attributes[2].value, "2");
+    assert_eq!(event.attributes[3].key, "coin_in");
+    assert_eq!(event.attributes[3].value, "9900uatom"); // 10_000 - (10_000 * 0.01) = 10_000 - 100 = 9_900
+    assert_eq!(event.attributes[4].key, "denom_out");
+    assert_eq!(event.attributes[4].value, "uosmo");
+
+    // assert rewards balance (rewards collector account id is created on deployment, so its #1)
+    let rewards_positions = mock.query_positions("1");
+    assert_eq!(rewards_positions.deposits.len(), 1);
+    assert_eq!(rewards_positions.deposits.first().unwrap().denom, coin_in.denom);
+    assert_eq!(rewards_positions.deposits.first().unwrap().amount, Uint128::from(100u128));
+
+    // User balance will still be mock_swap_result because it is mocked
+    let user_positions = mock.query_positions(&account_id);
+    assert_eq!(user_positions.deposits.len(), 1);
+    assert_eq!(user_positions.deposits.first().unwrap().denom, coin_out.denom);
+    assert_eq!(user_positions.deposits.first().unwrap().amount, MOCK_SWAP_RESULT);
 }
