@@ -16,8 +16,8 @@ export interface InstantiateMsg {
   revenue_share_tax_rate: Decimal
   safety_fund_config: RewardConfig
   safety_tax_rate: Decimal
-  slippage_tolerance: Decimal
   timeout_seconds: number
+  whitelisted_distributors: string[]
 }
 export interface RewardConfig {
   target_denom: string
@@ -81,6 +81,17 @@ export type OwnerUpdate =
       }
     }
   | 'clear_emergency_owner'
+export type WhitelistAction =
+  | {
+      add_address: {
+        address: string
+      }
+    }
+  | {
+      remove_address: {
+        address: string
+      }
+    }
 export type Uint128 = string
 export type Action =
   | {
@@ -220,8 +231,8 @@ export interface UpdateConfig {
   revenue_share_tax_rate?: Decimal | null
   safety_fund_config?: RewardConfig | null
   safety_tax_rate?: Decimal | null
-  slippage_tolerance?: Decimal | null
   timeout_seconds?: number | null
+  whitelist_actions?: WhitelistAction[] | null
 }
 export interface Coin {
   amount: Uint128
@@ -262,6 +273,6 @@ export interface ConfigResponse {
   revenue_share_tax_rate: Decimal
   safety_fund_config: RewardConfig
   safety_tax_rate: Decimal
-  slippage_tolerance: Decimal
   timeout_seconds: number
+  whitelisted_distributors: string[]
 }

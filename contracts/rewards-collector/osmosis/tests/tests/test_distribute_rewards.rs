@@ -106,7 +106,7 @@ fn assert_rewards_distribution(
     let res = execute(
         deps.as_mut(),
         env.clone(),
-        mock_info("jake"),
+        mock_info("owner"),
         ExecuteMsg::DistributeRewards {
             denom: denom_to_distribute,
         },

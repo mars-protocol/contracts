@@ -1420,6 +1420,48 @@ impl MockEnvBuilder {
         vault_addr
     }
 
+    fn deploy_rewards_collector(&mut self) -> Addr {
+        let code_id = self.app.store_code(mock_rewards_collector_osmosis_contract());
+        let owner = self.get_owner();
+        let address_provider = self.get_address_provider();
+
+        let addr = self
+            .app
+            .instantiate_contract(
+                code_id,
+                owner.clone(),
+                &rewards_collector::InstantiateMsg {
+                    owner: owner.clone().to_string(),
+                    address_provider: address_provider.to_string(),
+                    safety_tax_rate: Default::default(),
+                    revenue_share_tax_rate: Default::default(),
+                    safety_fund_config: RewardConfig {
+                        target_denom: "uusdc".to_string(),
+                        transfer_type: TransferType::Bank,
+                    },
+                    revenue_share_config: RewardConfig {
+                        target_denom: "uusdc".to_string(),
+                        transfer_type: TransferType::Bank,
+                    },
+                    fee_collector_config: RewardConfig {
+                        target_denom: "umars".to_string(),
+                        transfer_type: TransferType::Bank,
+                    },
+                    channel_id: "".to_string(),
+                    timeout_seconds: 1,
+                    whitelisted_distributors: vec![],
+                },
+                &[],
+                "mock-rewards-collector",
+                None,
+            )
+            .unwrap();
+
+        self.set_address(MarsAddressType::RewardsCollector, addr.clone());
+
+        addr
+    }
+
     fn deploy_swapper(&mut self) -> Swapper {
         let code_id = self.app.store_code(mock_swapper_contract());
         let addr = self

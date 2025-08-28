@@ -1,4 +1,6 @@
-use cosmwasm_std::{Addr, QuerierWrapper, Uint128};
+use cosmwasm_std::{Addr, Deps, QuerierWrapper, Uint128};
+use mars_owner::Owner;
+use mars_types::rewards_collector::Config;
 
 use crate::{ContractError, ContractResult};
 
@@ -23,6 +25,26 @@ pub(crate) fn unwrap_option_amount(
     } else {
         Ok(balance)
     }
+}
+
+pub(crate) fn ensure_distributor_whitelisted(
+    deps: Deps,
+    cfg: &Config,
+    owner: &Owner,
+    sender: &Addr,
+) -> ContractResult<()> {
+    // Owner can always distribute rewards
+    if owner.is_owner(deps.storage, sender)? {
+        return Ok(());
+    }
+
+    if cfg.whitelisted_distributors.is_empty() || !cfg.whitelisted_distributors.contains(sender) {
+        return Err(ContractError::UnauthorizedDistributor {
+            sender: sender.to_string(),
+        });
+    }
+
+    Ok(())
 }
 
 /// Convert an optional Uint128 amount to string. If the amount is undefined, return `undefined`

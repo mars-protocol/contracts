@@ -69,7 +69,7 @@ export interface DeploymentConfig {
     revenueShareConfig: RewardConfig
     safetyFundConfig: RewardConfig
     feeCollectorConfig: RewardConfig
-    slippageTolerance: string
+    whitelistedDistributors: string[]
   }
   incentives: {
     epochDuration: number

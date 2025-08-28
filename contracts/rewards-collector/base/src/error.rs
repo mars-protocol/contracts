@@ -72,6 +72,11 @@ pub enum ContractError {
     UnsupportedTransferType {
         transfer_type: String,
     },
+
+    #[error("Unauthorized: sender {sender} is not allowed to distribute rewards")]
+    UnauthorizedDistributor {
+        sender: String,
+    },
 }
 
 pub type ContractResult<T> = Result<T, ContractError>;

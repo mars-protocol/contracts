@@ -271,7 +271,7 @@ export const osmosisTestnetConfig: DeploymentConfig = {
       target_denom: aUSDC,
       transfer_type: 'bank',
     },
-    slippageTolerance: '0.01',
+    whitelistedDistributors: [],
   },
   incentives: {
     epochDuration: 604800, // 1 week

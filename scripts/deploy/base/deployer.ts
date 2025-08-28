@@ -400,7 +400,7 @@ export class Deployer {
       fee_collector_config: this.config.rewardsCollector.feeCollectorConfig,
       channel_id: this.config.rewardsCollector.channelId,
       timeout_seconds: this.config.rewardsCollector.timeoutSeconds,
-      slippage_tolerance: this.config.rewardsCollector.slippageTolerance,
+      whitelisted_distributors: this.config.rewardsCollector.whitelistedDistributors,
     }
     await this.instantiate('rewardsCollector', this.storage.codeIds['rewardsCollector']!, msg)
   }

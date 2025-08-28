@@ -1030,7 +1030,7 @@ export const osmosisMainnetConfig: DeploymentConfig = {
       target_denom: axlUSDC,
       transfer_type: 'ibc',
     },
-    slippageTolerance: '0.01',
+    whitelistedDistributors: [],
   },
   incentives: {
     epochDuration: 604800, // 1 week

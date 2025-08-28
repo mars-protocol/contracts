@@ -33,7 +33,7 @@ fn instantiating() {
             fee_collector_config: config.fee_collector_config,
             channel_id: config.channel_id,
             timeout_seconds: config.timeout_seconds,
-            slippage_tolerance: config.slippage_tolerance,
+            whitelisted_distributors: vec!["owner".to_string(), "jake".to_string()],
         }
     );
 
@@ -48,30 +48,6 @@ fn instantiating() {
             param_name: "total_tax_rate".to_string(),
             invalid_value: "1.6".to_string(),
             predicate: "<= 1".to_string(),
-        })
-    );
-}
-
-#[test]
-fn updating_config_if_invalid_slippage() {
-    let mut deps = helpers::setup_test();
-
-    let invalid_cfg = UpdateConfig {
-        slippage_tolerance: Some(Decimal::percent(51u64)),
-        ..Default::default()
-    };
-
-    let info = mock_info("owner");
-    let msg = ExecuteMsg::UpdateConfig {
-        new_cfg: invalid_cfg,
-    };
-    let err = execute(deps.as_mut(), mock_env(), info, msg).unwrap_err();
-    assert_eq!(
-        err,
-        ContractError::Validation(ValidationError::InvalidParam {
-            param_name: "slippage_tolerance".to_string(),
-            invalid_value: "0.51".to_string(),
-            predicate: "<= 0.5".to_string(),
         })
     );
 }
