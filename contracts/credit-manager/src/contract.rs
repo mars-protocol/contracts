@@ -132,6 +132,7 @@ pub fn query(deps: Deps, env: Env, msg: QueryMsg) -> ContractResult<Binary> {
             start_after,
             limit,
         } => to_json_binary(&query_vault_bindings(deps, start_after, limit)?),
+        QueryMsg::SwapFeeRate {} => to_json_binary(&query_swap_fee(deps)?),
     };
     res.map_err(Into::into)
 }

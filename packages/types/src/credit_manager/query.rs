@@ -96,6 +96,8 @@ pub enum QueryMsg {
         start_after: Option<String>,
         limit: Option<u32>,
     },
+    #[returns(Decimal)]
+    SwapFeeRate {},
 }
 
 #[cw_serde]

@@ -627,7 +627,6 @@ export interface ConfigResponse {
   params: string
   red_bank: string
   rewards_collector?: RewardsCollector | null
-  swap_fee: Decimal
   swapper: string
   zapper: string
 }
