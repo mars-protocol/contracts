@@ -2147,7 +2147,7 @@ dependencies = [
 
 [[package]]
 name = "mars-credit-manager"
-version = "2.1.0"
+version = "2.2.0"
 dependencies = [
  "anyhow",
  "cosmwasm-schema",
@@ -2530,7 +2530,7 @@ dependencies = [
 
 [[package]]
 name = "mars-rewards-collector-osmosis"
-version = "2.1.1"
+version = "2.2.0"
 dependencies = [
  "cosmwasm-schema",
  "cosmwasm-std",

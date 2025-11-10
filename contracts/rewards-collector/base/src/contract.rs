@@ -7,9 +7,7 @@ use mars_owner::{Owner, OwnerInit::SetInitialOwner, OwnerUpdate};
 use mars_types::{
     address_provider::{self, AddressResponseItem, MarsAddressType},
     credit_manager::{self, Action},
-    incentives::{self, IncentiveKind},
-    oracle::ActionKind,
-    red_bank,
+    incentives, red_bank,
     rewards_collector::{
         Config, ConfigResponse, ExecuteMsg, InstantiateMsg, QueryMsg, UpdateConfig,
     },

@@ -1,13 +1,26 @@
 use std::{mem::take, str::FromStr};
 
 use anyhow::Result as AnyResult;
-use cosmwasm_std::{Addr, Decimal};
+use cosmwasm_std::{Addr, Decimal, Empty};
 use cw_multi_test::{App, AppResponse, BasicApp, Executor};
 use cw_paginate::PaginationResponse;
 use mars_owner::{OwnerResponse, OwnerUpdate};
-use mars_types::params::{
-    AssetParams, AssetParamsUpdate, ConfigResponse, EmergencyUpdate, ExecuteMsg, InstantiateMsg,
-    QueryMsg, VaultConfig, VaultConfigUpdate,
+use mars_testing::{
+    integration::mock_contracts::mock_rewards_collector_osmosis_contract,
+    multitest::helpers::{
+        mock_address_provider_contract, mock_incentives_contract, mock_oracle_contract,
+        mock_red_bank_contract,
+    },
+};
+use mars_types::{
+    address_provider::{self, MarsAddressType},
+    incentives, oracle,
+    params::{
+        AssetParams, AssetParamsUpdate, ConfigResponse, EmergencyUpdate, ExecuteMsg,
+        InstantiateMsg, QueryMsg, VaultConfig, VaultConfigUpdate,
+    },
+    red_bank,
+    rewards_collector::{self, RewardConfig, TransferType},
 };
 
 use super::contracts::mock_params_contract;
@@ -19,8 +32,10 @@ pub struct MockEnv {
 
 pub struct MockEnvBuilder {
     pub app: BasicApp,
+    pub deployer: Addr,
     pub target_health_factor: Option<Decimal>,
     pub emergency_owner: Option<String>,
+    pub address_provider: Option<Addr>,
 }
 
 #[allow(clippy::new_ret_no_self)]
@@ -28,8 +43,10 @@ impl MockEnv {
     pub fn new() -> MockEnvBuilder {
         MockEnvBuilder {
             app: App::default(),
+            deployer: Addr::unchecked("deployer"),
             target_health_factor: None,
             emergency_owner: None,
+            address_provider: None,
         }
     }
 

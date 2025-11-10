@@ -236,7 +236,7 @@ const testActions = {
 
 export const osmosisTestnetConfig: DeploymentConfig = {
   mainnet: false,
-  deployerMnemonic: 'TO BE INSERTED AT TIME OF DEPLOYMENT',
+  deployerMnemonic: 'helmet gloom borrow nurse position child lion about grunt column habit forest',
   marsDenom: mars,
   atomDenom: atom,
   safetyFundAddr: safetyFundAddr,

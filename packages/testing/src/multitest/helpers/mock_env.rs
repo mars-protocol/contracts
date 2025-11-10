@@ -64,6 +64,7 @@ use mars_types::{
         QueryMsg::{UserCollateral, UserDebt},
         UserCollateralResponse, UserDebtResponse,
     },
+    rewards_collector::{self, RewardConfig, TransferType},
     swapper::{
         EstimateExactInSwapResponse, InstantiateMsg as SwapperInstantiateMsg,
         QueryMsg::EstimateExactInSwap, SwapperRoute,
@@ -81,7 +82,10 @@ use super::{
     mock_red_bank_contract, mock_rover_contract, mock_swapper_contract, mock_v2_zapper_contract,
     mock_vault_contract, AccountToFund, CoinInfo, VaultTestInfo, ASTRO_LP_DENOM,
 };
-use crate::multitest::modules::token_factory::{CustomApp, TokenFactory};
+use crate::{
+    integration::mock_contracts::mock_rewards_collector_osmosis_contract,
+    multitest::modules::token_factory::{CustomApp, TokenFactory},
+};
 
 pub const DEFAULT_RED_BANK_COIN_BALANCE: Uint128 = Uint128::new(1_000_000);
 
@@ -114,6 +118,7 @@ pub struct MockEnvBuilder {
     pub health_contract: Option<HealthContract>,
     pub evil_vault: Option<String>,
     pub swap_fee: Option<Decimal>,
+    pub rewards_collector: Option<Addr>,
 }
 
 #[allow(clippy::new_ret_no_self)]
@@ -142,6 +147,7 @@ impl MockEnv {
             health_contract: None,
             evil_vault: None,
             swap_fee: None,
+            rewards_collector: None,
         }
     }
 
@@ -939,20 +945,21 @@ impl MockEnvBuilder {
         self.update_health_contract_config(&rover);
 
         self.deploy_nft_contract(&rover);
+        self.fund_users();
+
+        self.deploy_vaults();
 
         if self.deploy_nft_contract && self.set_nft_contract_minter {
+            let rewards_collector_addr = self.deploy_rewards_collector();
+            self.rewards_collector = Some(rewards_collector_addr.clone());
             self.update_config(
                 &rover,
                 ConfigUpdates {
-                    rewards_collector: Some("rewards_collector_contract".to_string()),
+                    rewards_collector: Some(rewards_collector_addr.to_string()),
                     ..Default::default()
                 },
             );
         }
-
-        self.fund_users();
-
-        self.deploy_vaults();
 
         Ok(MockEnv {
             app: self.app,
@@ -1421,6 +1428,10 @@ impl MockEnvBuilder {
     }
 
     fn deploy_rewards_collector(&mut self) -> Addr {
+        if let Some(addr) = &self.rewards_collector {
+            return addr.clone();
+        }
+
         let code_id = self.app.store_code(mock_rewards_collector_osmosis_contract());
         let owner = self.get_owner();
         let address_provider = self.get_address_provider();
@@ -1458,7 +1469,11 @@ impl MockEnvBuilder {
             .unwrap();
 
         self.set_address(MarsAddressType::RewardsCollector, addr.clone());
+        self.set_address(MarsAddressType::SafetyFund, Addr::unchecked("safety_fund"));
+        self.set_address(MarsAddressType::RevenueShare, Addr::unchecked("revenue_share"));
+        self.set_address(MarsAddressType::FeeCollector, Addr::unchecked("fee_collector"));
 
+        self.rewards_collector = Some(addr.clone());
         addr
     }
 

@@ -1,4 +1,4 @@
-use cosmwasm_std::{Coin, Deps, Env, Order, StdResult};
+use cosmwasm_std::{Coin, Decimal, Deps, Env, Order, StdResult};
 use cw_paginate::{paginate_map, paginate_map_query, PaginationResponse, DEFAULT_LIMIT, MAX_LIMIT};
 use cw_storage_plus::Bound;
 use mars_types::{
@@ -61,6 +61,10 @@ pub fn query_config(deps: Deps) -> ContractResult<ConfigResponse> {
         rewards_collector: REWARDS_COLLECTOR.may_load(deps.storage)?,
         swap_fee: SWAP_FEE.load(deps.storage)?,
     })
+}
+
+pub fn query_swap_fee(deps: Deps) -> ContractResult<Decimal> {
+    Ok(SWAP_FEE.load(deps.storage)?)
 }
 
 pub fn query_positions(deps: Deps, account_id: &str) -> ContractResult<Positions> {

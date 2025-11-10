@@ -3,10 +3,7 @@ use cw2::{assert_contract_version, set_contract_version};
 use mars_rewards_collector_base::ContractError;
 use mars_types::rewards_collector::{Config, RewardConfig, TransferType};
 
-use crate::{
-    entry::{CONTRACT_NAME, CONTRACT_VERSION},
-    OsmosisCollector,
-};
+use crate::{entry::CONTRACT_NAME, OsmosisCollector};
 
 pub mod previous_state {
     use cosmwasm_schema::cw_serde;
@@ -44,6 +41,7 @@ pub mod previous_state {
 }
 
 const FROM_VERSION: &str = "2.1.0";
+const TO_VERSION: &str = "2.1.1";
 
 pub fn migrate(deps: DepsMut) -> Result<Response, ContractError> {
     let storage: &mut dyn Storage = deps.storage;
@@ -99,10 +97,10 @@ pub fn migrate(deps: DepsMut) -> Result<Response, ContractError> {
     let collector = OsmosisCollector::default();
     collector.config.save(storage, &new_config)?;
 
-    set_contract_version(deps.storage, format!("crates.io:{CONTRACT_NAME}"), CONTRACT_VERSION)?;
+    set_contract_version(deps.storage, format!("crates.io:{CONTRACT_NAME}"), TO_VERSION)?;
 
     Ok(Response::new()
         .add_attribute("action", "migrate")
         .add_attribute("from_version", FROM_VERSION)
-        .add_attribute("to_version", CONTRACT_VERSION))
+        .add_attribute("to_version", TO_VERSION))
 }

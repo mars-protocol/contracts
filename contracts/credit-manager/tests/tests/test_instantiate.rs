@@ -65,3 +65,11 @@ fn params_set_on_instantiate() {
 fn raises_on_invalid_params_addr() {
     MockEnv::new().params("%%%INVALID%%%").build().unwrap();
 }
+
+#[test]
+#[should_panic]
+fn raises_on_invalid_swap_fee() {
+    use cosmwasm_std::Decimal;
+
+    MockEnv::new().swap_fee(Decimal::percent(100)).build().unwrap();
+}
