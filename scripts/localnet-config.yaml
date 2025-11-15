@@ -1,0 +1,96 @@
+# Localnet Configuration for Osmosis
+# This file configures the initial state of your local Osmosis node
+
+# Chain configuration
+chain:
+  chain_id: "localosmosis"
+  denom: "uosmo"
+
+# Assets to initialize
+assets:
+  - denom: "uosmo"
+    description: "Osmosis native token"
+  - denom: "uatom"
+    description: "Cosmos Hub ATOM"
+  - denom: "uusdc"
+    description: "USD Coin"
+
+# Pools to create with initial liquidity and pricing
+# Price is calculated as: token2_amount / token1_amount
+pools:
+  - name: "OSMO/ATOM Pool"
+    token1:
+      denom: "uosmo"
+      amount: "1000000000000"  # 1,000,000 OSMO (6 decimals)
+    token2:
+      denom: "uatom"
+      amount: "100000000000"   # 100,000 ATOM (6 decimals)
+    # This creates a price of 0.1 ATOM per OSMO (or 10 OSMO per ATOM)
+    swap_fee: "0.002"  # 0.2%
+    exit_fee: "0.000"
+
+  - name: "OSMO/USDC Pool"
+    token1:
+      denom: "uosmo"
+      amount: "1000000000000"  # 1,000,000 OSMO
+    token2:
+      denom: "uusdc"
+      amount: "1000000000000"  # 1,000,000 USDC
+    # This creates a price of 1 USDC per OSMO
+    swap_fee: "0.002"
+    exit_fee: "0.000"
+
+  - name: "ATOM/USDC Pool"
+    token1:
+      denom: "uatom"
+      amount: "100000000000"   # 100,000 ATOM
+    token2:
+      denom: "uusdc"
+      amount: "1000000000000"  # 1,000,000 USDC
+    # This creates a price of 10 USDC per ATOM
+    swap_fee: "0.002"
+    exit_fee: "0.000"
+
+# Addresses to seed with initial balances
+seed_addresses:
+  - address: "osmo1ztdmncgxw3xwqdn8vhusfy0u9mne0w629syqsn"
+    name: "Test Account 1"
+    balances:
+      - denom: "uosmo"
+        amount: "100000000000000"  # 100,000,000 OSMO
+      - denom: "uatom"
+        amount: "10000000000000"   # 10,000,000 ATOM
+      - denom: "uusdc"
+        amount: "50000000000000"   # 50,000,000 USDC
+
+  - address: "osmo18s5lynnmx37hq4wlrw9gdn68sg2uxp5rgk26vv"
+    name: "Test Account 2"
+    balances:
+      - denom: "uosmo"
+        amount: "50000000000000"   # 50,000,000 OSMO
+      - denom: "uatom"
+        amount: "5000000000000"    # 5,000,000 ATOM
+      - denom: "uusdc"
+        amount: "25000000000000"   # 25,000,000 USDC
+
+  - address: "osmo1qwexv7c6sm95lwhzn9027vyu2ccneaqad4w8ka"
+    name: "Test Account 3"
+    balances:
+      - denom: "uosmo"
+        amount: "25000000000000"   # 25,000,000 OSMO
+      - denom: "uatom"
+        amount: "2500000000000"    # 2,500,000 ATOM
+      - denom: "uusdc"
+        amount: "10000000000000"   # 10,000,000 USDC
+
+# Genesis account for pool creation (needs sufficient funds)
+genesis_account:
+  name: "validator"
+  mnemonic: "bottom loan skill merry east cradle onion journey palm apology verb edit desert impose absurd oil bubble sweet glove shallow size build burst effort"
+  balances:
+    - denom: "uosmo"
+      amount: "100000000000000000"  # 100,000,000,000 OSMO
+    - denom: "uatom"
+      amount: "10000000000000000"   # 10,000,000,000 ATOM
+    - denom: "uusdc"
+      amount: "10000000000000000"   # 10,000,000,000 USDC

@@ -156,6 +156,36 @@ Run all tests:
 cargo make test
 ```
 
+### Local Osmosis Network
+
+For testing against a real Osmosis chain locally, you can use the localnet setup scripts. See the detailed guide: [scripts/LOCALNET.md](scripts/LOCALNET.md)
+
+Quick start:
+
+```bash
+cd scripts
+
+# One-command setup: reset chain, start it, create pools, and seed addresses
+./start-localnet.sh
+
+# Or run steps individually:
+# 1. Reset chain to genesis
+./reset-localnet.sh
+
+# 2. Start chain (in another terminal)
+osmosisd start --home ~/.osmosisd
+
+# 3. Create pools and seed addresses (in another terminal)
+npm run setup:localnet
+```
+
+This will:
+- Create a local Osmosis chain with 3 assets (uosmo, uatom, uusdc)
+- Create pools with configurable prices
+- Seed pre-configured test addresses with tokens
+
+Configuration is managed via [scripts/localnet-config.yaml](scripts/localnet-config.yaml)
+
 ## Deployments
 
 ### osmosis-1
