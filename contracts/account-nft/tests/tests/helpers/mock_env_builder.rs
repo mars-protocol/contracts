@@ -152,8 +152,7 @@ impl MockEnvBuilder {
                         swapper: "n/a".to_string(),
                         zapper: "n/a".to_string(),
                         health_contract: "n/a".to_string(),
-                        rewards_collector: None,
-                        swap_fee: Decimal::percent(1),
+                        rewards_collector: None
                     },
                 },
                 &[],

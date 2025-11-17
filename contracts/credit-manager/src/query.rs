@@ -58,8 +58,7 @@ pub fn query_config(deps: Deps) -> ContractResult<ConfigResponse> {
         swapper: SWAPPER.load(deps.storage)?.address().into(),
         zapper: ZAPPER.load(deps.storage)?.address().into(),
         health_contract: HEALTH_CONTRACT.load(deps.storage)?.address().into(),
-        rewards_collector: REWARDS_COLLECTOR.may_load(deps.storage)?,
-        swap_fee: SWAP_FEE.load(deps.storage)?,
+        rewards_collector: REWARDS_COLLECTOR.may_load(deps.storage)?
     })
 }
 
