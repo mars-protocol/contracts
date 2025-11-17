@@ -1,26 +1,13 @@
 use std::{mem::take, str::FromStr};
 
 use anyhow::Result as AnyResult;
-use cosmwasm_std::{Addr, Decimal, Empty};
+use cosmwasm_std::{Addr, Decimal};
 use cw_multi_test::{App, AppResponse, BasicApp, Executor};
 use cw_paginate::PaginationResponse;
 use mars_owner::{OwnerResponse, OwnerUpdate};
-use mars_testing::{
-    integration::mock_contracts::mock_rewards_collector_osmosis_contract,
-    multitest::helpers::{
-        mock_address_provider_contract, mock_incentives_contract, mock_oracle_contract,
-        mock_red_bank_contract,
-    },
-};
-use mars_types::{
-    address_provider::{self, MarsAddressType},
-    incentives, oracle,
-    params::{
-        AssetParams, AssetParamsUpdate, ConfigResponse, EmergencyUpdate, ExecuteMsg,
-        InstantiateMsg, QueryMsg, VaultConfig, VaultConfigUpdate,
-    },
-    red_bank,
-    rewards_collector::{self, RewardConfig, TransferType},
+use mars_types::params::{
+    AssetParams, AssetParamsUpdate, ConfigResponse, EmergencyUpdate, ExecuteMsg, InstantiateMsg,
+    QueryMsg, VaultConfig, VaultConfigUpdate,
 };
 
 use super::contracts::mock_params_contract;
@@ -258,164 +245,6 @@ impl MockEnvBuilder {
             app: take(&mut self.app),
             params_contract,
         })
-    }
-
-    fn deploy_address_provider(&mut self) -> Addr {
-        let contract = mock_address_provider_contract();
-        let code_id = self.app.store_code(contract);
-
-        self.app
-            .instantiate_contract(
-                code_id,
-                self.deployer.clone(),
-                &address_provider::InstantiateMsg {
-                    owner: self.deployer.clone().to_string(),
-                    prefix: "".to_string(),
-                },
-                &[],
-                "mock-address-provider",
-                None,
-            )
-            .unwrap()
-    }
-
-    fn deploy_oracle(&mut self) -> Addr {
-        let code_id = self.app.store_code(mock_oracle_contract());
-
-        let addr = self
-            .app
-            .instantiate_contract(
-                code_id,
-                self.deployer.clone(),
-                &oracle::InstantiateMsg::<Empty> {
-                    owner: self.deployer.to_string(),
-                    base_denom: "uusd".to_string(),
-                    custom_init: None,
-                },
-                &[],
-                "oracle",
-                None,
-            )
-            .unwrap();
-
-        self.set_address(MarsAddressType::Oracle, addr.clone());
-
-        addr
-    }
-
-    fn deploy_red_bank(&mut self, address_provider: &str) -> Addr {
-        let code_id = self.app.store_code(mock_red_bank_contract());
-
-        let addr = self
-            .app
-            .instantiate_contract(
-                code_id,
-                self.deployer.clone(),
-                &red_bank::InstantiateMsg {
-                    owner: self.deployer.to_string(),
-                    config: red_bank::CreateOrUpdateConfig {
-                        address_provider: Some(address_provider.to_string()),
-                    },
-                },
-                &[],
-                "red-bank",
-                None,
-            )
-            .unwrap();
-
-        self.set_address(MarsAddressType::RedBank, addr.clone());
-
-        addr
-    }
-
-    fn deploy_incentives(&mut self, address_provider_addr: &Addr) -> Addr {
-        let code_id = self.app.store_code(mock_incentives_contract());
-
-        let addr = self
-            .app
-            .instantiate_contract(
-                code_id,
-                self.deployer.clone(),
-                &incentives::InstantiateMsg {
-                    owner: self.deployer.to_string(),
-                    address_provider: address_provider_addr.to_string(),
-                    epoch_duration: 604800,
-                    max_whitelisted_denoms: 10,
-                },
-                &[],
-                "incentives",
-                None,
-            )
-            .unwrap();
-
-        self.set_address(MarsAddressType::Incentives, addr.clone());
-
-        addr
-    }
-
-    fn deploy_rewards_collector_osmosis(&mut self, address_provider_addr: &Addr) -> Addr {
-        let code_id = self.app.store_code(mock_rewards_collector_osmosis_contract());
-
-        let addr = self
-            .app
-            .instantiate_contract(
-                code_id,
-                self.deployer.clone(),
-                &rewards_collector::InstantiateMsg {
-                    owner: self.deployer.to_string(),
-                    address_provider: address_provider_addr.to_string(),
-                    safety_tax_rate: Decimal::percent(50),
-                    revenue_share_tax_rate: Decimal::percent(50),
-                    safety_fund_config: RewardConfig {
-                        target_denom: "uusdc".to_string(),
-                        transfer_type: TransferType::Bank,
-                    },
-                    revenue_share_config: RewardConfig {
-                        target_denom: "uusdc".to_string(),
-                        transfer_type: TransferType::Bank,
-                    },
-                    fee_collector_config: RewardConfig {
-                        target_denom: "umars".to_string(),
-                        transfer_type: TransferType::Bank,
-                    },
-                    channel_id: "0".to_string(),
-                    timeout_seconds: 900,
-                    whitelisted_distributors: vec![],
-                },
-                &[],
-                "rewards-collector",
-                None,
-            )
-            .unwrap();
-
-        self.set_address(MarsAddressType::RewardsCollector, addr.clone());
-
-        addr
-    }
-
-    fn set_address(&mut self, address_type: MarsAddressType, address: Addr) {
-        let address_provider_addr = self.get_address_provider();
-
-        self.app
-            .execute_contract(
-                self.deployer.clone(),
-                address_provider_addr,
-                &address_provider::ExecuteMsg::SetAddress {
-                    address_type,
-                    address: address.into(),
-                },
-                &[],
-            )
-            .unwrap();
-    }
-
-    fn get_address_provider(&mut self) -> Addr {
-        if self.address_provider.is_none() {
-            let addr = self.deploy_address_provider();
-
-            self.address_provider = Some(addr);
-        }
-        self.address_provider.clone().unwrap()
     }
 
     fn set_emergency_owner(&mut self, params_contract: &Addr, eo: &str) {

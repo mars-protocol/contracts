@@ -3,7 +3,10 @@ use cw2::{assert_contract_version, get_contract_version, set_contract_version, V
 use mars_rewards_collector_base::ContractError;
 use mars_types::rewards_collector::Config;
 
-use crate::{entry::{CONTRACT_NAME, CONTRACT_VERSION}, OsmosisCollector};
+use crate::{
+    entry::{CONTRACT_NAME, CONTRACT_VERSION},
+    OsmosisCollector,
+};
 
 mod previous_state {
     use cosmwasm_schema::cw_serde;
