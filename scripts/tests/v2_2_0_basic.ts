@@ -94,7 +94,7 @@ const migrateCreditManager = async (
     `Migrating credit manager at ${creditManagerAddr} from version ${info.version} to ${expectedVersion}`,
   )
   const codeId = await uploadCreditManager(client, deployer, storage)
-  await client.migrate(deployer, creditManagerAddr, codeId, {}, "auto")
+  await client.migrate(deployer, creditManagerAddr, codeId, {}, 'auto')
 
   const after: { contract: string; version: string } = await client.queryContractSmart(
     creditManagerAddr,
@@ -107,10 +107,7 @@ const migrateCreditManager = async (
   printGreen(`Migration complete :: contract ${after.contract} :: version ${after.version}`)
 }
 
-const ensureSwapFeeInitialized = async (
-  client: SigningCosmWasmClient,
-  storage: Storage,
-) => {
+const ensureSwapFeeInitialized = async (client: SigningCosmWasmClient, storage: Storage) => {
   const creditManagerAddr = expectDefined(
     storage.addresses.creditManager,
     'credit manager address missing from storage.',
@@ -161,12 +158,7 @@ const distributeRewards = async (
   for (const denom of denoms) {
     printBlue(`Triggering distribute_rewards for denom ${denom}`)
     try {
-      await client.execute(
-        deployerAddr,
-        contractAddr,
-        { distribute_rewards: { denom } },
-        'auto',
-      )
+      await client.execute(deployerAddr, contractAddr, { distribute_rewards: { denom } }, 'auto')
       printGreen(`distribute_rewards executed for ${denom}`)
     } catch (err) {
       printRed(`distribute_rewards failed for ${denom}: ${String(err)}`)

@@ -556,6 +556,9 @@ export type QueryMsg =
         start_after?: string | null
       }
     }
+  | {
+      swap_fee_rate: {}
+    }
 export type VaultPositionAmount =
   | {
       unlocked: VaultAmount
