@@ -15,6 +15,7 @@ use crate::{error::ContractError, user::User};
 /// 1. Updates market borrow and liquidity indices.
 /// 2. If there are any protocol rewards, builds a mint to the rewards collector and adds it
 ///    to the returned response
+///
 /// NOTE: it does not save the market to store
 /// WARNING: For a given block, this function should be called before updating interest rates
 /// as it would apply the new interest rates instead of the ones that were valid during

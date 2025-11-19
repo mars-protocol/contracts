@@ -14,6 +14,7 @@ use crate::{
 /// - Exceeds liquidatee's total debt for denom
 /// - Not enough liquidatee request coin balance to match
 /// - The value of the debt repaid exceeds the Maximum Debt Repayable (MDR)
+///
 /// Returns -> (Debt Coin, Liquidator Request Coin, Liquidatee Request Coin)
 /// Difference between Liquidator Request Coin and Liquidatee Request Coin goes to rewards-collector account as protocol fee.
 pub fn calculate_liquidation(
