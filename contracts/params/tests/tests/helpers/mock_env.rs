@@ -19,10 +19,8 @@ pub struct MockEnv {
 
 pub struct MockEnvBuilder {
     pub app: BasicApp,
-    pub deployer: Addr,
     pub target_health_factor: Option<Decimal>,
     pub emergency_owner: Option<String>,
-    pub address_provider: Option<Addr>,
 }
 
 #[allow(clippy::new_ret_no_self)]
@@ -30,10 +28,8 @@ impl MockEnv {
     pub fn new() -> MockEnvBuilder {
         MockEnvBuilder {
             app: App::default(),
-            deployer: Addr::unchecked("deployer"),
             target_health_factor: None,
             emergency_owner: None,
-            address_provider: None,
         }
     }
 

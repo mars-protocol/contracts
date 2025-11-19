@@ -59,7 +59,7 @@ impl MaybeMutStorage<'_> {
 /// - duration is a multiple of epoch duration
 /// - enough tokens are sent to cover the entire duration
 /// - start_time is a multiple of epoch duration away from any other existing incentive
-///  for the same collateral denom and incentive denom tuple
+///   for the same collateral denom and incentive denom tuple
 pub fn validate_incentive_schedule(
     storage: &dyn Storage,
     info: &MessageInfo,
