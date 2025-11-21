@@ -1,6 +1,6 @@
 {
   "contract_name": "mars-credit-manager",
-  "contract_version": "2.1.0",
+  "contract_version": "2.2.0",
   "idl_version": "1.0.0",
   "instantiate": {
     "$schema": "http://json-schema.org/draft-07/schema#",
@@ -15,6 +15,7 @@
       "owner",
       "params",
       "red_bank",
+      "swap_fee",
       "swapper",
       "zapper"
     ],
@@ -76,6 +77,14 @@
         "allOf": [
           {
             "$ref": "#/definitions/RedBankUnchecked"
+          }
+        ]
+      },
+      "swap_fee": {
+        "description": "The swap fee applied to each swap. This is a percentage of the swap amount. For example, if set to 0.0001, 0.01% of the swap amount will be taken as a fee. This fee is applied once, no matter how many hops in the route",
+        "allOf": [
+          {
+            "$ref": "#/definitions/Decimal"
           }
         ]
       },
@@ -1795,6 +1804,16 @@
               "null"
             ]
           },
+          "swap_fee": {
+            "anyOf": [
+              {
+                "$ref": "#/definitions/Decimal"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
           "swapper": {
             "anyOf": [
               {
@@ -2683,6 +2702,19 @@
                 ]
               }
             },
+            "additionalProperties": false
+          }
+        },
+        "additionalProperties": false
+      },
+      {
+        "type": "object",
+        "required": [
+          "swap_fee_rate"
+        ],
+        "properties": {
+          "swap_fee_rate": {
+            "type": "object",
             "additionalProperties": false
           }
         },
@@ -3670,6 +3702,12 @@
           "additionalProperties": false
         }
       }
+    },
+    "swap_fee_rate": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Decimal",
+      "description": "A fixed-point decimal value with 18 fractional digits, i.e. Decimal(1_000_000_000_000_000_000) == 1.0\n\nThe greatest possible value that can be represented is 340282366920938463463.374607431768211455 (which is (2^128 - 1) / 10^18)",
+      "type": "string"
     },
     "total_debt_shares": {
       "$schema": "http://json-schema.org/draft-07/schema#",

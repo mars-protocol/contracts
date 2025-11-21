@@ -15,8 +15,8 @@
       "revenue_share_tax_rate",
       "safety_fund_config",
       "safety_tax_rate",
-      "slippage_tolerance",
-      "timeout_seconds"
+      "timeout_seconds",
+      "whitelisted_distributors"
     ],
     "properties": {
       "address_provider": {
@@ -71,19 +71,18 @@
           }
         ]
       },
-      "slippage_tolerance": {
-        "description": "Maximum percentage of price movement (minimum amount you accept to receive during swap)",
-        "allOf": [
-          {
-            "$ref": "#/definitions/Decimal"
-          }
-        ]
-      },
       "timeout_seconds": {
         "description": "Number of seconds after which an IBC transfer is to be considered failed, if no acknowledgement is received",
         "type": "integer",
         "format": "uint64",
         "minimum": 0.0
+      },
+      "whitelisted_distributors": {
+        "description": "List of addresses that are allowed to execute the rewards distribution",
+        "type": "array",
+        "items": {
+          "type": "string"
+        }
       }
     },
     "additionalProperties": false,
@@ -1227,17 +1226,6 @@
               }
             ]
           },
-          "slippage_tolerance": {
-            "description": "Maximum percentage of price movement (minimum amount you accept to receive during swap)",
-            "anyOf": [
-              {
-                "$ref": "#/definitions/Decimal"
-              },
-              {
-                "type": "null"
-              }
-            ]
-          },
           "timeout_seconds": {
             "description": "Number of seconds after which an IBC transfer is to be considered failed, if no acknowledgement is received",
             "type": [
@@ -1246,6 +1234,16 @@
             ],
             "format": "uint64",
             "minimum": 0.0
+          },
+          "whitelist_actions": {
+            "description": "Actions to modify the whitelist of distributors",
+            "type": [
+              "array",
+              "null"
+            ],
+            "items": {
+              "$ref": "#/definitions/WhitelistAction"
+            }
           }
         },
         "additionalProperties": false
@@ -1268,6 +1266,54 @@
           "u_n_l_o_c_k_e_d",
           "l_o_c_k_e_d",
           "u_n_l_o_c_k_i_n_g"
+        ]
+      },
+      "WhitelistAction": {
+        "oneOf": [
+          {
+            "description": "Add an address to the whitelist of distributors",
+            "type": "object",
+            "required": [
+              "add_address"
+            ],
+            "properties": {
+              "add_address": {
+                "type": "object",
+                "required": [
+                  "address"
+                ],
+                "properties": {
+                  "address": {
+                    "type": "string"
+                  }
+                },
+                "additionalProperties": false
+              }
+            },
+            "additionalProperties": false
+          },
+          {
+            "description": "Remove an address from the whitelist of distributors",
+            "type": "object",
+            "required": [
+              "remove_address"
+            ],
+            "properties": {
+              "remove_address": {
+                "type": "object",
+                "required": [
+                  "address"
+                ],
+                "properties": {
+                  "address": {
+                    "type": "string"
+                  }
+                },
+                "additionalProperties": false
+              }
+            },
+            "additionalProperties": false
+          }
         ]
       }
     }
@@ -1307,8 +1353,8 @@
         "revenue_share_tax_rate",
         "safety_fund_config",
         "safety_tax_rate",
-        "slippage_tolerance",
-        "timeout_seconds"
+        "timeout_seconds",
+        "whitelisted_distributors"
       ],
       "properties": {
         "address_provider": {
@@ -1373,19 +1419,18 @@
             }
           ]
         },
-        "slippage_tolerance": {
-          "description": "Maximum percentage of price movement (minimum amount you accept to receive during swap)",
-          "allOf": [
-            {
-              "$ref": "#/definitions/Decimal"
-            }
-          ]
-        },
         "timeout_seconds": {
           "description": "Number of seconds after which an IBC transfer is to be considered failed, if no acknowledgement is received",
           "type": "integer",
           "format": "uint64",
           "minimum": 0.0
+        },
+        "whitelisted_distributors": {
+          "description": "List of addresses that are allowed to execute the rewards distribution",
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
         }
       },
       "additionalProperties": false,

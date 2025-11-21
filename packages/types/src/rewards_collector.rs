@@ -10,8 +10,6 @@ use mars_utils::{
 
 use crate::{credit_manager::Action, swapper::SwapperRoute};
 
-const MAX_SLIPPAGE_TOLERANCE_PERCENTAGE: u64 = 50;
-
 #[cw_serde]
 pub struct InstantiateMsg {
     /// The contract's owner
@@ -32,8 +30,8 @@ pub struct InstantiateMsg {
     pub channel_id: String,
     /// Number of seconds after which an IBC transfer is to be considered failed, if no acknowledgement is received
     pub timeout_seconds: u64,
-    /// Maximum percentage of price movement (minimum amount you accept to receive during swap)
-    pub slippage_tolerance: Decimal,
+    /// List of addresses that are allowed to execute the rewards distribution
+    pub whitelisted_distributors: Vec<String>,
 }
 #[cw_serde]
 pub enum TransferType {
@@ -78,8 +76,8 @@ pub struct Config {
     pub channel_id: String,
     /// Number of seconds after which an IBC transfer is to be considered failed, if no acknowledgement is received
     pub timeout_seconds: u64,
-    /// Maximum percentage of price movement (minimum amount you accept to receive during swap)
-    pub slippage_tolerance: Decimal,
+    /// List of addresses that are allowed to execute the rewards distribution
+    pub whitelisted_distributors: Vec<Addr>,
 }
 
 impl Config {
@@ -88,14 +86,6 @@ impl Config {
         decimal_param_le_one(total_tax_rate, "total_tax_rate")?;
 
         integer_param_gt_zero(self.timeout_seconds, "timeout_seconds")?;
-
-        if self.slippage_tolerance > Decimal::percent(MAX_SLIPPAGE_TOLERANCE_PERCENTAGE) {
-            return Err(ValidationError::InvalidParam {
-                param_name: "slippage_tolerance".to_string(),
-                invalid_value: self.slippage_tolerance.to_string(),
-                predicate: format!("<= {}", Decimal::percent(MAX_SLIPPAGE_TOLERANCE_PERCENTAGE)),
-            });
-        }
 
         // There is an assumption that revenue share and safety fund are swapped to the same denom
         assert_eq!(self.safety_fund_config.target_denom, self.revenue_share_config.target_denom);
@@ -113,6 +103,13 @@ impl Config {
 
 impl Config {
     pub fn checked(api: &dyn Api, msg: InstantiateMsg) -> StdResult<Config> {
+        // Validate all addresses in the whitelist
+        let whitelisted_distributors = msg
+            .whitelisted_distributors
+            .iter()
+            .map(|addr| api.addr_validate(addr))
+            .collect::<StdResult<Vec<Addr>>>()?;
+
         Ok(Config {
             address_provider: api.addr_validate(&msg.address_provider)?,
             safety_tax_rate: msg.safety_tax_rate,
@@ -122,9 +119,21 @@ impl Config {
             fee_collector_config: msg.fee_collector_config,
             channel_id: msg.channel_id,
             timeout_seconds: msg.timeout_seconds,
-            slippage_tolerance: msg.slippage_tolerance,
+            whitelisted_distributors,
         })
     }
+}
+
+#[cw_serde]
+pub enum WhitelistAction {
+    /// Add an address to the whitelist of distributors
+    AddAddress {
+        address: String,
+    },
+    /// Remove an address from the whitelist of distributors
+    RemoveAddress {
+        address: String,
+    },
 }
 
 #[cw_serde]
@@ -146,8 +155,8 @@ pub struct UpdateConfig {
     pub channel_id: Option<String>,
     /// Number of seconds after which an IBC transfer is to be considered failed, if no acknowledgement is received
     pub timeout_seconds: Option<u64>,
-    /// Maximum percentage of price movement (minimum amount you accept to receive during swap)
-    pub slippage_tolerance: Option<Decimal>,
+    /// Actions to modify the whitelist of distributors
+    pub whitelist_actions: Option<Vec<WhitelistAction>>,
 }
 
 #[cw_serde]
@@ -227,8 +236,8 @@ pub struct ConfigResponse {
     pub channel_id: String,
     /// Number of seconds after which an IBC transfer is to be considered failed, if no acknowledgement is received
     pub timeout_seconds: u64,
-    /// Maximum percentage of price movement (minimum amount you accept to receive during swap)
-    pub slippage_tolerance: Decimal,
+    /// List of addresses that are allowed to execute the rewards distribution
+    pub whitelisted_distributors: Vec<String>,
 }
 
 #[cw_serde]

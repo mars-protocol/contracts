@@ -1,7 +1,6 @@
 use cosmwasm_std::{
     coin, testing::mock_env, to_json_binary, CosmosMsg, Decimal, Empty, SubMsg, Uint128, WasmMsg,
 };
-use mars_rewards_collector_base::ContractError;
 use mars_rewards_collector_osmosis::entry::execute;
 use mars_testing::mock_info;
 use mars_types::{
@@ -194,108 +193,4 @@ fn skipping_swap_if_denom_matches() {
     }
     .into();
     assert_eq!(res.messages[0], SubMsg::new(swap_msg));
-}
-
-#[test]
-fn swap_fails_if_slippage_limit_exceeded() {
-    let mut deps = helpers::setup_test();
-
-    let usdc_denom = "uusdc".to_string();
-    let mars_denom = "umars".to_string();
-    let atom_denom = "uatom".to_string();
-
-    let uusdc_usd_price = Decimal::one();
-    let umars_uusdc_price = Decimal::from_ratio(5u128, 10u128); // 0.5 uusdc = 1 umars
-    let uatom_uusdc_price = Decimal::from_ratio(125u128, 10u128); // 12.5 uusd = 1 uatom
-
-    deps.querier.set_oracle_price(&usdc_denom, uusdc_usd_price);
-
-    deps.querier.set_oracle_price(&mars_denom, umars_uusdc_price);
-
-    deps.querier.set_oracle_price(&atom_denom, uatom_uusdc_price);
-
-    deps.querier.set_swapper_estimate_price(&mars_denom, umars_uusdc_price);
-    deps.querier.set_swapper_estimate_price(&atom_denom, uatom_uusdc_price);
-    deps.querier.set_swapper_estimate_price(&usdc_denom, uusdc_usd_price);
-
-    // Here we test the slippage limits for each of the target reward denoms
-    //
-    // uatom for revenue share = 88888 * 0.1 = 8888
-    // uatom for safety fund = 88888 * 0.25 = 22222
-    // uatom for Fee collector = 88888 - 8888 - 22222 = 57778
-    // worst price (atom -> mars ) = 12.5 / 0/5 = 25 * (1-0.03) = 24.25
-    // worst price (atom -> usdc) = 12.5 = * (1-0.03) = 12.125
-    // minimum revenue share (atom -> usdc) = 8888 * 12.125 = 107767
-    // minimum safety fund (atom -> usdc) = 31110 * 12.125 = 377208
-    // minimum fee collector (atom -> mars) = 57778 * 24.25= 1401116
-
-    // Safety Fund fail
-    let res = execute(
-        deps.as_mut(),
-        mock_env(),
-        mock_info("jake"),
-        ExecuteMsg::SwapAsset {
-            denom: atom_denom.to_string(),
-            amount: None,
-            safety_fund_route: Some(SwapperRoute::Osmo(OsmoRoute {
-                swaps: vec![OsmoSwap {
-                    pool_id: 12,
-                    to: usdc_denom.to_string(),
-                }],
-            })),
-            fee_collector_route: Some(SwapperRoute::Osmo(OsmoRoute {
-                swaps: vec![OsmoSwap {
-                    pool_id: 69,
-                    to: mars_denom.to_string(),
-                }],
-            })),
-            safety_fund_min_receive: Some(Uint128::new(377207)), // 377207 < 377208 -> error
-            fee_collector_min_receive: Some(Uint128::new(1401116)), // pass
-        },
-    );
-
-    assert_eq!(
-        res.unwrap_err(),
-        ContractError::SlippageLimitExceeded {
-            denom_in: atom_denom.clone(),
-            denom_out: usdc_denom.clone(),
-            min_receive_minimum: Uint128::new(377208),
-            min_receive_given: Uint128::new(377207),
-        }
-    );
-
-    // Fee Collector fail
-    let res = execute(
-        deps.as_mut(),
-        mock_env(),
-        mock_info("jake"),
-        ExecuteMsg::SwapAsset {
-            denom: atom_denom.to_string(),
-            amount: None,
-            safety_fund_route: Some(SwapperRoute::Osmo(OsmoRoute {
-                swaps: vec![OsmoSwap {
-                    pool_id: 12,
-                    to: usdc_denom.to_string(),
-                }],
-            })),
-            fee_collector_route: Some(SwapperRoute::Osmo(OsmoRoute {
-                swaps: vec![OsmoSwap {
-                    pool_id: 69,
-                    to: mars_denom.to_string(),
-                }],
-            })),
-            safety_fund_min_receive: Some(Uint128::new(377208)), // pass
-            fee_collector_min_receive: Some(Uint128::new(1401115)), // 1401115 < 1401116 -> error
-        },
-    );
-
-    assert_eq!(
-        res.unwrap_err(),
-        ContractError::SlippageLimitExceeded {
-            denom_in: atom_denom.clone(),
-            denom_out: mars_denom.clone(),
-            min_receive_minimum: Uint128::new(1401116),
-            min_receive_given: Uint128::new(1401115),
-        }
-    );
 }

@@ -1294,7 +1294,7 @@ fn setup_redbank(wasm: &Wasm<OsmosisTestApp>, signer: &SigningAccount) -> (Strin
             },
             channel_id: "channel-1".to_string(),
             timeout_seconds: 60,
-            slippage_tolerance: Decimal::new(Uint128::from(1u128)),
+            whitelisted_distributors: vec![signer.address()],
         },
     );
 

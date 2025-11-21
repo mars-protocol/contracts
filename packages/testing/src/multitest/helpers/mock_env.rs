@@ -64,6 +64,7 @@ use mars_types::{
         QueryMsg::{UserCollateral, UserDebt},
         UserCollateralResponse, UserDebtResponse,
     },
+    rewards_collector::{self, RewardConfig, TransferType},
     swapper::{
         EstimateExactInSwapResponse, InstantiateMsg as SwapperInstantiateMsg,
         QueryMsg::EstimateExactInSwap, SwapperRoute,
@@ -81,7 +82,10 @@ use super::{
     mock_red_bank_contract, mock_rover_contract, mock_swapper_contract, mock_v2_zapper_contract,
     mock_vault_contract, AccountToFund, CoinInfo, VaultTestInfo, ASTRO_LP_DENOM,
 };
-use crate::multitest::modules::token_factory::{CustomApp, TokenFactory};
+use crate::{
+    integration::mock_contracts::mock_rewards_collector_osmosis_contract,
+    multitest::modules::token_factory::{CustomApp, TokenFactory},
+};
 
 pub const DEFAULT_RED_BANK_COIN_BALANCE: Uint128 = Uint128::new(1_000_000);
 
@@ -113,6 +117,8 @@ pub struct MockEnvBuilder {
     pub max_slippage: Option<Decimal>,
     pub health_contract: Option<HealthContract>,
     pub evil_vault: Option<String>,
+    pub swap_fee: Option<Decimal>,
+    pub rewards_collector: Option<Addr>,
 }
 
 #[allow(clippy::new_ret_no_self)]
@@ -140,6 +146,8 @@ impl MockEnv {
             max_slippage: None,
             health_contract: None,
             evil_vault: None,
+            swap_fee: None,
+            rewards_collector: None,
         }
     }
 
@@ -937,20 +945,21 @@ impl MockEnvBuilder {
         self.update_health_contract_config(&rover);
 
         self.deploy_nft_contract(&rover);
+        self.fund_users();
+
+        self.deploy_vaults();
 
         if self.deploy_nft_contract && self.set_nft_contract_minter {
+            let rewards_collector_addr = self.deploy_rewards_collector();
+            self.rewards_collector = Some(rewards_collector_addr.clone());
             self.update_config(
                 &rover,
                 ConfigUpdates {
-                    rewards_collector: Some("rewards_collector_contract".to_string()),
+                    rewards_collector: Some(rewards_collector_addr.to_string()),
                     ..Default::default()
                 },
             );
         }
-
-        self.fund_users();
-
-        self.deploy_vaults();
 
         Ok(MockEnv {
             app: self.app,
@@ -1085,11 +1094,11 @@ impl MockEnvBuilder {
         let swapper = self.deploy_swapper().into();
         let max_unlocking_positions = self.get_max_unlocking_positions();
         let max_slippage = self.get_max_slippage();
-
         let oracle = self.get_oracle().into();
         let zapper = self.deploy_zapper(&oracle)?.into();
         let health_contract = self.get_health_contract().into();
         let params = self.get_params_contract().into();
+        let swap_fee = self.get_swap_fee();
 
         self.deploy_astroport_incentives();
 
@@ -1109,6 +1118,7 @@ impl MockEnvBuilder {
                     health_contract,
                     params,
                     incentives,
+                    swap_fee,
                 },
                 &[],
                 "mock-rover-contract",
@@ -1417,6 +1427,56 @@ impl MockEnvBuilder {
         vault_addr
     }
 
+    fn deploy_rewards_collector(&mut self) -> Addr {
+        if let Some(addr) = &self.rewards_collector {
+            return addr.clone();
+        }
+
+        let code_id = self.app.store_code(mock_rewards_collector_osmosis_contract());
+        let owner = self.get_owner();
+        let address_provider = self.get_address_provider();
+
+        let addr = self
+            .app
+            .instantiate_contract(
+                code_id,
+                owner.clone(),
+                &rewards_collector::InstantiateMsg {
+                    owner: owner.clone().to_string(),
+                    address_provider: address_provider.to_string(),
+                    safety_tax_rate: Default::default(),
+                    revenue_share_tax_rate: Default::default(),
+                    safety_fund_config: RewardConfig {
+                        target_denom: "uusdc".to_string(),
+                        transfer_type: TransferType::Bank,
+                    },
+                    revenue_share_config: RewardConfig {
+                        target_denom: "uusdc".to_string(),
+                        transfer_type: TransferType::Bank,
+                    },
+                    fee_collector_config: RewardConfig {
+                        target_denom: "umars".to_string(),
+                        transfer_type: TransferType::Bank,
+                    },
+                    channel_id: "".to_string(),
+                    timeout_seconds: 1,
+                    whitelisted_distributors: vec![],
+                },
+                &[],
+                "mock-rewards-collector",
+                None,
+            )
+            .unwrap();
+
+        self.set_address(MarsAddressType::RewardsCollector, addr.clone());
+        self.set_address(MarsAddressType::SafetyFund, Addr::unchecked("safety_fund"));
+        self.set_address(MarsAddressType::RevenueShare, Addr::unchecked("revenue_share"));
+        self.set_address(MarsAddressType::FeeCollector, Addr::unchecked("fee_collector"));
+
+        self.rewards_collector = Some(addr.clone());
+        addr
+    }
+
     fn deploy_swapper(&mut self) -> Swapper {
         let code_id = self.app.store_code(mock_swapper_contract());
         let addr = self
@@ -1510,6 +1570,10 @@ impl MockEnvBuilder {
         self.max_slippage.unwrap_or_else(|| Decimal::percent(99))
     }
 
+    fn get_swap_fee(&self) -> Decimal {
+        self.swap_fee.unwrap_or_else(|| Decimal::percent(0))
+    }
+
     //--------------------------------------------------------------------------------------------------
     // Setter functions
     //--------------------------------------------------------------------------------------------------
@@ -1586,6 +1650,11 @@ impl MockEnvBuilder {
 
     pub fn evil_vault(mut self, credit_account: &str) -> Self {
         self.evil_vault = Some(credit_account.to_string());
+        self
+    }
+
+    pub fn swap_fee(mut self, ratio: Decimal) -> Self {
+        self.swap_fee = Some(ratio);
         self
     }
 }

@@ -69,7 +69,7 @@ export interface DeploymentConfig {
     revenueShareConfig: RewardConfig
     safetyFundConfig: RewardConfig
     feeCollectorConfig: RewardConfig
-    slippageTolerance: string
+    whitelistedDistributors: string[]
   }
   incentives: {
     epochDuration: number
@@ -92,6 +92,7 @@ export interface DeploymentConfig {
   vaults: VaultConfig[]
   oracleConfigs: OracleConfig[]
   astroportConfig?: AstroportConfig
+  swapFee: Decimal
 }
 
 export interface AssetConfig {

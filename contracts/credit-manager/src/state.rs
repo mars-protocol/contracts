@@ -46,3 +46,6 @@ pub const REWARDS_COLLECTOR: Item<RewardsCollector> = Item::new("rewards_collect
 
 // (account id, vault addr) bindings between account and vault
 pub const VAULTS: Map<&str, Addr> = Map::new("vaults");
+
+// Swap fee
+pub const SWAP_FEE: Item<Decimal> = Item::new("swap_fee");

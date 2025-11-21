@@ -13,7 +13,7 @@ ARTIFACTS_DIR_PATH = "target/wasm32-unknown-unknown/release"
 RUST_OPTIMIZER_VERSION = "0.16.0"
 # Use rust version from rust-optimizer Dockerfile (see https://github.com/CosmWasm/optimizer/blob/v0.16.0/Dockerfile#L1)
 # to be sure that we compile / test against the same version
-RUST_VERSION = "1.78.0"
+RUST_VERSION = "1.81.0"
 
 [tasks.install-stable]
 script = '''

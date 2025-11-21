@@ -1030,7 +1030,7 @@ export const osmosisMainnetConfig: DeploymentConfig = {
       target_denom: axlUSDC,
       transfer_type: 'ibc',
     },
-    slippageTolerance: '0.01',
+    whitelistedDistributors: [],
   },
   incentives: {
     epochDuration: 604800, // 1 week
@@ -1084,5 +1084,5 @@ export const osmosisMainnetConfig: DeploymentConfig = {
     wbtcOsmoOracle,
     atomStAtomOracle,
   ],
-  // oracleConfigs: [osmoOracleTwap, atomOracleTwap, axlOracleTwap, stAtomOracleTwap, wbtcOracleTwap, axlUSDCOracleTwap, ethOracleTwap, atomOsmoOracle, usdcOsmoOracle, ethOsmoOracle, wbtcOsmoOracle, atomStAtomOracle],
+  swapFee: '0.0005',
 }

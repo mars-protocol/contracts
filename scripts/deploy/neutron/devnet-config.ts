@@ -437,7 +437,7 @@ export const neutronDevnetConfig: DeploymentConfig = {
       target_denom: marsDenom,
       transfer_type: 'ibc',
     },
-    slippageTolerance: '0.01',
+    whitelistedDistributors: [],
   },
   incentives: {
     epochDuration: 604800, // 1 week
@@ -481,4 +481,5 @@ export const neutronDevnetConfig: DeploymentConfig = {
     router: astroportRouter,
     incentives: astroportIncentives,
   },
+  swapFee: '0.0005',
 }

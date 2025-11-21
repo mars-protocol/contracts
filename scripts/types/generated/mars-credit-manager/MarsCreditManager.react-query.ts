@@ -216,6 +216,14 @@ export const marsCreditManagerQueryKeys = {
         args,
       },
     ] as const,
+  swapFeeRate: (contractAddress: string | undefined, args?: Record<string, unknown>) =>
+    [
+      {
+        ...marsCreditManagerQueryKeys.address(contractAddress)[0],
+        method: 'swap_fee_rate',
+        args,
+      },
+    ] as const,
 }
 export interface MarsCreditManagerReactQuery<TResponse, TData = TResponse> {
   client: MarsCreditManagerQueryClient | undefined
@@ -225,6 +233,21 @@ export interface MarsCreditManagerReactQuery<TResponse, TData = TResponse> {
   > & {
     initialData?: undefined
   }
+}
+export interface MarsCreditManagerSwapFeeRateQuery<TData>
+  extends MarsCreditManagerReactQuery<Decimal, TData> {}
+export function useMarsCreditManagerSwapFeeRateQuery<TData = Decimal>({
+  client,
+  options,
+}: MarsCreditManagerSwapFeeRateQuery<TData>) {
+  return useQuery<Decimal, Error, TData>(
+    marsCreditManagerQueryKeys.swapFeeRate(client?.contractAddress),
+    () => (client ? client.swapFeeRate() : Promise.reject(new Error('Invalid client'))),
+    {
+      ...options,
+      enabled: !!client && (options?.enabled != undefined ? options.enabled : true),
+    },
+  )
 }
 export interface MarsCreditManagerVaultBindingsQuery<TData>
   extends MarsCreditManagerReactQuery<ArrayOfVaultBinding, TData> {

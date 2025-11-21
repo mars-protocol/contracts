@@ -15,8 +15,8 @@ use crate::{
     query::{
         query_accounts, query_all_coin_balances, query_all_debt_shares,
         query_all_total_debt_shares, query_all_vault_positions, query_all_vault_utilizations,
-        query_config, query_positions, query_total_debt_shares, query_vault_bindings,
-        query_vault_position_value, query_vault_utilization,
+        query_config, query_positions, query_swap_fee, query_total_debt_shares,
+        query_vault_bindings, query_vault_position_value, query_vault_utilization,
     },
     repay::repay_from_wallet,
     update_config::{update_config, update_nft_config, update_owner},
@@ -132,11 +132,12 @@ pub fn query(deps: Deps, env: Env, msg: QueryMsg) -> ContractResult<Binary> {
             start_after,
             limit,
         } => to_json_binary(&query_vault_bindings(deps, start_after, limit)?),
+        QueryMsg::SwapFeeRate {} => to_json_binary(&query_swap_fee(deps)?),
     };
     res.map_err(Into::into)
 }
 
 #[cfg_attr(not(feature = "library"), entry_point)]
 pub fn migrate(deps: DepsMut, _env: Env, _msg: Empty) -> Result<Response, ContractError> {
-    migrations::v2_1_0::migrate(deps)
+    migrations::v2_2_0::migrate(deps)
 }

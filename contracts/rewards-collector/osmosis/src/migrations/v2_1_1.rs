@@ -3,10 +3,7 @@ use cw2::{assert_contract_version, set_contract_version};
 use mars_rewards_collector_base::ContractError;
 use mars_types::rewards_collector::{Config, RewardConfig, TransferType};
 
-use crate::{
-    entry::{CONTRACT_NAME, CONTRACT_VERSION},
-    OsmosisCollector,
-};
+use crate::{entry::CONTRACT_NAME, OsmosisCollector};
 
 pub mod previous_state {
     use cosmwasm_schema::cw_serde;
@@ -44,6 +41,7 @@ pub mod previous_state {
 }
 
 const FROM_VERSION: &str = "2.1.0";
+const TO_VERSION: &str = "2.1.1";
 
 pub fn migrate(deps: DepsMut) -> Result<Response, ContractError> {
     let storage: &mut dyn Storage = deps.storage;
@@ -59,7 +57,6 @@ pub fn migrate(deps: DepsMut) -> Result<Response, ContractError> {
     let new_config = Config {
         // old, unchanged values
         address_provider: old_config.address_provider,
-        slippage_tolerance: old_config.slippage_tolerance,
         timeout_seconds: old_config.timeout_seconds,
 
         // source channel on osmosis-1 for neutron-1 is channel-874. Proof below
@@ -90,6 +87,8 @@ pub fn migrate(deps: DepsMut) -> Result<Response, ContractError> {
             target_denom: old_config.fee_collector_denom,
             transfer_type: TransferType::Ibc,
         },
+        // empty initially
+        whitelisted_distributors: vec![],
     };
 
     // ensure our new config is legal
@@ -98,10 +97,10 @@ pub fn migrate(deps: DepsMut) -> Result<Response, ContractError> {
     let collector = OsmosisCollector::default();
     collector.config.save(storage, &new_config)?;
 
-    set_contract_version(deps.storage, format!("crates.io:{CONTRACT_NAME}"), CONTRACT_VERSION)?;
+    set_contract_version(deps.storage, format!("crates.io:{CONTRACT_NAME}"), TO_VERSION)?;
 
     Ok(Response::new()
         .add_attribute("action", "migrate")
         .add_attribute("from_version", FROM_VERSION)
-        .add_attribute("to_version", CONTRACT_VERSION))
+        .add_attribute("to_version", TO_VERSION))
 }

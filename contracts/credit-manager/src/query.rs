@@ -1,4 +1,4 @@
-use cosmwasm_std::{Coin, Deps, Env, Order, StdResult};
+use cosmwasm_std::{Coin, Decimal, Deps, Env, Order, StdResult};
 use cw_paginate::{paginate_map, paginate_map_query, PaginationResponse, DEFAULT_LIMIT, MAX_LIMIT};
 use cw_storage_plus::Bound;
 use mars_types::{
@@ -16,7 +16,7 @@ use crate::{
     state::{
         ACCOUNT_KINDS, ACCOUNT_NFT, COIN_BALANCES, DEBT_SHARES, HEALTH_CONTRACT, INCENTIVES,
         MAX_SLIPPAGE, MAX_UNLOCKING_POSITIONS, ORACLE, OWNER, PARAMS, RED_BANK, REWARDS_COLLECTOR,
-        SWAPPER, TOTAL_DEBT_SHARES, VAULTS, VAULT_POSITIONS, ZAPPER,
+        SWAPPER, SWAP_FEE, TOTAL_DEBT_SHARES, VAULTS, VAULT_POSITIONS, ZAPPER,
     },
     utils::debt_shares_to_amount,
     vault::vault_utilization_in_deposit_cap_denom,
@@ -60,6 +60,10 @@ pub fn query_config(deps: Deps) -> ContractResult<ConfigResponse> {
         health_contract: HEALTH_CONTRACT.load(deps.storage)?.address().into(),
         rewards_collector: REWARDS_COLLECTOR.may_load(deps.storage)?,
     })
+}
+
+pub fn query_swap_fee(deps: Deps) -> ContractResult<Decimal> {
+    Ok(SWAP_FEE.load(deps.storage)?)
 }
 
 pub fn query_positions(deps: Deps, account_id: &str) -> ContractResult<Positions> {

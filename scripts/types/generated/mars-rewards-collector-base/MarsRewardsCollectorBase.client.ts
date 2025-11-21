@@ -14,6 +14,7 @@ import {
   RewardConfig,
   ExecuteMsg,
   OwnerUpdate,
+  WhitelistAction,
   Uint128,
   Action,
   ActionAmount,

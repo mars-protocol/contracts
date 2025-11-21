@@ -13,9 +13,9 @@ use crate::{
     execute::create_credit_account,
     state::{
         ACCOUNT_NFT, HEALTH_CONTRACT, INCENTIVES, MAX_SLIPPAGE, MAX_UNLOCKING_POSITIONS, ORACLE,
-        OWNER, RED_BANK, REWARDS_COLLECTOR, SWAPPER, ZAPPER,
+        OWNER, RED_BANK, REWARDS_COLLECTOR, SWAPPER, SWAP_FEE, ZAPPER,
     },
-    utils::assert_max_slippage,
+    utils::{assert_max_slippage, assert_swap_fee},
 };
 
 pub fn update_config(
@@ -81,6 +81,13 @@ pub fn update_config(
         MAX_SLIPPAGE.save(deps.storage, &num)?;
         response =
             response.add_attribute("key", "max_slippage").add_attribute("value", num.to_string());
+    }
+
+    if let Some(num) = updates.swap_fee {
+        assert_swap_fee(num)?;
+        SWAP_FEE.save(deps.storage, &num)?;
+        response =
+            response.add_attribute("key", "swap_fee").add_attribute("value", num.to_string());
     }
 
     if let Some(unchecked) = updates.health_contract {

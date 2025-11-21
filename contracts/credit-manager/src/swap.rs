@@ -6,8 +6,8 @@ use mars_types::{
 
 use crate::{
     error::{ContractError, ContractResult},
-    state::{COIN_BALANCES, SWAPPER},
-    utils::{decrement_coin_balance, update_balance_msg},
+    state::{COIN_BALANCES, REWARDS_COLLECTOR, SWAPPER, SWAP_FEE},
+    utils::{decrement_coin_balance, increment_coin_balance, update_balance_msg},
 };
 
 pub fn swap_exact_in(
@@ -19,7 +19,7 @@ pub fn swap_exact_in(
     min_receive: Uint128,
     route: Option<SwapperRoute>,
 ) -> ContractResult<Response> {
-    let coin_in_to_trade = Coin {
+    let mut coin_in_to_trade = Coin {
         denom: coin_in.denom.clone(),
         amount: match coin_in.amount {
             ActionAmount::Exact(a) => a,
@@ -34,6 +34,19 @@ pub fn swap_exact_in(
     }
 
     decrement_coin_balance(deps.storage, account_id, &coin_in_to_trade)?;
+
+    // Deduct the swap fee
+    let swap_fee = SWAP_FEE.load(deps.storage)?;
+    let swap_fee_amount = coin_in_to_trade.amount.checked_mul_floor(swap_fee)?;
+    coin_in_to_trade.amount = coin_in_to_trade.amount.checked_sub(swap_fee_amount)?;
+
+    // Send to Rewards collector
+    let rc_coin = Coin {
+        denom: coin_in.denom.clone(),
+        amount: swap_fee_amount,
+    };
+    let rewards_collector_account = REWARDS_COLLECTOR.load(deps.storage)?.account_id;
+    increment_coin_balance(deps.storage, &rewards_collector_account, &rc_coin)?;
 
     // Updates coin balances for account after the swap has taken place
     let update_coin_balance_msg = update_balance_msg(
